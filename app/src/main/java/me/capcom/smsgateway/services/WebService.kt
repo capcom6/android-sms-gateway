@@ -7,14 +7,21 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
 import io.ktor.http.*
+import io.ktor.serialization.gson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.helpers.PhoneHelper
+import me.capcom.smsgateway.models.PostMessageRequest
 import kotlin.concurrent.thread
 
 class WebService : Service() {
@@ -25,11 +32,41 @@ class WebService : Service() {
         embeddedServer(Netty, PORT, watchPaths = emptyList()) {
 //            install(CallLogging)
             routing {
+//                install(Compression)
+                install(ContentNegotiation) {
+                    gson {
+                        if (me.capcom.smsgateway.BuildConfig.DEBUG) {
+                            setPrettyPrinting()
+                        }
+                    }
+                }
+                install(CORS) {
+                    anyHost()
+                    allowHeader(HttpHeaders.ContentType)
+                    allowHeader(HttpHeaders.Authorization)
+                    allowMethod(HttpMethod.Get)
+                    allowMethod(HttpMethod.Post)
+                }
                 get("/") {
-                    call.respondText(
-                        text = "Hello! You are here in ${Build.MODEL}",
-                        contentType = ContentType.Text.Plain
-                    )
+                    val token = call.request.header(HttpHeaders.Authorization)
+                    call.respond(mapOf("token" to token, "status" to "ok", "model" to Build.MODEL))
+                }
+                post("/message") {
+                    val request = call.receive<PostMessageRequest>()
+                    if (request.message.isNullOrEmpty()) {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("message" to "message is empty"))
+                    }
+                    if (request.phoneNumbers.isNullOrEmpty()) {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("message" to "phoneNumbers is empty"))
+                    }
+
+                    try {
+                        sendSMS(request.message, request.phoneNumbers)
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
+                    }
+
+                    call.respond(request)
                 }
             }
         }
@@ -52,7 +89,6 @@ class WebService : Service() {
         }
 
         server.start()
-//        server.start()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -79,7 +115,20 @@ class WebService : Service() {
         super.onDestroy()
     }
 
-    companion object {        const val NOTIFICATION_CHANNEL_ID = "WEBSERVICE"
+    private fun sendSMS(message: String, phoneNumbers: List<String>) {
+        val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getSystemService(SmsManager::class.java) as SmsManager
+        } else {
+            SmsManager.getDefault()
+        }
+
+        phoneNumbers.mapNotNull { PhoneHelper.filterPhoneNumber(it) }.forEach {
+            smsManager.sendTextMessage(it, null, message, null, null)
+        }
+    }
+
+    companion object {
+        const val NOTIFICATION_CHANNEL_ID = "WEBSERVICE"
         const val NOTIFICATION_ID = 1
 
         private const val PORT = 53954
