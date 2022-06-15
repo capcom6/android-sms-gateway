@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">SmsGateway</string>
+    <string name="notification_title">SMS-шлюз</string>
+    <string name="notification_message">Ожидаем сообщения</string>
+</resources>
