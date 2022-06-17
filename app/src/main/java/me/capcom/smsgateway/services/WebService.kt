@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
 import io.ktor.http.*
@@ -21,15 +22,22 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.helpers.PhoneHelper
+import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.models.PostMessageRequest
 import kotlin.concurrent.thread
 
 class WebService : Service() {
 
-//    private val server by lazy { WebServer() }
+    private val settingsHelper by lazy { SettingsHelper(this) }
+
+    private val wakeLock: PowerManager.WakeLock by lazy {
+        (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
+            newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, this.javaClass.name)
+        }
+    }
 
     private val server by lazy {
-        embeddedServer(Netty, PORT, watchPaths = emptyList()) {
+        embeddedServer(Netty, settingsHelper.serverPort, watchPaths = emptyList()) {
 //            install(CallLogging)
             routing {
 //                install(Compression)
@@ -89,12 +97,13 @@ class WebService : Service() {
         }
 
         server.start()
+        wakeLock.acquire()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(getText(R.string.notification_title))
-            .setContentText(getText(R.string.notification_message))
+            .setContentText("Шлюз запущен на порту ${settingsHelper.serverPort}")
             .setSmallIcon(R.drawable.ic_sms)
             .build()
 
@@ -108,6 +117,7 @@ class WebService : Service() {
     }
 
     override fun onDestroy() {
+        wakeLock.release()
         thread { server.stop() }
 
         stopForeground(true)
@@ -128,10 +138,8 @@ class WebService : Service() {
     }
 
     companion object {
-        const val NOTIFICATION_CHANNEL_ID = "WEBSERVICE"
-        const val NOTIFICATION_ID = 1
-
-        private const val PORT = 53954
+        private const val NOTIFICATION_CHANNEL_ID = "WEBSERVICE"
+        private const val NOTIFICATION_ID = 1
 
         fun start(context: Context) {
             val intent = Intent(context, WebService::class.java)
