@@ -26,8 +26,17 @@ class MainActivity : AppCompatActivity() {
         binding.switchAutostart.setOnCheckedChangeListener { _, isChecked ->
             settingsHelper.autostart = isChecked
         }
+
         binding.buttonStart.setOnCheckedChangeListener { _, b ->
             actionStart(b)
+        }
+
+        WebService.STATUS.observe(this) {
+            binding.buttonStart.isChecked = it
+        }
+
+        if (settingsHelper.autostart) {
+            actionStart(true)
         }
     }
 

@@ -10,9 +10,12 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import io.ktor.http.*
 import io.ktor.serialization.gson.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -38,7 +41,21 @@ class WebService : Service() {
 
     private val server by lazy {
         embeddedServer(Netty, settingsHelper.serverPort, watchPaths = emptyList()) {
-//            install(CallLogging)
+            install(Authentication) {
+                basic("auth-basic") {
+                    realm = "Access to SMS Gateway"
+                    validate { credentials ->
+                        if (credentials.name == "sms" && credentials.password == settingsHelper.serverToken) {
+                            UserIdPrincipal(credentials.name)
+                        } else {
+                            null
+                        }
+                    }
+                }
+            }
+//            install(CallLogging) {
+//                this.level = Level.DEBUG
+//            }
             routing {
 //                install(Compression)
                 install(ContentNegotiation) {
@@ -55,27 +72,30 @@ class WebService : Service() {
                     allowMethod(HttpMethod.Get)
                     allowMethod(HttpMethod.Post)
                 }
-                get("/") {
-                    val token = call.request.header(HttpHeaders.Authorization)
-                    call.respond(mapOf("token" to token, "status" to "ok", "model" to Build.MODEL))
-                }
-                post("/message") {
-                    val request = call.receive<PostMessageRequest>()
-                    if (request.message.isNullOrEmpty()) {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("message" to "message is empty"))
+                authenticate("auth-basic") {
+                    get("/") {
+                        val token = call.request.header(HttpHeaders.Authorization)
+                        call.respond(mapOf("token" to token, "status" to "ok", "model" to Build.MODEL))
                     }
-                    if (request.phoneNumbers.isNullOrEmpty()) {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("message" to "phoneNumbers is empty"))
-                    }
+                    post("/message") {
+                        val request = call.receive<PostMessageRequest>()
+                        if (request.message.isNullOrEmpty()) {
+                            call.respond(HttpStatusCode.BadRequest, mapOf("message" to "message is empty"))
+                        }
+                        if (request.phoneNumbers.isNullOrEmpty()) {
+                            call.respond(HttpStatusCode.BadRequest, mapOf("message" to "phoneNumbers is empty"))
+                        }
 
-                    try {
-                        sendSMS(request.message, request.phoneNumbers)
-                    } catch (e: Exception) {
-                        call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
-                    }
+                        try {
+                            sendSMS(request.message, request.phoneNumbers)
+                        } catch (e: Exception) {
+                            call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
+                        }
 
-                    call.respond(request)
+                        call.respond(request)
+                    }
                 }
+
             }
         }
     }
@@ -98,6 +118,8 @@ class WebService : Service() {
 
         server.start()
         wakeLock.acquire()
+
+        status.postValue(true)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -122,6 +144,8 @@ class WebService : Service() {
 
         stopForeground(true)
 
+        status.postValue(false)
+
         super.onDestroy()
     }
 
@@ -140,6 +164,9 @@ class WebService : Service() {
     companion object {
         private const val NOTIFICATION_CHANNEL_ID = "WEBSERVICE"
         private const val NOTIFICATION_ID = 1
+
+        private val status = MutableLiveData<Boolean>(false)
+        val STATUS: LiveData<Boolean> = status
 
         fun start(context: Context) {
             val intent = Intent(context, WebService::class.java)
