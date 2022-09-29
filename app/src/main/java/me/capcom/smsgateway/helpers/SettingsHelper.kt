@@ -4,8 +4,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.preference.PreferenceManager
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import me.capcom.smsgateway.receivers.BootReceiver
-import java.util.*
 
 class SettingsHelper(private val context: Context) {
     private val settings = PreferenceManager.getDefaultSharedPreferences(context)
@@ -28,7 +28,9 @@ class SettingsHelper(private val context: Context) {
         set(value) = settings.edit().putInt(PREF_KEY_SERVER_PORT, value).apply()
 
     var serverToken: String
-        get() = settings.getString(PREF_KEY_SERVER_TOKEN, null) ?: UUID.randomUUID().toString().substring(0, 8).also { serverToken = it }
+        get() = settings.getString(PREF_KEY_SERVER_TOKEN, null)
+            ?: NanoIdUtils.randomNanoId(NanoIdUtils.DEFAULT_NUMBER_GENERATOR, NanoIdUtils.DEFAULT_ALPHABET, 8)
+                .also { serverToken = it }
         set(value) = settings.edit().putString(PREF_KEY_SERVER_TOKEN, value).apply()
 
 

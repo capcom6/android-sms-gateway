@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <application
+    <application android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -17,11 +17,21 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SmsGateway">
         <receiver
+            android:name=".receivers.EventsReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="me.capcom.smsgateway.ACTION_SENT"/>
+                <action android:name="me.capcom.smsgateway.ACTION_DELIVERED"/>
+            </intent-filter>
+        </receiver>
+        <receiver
             android:name=".receivers.BootReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.ACTION_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.REBOOT" />

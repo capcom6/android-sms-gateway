@@ -2,6 +2,7 @@ package me.capcom.smsgateway.services
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -12,6 +13,7 @@ import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import io.ktor.http.*
 import io.ktor.serialization.gson.*
 import io.ktor.server.application.*
@@ -24,9 +26,11 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.domain.PostMessageRequest
+import me.capcom.smsgateway.domain.PostMessageResponse
 import me.capcom.smsgateway.helpers.PhoneHelper
 import me.capcom.smsgateway.helpers.SettingsHelper
-import me.capcom.smsgateway.models.PostMessageRequest
+import me.capcom.smsgateway.receivers.EventsReceiver
 import kotlin.concurrent.thread
 
 class WebService : Service() {
@@ -92,7 +96,10 @@ class WebService : Service() {
                             call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
                         }
 
-                        call.respond(request)
+                        call.respond(PostMessageResponse(
+                            id = NanoIdUtils.randomNanoId(),
+                            state = PostMessageResponse.State.Pending
+                        ))
                     }
                 }
 
@@ -156,8 +163,11 @@ class WebService : Service() {
             SmsManager.getDefault()
         }
 
+        val sentIntent = PendingIntent.getBroadcast(this, 0, Intent(EventsReceiver.ACTION_SENT), 0)
+        val deliveredIntent = PendingIntent.getBroadcast(this, 0, Intent(EventsReceiver.ACTION_DELIVERED), 0)
+
         phoneNumbers.mapNotNull { PhoneHelper.filterPhoneNumber(it) }.forEach {
-            smsManager.sendTextMessage(it, null, message, null, null)
+            smsManager.sendTextMessage(it, null, message, sentIntent, deliveredIntent)
         }
     }
 
