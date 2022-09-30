@@ -78,8 +78,7 @@ class WebService : Service() {
                 }
                 authenticate("auth-basic") {
                     get("/") {
-                        val token = call.request.header(HttpHeaders.Authorization)
-                        call.respond(mapOf("token" to token, "status" to "ok", "model" to Build.MODEL))
+                        call.respond(mapOf("status" to "ok", "model" to Build.MODEL))
                     }
                     post("/message") {
                         val request = call.receive<PostMessageRequest>()
@@ -157,8 +156,8 @@ class WebService : Service() {
     }
 
     private fun sendSMS(message: String, phoneNumbers: List<String>) {
-        val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            getSystemService(SmsManager::class.java) as SmsManager
+        val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getSystemService(SmsManager::class.java)
         } else {
             SmsManager.getDefault()
         }
