@@ -1,7 +1,12 @@
 package me.capcom.smsgateway
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import me.capcom.smsgateway.databinding.ActivityMainBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.providers.LocalIPProvider
@@ -53,9 +58,36 @@ class MainActivity : AppCompatActivity() {
 
     private fun actionStart(start: Boolean) {
         if (start) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.SEND_SMS)
+            }
+
             WebService.start(this)
         } else {
             WebService.stop(this)
         }
     }
+
+    // Register the permissions callback, which handles the user's response to the
+    // system permissions dialog. Save the return value, an instance of
+    // ActivityResultLauncher. You can use either a val, as shown in this snippet,
+    // or a lateinit var in your onAttach() or onCreate() method.
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                // Permission is granted. Continue the action or workflow in your
+                // app.
+                Log.d(javaClass.name, "Permissions granted")
+            } else {
+                // Explain to the user that the feature is unavailable because the
+                // features requires a permission that the user has denied. At the
+                // same time, respect the user's decision. Don't link to system
+                // settings in an effort to convince the user to change their
+                // decision.
+                Log.d(javaClass.name, "Permissions is not granted")
+            }
+        }
+
 }
