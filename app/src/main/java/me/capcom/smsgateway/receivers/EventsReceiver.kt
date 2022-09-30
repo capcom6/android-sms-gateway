@@ -14,7 +14,13 @@ class EventsReceiver : BroadcastReceiver() {
     }
 
     companion object {
+        private var INSTANCE: EventsReceiver? = null
+
         const val ACTION_SENT = "me.capcom.smsgateway.ACTION_SENT"
         const val ACTION_DELIVERED = "me.capcom.smsgateway.ACTION_DELIVERED"
+
+        fun getInstance(): EventsReceiver {
+            return INSTANCE ?: EventsReceiver().also { INSTANCE = it }
+        }
     }
 }
