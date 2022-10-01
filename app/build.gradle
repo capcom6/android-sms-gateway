@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id "org.jetbrains.kotlin.kapt"
 }
 
 android {
@@ -41,6 +42,8 @@ android {
 dependencies {
     var ktor_version = '2.0.2'
     var retrofit_version = '2.9.0'
+    def room_version = "2.4.3"
+
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1"
     implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-server-netty:$ktor_version")
@@ -63,6 +66,10 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
     implementation("com.aventrix.jnanoid:jnanoid:2.0.0")
+
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

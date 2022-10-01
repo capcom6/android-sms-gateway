@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -25,7 +26,9 @@ import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import me.capcom.smsgateway.App
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.domain.PostMessageRequest
 import me.capcom.smsgateway.domain.PostMessageResponse
 import me.capcom.smsgateway.helpers.PhoneHelper
@@ -80,25 +83,47 @@ class WebService : Service() {
                     get("/") {
                         call.respond(mapOf("status" to "ok", "model" to Build.MODEL))
                     }
-                    post("/message") {
-                        val request = call.receive<PostMessageRequest>()
-                        if (request.message.isNullOrEmpty()) {
-                            call.respond(HttpStatusCode.BadRequest, mapOf("message" to "message is empty"))
-                        }
-                        if (request.phoneNumbers.isNullOrEmpty()) {
-                            call.respond(HttpStatusCode.BadRequest, mapOf("message" to "phoneNumbers is empty"))
-                        }
+                    route("/message") {
+                        post {
+                            val request = call.receive<PostMessageRequest>()
+                            if (request.message.isNullOrEmpty()) {
+                                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "message is empty"))
+                            }
+                            if (request.phoneNumbers.isNullOrEmpty()) {
+                                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "phoneNumbers is empty"))
+                            }
 
-                        try {
-                            sendSMS(request.message, request.phoneNumbers)
-                        } catch (e: Exception) {
-                            call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
-                        }
+                            val id = request.id ?: NanoIdUtils.randomNanoId()
+                            App.db.messageDao().insert(Message(id, request.message, request.phoneNumbers))
 
-                        call.respond(PostMessageResponse(
-                            id = NanoIdUtils.randomNanoId(),
-                            state = PostMessageResponse.State.Pending
-                        ))
+                            try {
+                                sendSMS(id, request.message, request.phoneNumbers)
+                            } catch (e: Exception) {
+                                call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
+                            }
+
+                            call.respond(PostMessageResponse(
+                                id = id,
+                                state = PostMessageResponse.State.Pending
+                            ))
+                        }
+                        get("{id}") {
+                            val id = call.parameters["id"]
+                                ?: return@get call.respond(HttpStatusCode.BadRequest)
+
+                            val message = App.db.messageDao().get(id)
+                                ?: return@get call.respond(HttpStatusCode.NotFound)
+
+                            call.respond(PostMessageResponse(
+                                message.id,
+                                when (message.state) {
+                                    Message.State.Pending -> PostMessageResponse.State.Pending
+                                    Message.State.Sent -> PostMessageResponse.State.Sent
+                                    Message.State.Delivered -> PostMessageResponse.State.Delivered
+                                    Message.State.Failed -> PostMessageResponse.State.Failed
+                                }
+                            ))
+                        }
                     }
                 }
 
@@ -155,15 +180,25 @@ class WebService : Service() {
         super.onDestroy()
     }
 
-    private fun sendSMS(message: String, phoneNumbers: List<String>) {
+    private fun sendSMS(id: String, message: String, phoneNumbers: List<String>) {
         val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             getSystemService(SmsManager::class.java)
         } else {
             SmsManager.getDefault()
         }
 
-        val sentIntent = PendingIntent.getBroadcast(this, 0, Intent(EventsReceiver.ACTION_SENT), 0)
-        val deliveredIntent = PendingIntent.getBroadcast(this, 0, Intent(EventsReceiver.ACTION_DELIVERED), 0)
+        val sentIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            Intent(EventsReceiver.ACTION_SENT, Uri.parse(id), this, EventsReceiver::class.java),
+            PendingIntent.FLAG_IMMUTABLE
+        )
+        val deliveredIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            Intent(EventsReceiver.ACTION_DELIVERED, Uri.parse(id), this, EventsReceiver::class.java),
+            PendingIntent.FLAG_IMMUTABLE
+        )
 
         phoneNumbers.mapNotNull { PhoneHelper.filterPhoneNumber(it) }.forEach {
             smsManager.sendTextMessage(it, null, message, sentIntent, deliveredIntent)
