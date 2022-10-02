@@ -7,7 +7,6 @@ import androidx.room.PrimaryKey
 data class Message(
     @PrimaryKey val id: String,
     val text: String,
-    val recipients: List<String>,
     val state: State = State.Pending,
 ) {
     enum class State {

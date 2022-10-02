@@ -9,7 +9,7 @@ class Converters {
     }
 
     @TypeConverter
-    fun dateToTimestamp(value: List<String>?): String? {
+    fun stringFromList(value: List<String>?): String? {
         return value?.joinToString("|")
     }
 
