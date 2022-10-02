@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.receivers
 
+import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -16,7 +17,10 @@ class EventsReceiver : BroadcastReceiver() {
         intent.dataString?.let { Log.d(this.javaClass.name, it) }
 
         val state = when (intent.action) {
-            ACTION_SENT -> Message.State.Sent
+            ACTION_SENT -> when (resultCode) {
+                Activity.RESULT_OK -> Message.State.Sent
+                else -> Message.State.Failed
+            }
             ACTION_DELIVERED -> Message.State.Delivered
             else -> return
         }
