@@ -7,6 +7,9 @@ import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import me.capcom.smsgateway.databinding.ActivityMainBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.providers.LocalIPProvider
@@ -48,11 +51,17 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        LocalIPProvider(this).getIP { ip ->
-            binding.textLocalIP.text = "Local address is $ip:${settingsHelper.serverPort}"
-        }
-        PublicIPProvider().getIP { ip ->
-            binding.textPublicIP.text = "Public address is $ip:${settingsHelper.serverPort}"
+        lifecycleScope.launch(Dispatchers.IO) {
+            LocalIPProvider(this@MainActivity).getIP()?.let { ip ->
+                launch(Dispatchers.Main) {
+                    binding.textLocalIP.text = "Local address is $ip:${settingsHelper.serverPort}"
+                }
+            }
+            PublicIPProvider().getIP()?.let { ip ->
+                launch(Dispatchers.Main) {
+                    binding.textPublicIP.text = "Public address is $ip:${settingsHelper.serverPort}"
+                }
+            }
         }
     }
 

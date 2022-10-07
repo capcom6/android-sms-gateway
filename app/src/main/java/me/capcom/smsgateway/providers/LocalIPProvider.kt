@@ -9,7 +9,7 @@ import java.nio.ByteOrder
 
 
 class LocalIPProvider(private val context: Context): IPProvider {
-    override fun getIP(onResult: (String?) -> Unit) {
+    override suspend fun getIP(): String? {
         var ipAddress = (context.applicationContext.getSystemService(WIFI_SERVICE) as WifiManager).connectionInfo.ipAddress
         // Convert little-endian to big-endianif needed
         if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
@@ -18,6 +18,6 @@ class LocalIPProvider(private val context: Context): IPProvider {
 
         val ipByteArray: ByteArray = BigInteger.valueOf(0L+ipAddress).toByteArray()
 
-        onResult(InetAddress.getByAddress(ipByteArray).hostAddress)
+        return (InetAddress.getByAddress(ipByteArray).hostAddress)
     }
 }

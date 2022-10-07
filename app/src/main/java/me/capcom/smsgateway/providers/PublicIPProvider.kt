@@ -1,45 +1,28 @@
 package me.capcom.smsgateway.providers
 
-import retrofit2.Call
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.create
-import retrofit2.http.GET
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.okhttp.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.request.*
+import io.ktor.serialization.gson.*
 
 class PublicIPProvider: IPProvider {
-    override fun getIP(onResult: (String?) -> Unit) {
-        API.getPublicIpAddress().enqueue(object: retrofit2.Callback<IpifyResponse> {
-            override fun onFailure(call: Call<IpifyResponse>, t: Throwable) {
-                t.printStackTrace()
-                onResult(null)
-            }
-
-            override fun onResponse(call: Call<IpifyResponse>, response: retrofit2.Response<IpifyResponse>) {
-                try {
-                    if (response.isSuccessful) {
-                        onResult(response.body()?.ip)
-                    } else {
-                        onResult(null)
-                    }
-                } catch (e: Exception) {
-                    onResult(null)
-                }
-            }
-        })
-    }
-
-    private interface IpifyService {
-        @GET("?format=json")
-        fun getPublicIpAddress(): Call<IpifyResponse>
+    override suspend fun getIP(): String? {
+        return try {
+            client.get("https://api.ipify.org/?format=json").body<IpifyResponse>().ip
+        } catch (e: Exception) {
+            null
+        }
     }
 
     private data class IpifyResponse(val ip: String)
 
     companion object {
-        private val API = Retrofit.Builder()
-            .baseUrl("https://api.ipify.org/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create<IpifyService>()
+        private val client = HttpClient(OkHttp) {
+            install(ContentNegotiation) {
+                gson()
+            }
+        }
     }
 }
