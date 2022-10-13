@@ -25,6 +25,7 @@ import io.ktor.server.routing.*
 import me.capcom.smsgateway.App
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.data.entities.Message
+import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.domain.PostMessageRequest
 import me.capcom.smsgateway.domain.PostMessageResponse
 import me.capcom.smsgateway.helpers.SettingsHelper
@@ -93,7 +94,8 @@ class WebService : Service() {
                                 messagesModule.sendMessage(
                                     request.id,
                                     request.message,
-                                    request.phoneNumbers
+                                    request.phoneNumbers,
+                                    Message.Source.Local
                                 )
                             } catch (e: IllegalArgumentException) {
                                 return@post call.respond(HttpStatusCode.BadRequest, mapOf("message" to e.message))
@@ -133,11 +135,11 @@ class WebService : Service() {
         }
     }
 
-    private fun Message.State.toApiState(): PostMessageResponse.State = when (this) {
-        Message.State.Pending -> PostMessageResponse.State.Pending
-        Message.State.Sent -> PostMessageResponse.State.Sent
-        Message.State.Delivered -> PostMessageResponse.State.Delivered
-        Message.State.Failed -> PostMessageResponse.State.Failed
+    private fun Message.State.toApiState(): MessageState = when (this) {
+        Message.State.Pending -> MessageState.Pending
+        Message.State.Sent -> MessageState.Sent
+        Message.State.Delivered -> MessageState.Delivered
+        Message.State.Failed -> MessageState.Failed
     }
 
     override fun onCreate() {

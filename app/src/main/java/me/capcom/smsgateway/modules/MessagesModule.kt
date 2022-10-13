@@ -19,14 +19,14 @@ class MessagesModule(
     private val context: Context,
     private val dao: MessageDao,
 ) {
-    fun sendMessage(id: String?, text: String, recipients: List<String>): MessageWithRecipients {
+    fun sendMessage(id: String?, text: String, recipients: List<String>, source: Message.Source): MessageWithRecipients {
         val id = id ?: NanoIdUtils.randomNanoId()
         val recipients = recipients.map {
             PhoneHelper.filterPhoneNumber(it) ?: throw IllegalArgumentException("Некорректный номер телефона $it")
         }
 
         val message = MessageWithRecipients(
-            Message(id, text),
+            Message(id, text, source),
             recipients.map { MessageRecipient(id, it) },
         )
 
@@ -37,7 +37,7 @@ class MessagesModule(
         } catch (e: Exception) {
             dao.updateState(id, Message.State.Failed)
             return MessageWithRecipients(
-                Message(id, text, Message.State.Failed),
+                Message(id, text, source, Message.State.Failed),
                 recipients.map { MessageRecipient(id, it, Message.State.Failed) },
             )
         }

@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.data.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -7,6 +8,8 @@ import androidx.room.PrimaryKey
 data class Message(
     @PrimaryKey val id: String,
     val text: String,
+    @ColumnInfo(defaultValue = "Local")
+    val source: Source,
     val state: State = State.Pending,
 ) {
     enum class State {
@@ -14,5 +17,10 @@ data class Message(
         Sent,
         Delivered,
         Failed,
+    }
+
+    enum class Source {
+        Local,
+        Gateway,
     }
 }
