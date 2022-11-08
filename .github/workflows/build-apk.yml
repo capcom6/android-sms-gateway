@@ -1,0 +1,18 @@
+name: Build APK
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Build
+        uses: sparkfabrik/android-build-action@v1.2.0
+        with:
+          project-path: .
+          output-path: smsgateway-${GITHUB_REF_NAME}.apk
