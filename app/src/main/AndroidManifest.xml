@@ -2,27 +2,38 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.capcom.smsgateway">
 
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+<!--    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:node="remove"/>-->
 
-    <application android:name=".App"
+    <application
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SmsGateway">
+        <service
+            android:name=".services.PushService"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".receivers.EventsReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="me.capcom.smsgateway.ACTION_SENT"/>
-                <action android:name="me.capcom.smsgateway.ACTION_DELIVERED"/>
+                <action android:name="me.capcom.smsgateway.ACTION_SENT" />
+                <action android:name="me.capcom.smsgateway.ACTION_DELIVERED" />
             </intent-filter>
         </receiver>
         <receiver
