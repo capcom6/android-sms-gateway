@@ -1,4 +1,4 @@
-package me.capcom.smsgateway.api
+package me.capcom.smsgateway.modules.gateway
 
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -9,7 +9,7 @@ import io.ktor.http.*
 import io.ktor.serialization.gson.*
 import me.capcom.smsgateway.domain.MessageState
 
-class SmsGatewayApi {
+class GatewayApi(var token: String?) {
     private val client = HttpClient(OkHttp) {
         install(ContentNegotiation) {
             gson()
@@ -19,23 +19,32 @@ class SmsGatewayApi {
 
     suspend fun register(request: RegisterRequest): RegisterResponse {
         return client.post("$BASE_URL/register") {
+            header(HttpHeaders.Authorization, token)
             contentType(ContentType.Application.Json)
             setBody(request)
-        }.body()
+        }.body<RegisterResponse>().also {
+            this.token = it.token
+        }
     }
 
     suspend fun getMessages(): List<Message> {
-        return client.get("$BASE_URL/message").body()
+        val token = this.token ?: throw RuntimeException("Empty token")
+        return client.get("$BASE_URL/message") {
+            header(HttpHeaders.Authorization, token)
+        }.body()
     }
 
     suspend fun patchMessages(request: MessagePatchRequest) {
+        val token = this.token ?: throw RuntimeException("Empty token")
         client.patch("$BASE_URL/message") {
+            header(HttpHeaders.Authorization, token)
             contentType(ContentType.Application.Json)
             setBody(request)
         }
     }
 
     data class RegisterRequest(
+        val id: String?,
         val name: String,
         val pushToken: String?,
     )
