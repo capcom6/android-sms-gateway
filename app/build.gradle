@@ -50,6 +50,7 @@ dependencies {
     def ktor_version = "2.0.2"
     def room_version = "2.4.3"
     def corutines_version = "1.6.1"
+    def work_version = "2.7.1"
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$corutines_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$corutines_version")
@@ -66,6 +67,9 @@ dependencies {
 
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-client-okhttp:$ktor_version")
+
+    // Kotlin + coroutines
+    implementation "androidx.work:work-runtime-ktx:$work_version"
 
     implementation("androidx.preference:preference:1.2.0")
 

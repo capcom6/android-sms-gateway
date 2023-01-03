@@ -35,7 +35,7 @@ import kotlin.concurrent.thread
 class WebService : Service() {
 
     private val settingsHelper by lazy { SettingsHelper(this) }
-    private val messagesModule by lazy { MessagesModule(this, App.db.messageDao()) }
+    private val messagesModule by lazy { MessagesModule(this, App.instance.db.messageDao()) }
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {

@@ -12,7 +12,7 @@ class EventsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         // This method is called when the BroadcastReceiver is receiving an Intent broadcast.
 
-        MessagesModule(context, App.db.messageDao())
+        MessagesModule(context, App.instance.db.messageDao())
             .processStateIntent(intent, resultCode)
     }
 
