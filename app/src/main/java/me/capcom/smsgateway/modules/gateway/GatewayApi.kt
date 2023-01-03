@@ -9,7 +9,7 @@ import io.ktor.http.*
 import io.ktor.serialization.gson.*
 import me.capcom.smsgateway.domain.MessageState
 
-class GatewayApi(var token: String?) {
+class GatewayApi() {
     private val client = HttpClient(OkHttp) {
         install(ContentNegotiation) {
             gson()
@@ -17,43 +17,54 @@ class GatewayApi(var token: String?) {
         expectSuccess = true
     }
 
-    suspend fun register(request: RegisterRequest): RegisterResponse {
-        return client.post("$BASE_URL/register") {
-            header(HttpHeaders.Authorization, token)
+    suspend fun deviceRegister(request: DeviceRegisterRequest): DeviceRegisterResponse {
+        return client.post("$BASE_URL/device") {
             contentType(ContentType.Application.Json)
             setBody(request)
-        }.body<RegisterResponse>().also {
-            this.token = it.token
-        }
-    }
-
-    suspend fun getMessages(): List<Message> {
-        val token = this.token ?: throw RuntimeException("Empty token")
-        return client.get("$BASE_URL/message") {
-            header(HttpHeaders.Authorization, token)
         }.body()
     }
 
-    suspend fun patchMessages(request: MessagePatchRequest) {
-        val token = this.token ?: throw RuntimeException("Empty token")
-        client.patch("$BASE_URL/message") {
-            header(HttpHeaders.Authorization, token)
+    suspend fun devicePatch(token: String, request: DevicePatchRequest) {
+        client.patch("$BASE_URL/device") {
+            auth(token)
             contentType(ContentType.Application.Json)
             setBody(request)
         }
     }
 
-    data class RegisterRequest(
-        val id: String?,
+    suspend fun getMessages(token: String): List<Message> {
+        return client.get("$BASE_URL/message") {
+            auth(token)
+        }.body()
+    }
+
+    suspend fun patchMessages(token: String, request: MessagePatchRequest) {
+        client.patch("$BASE_URL/message") {
+            auth(token)
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+    }
+
+    fun HttpRequestBuilder.auth(token: String) {
+        header(HttpHeaders.Authorization, "Bearer $token")
+    }
+
+    data class DeviceRegisterRequest(
         val name: String,
         val pushToken: String?,
     )
 
-    data class RegisterResponse(
+    data class DeviceRegisterResponse(
         val id: String,
         val token: String,
         val login: String,
         val password: String,
+    )
+
+    data class DevicePatchRequest(
+        val id: String,
+        val pushToken: String,
     )
 
     data class MessagePatchRequest(
