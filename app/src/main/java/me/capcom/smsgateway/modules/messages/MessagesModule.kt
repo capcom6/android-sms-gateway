@@ -1,4 +1,4 @@
-package me.capcom.smsgateway.modules
+package me.capcom.smsgateway.modules.messages
 
 import android.app.Activity
 import android.app.PendingIntent
@@ -13,16 +13,20 @@ import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.helpers.PhoneHelper
+import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.receivers.EventsReceiver
 
 class MessagesModule(
     private val context: Context,
     private val dao: MessageDao,
 ) {
-    fun sendMessage(id: String?, text: String, recipients: List<String>, source: Message.Source): MessageWithRecipients {
+    val events = EventBus()
+
+    suspend fun sendMessage(id: String?, text: String, recipients: List<String>, source: Message.Source): MessageWithRecipients {
         val id = id ?: NanoIdUtils.randomNanoId()
         val recipients = recipients.map {
-            PhoneHelper.filterPhoneNumber(it) ?: throw IllegalArgumentException("Некорректный номер телефона $it")
+            PhoneHelper.filterPhoneNumber(it)
+                ?: throw IllegalArgumentException("Некорректный номер телефона $it")
         }
 
         val message = MessageWithRecipients(
@@ -35,7 +39,7 @@ class MessagesModule(
         try {
             sendSMS(id, text, recipients)
         } catch (e: Exception) {
-            dao.updateState(id, Message.State.Failed)
+            updateState(id, null, Message.State.Failed)
             return MessageWithRecipients(
                 Message(id, text, source, Message.State.Failed),
                 recipients.map { MessageRecipient(id, it, Message.State.Failed) },
@@ -45,7 +49,7 @@ class MessagesModule(
         return message
     }
 
-    fun getState(id: String): MessageWithRecipients? {
+    suspend fun getState(id: String): MessageWithRecipients? {
         val message = dao.get(id)
             ?: return null
 
@@ -61,13 +65,13 @@ class MessagesModule(
         }
 
         if (state != message.message.state) {
-            dao.updateState(message.message.id, state)
+            updateState(message.message.id, null, state)
         }
 
         return dao.get(id)
     }
 
-    fun processStateIntent(intent: Intent, resultCode: Int) {
+    suspend fun processStateIntent(intent: Intent, resultCode: Int) {
         val state = when (intent.action) {
             EventsReceiver.ACTION_SENT -> when (resultCode) {
                 Activity.RESULT_OK -> Message.State.Sent
@@ -78,7 +82,30 @@ class MessagesModule(
         }
         val (id, phone) = intent.dataString?.split("|", limit = 2) ?: return
 
-        dao.updateState(id, phone, state)
+        updateState(id, phone, state)
+    }
+
+    private suspend fun updateState(
+        id: String,
+        phone: String?,
+        state: Message.State
+    ) {
+        phone?.let {
+            dao.updateState(id, it, state)
+        }
+            ?: kotlin.run {
+                dao.updateState(id, state)
+            }
+
+        events.emitEvent(
+            MessageStateChangedEvent(
+                id,
+                state,
+                dao.get(id)?.recipients?.associate {
+                    it.phoneNumber to it.state
+                } ?: return
+            )
+        )
     }
 
     private fun sendSMS(id: String, message: String, recipients: List<String>) {

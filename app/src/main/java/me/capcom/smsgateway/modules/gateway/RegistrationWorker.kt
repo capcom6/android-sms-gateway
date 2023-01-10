@@ -29,6 +29,11 @@ class RegistrationWorker(
 
         fun start(context: Context, token: String) {
             val work = OneTimeWorkRequestBuilder<RegistrationWorker>()
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
                 .setInputData(workDataOf(
                     DATA_TOKEN to token

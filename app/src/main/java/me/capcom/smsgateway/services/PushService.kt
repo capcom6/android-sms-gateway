@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.gateway.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.RegistrationWorker
 
 class PushService : FirebaseMessagingService() {
@@ -24,6 +25,7 @@ class PushService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
+        PullMessagesWorker.start(this)
         Log.d(this.javaClass.name, message.data.toString())
     }
 
