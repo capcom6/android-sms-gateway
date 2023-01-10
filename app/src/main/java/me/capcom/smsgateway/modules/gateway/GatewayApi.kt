@@ -38,7 +38,7 @@ class GatewayApi() {
         }.body()
     }
 
-    suspend fun patchMessages(token: String, request: MessagePatchRequest) {
+    suspend fun patchMessages(token: String, request: List<MessagePatchRequest>) {
         client.patch("$BASE_URL/message") {
             auth(token)
             contentType(ContentType.Application.Json)

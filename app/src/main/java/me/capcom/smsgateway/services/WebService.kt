@@ -29,13 +29,11 @@ import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.domain.PostMessageRequest
 import me.capcom.smsgateway.domain.PostMessageResponse
 import me.capcom.smsgateway.helpers.SettingsHelper
-import me.capcom.smsgateway.modules.MessagesModule
 import kotlin.concurrent.thread
 
 class WebService : Service() {
 
     private val settingsHelper by lazy { SettingsHelper(this) }
-    private val messagesModule by lazy { MessagesModule(this, App.instance.db.messageDao()) }
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -91,7 +89,7 @@ class WebService : Service() {
                             }
 
                             val message = try {
-                                messagesModule.sendMessage(
+                                App.instance.messagesModule.sendMessage(
                                     request.id,
                                     request.message,
                                     request.phoneNumbers,
@@ -116,7 +114,7 @@ class WebService : Service() {
                                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
                             val message = try {
-                                messagesModule.getState(id)
+                                App.instance.messagesModule.getState(id)
                                     ?: return@get call.respond(HttpStatusCode.NotFound)
                             } catch (e: Throwable) {
                                 return@get call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
