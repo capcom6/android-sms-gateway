@@ -71,8 +71,10 @@ class MainActivity : AppCompatActivity() {
                 requestPermissionLauncher.launch(Manifest.permission.SEND_SMS)
             }
 
+            App.instance.gatewayModule.start(this)
             WebService.start(this)
         } else {
+            App.instance.gatewayModule.stop(this)
             WebService.stop(this)
         }
     }
