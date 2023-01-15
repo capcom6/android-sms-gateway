@@ -32,7 +32,7 @@ class App: Application() {
 
     val settings by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
     val messagesModule by lazy { MessagesModule(this, db.messageDao()) }
-    val gatewayModule by lazy { GatewayModule(this, messagesModule, PreferencesStorage(settings, "gateway")) }
+    val gatewayModule by lazy { GatewayModule(messagesModule, PreferencesStorage(settings, "gateway")) }
 
     companion object {
         lateinit var instance: App

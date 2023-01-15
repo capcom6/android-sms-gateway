@@ -1,7 +1,6 @@
 package me.capcom.smsgateway.modules.settings
 
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.core.content.edit
 import java.lang.reflect.Type
 
@@ -20,7 +19,6 @@ class PreferencesStorage(
 
     override fun <T> get(key: String, typeOfT: Type): T? {
         return preferences.getString("${prefix}.${key}", null)?.let {
-            Log.d(this.javaClass.name, it)
             serializer.deserialize(it, typeOfT)
         }
     }
