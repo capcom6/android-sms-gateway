@@ -5,16 +5,24 @@ import android.os.Build
 import kotlinx.coroutines.*
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.domain.MessageState
+import me.capcom.smsgateway.modules.events.EventBus
+import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.messages.MessageStateChangedEvent
 import me.capcom.smsgateway.modules.messages.MessagesModule
 import me.capcom.smsgateway.modules.settings.KeyValueStorage
 import me.capcom.smsgateway.modules.settings.get
+import me.capcom.smsgateway.services.PushService
 
 class GatewayModule(
     private val messagesModule: MessagesModule,
     private val storage: KeyValueStorage,
 ) {
     private val api = GatewayApi()
+
+    val events = EventBus()
+    var enabled: Boolean
+        get() = storage.get<Boolean>(ENABLED) ?: false
+        set(value) = storage.set(ENABLED, value)
 
     init {
         scope.launch {
@@ -30,6 +38,8 @@ class GatewayModule(
     }
 
     fun start(context: Context) {
+        if (!enabled) return
+        PushService.register(context)
         PullMessagesWorker.start(context)
     }
 
@@ -62,16 +72,26 @@ class GatewayModule(
     }
 
     suspend fun registerFcmToken(token: String) {
+        if (!enabled) return
+
         val settings = storage.get<GatewayApi.DeviceRegisterResponse>(REGISTRATION_INFO)
         settings?.token?.let {
             withContext(Dispatchers.IO) {
                 api.devicePatch(
-                    it, GatewayApi.DevicePatchRequest(
+                    it,
+                    GatewayApi.DevicePatchRequest(
                         settings.id,
                         token
                     )
                 )
             }
+
+            events.emitEvent(
+                DeviceRegisteredEvent(
+                    settings.login,
+                    settings.password,
+                )
+            )
         } ?: kotlin.run {
             val response = withContext(Dispatchers.IO) {
                 api.deviceRegister(
@@ -82,10 +102,17 @@ class GatewayModule(
                 )
             }
             storage.set(REGISTRATION_INFO, response)
+
+            events.emitEvent(
+                DeviceRegisteredEvent(
+                    response.login,
+                    response.password,
+                )
+            )
         }
     }
 
-    suspend fun getNewMessages() {
+    internal suspend fun getNewMessages() {
         val settings = storage.get<GatewayApi.DeviceRegisterResponse>(REGISTRATION_INFO) ?: return
         withContext(Dispatchers.IO) {
             val messages = api.getMessages(settings.token)
@@ -127,5 +154,6 @@ class GatewayModule(
         private val scope = CoroutineScope(job)
 
         private const val REGISTRATION_INFO = "REGISTRATION_INFO"
+        private const val ENABLED = "ENABLED"
     }
 }
