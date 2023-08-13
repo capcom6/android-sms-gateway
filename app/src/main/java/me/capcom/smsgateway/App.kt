@@ -8,7 +8,6 @@ import me.capcom.smsgateway.modules.gateway.GatewayModule
 import me.capcom.smsgateway.modules.messages.MessagesModule
 import me.capcom.smsgateway.modules.settings.PreferencesStorage
 import me.capcom.smsgateway.receivers.EventsReceiver
-import me.capcom.smsgateway.services.PushService
 
 class App: Application() {
     override fun onCreate() {
@@ -16,7 +15,6 @@ class App: Application() {
 
         instance = this
 
-        PushService.register(this)
         EventsReceiver.register(this)
     }
 

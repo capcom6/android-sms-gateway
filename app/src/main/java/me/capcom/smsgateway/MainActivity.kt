@@ -7,11 +7,13 @@ import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.databinding.ActivityMainBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.providers.LocalIPProvider
 import me.capcom.smsgateway.providers.PublicIPProvider
 import me.capcom.smsgateway.services.WebService
@@ -34,6 +36,10 @@ class MainActivity : AppCompatActivity() {
         binding.switchAutostart.setOnCheckedChangeListener { _, isChecked ->
             settingsHelper.autostart = isChecked
         }
+        binding.switchUseRemoteServer.setOnCheckedChangeListener { _, isChecked ->
+            App.instance.gatewayModule.enabled = isChecked
+            binding.layoutRemoteServer.isVisible = isChecked
+        }
 
         binding.buttonStart.setOnCheckedChangeListener { _, b ->
             actionStart(b)
@@ -45,6 +51,14 @@ class MainActivity : AppCompatActivity() {
 
         if (settingsHelper.autostart) {
             actionStart(true)
+        }
+
+        lifecycleScope.launch {
+            App.instance.gatewayModule.events.events.collect { event ->
+                val event = event as? DeviceRegisteredEvent ?: return@collect
+
+                binding.textRemoteAuth.text = "Basic auth ${event.login}:${event.password}"
+            }
         }
     }
 
@@ -63,6 +77,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        binding.switchUseRemoteServer.isChecked = App.instance.gatewayModule.enabled
     }
 
     private fun actionStart(start: Boolean) {
