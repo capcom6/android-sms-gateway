@@ -4,12 +4,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import me.capcom.smsgateway.App
-import me.capcom.smsgateway.services.WebService
 
 class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         App.instance.gatewayModule.start(context)
-        WebService.start(context)
+        App.instance.localServerModule.start(context)
     }
 }

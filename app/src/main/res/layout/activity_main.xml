@@ -13,11 +13,13 @@
         android:layout_weight="1"/>
 
     <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/layoutLocalServer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="4dp"
         android:orientation="vertical"
-        android:gravity="center">
+        android:gravity="center"
+        android:visibility="gone">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -30,21 +32,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            tools:text="Local IP is 127.0.0.1!" />
+            tools:text="Local address is 127.0.0.1:8080" />
 
         <TextView
             android:id="@+id/textPublicIP"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            tools:text="Public IP is 127.0.0.1!" />
+            tools:text="Public address is 127.0.0.1:8080" />
 
         <TextView
             android:id="@+id/textAuthentication"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            tools:text="Basic auth: sms:token" />
+            tools:text="Basic auth sms:token" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.appcompat.widget.LinearLayoutCompat

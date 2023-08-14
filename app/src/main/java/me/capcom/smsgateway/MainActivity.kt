@@ -9,14 +9,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.databinding.ActivityMainBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
-import me.capcom.smsgateway.providers.LocalIPProvider
-import me.capcom.smsgateway.providers.PublicIPProvider
-import me.capcom.smsgateway.services.WebService
+import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
 
 class MainActivity : AppCompatActivity() {
 
@@ -40,14 +37,18 @@ class MainActivity : AppCompatActivity() {
             App.instance.gatewayModule.enabled = isChecked
             binding.layoutRemoteServer.isVisible = isChecked
         }
+        binding.switchUseLocalServer.setOnCheckedChangeListener { _, isChecked ->
+            App.instance.localServerModule.enabled = isChecked
+            binding.layoutLocalServer.isVisible = isChecked
+        }
 
         binding.buttonStart.setOnCheckedChangeListener { _, b ->
             actionStart(b)
         }
 
-        WebService.STATUS.observe(this) {
-            binding.buttonStart.isChecked = it
-        }
+//        WebService.STATUS.observe(this) {
+//            binding.buttonStart.isChecked = it
+//        }
 
         if (settingsHelper.autostart) {
             actionStart(true)
@@ -60,21 +61,13 @@ class MainActivity : AppCompatActivity() {
                 binding.textRemoteAuth.text = "Basic auth ${event.login}:${event.password}"
             }
         }
-    }
 
-    override fun onStart() {
-        super.onStart()
+        lifecycleScope.launch {
+            App.instance.localServerModule.events.events.collect { event ->
+                val event = event as? IPReceivedEvent ?: return@collect
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            LocalIPProvider(this@MainActivity).getIP()?.let { ip ->
-                launch(Dispatchers.Main) {
-                    binding.textLocalIP.text = "Local address is $ip:${settingsHelper.serverPort}"
-                }
-            }
-            PublicIPProvider().getIP()?.let { ip ->
-                launch(Dispatchers.Main) {
-                    binding.textPublicIP.text = "Public address is $ip:${settingsHelper.serverPort}"
-                }
+                binding.textLocalIP.text = "Local address is ${event.localIP}:${settingsHelper.serverPort}"
+                binding.textPublicIP.text = "Public address is ${event.publicIP}:${settingsHelper.serverPort}"
             }
         }
     }
@@ -83,6 +76,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
 
         binding.switchUseRemoteServer.isChecked = App.instance.gatewayModule.enabled
+        binding.switchUseLocalServer.isChecked = App.instance.localServerModule.enabled
     }
 
     private fun actionStart(start: Boolean) {
@@ -92,10 +86,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             App.instance.gatewayModule.start(this)
-            WebService.start(this)
+            App.instance.localServerModule.start(this)
         } else {
+            App.instance.localServerModule.stop(this)
             App.instance.gatewayModule.stop(this)
-            WebService.stop(this)
         }
     }
 
