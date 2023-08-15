@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.telephony.SmsManager
+import android.util.Log
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import me.capcom.smsgateway.data.dao.MessageDao
 import me.capcom.smsgateway.data.entities.Message
@@ -72,6 +73,7 @@ class MessagesModule(
     }
 
     suspend fun processStateIntent(intent: Intent, resultCode: Int) {
+        Log.d("MessagesModule", intent.dataString.toString())
         val state = when (intent.action) {
             EventsReceiver.ACTION_SENT -> when (resultCode) {
                 Activity.RESULT_OK -> Message.State.Sent

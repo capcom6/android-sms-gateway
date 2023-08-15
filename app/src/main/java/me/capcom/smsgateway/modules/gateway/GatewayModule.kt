@@ -24,7 +24,11 @@ class GatewayModule(
         get() = storage.get<Boolean>(ENABLED) ?: false
         set(value) = storage.set(ENABLED, value)
 
-    init {
+    fun start(context: Context) {
+        if (!enabled) return
+        PushService.register(context)
+        PullMessagesWorker.start(context)
+
         scope.launch {
             messagesModule.events.events.collect { event ->
                 val event = event as? MessageStateChangedEvent ?: return@collect
@@ -37,13 +41,8 @@ class GatewayModule(
         }
     }
 
-    fun start(context: Context) {
-        if (!enabled) return
-        PushService.register(context)
-        PullMessagesWorker.start(context)
-    }
-
     fun stop(context: Context) {
+        scope.cancel()
         PullMessagesWorker.stop(context)
     }
 
