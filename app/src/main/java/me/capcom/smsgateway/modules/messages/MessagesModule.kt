@@ -7,7 +7,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.telephony.SmsManager
-import android.util.Log
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import me.capcom.smsgateway.data.dao.MessageDao
 import me.capcom.smsgateway.data.entities.Message
@@ -66,14 +65,13 @@ class MessagesModule(
         }
 
         if (state != message.message.state) {
-            updateState(message.message.id, null, state)
+            dao.updateMessageState(message.message.id, state)
         }
 
         return dao.get(id)
     }
 
     suspend fun processStateIntent(intent: Intent, resultCode: Int) {
-        Log.d("MessagesModule", intent.dataString.toString())
         val state = when (intent.action) {
             EventsReceiver.ACTION_SENT -> when (resultCode) {
                 Activity.RESULT_OK -> Message.State.Sent
@@ -93,11 +91,13 @@ class MessagesModule(
         state: Message.State
     ) {
         phone?.let {
-            dao.updateState(id, it, state)
+            dao.updateRecipientState(id, it, state)
         }
             ?: kotlin.run {
-                dao.updateState(id, state)
+                dao.updateRecipientsState(id, state)
             }
+
+        val state = getState(id)?.message?.state ?: state
 
         events.emitEvent(
             MessageStateChangedEvent(

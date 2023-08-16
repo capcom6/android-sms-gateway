@@ -118,7 +118,6 @@ class GatewayModule(
             messages.forEach {
                 try {
                     messagesModule.getState(it.id)
-//                        ?.takeIf { it.message.state != Message.State.Pending }
                         ?.also {
                         sendState(
                                 MessageStateChangedEvent(
