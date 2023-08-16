@@ -29,8 +29,11 @@ interface MessageDao {
     }
 
     @Query("UPDATE message SET state = :state WHERE id = :id")
-    fun updateState(id: String, state: Message.State)
+    fun updateMessageState(id: String, state: Message.State)
 
     @Query("UPDATE messagerecipient SET state = :state WHERE messageId = :id AND phoneNumber = :phoneNumber")
-    fun updateState(id: String, phoneNumber: String, state: Message.State)
+    fun updateRecipientState(id: String, phoneNumber: String, state: Message.State)
+
+    @Query("UPDATE messagerecipient SET state = :state WHERE messageId = :id")
+    fun updateRecipientsState(id: String, state: Message.State)
 }
