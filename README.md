@@ -13,7 +13,7 @@ This application allows you to use your Android smartphone as an SMS gateway to 
 ## Available modes
 
 - [x] Local web server
-- [ ] Use of sms.capcom.me server in pull and push modes (in progress)
+- [x] Use of sms.capcom.me server in pull and push modes
 - [ ] Self-hosted server in pull-mode
 
 ## How to use
@@ -32,14 +32,14 @@ This application allows you to use your Android smartphone as an SMS gateway to 
 - [ ] Display and change the api key
 - [ ] Change server port
 - [x] Enable/disable startup on device boot
-- [ ] Select mode (local, server, self-hosted)
+- [x] Select mode (local, server, self-hosted)
 
 ### Features
 
 - [x] Save messages to local db
 - [x] Get message status
-- [ ] Pull mode
-- [ ] Push mode
+- [x] Pull mode
+- [x] Push mode
 - [ ] Web notifications to an external server
 
 ---
@@ -59,7 +59,7 @@ This application allows you to use your Android smartphone as an SMS gateway to 
 ## Доступные режимы
 
 - [x] Локальный веб-сервер
-- [ ] Использование сервера sms.capcom.me в режимах pull и push (в процессе)
+- [x] Использование сервера sms.capcom.me в режимах pull и push (в процессе)
 - [ ] Собственные серверы в режиме pull
 
 ## Как использовать
@@ -78,12 +78,12 @@ This application allows you to use your Android smartphone as an SMS gateway to 
 - [ ] Отображение и изменение ключа доступа
 - [ ] Изменение порта сервера
 - [x] Включение/отключение запуска при загрузке устройства
-- [ ] Выбор режима (локальный, сервер, свой сервер)
+- [x] Выбор режима (локальный, сервер, свой сервер)
 
 ### Функции
 
 - [x] Сохранять сообщения в локальную БД
 - [x] Получать статус сообщения
-- [ ] Pull-режим
-- [ ] Push-режим
+- [x] Pull-режим
+- [x] Push-режим
 - [ ] Веб-уведомления на внешний сервер
