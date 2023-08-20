@@ -10,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+      - name: Setup Google Services
+        run: echo ${{ secrets.GOOGLE_SERVICES_JSON }} | base64 --decode > ./app/google-services.json
       - name: Build
-        uses: sparkfabrik/android-build-action@v1.2.0
+        uses: sparkfabrik/android-build-action@v1.5.0
         with:
           project-path: .
           output-path: smsgateway-${GITHUB_REF_NAME}.apk
