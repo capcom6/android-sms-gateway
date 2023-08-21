@@ -1,161 +1,131 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "SMS-шлюз - API устройства",
     "version": "1.0.0",
-    "summary": "API сервера, запускаемого на Android-устройстве",
+    "title": "SMS-шлюз - API устройства",
     "description": "Предоставляет возможность отправки SMS при непосредственном подключении к устройству",
     "contact": {
       "name": "Солошенко Александр",
-      "email": "capcom@soft-c.ru",
-      "url": "https://soft-c.ru"
+      "email": "i@capcom.me",
+      "url": "https://github.com/capcom6"
     },
     "license": {
-      "name": "Apache 2.0",
-      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+      "name": "Apache 2.0"
     }
   },
   "servers": [
     {
       "url": "http://localhost:8080",
       "description": "Device"
+    },
+    {
+      "url": "https://sms.capcom.me/api/3rdparty/v1",
+      "description": "sms.capcom.me"
     }
   ],
   "paths": {
     "/message": {
       "post": {
+        "tags": [
+          "Сообщения"
+        ],
         "summary": "Отправить сообщение",
+        "description": "Ставит переданное сообщение в очередь на отправку",
         "operationId": "post-message",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/SendMessageRequest"
+        },
         "responses": {
-          "200": {
+          "201": {
             "$ref": "#/components/responses/MessageStatusResponse"
           },
           "400": {
             "$ref": "#/components/responses/ErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorResponse"
           }
         },
-        "description": "Ставит переданное сообщение в очередь на отправку",
-        "requestBody": {
-          "$ref": "#/components/requestBodies/SendMessageRequest"
-        }
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8080",
+            "description": "Device"
+          },
+          {
+            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "description": "sms.capcom.me"
+          }
+        ]
       }
     },
     "/message/{id}": {
-      "parameters": [
-        {
-          "schema": {
-            "type": "string"
-          },
-          "name": "id",
-          "in": "path",
-          "required": true,
-          "description": "идентификатор рассылки"
-        }
-      ],
       "get": {
+        "tags": [
+          "Сообщения"
+        ],
         "summary": "Получить состояние рассылки",
-        "tags": [],
+        "description": "Возвращает текущее состояние указанной рассылки",
+        "operationId": "get-message-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "идентификатор рассылки",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/MessageStatusResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorResponse"
           },
           "404": {
             "$ref": "#/components/responses/ErrorResponse"
           }
         },
-        "operationId": "get-message-id",
-        "description": "Возвращает текущее состояние указанной рассылки"
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8080",
+            "description": "Device"
+          },
+          {
+            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "description": "sms.capcom.me"
+          }
+        ]
       }
     }
   },
+  "tags": [
+    {
+      "name": "Сообщения"
+    }
+  ],
   "components": {
-    "schemas": {
-      "Message": {
-        "title": "Рассылка",
-        "type": "object",
-        "description": "",
-        "examples": [
-          {
-            "message": "Hello world!",
-            "phoneNumbers": [
-              "79990001234"
-            ]
-          }
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "идентификатор"
-          },
-          "message": {
-            "type": "string",
-            "description": "текст сообщения"
-          },
-          "phoneNumbers": {
-            "type": "array",
-            "description": "получатели сообщения",
-            "items": {
-              "type": "string",
-              "pattern": "^\\d{11}$",
-              "minLength": 11,
-              "maxLength": 11
+    "requestBodies": {
+      "SendMessageRequest": {
+        "description": "Запрос на отправку сообщения",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Message"
             }
-          }
-        },
-        "required": [
-          "message",
-          "phoneNumbers"
-        ]
-      },
-      "MessageStatus": {
-        "title": "Состояние рассылки",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "идентификатор"
-          },
-          "state": {
-            "type": "string",
-            "enum": [
-              "Pending",
-              "Sent",
-              "Delivered",
-              "Failed"
-            ],
-            "description": "состояние"
-          },
-          "recipients": {
-            "type": "array",
-            "description": "получатели",
-            "items": {
-              "$ref": "#/components/schemas/MessageRecipient"
-            }
-          }
-        }
-      },
-      "MessageRecipient": {
-        "title": "Получатель сообщения",
-        "type": "object",
-        "examples": [],
-        "properties": {
-          "phoneNumber": {
-            "type": "string",
-            "description": "номер телефона",
-            "pattern": "^\\d{11}$",
-            "minLength": 11,
-            "maxLength": 11,
-            "example": "79990001234"
-          },
-          "state": {
-            "type": "string",
-            "enum": [
-              "Pending",
-              "Sent",
-              "Delivered",
-              "Failed"
-            ],
-            "description": "состояние"
           }
         }
       }
@@ -163,20 +133,8 @@
     "securitySchemes": {
       "BasicAuth": {
         "type": "http",
-        "scheme": "basic",
-        "description": "Авторизация по логину и паролю"
-      }
-    },
-    "requestBodies": {
-      "SendMessageRequest": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Message"
-            }
-          }
-        },
-        "description": "Запрос на отправку сообщения"
+        "description": "Авторизация по логину и паролю",
+        "scheme": "basic"
       }
     },
     "responses": {
@@ -210,7 +168,85 @@
         }
       }
     },
-    "examples": {}
+    "schemas": {
+      "Message": {
+        "type": "object",
+        "title": "Рассылка",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "идентификатор"
+          },
+          "message": {
+            "type": "string",
+            "description": "текст сообщения"
+          },
+          "phoneNumbers": {
+            "type": "array",
+            "description": "получатели сообщения",
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{11}$",
+              "minLength": 11,
+              "maxLength": 11
+            }
+          }
+        },
+        "required": [
+          "message",
+          "phoneNumbers"
+        ]
+      },
+      "MessageStatus": {
+        "type": "object",
+        "title": "Состояние рассылки",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "идентификатор"
+          },
+          "state": {
+            "enum": [
+              "Pending",
+              "Sent",
+              "Delivered",
+              "Failed"
+            ],
+            "description": "состояние"
+          },
+          "recipients": {
+            "type": "array",
+            "description": "получатели",
+            "items": {
+              "$ref": "#/components/schemas/MessageRecipient"
+            }
+          }
+        }
+      },
+      "MessageRecipient": {
+        "type": "object",
+        "title": "Получатель сообщения",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "description": "номер телефона",
+            "pattern": "^\\d{11}$",
+            "minLength": 11,
+            "maxLength": 11,
+            "example": "79990001234"
+          },
+          "state": {
+            "enum": [
+              "Pending",
+              "Sent",
+              "Delivered",
+              "Failed"
+            ],
+            "description": "состояние"
+          }
+        }
+      }
+    }
   },
   "security": [
     {
