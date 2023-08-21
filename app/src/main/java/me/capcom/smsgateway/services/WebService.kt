@@ -101,13 +101,16 @@ class WebService : Service() {
                                 return@post call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
                             }
 
-                            call.respond(PostMessageResponse(
-                                id = message.message.id,
-                                state = message.message.state.toApiState(),
-                                recipients = message.recipients.map {
-                                    PostMessageResponse.Recipient(it.phoneNumber, it.state.toApiState())
-                                }
-                            ))
+                            call.respond(
+                                HttpStatusCode.Created,
+                                PostMessageResponse(
+                                    id = message.message.id,
+                                    state = message.message.state.toApiState(),
+                                    recipients = message.recipients.map {
+                                        PostMessageResponse.Recipient(it.phoneNumber, it.state.toApiState())
+                                    }
+                                )
+                            )
                         }
                         get("{id}") {
                             val id = call.parameters["id"]
