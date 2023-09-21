@@ -67,7 +67,8 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-<!-- [![Product Name Screen Shot][product-screenshot]](https://example.com) -->
+<p align="center"><img src="docs/screenshot.png" width="360"></p>
+
 
 Android SMS Gateway is a lightweight application that allows you to use your Android smartphone as an SMS gateway. With this app, you can send SMS messages programmatically via API, making it ideal for integrating SMS functionality into your own applications or services. The application supports Android 5.0 and above, and offers features such as message status tracking, starting at boot, and protection from going to sleep. Whether you need to send notifications, alerts, or two-factor authentication codes, Android SMS Gateway provides a convenient and reliable solution.
 
@@ -232,5 +233,5 @@ Use this space to list resources you find helpful and would like to give credit 
 [issues-url]: https://github.com/capcom6/android-sms-gateway/issues
 [license-shield]: https://img.shields.io/github/license/capcom6/android-sms-gateway.svg?style=for-the-badge
 [license-url]: https://github.com/capcom6/android-sms-gateway/blob/master/LICENSE.txt
-[product-screenshot]: assets/screenshot.png
+[product-screenshot]: docs/screenshot.png
 
