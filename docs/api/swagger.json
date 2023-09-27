@@ -2,10 +2,10 @@
   "openapi": "3.0.0",
   "info": {
     "version": "1.0.0",
-    "title": "SMS-шлюз - API устройства",
-    "description": "Предоставляет возможность отправки SMS при непосредственном подключении к устройству",
+    "title": "Android SMS Gateway - Integration API",
+    "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
-      "name": "Солошенко Александр",
+      "name": "Soloshenko Aleksandr",
       "email": "i@capcom.me",
       "url": "https://github.com/capcom6"
     },
@@ -21,17 +21,17 @@
     },
     {
       "url": "https://sms.capcom.me/api/3rdparty/v1",
-      "description": "sms.capcom.me"
+      "description": "Cloud"
     }
   ],
   "paths": {
     "/message": {
       "post": {
         "tags": [
-          "Сообщения"
+          "Messages"
         ],
-        "summary": "Отправить сообщение",
-        "description": "Ставит переданное сообщение в очередь на отправку",
+        "summary": "Send message",
+        "description": "Adds a message to the queue for sending",
         "operationId": "post-message",
         "requestBody": {
           "$ref": "#/components/requestBodies/SendMessageRequest"
@@ -59,7 +59,7 @@
           },
           {
             "url": "https://sms.capcom.me/api/3rdparty/v1",
-            "description": "sms.capcom.me"
+            "description": "Cloud"
           }
         ]
       }
@@ -67,10 +67,10 @@
     "/message/{id}": {
       "get": {
         "tags": [
-          "Сообщения"
+          "Messages"
         ],
-        "summary": "Получить состояние рассылки",
-        "description": "Возвращает текущее состояние указанной рассылки",
+        "summary": "Get message status",
+        "description": "Returns the current state of a message by its ID",
         "operationId": "get-message-id",
         "parameters": [
           {
@@ -106,7 +106,7 @@
           },
           {
             "url": "https://sms.capcom.me/api/3rdparty/v1",
-            "description": "sms.capcom.me"
+            "description": "Cloud"
           }
         ]
       }
@@ -114,13 +114,13 @@
   },
   "tags": [
     {
-      "name": "Сообщения"
+      "name": "Messages"
     }
   ],
   "components": {
     "requestBodies": {
       "SendMessageRequest": {
-        "description": "Запрос на отправку сообщения",
+        "description": "Message sending request",
         "content": {
           "application/json": {
             "schema": {
@@ -139,7 +139,7 @@
     },
     "responses": {
       "ErrorResponse": {
-        "description": "Сообщение об ошибке",
+        "description": "",
         "content": {
           "application/json": {
             "schema": {
@@ -147,7 +147,7 @@
               "properties": {
                 "message": {
                   "type": "string",
-                  "description": "текст ошибки"
+                  "description": "error message"
                 }
               },
               "required": [
@@ -158,7 +158,7 @@
         }
       },
       "MessageStatusResponse": {
-        "description": "Состояние рассылки",
+        "description": "",
         "content": {
           "application/json": {
             "schema": {
@@ -171,19 +171,19 @@
     "schemas": {
       "Message": {
         "type": "object",
-        "title": "Рассылка",
+        "title": "Message",
         "properties": {
           "id": {
             "type": "string",
-            "description": "идентификатор"
+            "description": "ID"
           },
           "message": {
             "type": "string",
-            "description": "текст сообщения"
+            "description": "message text"
           },
           "phoneNumbers": {
             "type": "array",
-            "description": "получатели сообщения",
+            "description": "recipients' phone numbers, international notation recommended",
             "items": {
               "type": "string",
               "pattern": "^\\d{11}$",
@@ -199,11 +199,12 @@
       },
       "MessageStatus": {
         "type": "object",
-        "title": "Состояние рассылки",
+        "title": "Message state",
         "properties": {
           "id": {
             "type": "string",
-            "description": "идентификатор"
+            "description": "ID",
+            "readOnly": true
           },
           "state": {
             "enum": [
@@ -212,11 +213,12 @@
               "Delivered",
               "Failed"
             ],
-            "description": "состояние"
+            "description": "state",
+            "readOnly": true
           },
           "recipients": {
             "type": "array",
-            "description": "получатели",
+            "description": "recipients' statuses",
             "items": {
               "$ref": "#/components/schemas/MessageRecipient"
             }
@@ -225,11 +227,11 @@
       },
       "MessageRecipient": {
         "type": "object",
-        "title": "Получатель сообщения",
+        "title": "Recipient status",
         "properties": {
           "phoneNumber": {
             "type": "string",
-            "description": "номер телефона",
+            "description": "phone number",
             "pattern": "^\\d{11}$",
             "minLength": 11,
             "maxLength": 11,
@@ -242,7 +244,7 @@
               "Delivered",
               "Failed"
             ],
-            "description": "состояние"
+            "description": "state"
           }
         }
       }
