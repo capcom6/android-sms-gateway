@@ -159,6 +159,7 @@ If you need to send messages with dynamic or shared device IP you can use the re
 - [ ] Ability to change the local server port.
 - [ ] Send notifications to an external server on message status change.
 - [ ] Implement scheduling functionality to send messages at specified times.
+- [ ] Region restriction to block international SMS
 
 
 See the [open issues](https://github.com/capcom6/android-sms-gateway/issues) for a full list of proposed features (and known issues).
