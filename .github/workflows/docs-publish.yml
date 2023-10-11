@@ -1,4 +1,4 @@
-name: Publich Docs
+name: Publish Docs
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
