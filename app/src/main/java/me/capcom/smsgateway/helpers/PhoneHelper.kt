@@ -1,16 +1,24 @@
 package me.capcom.smsgateway.helpers
 
+import android.util.Log
+import com.google.i18n.phonenumbers.PhoneNumberUtil
+
 object PhoneHelper {
-    fun filterPhoneNumber(phoneNumber: String): String? {
-        val number = phoneNumber.replace("[^0-9]".toRegex(), "")
-        return when {
-            number.length == 10 && number.first() == '9' -> "+7$number"
-            number.length == 11 -> when (number.substring(0, 2)) {
-                "89" -> "+7${number.substring(1)}"
-                "79" -> "+$number"
-                else -> null
+    fun filterPhoneNumber(phoneNumber: String, countryCode: String): String? {
+        val phoneUtil = PhoneNumberUtil.getInstance()
+        try {
+            val number = phoneUtil.parse(phoneNumber, countryCode.uppercase())
+            if (!phoneUtil.isValidNumber(number)) {
+                return null;
             }
-            else -> null
+            if (phoneUtil.getNumberType(number) != PhoneNumberUtil.PhoneNumberType.MOBILE
+                && phoneUtil.getNumberType(number) != PhoneNumberUtil.PhoneNumberType.FIXED_LINE_OR_MOBILE) {
+                return null
+            }
+            return phoneUtil.format(number, PhoneNumberUtil.PhoneNumberFormat.E164)
+        } catch (e: Exception) {
+            Log.d("PhoneHelper", "filterPhoneNumber: ${e.message}")
+            return null
         }
     }
 }
