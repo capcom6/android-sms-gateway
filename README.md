@@ -28,9 +28,9 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <!-- <a href="https://github.com/capcom6/android-sms-gateway">
+  <a href="https://github.com/capcom6/android-sms-gateway">
     <img src="assets/logo.png" alt="Logo" width="80" height="80">
-  </a> -->
+  </a>
 
 <h3 align="center">Android SMS Gateway</h3>
 
