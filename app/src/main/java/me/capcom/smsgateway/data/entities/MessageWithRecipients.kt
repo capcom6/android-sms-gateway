@@ -10,4 +10,12 @@ data class MessageWithRecipients(
         entityColumn = "messageId",
     )
     val recipients: List<MessageRecipient>,
-)
+) {
+    val state: Message.State
+        get() = when {
+            recipients.all { it.state == Message.State.Failed } -> Message.State.Failed
+            recipients.all { it.state == Message.State.Delivered } -> Message.State.Delivered
+            recipients.all { it.state == Message.State.Sent } -> Message.State.Sent
+            else -> Message.State.Pending
+        }
+}

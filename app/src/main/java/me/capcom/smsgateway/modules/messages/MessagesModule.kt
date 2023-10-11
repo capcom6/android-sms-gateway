@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.telephony.SmsManager
+import android.telephony.TelephonyManager
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import me.capcom.smsgateway.data.dao.MessageDao
 import me.capcom.smsgateway.data.entities.Message
@@ -21,23 +22,37 @@ class MessagesModule(
     private val dao: MessageDao,
 ) {
     val events = EventBus()
+    private val countryCode: String? = (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
 
     suspend fun sendMessage(id: String?, text: String, recipients: List<String>, source: Message.Source): MessageWithRecipients {
         val id = id ?: NanoIdUtils.randomNanoId()
-        val recipients = recipients.map {
-            PhoneHelper.filterPhoneNumber(it)
-                ?: throw IllegalArgumentException("Некорректный номер телефона $it")
-        }
 
         val message = MessageWithRecipients(
             Message(id, text, source),
-            recipients.map { MessageRecipient(id, it) },
+            recipients.map {
+                val phoneNumber = PhoneHelper.filterPhoneNumber(it, countryCode ?: "RU")
+                MessageRecipient(
+                    id,
+                    phoneNumber ?: it,
+                    phoneNumber?.let { Message.State.Pending } ?: Message.State.Failed
+                )
+            },
         )
 
         dao.insert(message)
 
+        events.emitEvent(
+            MessageStateChangedEvent(
+                id,
+                message.state,
+                message.recipients.associate {
+                    it.phoneNumber to it.state
+                }
+            )
+        )
+
         try {
-            sendSMS(id, text, recipients)
+            sendSMS(id, text, message.recipients.filter { it.state == Message.State.Pending }.map { it.phoneNumber })
         } catch (e: Exception) {
             updateState(id, null, Message.State.Failed)
             return MessageWithRecipients(
@@ -97,7 +112,7 @@ class MessagesModule(
                 dao.updateRecipientsState(id, state)
             }
 
-        val state = getState(id)?.message?.state ?: state
+        val state = getState(id)?.state ?: state
 
         events.emitEvent(
             MessageStateChangedEvent(
