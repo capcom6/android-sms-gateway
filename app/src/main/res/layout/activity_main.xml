@@ -61,7 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:text="Remote server:"
+            android:text="Cloud server:"
             android:textAppearance="@style/TextAppearance.AppCompat.Headline"/>
 
         <TextView
@@ -99,7 +99,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            android:text="Remote server"/>
+            android:text="Cloud server"/>
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.appcompat.widget.SwitchCompat android:id="@+id/switchAutostart"

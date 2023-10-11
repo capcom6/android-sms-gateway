@@ -115,7 +115,7 @@ You need an Android device with Android 5.0 (Lollipop) or above for using the ap
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-The Android SMS Gateway can work in two modes: with a local server started on the device or with a remote server at [sms.capcom.me](https://sms.capcom.me). The basic API is the same for both modes and is documented on the [Android SMS Gateway API Documentation](https://capcom6.github.io/android-sms-gateway/).
+The Android SMS Gateway can work in two modes: with a local server started on the device or with a cloud server at [sms.capcom.me](https://sms.capcom.me). The basic API is the same for both modes and is documented on the [Android SMS Gateway API Documentation](https://capcom6.github.io/android-sms-gateway/).
 
 
 ### Send SMS with local server
@@ -134,12 +134,12 @@ Application can start web-server on the device, so it can be used without any ex
 
 ### Send SMS with sms.capcom.me
 
-If you need to send messages with dynamic or shared device IP you can use the remote server.
+If you need to send messages with dynamic or shared device IP you can use the cloud server.
 
 1. Start the app on the device.
-2. Activate the `Remote server` switch.
+2. Activate the `Cloud server` switch.
 3. Tap the `Offline` button at the bottom of the screen.
-4. In the `Remote server` section, the credentials for basic authentication will be displayed.
+4. In the `Cloud server` section, the credentials for basic authentication will be displayed.
 5. Make a curl call using a command like the following, replacing `<username>` and `<password>` with the values obtained in step 4:
    
     ```
