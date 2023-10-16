@@ -33,15 +33,13 @@ jobs:
 
       - name: Set App Version
         run: |
-          export BUILD=$(( ($(date +%s) - $(date -d "2022-06-15" +%s)) / 86400 ))
           sed -i "s/versionName.*/versionName \"${GITHUB_REF_NAME#v}\"/" app/build.gradle
-          sed -i "s/versionCode.*/versionCode ${BUILD}/" app/build.gradle
 
       #1     
       - name: Decode Keystore
         env:
           ENCODED_STRING: ${{ secrets.SIGNING_KEY_STORE_BASE64 }}
-          SIGNING_KEY_STORE_PATH: app/keystore.jks
+          SIGNING_KEY_STORE_PATH: keystore.jks
 
         run: |
           echo $ENCODED_STRING > keystore-b64.txt
