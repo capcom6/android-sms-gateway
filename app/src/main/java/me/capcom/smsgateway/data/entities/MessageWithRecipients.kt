@@ -16,6 +16,7 @@ data class MessageWithRecipients(
             recipients.all { it.state == Message.State.Failed } -> Message.State.Failed
             recipients.all { it.state == Message.State.Delivered } -> Message.State.Delivered
             recipients.all { it.state == Message.State.Sent } -> Message.State.Sent
-            else -> Message.State.Pending
+            recipients.any { it.state == Message.State.Pending } -> Message.State.Pending
+            else -> Message.State.Processed
         }
 }

@@ -41,24 +41,11 @@ class MessagesModule(
 
         dao.insert(message)
 
-        events.emitEvent(
-            MessageStateChangedEvent(
-                id,
-                message.state,
-                message.recipients.associate {
-                    it.phoneNumber to it.state
-                }
-            )
-        )
-
         try {
             sendSMS(id, text, message.recipients.filter { it.state == Message.State.Pending }.map { it.phoneNumber })
         } catch (e: Exception) {
             updateState(id, null, Message.State.Failed)
-            return MessageWithRecipients(
-                Message(id, text, source, Message.State.Failed),
-                recipients.map { MessageRecipient(id, it, Message.State.Failed) },
-            )
+            return requireNotNull(getState(id))
         }
 
         return message
@@ -68,12 +55,7 @@ class MessagesModule(
         val message = dao.get(id)
             ?: return null
 
-        val state = when {
-            message.recipients.any { it.state == Message.State.Failed } -> Message.State.Failed
-            message.recipients.all { it.state == Message.State.Delivered } -> Message.State.Delivered
-            message.recipients.all { it.state == Message.State.Sent } -> Message.State.Sent
-            else -> Message.State.Pending
-        }
+        val state = message.state
 
         if (state == message.message.state) {
             return message
@@ -112,7 +94,7 @@ class MessagesModule(
                 dao.updateRecipientsState(id, state)
             }
 
-        val state = getState(id)?.state ?: state
+        val state = requireNotNull(getState(id)?.state)
 
         events.emitEvent(
             MessageStateChangedEvent(
@@ -125,7 +107,7 @@ class MessagesModule(
         )
     }
 
-    private fun sendSMS(id: String, message: String, recipients: List<String>) {
+    private suspend fun sendSMS(id: String, message: String, recipients: List<String>) {
         val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             context.getSystemService(SmsManager::class.java)
         } else {
@@ -146,7 +128,13 @@ class MessagesModule(
                 PendingIntent.FLAG_IMMUTABLE
             )
 
-            smsManager.sendTextMessage(it, null, message, sentIntent, deliveredIntent)
+            try {
+                smsManager.sendTextMessage(it, null, message, sentIntent, deliveredIntent)
+                updateState(id, it, Message.State.Processed)
+            } catch (th: Throwable) {
+                th.printStackTrace()
+                updateState(id, it, Message.State.Failed)
+            }
         }
     }
 }

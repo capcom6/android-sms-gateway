@@ -209,12 +209,14 @@
           "state": {
             "enum": [
               "Pending",
+              "Processed",
               "Sent",
               "Delivered",
               "Failed"
             ],
             "description": "state",
-            "readOnly": true
+            "readOnly": true,
+            "default": "Pending"
           },
           "recipients": {
             "type": "array",
@@ -240,6 +242,7 @@
           "state": {
             "enum": [
               "Pending",
+              "Processed",
               "Sent",
               "Delivered",
               "Failed"
