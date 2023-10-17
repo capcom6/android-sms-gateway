@@ -14,6 +14,7 @@ data class Message(
 ) {
     enum class State {
         Pending,
+        Processed,
         Sent,
         Delivered,
         Failed,

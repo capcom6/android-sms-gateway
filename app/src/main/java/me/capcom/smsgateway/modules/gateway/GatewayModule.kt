@@ -2,7 +2,12 @@ package me.capcom.smsgateway.modules.gateway
 
 import android.content.Context
 import android.os.Build
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.modules.events.EventBus
@@ -30,12 +35,14 @@ class GatewayModule(
         PullMessagesWorker.start(context)
 
         scope.launch {
-            messagesModule.events.events.collect { event ->
-                val event = event as? MessageStateChangedEvent ?: return@collect
-                try {
-                    sendState(event)
-                } catch (th: Throwable) {
-                    th.printStackTrace()
+            withContext(Dispatchers.IO) {
+                messagesModule.events.events.collect { event ->
+                    val event = event as? MessageStateChangedEvent ?: return@collect
+                    try {
+                        sendState(event)
+                    } catch (th: Throwable) {
+                        th.printStackTrace()
+                    }
                 }
             }
         }
@@ -60,7 +67,7 @@ class GatewayModule(
                         event.state.toApiState(),
                         event.recipients.entries.map {
                             GatewayApi.RecipientState(
-                                it.key.removePrefix("+"),
+                                it.key,
                                 it.value.toApiState()
                             )
                         }
@@ -142,6 +149,7 @@ class GatewayModule(
 
     private fun Message.State.toApiState(): MessageState = when (this) {
         Message.State.Pending -> MessageState.Pending
+        Message.State.Processed -> MessageState.Processed
         Message.State.Sent -> MessageState.Sent
         Message.State.Delivered -> MessageState.Delivered
         Message.State.Failed -> MessageState.Failed
