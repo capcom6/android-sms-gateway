@@ -35,12 +35,14 @@ class GatewayModule(
         PullMessagesWorker.start(context)
 
         scope.launch {
-            messagesModule.events.events.collect { event ->
-                val event = event as? MessageStateChangedEvent ?: return@collect
-                try {
-                    sendState(event)
-                } catch (th: Throwable) {
-                    th.printStackTrace()
+            withContext(Dispatchers.IO) {
+                messagesModule.events.events.collect { event ->
+                    val event = event as? MessageStateChangedEvent ?: return@collect
+                    try {
+                        sendState(event)
+                    } catch (th: Throwable) {
+                        th.printStackTrace()
+                    }
                 }
             }
         }
