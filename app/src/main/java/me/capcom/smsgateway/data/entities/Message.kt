@@ -11,6 +11,8 @@ data class Message(
     @ColumnInfo(defaultValue = "Local")
     val source: Source,
     val state: State = State.Pending,
+    @ColumnInfo(defaultValue = "0")
+    val createdAt: Long = System.currentTimeMillis(),
 ) {
     enum class State {
         Pending,

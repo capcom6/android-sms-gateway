@@ -19,7 +19,7 @@ import me.capcom.smsgateway.receivers.EventsReceiver
 
 class MessagesModule(
     private val context: Context,
-    private val dao: MessageDao,
+    private val dao: MessageDao,    // todo: use MessagesRepository
 ) {
     val events = EventBus()
     private val countryCode: String? = (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
@@ -74,6 +74,7 @@ class MessagesModule(
                 Activity.RESULT_OK -> Message.State.Sent
                 else -> Message.State.Failed
             }
+
             EventsReceiver.ACTION_DELIVERED -> Message.State.Delivered
             else -> return
         }

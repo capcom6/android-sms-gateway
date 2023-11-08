@@ -7,15 +7,19 @@ import android.content.IntentFilter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import me.capcom.smsgateway.App
+import me.capcom.smsgateway.modules.messages.MessagesModule
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class EventsReceiver : BroadcastReceiver() {
+class EventsReceiver : BroadcastReceiver(), KoinComponent {
+
+    private val messagesModule: MessagesModule by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         // This method is called when the BroadcastReceiver is receiving an Intent broadcast.
 
         scope.launch {
-            App.instance.messagesModule
+            messagesModule
                 .processStateIntent(intent, resultCode)
         }
     }
