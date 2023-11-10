@@ -9,5 +9,5 @@ import me.capcom.smsgateway.modules.messages.repositories.MessagesRepository
 class MessagesListViewModel(
     private val messagesRepo: MessagesRepository
 ) : ViewModel() {
-    val messages: LiveData<List<Message>> = messagesRepo.messages.asLiveData()
+    val messages: LiveData<List<Message>> = messagesRepo.lastMessages.asLiveData()
 }

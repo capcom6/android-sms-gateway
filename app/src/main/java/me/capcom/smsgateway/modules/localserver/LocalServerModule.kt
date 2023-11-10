@@ -7,7 +7,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
-import me.capcom.smsgateway.modules.messages.MessagesModule
+import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.settings.KeyValueStorage
 import me.capcom.smsgateway.modules.settings.get
 import me.capcom.smsgateway.providers.LocalIPProvider
@@ -15,7 +15,7 @@ import me.capcom.smsgateway.providers.PublicIPProvider
 import me.capcom.smsgateway.services.WebService
 
 class LocalServerModule(
-    private val messagesModule: MessagesModule,
+    private val messagesService: MessagesService,
     private val storage: KeyValueStorage,
 ) {
     val events = EventBus()

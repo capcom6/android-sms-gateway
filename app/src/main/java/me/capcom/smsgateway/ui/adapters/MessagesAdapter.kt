@@ -1,13 +1,14 @@
 package me.capcom.smsgateway.ui.adapters
 
 import android.graphics.Color
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.databinding.ItemMessageBinding
+import java.text.DateFormat
+import java.util.Date
 
 class MessagesAdapter :
     ListAdapter<Message, MessagesAdapter.MessageViewHolder>(MessageDiffCallback()) {
@@ -25,9 +26,10 @@ class MessagesAdapter :
     class MessageViewHolder(private val binding: ItemMessageBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(message: Message) {
-            Log.d("MessageViewHolder", message.id)
             binding.textViewId.text = message.id
-            binding.textViewDate.text = message.createdAt.toString()
+            binding.textViewDate.text =
+                DateFormat.getDateTimeInstance().format(Date(message.createdAt))
+            binding.textViewState.text = message.state.name
             val tintColor = when (message.state) {
                 Message.State.Pending -> Color.parseColor("#FFBB86FC")
                 Message.State.Processed -> Color.parseColor("#FF6200EE")

@@ -17,14 +17,20 @@ import me.capcom.smsgateway.helpers.PhoneHelper
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.receivers.EventsReceiver
 
-class MessagesModule(
+class MessagesService(
     private val context: Context,
     private val dao: MessageDao,    // todo: use MessagesRepository
 ) {
     val events = EventBus()
-    private val countryCode: String? = (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
+    private val countryCode: String? =
+        (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
 
-    suspend fun sendMessage(id: String?, text: String, recipients: List<String>, source: Message.Source): MessageWithRecipients {
+    suspend fun sendMessage(
+        id: String?,
+        text: String,
+        recipients: List<String>,
+        source: Message.Source
+    ): MessageWithRecipients {
         val id = id ?: NanoIdUtils.randomNanoId()
 
         val message = MessageWithRecipients(
