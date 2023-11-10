@@ -38,8 +38,11 @@ class MessagesListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.recyclerView.adapter = messagesAdapter
-        
-//        binding.recyclerView.setHasFixedSize(true)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     companion object {

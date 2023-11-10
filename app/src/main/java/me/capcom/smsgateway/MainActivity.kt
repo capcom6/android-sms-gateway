@@ -1,23 +1,14 @@
 package me.capcom.smsgateway
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+import androidx.fragment.app.Fragment
+import com.google.android.material.tabs.TabLayoutMediator
 import me.capcom.smsgateway.databinding.ActivityMainBinding
-import me.capcom.smsgateway.helpers.SettingsHelper
-import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
-import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
+import me.capcom.smsgateway.ui.MessagesListFragment
+import me.capcom.smsgateway.ui.SettingsFragment
 
 class MainActivity : AppCompatActivity() {
-
-    private val settingsHelper by lazy { SettingsHelper(this) }
 
     private lateinit var binding: ActivityMainBinding
 
@@ -27,92 +18,33 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.textAuthentication.text = "Basic auth sms:${settingsHelper.serverToken}"
-        binding.switchAutostart.isChecked = settingsHelper.autostart
+        binding.viewPager.adapter = FragmentsAdapter(this)
 
-        binding.switchAutostart.setOnCheckedChangeListener { _, isChecked ->
-            settingsHelper.autostart = isChecked
-        }
-        binding.switchUseRemoteServer.setOnCheckedChangeListener { _, isChecked ->
-            App.instance.gatewayModule.enabled = isChecked
-            binding.layoutRemoteServer.isVisible = isChecked
-        }
-        binding.switchUseLocalServer.setOnCheckedChangeListener { _, isChecked ->
-            App.instance.localServerModule.enabled = isChecked
-            binding.layoutLocalServer.isVisible = isChecked
-        }
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+            when (position) {
+                0 -> tab.apply {
+                    text = "SETTINGS"
+                    setIcon(R.drawable.ic_settings_24)
+                }
 
-        binding.buttonStart.setOnCheckedChangeListener { _, b ->
-            actionStart(b)
-        }
-
-//        WebService.STATUS.observe(this) {
-//            binding.buttonStart.isChecked = it
-//        }
-
-        if (settingsHelper.autostart) {
-            actionStart(true)
-        }
-
-        lifecycleScope.launch {
-            App.instance.gatewayModule.events.events.collect { event ->
-                val event = event as? DeviceRegisteredEvent ?: return@collect
-
-                binding.textRemoteAuth.text = "Basic auth ${event.login}:${event.password}"
+                else -> tab.apply {
+                    text = "MESSAGES"
+                    setIcon(R.drawable.ic_sms)
+                }
             }
-        }
-
-        lifecycleScope.launch {
-            App.instance.localServerModule.events.events.collect { event ->
-                val event = event as? IPReceivedEvent ?: return@collect
-
-                binding.textLocalIP.text = "Local address is ${event.localIP}:${settingsHelper.serverPort}"
-                binding.textPublicIP.text = "Public address is ${event.publicIP}:${settingsHelper.serverPort}"
-            }
-        }
+        }.attach()
     }
 
-    override fun onResume() {
-        super.onResume()
+    class FragmentsAdapter(activity: AppCompatActivity) :
+        androidx.viewpager2.adapter.FragmentStateAdapter(activity) {
+        override fun getItemCount(): Int = 2
 
-        binding.switchUseRemoteServer.isChecked = App.instance.gatewayModule.enabled
-        binding.switchUseLocalServer.isChecked = App.instance.localServerModule.enabled
-    }
-
-    private fun actionStart(start: Boolean) {
-        if (start) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissionLauncher.launch(Manifest.permission.SEND_SMS)
-            }
-
-            App.instance.gatewayModule.start(this)
-            App.instance.localServerModule.start(this)
-        } else {
-            App.instance.localServerModule.stop(this)
-            App.instance.gatewayModule.stop(this)
-        }
-    }
-
-    // Register the permissions callback, which handles the user's response to the
-    // system permissions dialog. Save the return value, an instance of
-    // ActivityResultLauncher. You can use either a val, as shown in this snippet,
-    // or a lateinit var in your onAttach() or onCreate() method.
-    private val requestPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-                // Permission is granted. Continue the action or workflow in your
-                // app.
-                Log.d(javaClass.name, "Permissions granted")
-            } else {
-                // Explain to the user that the feature is unavailable because the
-                // features requires a permission that the user has denied. At the
-                // same time, respect the user's decision. Don't link to system
-                // settings in an effort to convince the user to change their
-                // decision.
-                Log.d(javaClass.name, "Permissions is not granted")
+        override fun createFragment(position: Int): Fragment {
+            return when (position) {
+                0 -> SettingsFragment.newInstance()
+                else -> MessagesListFragment.newInstance()
             }
         }
 
+    }
 }
