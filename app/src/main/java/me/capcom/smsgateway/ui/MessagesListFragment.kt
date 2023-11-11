@@ -6,8 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import me.capcom.smsgateway.databinding.FragmentMessagesListBinding
+import me.capcom.smsgateway.modules.messages.vm.MessagesListViewModel
 import me.capcom.smsgateway.ui.adapters.MessagesAdapter
-import me.capcom.smsgateway.ui.vm.MessagesListViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MessagesListFragment : Fragment() {
@@ -21,7 +21,9 @@ class MessagesListFragment : Fragment() {
         super.onCreate(savedInstanceState)
 
         viewModel.messages.observe(this) {
-            messagesAdapter.submitList(it)
+            messagesAdapter.submitList(it) {
+                _binding?.recyclerView?.scrollToPosition(0)
+            }
         }
     }
 

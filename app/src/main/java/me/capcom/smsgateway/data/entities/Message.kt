@@ -12,7 +12,7 @@ data class Message(
     val source: Source,
     val state: State = State.Pending,
     @ColumnInfo(defaultValue = "0")
-    val createdAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = System.currentTimeMillis(),   // do we need index here for querying in UI?
 ) {
     enum class State {
         Pending,

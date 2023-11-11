@@ -1,13 +1,15 @@
-package me.capcom.smsgateway.ui.vm
+package me.capcom.smsgateway.modules.messages.vm
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
+import kotlinx.coroutines.flow.distinctUntilChanged
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.modules.messages.repositories.MessagesRepository
 
 class MessagesListViewModel(
-    private val messagesRepo: MessagesRepository
+    messagesRepo: MessagesRepository
 ) : ViewModel() {
-    val messages: LiveData<List<Message>> = messagesRepo.lastMessages.asLiveData()
+    val messages: LiveData<List<Message>> =
+        messagesRepo.lastMessages.distinctUntilChanged().asLiveData()
 }

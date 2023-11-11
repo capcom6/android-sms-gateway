@@ -47,8 +47,17 @@ class MessagesService(
 
         dao.insert(message)
 
+        if (message.state != Message.State.Pending) {
+            updateState(id, null, message.state)
+            return message
+        }
+
         try {
-            sendSMS(id, text, message.recipients.filter { it.state == Message.State.Pending }.map { it.phoneNumber })
+            sendSMS(
+                id,
+                text,
+                message.recipients.filter { it.state == Message.State.Pending }
+                    .map { it.phoneNumber })
         } catch (e: Exception) {
             updateState(id, null, Message.State.Failed)
             return requireNotNull(getState(id))

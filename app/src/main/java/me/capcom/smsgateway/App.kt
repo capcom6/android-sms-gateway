@@ -8,7 +8,6 @@ import me.capcom.smsgateway.modules.localserver.LocalServerModule
 import me.capcom.smsgateway.modules.messages.messagesModule
 import me.capcom.smsgateway.modules.settings.PreferencesStorage
 import me.capcom.smsgateway.receivers.EventsReceiver
-import me.capcom.smsgateway.ui.vm.vmModule
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -24,7 +23,6 @@ class App: Application() {
             modules(
                 dbModule,
                 messagesModule,
-                vmModule,
             )
         }
 
@@ -34,8 +32,7 @@ class App: Application() {
     }
 
     val settings by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
-
-    //    val messagesModule by lazy { MessagesModule(this, get()) }
+    
     val gatewayModule by lazy {
         GatewayModule(
             get(),
