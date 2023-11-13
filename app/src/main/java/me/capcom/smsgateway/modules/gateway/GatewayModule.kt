@@ -48,6 +48,8 @@ class GatewayModule(
         }
     }
 
+    fun isActiveLiveData(context: Context) = PullMessagesWorker.getStateLiveData(context)
+
     fun stop(context: Context) {
         scope.cancel()
         PullMessagesWorker.stop(context)

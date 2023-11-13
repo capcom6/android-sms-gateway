@@ -1,4 +1,4 @@
-package me.capcom.smsgateway.services
+package me.capcom.smsgateway.modules.localserver
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
