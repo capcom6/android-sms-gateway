@@ -23,12 +23,12 @@ class MainActivity : AppCompatActivity() {
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             when (position) {
                 0 -> tab.apply {
-                    text = "SETTINGS"
+                    text = getString(R.string.tab_text_settings)
                     setIcon(R.drawable.ic_settings_24)
                 }
 
                 else -> tab.apply {
-                    text = "MESSAGES"
+                    text = getString(R.string.tab_text_messages)
                     setIcon(R.drawable.ic_sms)
                 }
             }

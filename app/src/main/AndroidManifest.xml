@@ -55,7 +55,7 @@
         </receiver>
 
         <service
-            android:name=".services.WebService"
+            android:name=".modules.localserver.WebService"
             android:enabled="true"
             android:exported="true" />
 

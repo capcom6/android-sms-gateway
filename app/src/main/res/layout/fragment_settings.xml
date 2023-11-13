@@ -24,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:text="Local server:"
+            android:text="@string/settings_local_server"
             android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
 
         <TextView
@@ -62,14 +62,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:text="Cloud server:"
+            android:text="@string/settings_cloud_server"
             android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            android:text="Address is sms.capcom.me" />
+            android:text="@string/settings_address_is_sms_capcom_me" />
 
         <TextView
             android:id="@+id/textRemoteAuth"
@@ -96,14 +96,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            android:text="Local server" />
+            android:text="@string/settings_local_server" />
 
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/switchUseRemoteServer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            android:text="Cloud server" />
+            android:text="@string/settings_cloud_server" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.appcompat.widget.SwitchCompat
@@ -111,7 +111,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:text="Start on boot" />
+        android:text="@string/settings_start_on_boot" />
 
     <Space
         android:layout_width="match_parent"
@@ -121,6 +121,6 @@
         android:id="@+id/buttonStart"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textOff="Offline"
-        android:textOn="Online" />
+        android:textOff="@string/settings_offline"
+        android:textOn="@string/settings_online" />
 </androidx.appcompat.widget.LinearLayoutCompat>

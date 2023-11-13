@@ -11,9 +11,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.App
+import me.capcom.smsgateway.R
 import me.capcom.smsgateway.databinding.FragmentSettingsBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
@@ -37,7 +39,8 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.textAuthentication.text = "Basic auth sms:${settingsHelper.serverToken}"
+        binding.textAuthentication.text =
+            getString(R.string.settings_basic_auth, "sms", settingsHelper.serverToken)
         binding.switchAutostart.isChecked = settingsHelper.autostart
 
         binding.switchAutostart.setOnCheckedChangeListener { _, isChecked ->
@@ -64,7 +67,8 @@ class SettingsFragment : Fragment() {
             App.instance.gatewayModule.events.events.collect { event ->
                 val event = event as? DeviceRegisteredEvent ?: return@collect
 
-                binding.textRemoteAuth.text = "Basic auth ${event.login}:${event.password}"
+                binding.textRemoteAuth.text =
+                    getString(R.string.settings_basic_auth, event.login, event.password)
             }
         }
 
@@ -73,9 +77,17 @@ class SettingsFragment : Fragment() {
                 val event = event as? IPReceivedEvent ?: return@collect
 
                 binding.textLocalIP.text =
-                    "Local address is ${event.localIP}:${settingsHelper.serverPort}"
+                    getString(
+                        R.string.settings_local_address_is,
+                        event.localIP,
+                        settingsHelper.serverPort
+                    )
                 binding.textPublicIP.text =
-                    "Public address is ${event.publicIP}:${settingsHelper.serverPort}"
+                    getString(
+                        R.string.settings_public_address_is,
+                        event.publicIP,
+                        settingsHelper.serverPort
+                    )
             }
         }
     }
