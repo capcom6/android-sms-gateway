@@ -12,7 +12,6 @@ import me.capcom.smsgateway.modules.settings.KeyValueStorage
 import me.capcom.smsgateway.modules.settings.get
 import me.capcom.smsgateway.providers.LocalIPProvider
 import me.capcom.smsgateway.providers.PublicIPProvider
-import me.capcom.smsgateway.services.WebService
 
 class LocalServerModule(
     private val messagesService: MessagesService,
@@ -38,6 +37,8 @@ class LocalServerModule(
     fun stop(context: Context) {
         WebService.stop(context)
     }
+
+    fun isActiveLiveData(context: Context) = WebService.STATUS
 
     companion object {
         private val job = SupervisorJob()

@@ -90,6 +90,10 @@ class SettingsFragment : Fragment() {
                     )
             }
         }
+
+        stateLiveData.observe(viewLifecycleOwner) {
+            binding.buttonStart.isChecked = it
+        }
     }
 
     override fun onResume() {
@@ -138,6 +142,26 @@ class SettingsFragment : Fragment() {
                 Log.d(javaClass.name, "Permissions is not granted")
             }
         }
+
+    private val stateLiveData by lazy {
+        object : MediatorLiveData<Boolean>() {
+            private var gatewayStatus = false
+            private var localServerStatus = false
+
+            init {
+                addSource(App.instance.gatewayModule.isActiveLiveData(requireContext())) {
+                    gatewayStatus = it
+
+                    value = gatewayStatus || localServerStatus
+                }
+                addSource(App.instance.localServerModule.isActiveLiveData(requireContext())) {
+                    localServerStatus = it
+
+                    value = gatewayStatus || localServerStatus
+                }
+            }
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

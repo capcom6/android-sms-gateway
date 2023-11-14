@@ -1,7 +1,18 @@
 package me.capcom.smsgateway.modules.gateway
 
 import android.content.Context
-import androidx.work.*
+import androidx.lifecycle.map
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequest
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
+import androidx.work.WorkerParameters
 import me.capcom.smsgateway.App
 import java.util.concurrent.TimeUnit
 
@@ -39,6 +50,10 @@ class PullMessagesWorker(appContext: Context,
                     work
                 )
         }
+
+        fun getStateLiveData(context: Context) = WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWorkLiveData(NAME)
+            .map { infos -> infos.any { it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.ENQUEUED } }
 
         fun stop(context: Context) {
             WorkManager.getInstance(context)
