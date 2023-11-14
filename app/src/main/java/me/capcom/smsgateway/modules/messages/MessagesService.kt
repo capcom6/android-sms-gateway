@@ -17,14 +17,20 @@ import me.capcom.smsgateway.helpers.PhoneHelper
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.receivers.EventsReceiver
 
-class MessagesModule(
+class MessagesService(
     private val context: Context,
-    private val dao: MessageDao,
+    private val dao: MessageDao,    // todo: use MessagesRepository
 ) {
     val events = EventBus()
-    private val countryCode: String? = (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
+    private val countryCode: String? =
+        (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
 
-    suspend fun sendMessage(id: String?, text: String, recipients: List<String>, source: Message.Source): MessageWithRecipients {
+    suspend fun sendMessage(
+        id: String?,
+        text: String,
+        recipients: List<String>,
+        source: Message.Source
+    ): MessageWithRecipients {
         val id = id ?: NanoIdUtils.randomNanoId()
 
         val message = MessageWithRecipients(
@@ -41,8 +47,17 @@ class MessagesModule(
 
         dao.insert(message)
 
+        if (message.state != Message.State.Pending) {
+            updateState(id, null, message.state)
+            return message
+        }
+
         try {
-            sendSMS(id, text, message.recipients.filter { it.state == Message.State.Pending }.map { it.phoneNumber })
+            sendSMS(
+                id,
+                text,
+                message.recipients.filter { it.state == Message.State.Pending }
+                    .map { it.phoneNumber })
         } catch (e: Exception) {
             updateState(id, null, Message.State.Failed)
             return requireNotNull(getState(id))
@@ -74,6 +89,7 @@ class MessagesModule(
                 Activity.RESULT_OK -> Message.State.Sent
                 else -> Message.State.Failed
             }
+
             EventsReceiver.ACTION_DELIVERED -> Message.State.Delivered
             else -> return
         }

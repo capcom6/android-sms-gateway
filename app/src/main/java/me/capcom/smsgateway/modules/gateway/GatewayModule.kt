@@ -13,13 +13,13 @@ import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.messages.MessageStateChangedEvent
-import me.capcom.smsgateway.modules.messages.MessagesModule
+import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.settings.KeyValueStorage
 import me.capcom.smsgateway.modules.settings.get
 import me.capcom.smsgateway.services.PushService
 
 class GatewayModule(
-    private val messagesModule: MessagesModule,
+    private val messagesService: MessagesService,
     private val storage: KeyValueStorage,
 ) {
     private val api = GatewayApi()
@@ -36,7 +36,7 @@ class GatewayModule(
 
         scope.launch {
             withContext(Dispatchers.IO) {
-                messagesModule.events.events.collect { event ->
+                messagesService.events.events.collect { event ->
                     val event = event as? MessageStateChangedEvent ?: return@collect
                     try {
                         sendState(event)
@@ -124,17 +124,17 @@ class GatewayModule(
             val messages = api.getMessages(settings.token)
             messages.forEach {
                 try {
-                    messagesModule.getState(it.id)
+                    messagesService.getState(it.id)
                         ?.also {
-                        sendState(
+                            sendState(
                                 MessageStateChangedEvent(
-                                it.message.id,
-                                it.message.state,
-                                it.recipients.associate { it.phoneNumber to it.state }
+                                    it.message.id,
+                                    it.message.state,
+                                    it.recipients.associate { it.phoneNumber to it.state }
+                                )
                             )
-                        )
-                    }
-                        ?: messagesModule.sendMessage(
+                        }
+                        ?: messagesService.sendMessage(
                             it.id,
                             it.message,
                             it.phoneNumbers,
