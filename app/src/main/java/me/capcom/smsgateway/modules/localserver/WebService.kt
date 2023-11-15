@@ -34,9 +34,9 @@ import io.ktor.server.routing.routing
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.domain.MessageState
-import me.capcom.smsgateway.domain.PostMessageRequest
-import me.capcom.smsgateway.domain.PostMessageResponse
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
+import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
 import me.capcom.smsgateway.modules.messages.MessagesService
 import org.koin.android.ext.android.inject
 import kotlin.concurrent.thread
@@ -66,11 +66,7 @@ class WebService : Service() {
                     }
                 }
             }
-//            install(CallLogging) {
-//                this.level = Level.DEBUG
-//            }
             routing {
-//                install(Compression)
                 install(ContentNegotiation) {
                     gson {
                         if (me.capcom.smsgateway.BuildConfig.DEBUG) {
@@ -93,10 +89,22 @@ class WebService : Service() {
                         post {
                             val request = call.receive<PostMessageRequest>()
                             if (request.message.isNullOrEmpty()) {
-                                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "message is empty"))
+                                call.respond(
+                                    HttpStatusCode.BadRequest,
+                                    mapOf("message" to "message is empty")
+                                )
                             }
                             if (request.phoneNumbers.isNullOrEmpty()) {
-                                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "phoneNumbers is empty"))
+                                call.respond(
+                                    HttpStatusCode.BadRequest,
+                                    mapOf("message" to "phoneNumbers is empty")
+                                )
+                            }
+                            if (request.simNumber != null && request.simNumber < 1) {
+                                call.respond(
+                                    HttpStatusCode.BadRequest,
+                                    mapOf("message" to "simNumber must be >= 1")
+                                )
                             }
 
                             val message = try {
@@ -104,10 +112,14 @@ class WebService : Service() {
                                     request.id,
                                     request.message,
                                     request.phoneNumbers,
-                                    Message.Source.Local
+                                    Message.Source.Local,
+                                    request.simNumber?.let { it - 1 }
                                 )
                             } catch (e: IllegalArgumentException) {
-                                return@post call.respond(HttpStatusCode.BadRequest, mapOf("message" to e.message))
+                                return@post call.respond(
+                                    HttpStatusCode.BadRequest,
+                                    mapOf("message" to e.message)
+                                )
                             } catch (e: Throwable) {
                                 return@post call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
                             }
