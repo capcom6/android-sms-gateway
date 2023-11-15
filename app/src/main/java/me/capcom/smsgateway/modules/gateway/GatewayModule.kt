@@ -38,6 +38,8 @@ class GatewayModule(
             withContext(Dispatchers.IO) {
                 messagesService.events.events.collect { event ->
                     val event = event as? MessageStateChangedEvent ?: return@collect
+                    if (event.source != Message.Source.Gateway) return@collect
+
                     try {
                         sendState(event)
                     } catch (th: Throwable) {
@@ -127,12 +129,13 @@ class GatewayModule(
             val messages = api.getMessages(settings.token)
             messages.forEach {
                 try {
-                    messagesService.getState(it.id)
+                    messagesService.getMessage(it.id)
                         ?.also {
                             sendState(
                                 MessageStateChangedEvent(
                                     it.message.id,
                                     it.message.state,
+                                    it.message.source,
                                     it.recipients.associate { it.phoneNumber to it.state }
                                 )
                             )

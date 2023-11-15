@@ -68,13 +68,13 @@ class MessagesService(
         } catch (e: Exception) {
             e.printStackTrace()
             updateState(id, null, Message.State.Failed)
-            return requireNotNull(getState(id))
+            return requireNotNull(getMessage(id))
         }
 
         return message
     }
 
-    suspend fun getState(id: String): MessageWithRecipients? {
+    fun getMessage(id: String): MessageWithRecipients? {
         val message = dao.get(id)
             ?: return null
 
@@ -118,15 +118,16 @@ class MessagesService(
                 dao.updateRecipientsState(id, state)
             }
 
-        val state = requireNotNull(getState(id)?.state)
+        val msg = requireNotNull(getMessage(id))
 
         events.emitEvent(
             MessageStateChangedEvent(
                 id,
-                state,
-                dao.get(id)?.recipients?.associate {
+                msg.state,
+                msg.message.source,
+                msg.recipients.associate {
                     it.phoneNumber to it.state
-                } ?: return
+                }
             )
         )
     }
