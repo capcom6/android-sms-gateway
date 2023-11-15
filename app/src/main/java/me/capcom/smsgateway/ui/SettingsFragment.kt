@@ -77,8 +77,8 @@ class SettingsFragment : Fragment() {
             binding.layoutLocalServer.isVisible = isChecked
         }
 
-        binding.buttonStart.setOnCheckedChangeListener { _, b ->
-            actionStart(b)
+        binding.buttonStart.setOnClickListener {
+            actionStart(binding.buttonStart.isChecked)
         }
 
         if (settingsHelper.autostart) {
