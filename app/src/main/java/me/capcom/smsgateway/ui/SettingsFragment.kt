@@ -1,14 +1,26 @@
 package me.capcom.smsgateway.ui
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.text.Html
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
+import android.text.style.URLSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.text.toSpanned
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MediatorLiveData
@@ -39,8 +51,18 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.textAuthentication.text =
-            getString(R.string.settings_basic_auth, "sms", settingsHelper.serverToken)
+        binding.textAuthentication.movementMethod = LinkMovementMethod.getInstance()
+        binding.textAuthentication.text = makeCopyableLink(
+            Html
+                .fromHtml(
+                    getString(
+                        R.string.settings_basic_auth,
+                        "sms",
+                        settingsHelper.serverToken
+                    )
+                )
+        )
+
         binding.switchAutostart.isChecked = settingsHelper.autostart
 
         binding.switchAutostart.setOnCheckedChangeListener { _, isChecked ->
@@ -67,8 +89,17 @@ class SettingsFragment : Fragment() {
             App.instance.gatewayModule.events.events.collect { event ->
                 val event = event as? DeviceRegisteredEvent ?: return@collect
 
-                binding.textRemoteAuth.text =
-                    getString(R.string.settings_basic_auth, event.login, event.password)
+                binding.textRemoteAuth.movementMethod = LinkMovementMethod.getInstance()
+                binding.textRemoteAuth.text = makeCopyableLink(
+                    Html
+                        .fromHtml(
+                            getString(
+                                R.string.settings_basic_auth,
+                                event.login,
+                                event.password
+                            )
+                        )
+                )
             }
         }
 
@@ -94,6 +125,38 @@ class SettingsFragment : Fragment() {
         stateLiveData.observe(viewLifecycleOwner) {
             binding.buttonStart.isChecked = it
         }
+    }
+
+    private fun makeCopyableLink(source: Spanned): Spanned {
+        val builder = SpannableStringBuilder(source)
+        val spans = builder.getSpans(0, builder.length, URLSpan::class.java)
+        for (span in spans) {
+            val innerText = builder.subSequence(
+                builder.getSpanStart(span),
+                builder.getSpanEnd(span)
+            ).toString()
+            val clickableSpan = object : ClickableSpan() {
+
+                override fun onClick(widget: View) {
+                    val clipboard = requireContext().getSystemService(
+                        Context.CLIPBOARD_SERVICE
+                    ) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("", innerText))
+                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2)
+                        Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT)
+                            .show()
+                }
+            }
+            builder.setSpan(
+                clickableSpan,
+                builder.getSpanStart(span),
+                builder.getSpanEnd(span),
+                builder.getSpanFlags(span)
+            )
+            builder.removeSpan(span)
+        }
+
+        return builder.toSpanned()
     }
 
     override fun onResume() {
