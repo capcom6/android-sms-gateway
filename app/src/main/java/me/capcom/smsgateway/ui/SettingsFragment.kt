@@ -168,43 +168,50 @@ class SettingsFragment : Fragment() {
 
     private fun actionStart(start: Boolean) {
         if (start) {
-            if (ContextCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.SEND_SMS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissionLauncher.launch(Manifest.permission.SEND_SMS)
-            }
-
-            App.instance.gatewayModule.start(requireContext())
-            App.instance.localServerModule.start(requireContext())
+            requestPermissionsAndStart()
         } else {
             App.instance.localServerModule.stop(requireContext())
             App.instance.gatewayModule.stop(requireContext())
         }
     }
 
-    // Register the permissions callback, which handles the user's response to the
-    // system permissions dialog. Save the return value, an instance of
-    // ActivityResultLauncher. You can use either a val, as shown in this snippet,
-    // or a lateinit var in your onAttach() or onCreate() method.
-    private val requestPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-                // Permission is granted. Continue the action or workflow in your
-                // app.
-                Log.d(javaClass.name, "Permissions granted")
-            } else {
-                // Explain to the user that the feature is unavailable because the
-                // features requires a permission that the user has denied. At the
-                // same time, respect the user's decision. Don't link to system
-                // settings in an effort to convince the user to change their
-                // decision.
-                Log.d(javaClass.name, "Permissions is not granted")
-            }
+    private fun start() {
+        App.instance.gatewayModule.start(requireContext())
+        App.instance.localServerModule.start(requireContext())
+    }
+
+    private fun requestPermissionsAndStart() {
+        val permissionsRequired =
+            listOf(Manifest.permission.SEND_SMS, Manifest.permission.READ_PHONE_STATE)
+                .filter {
+                    ContextCompat.checkSelfPermission(
+                        requireContext(),
+                        it
+                    ) != PackageManager.PERMISSION_GRANTED
+                }
+
+        if (permissionsRequired.isEmpty()) {
+            start()
+            return
         }
+
+        permissionsRequest.launch(permissionsRequired.toTypedArray())
+    }
+
+    private val permissionsRequest = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        if (result.values.all { it }) {
+            // Permission is granted. Continue the action or workflow in your
+            // app.
+            Log.d(javaClass.name, "Permissions granted")
+        } else {
+            Toast.makeText(requireContext(), "Not all permissions granted", Toast.LENGTH_SHORT)
+                .show()
+        }
+
+        start()
+    }
 
     private val stateLiveData by lazy {
         object : MediatorLiveData<Boolean>() {
