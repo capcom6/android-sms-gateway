@@ -3,6 +3,7 @@ package me.capcom.smsgateway.modules.gateway
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
@@ -14,10 +15,14 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.serialization.gson.gson
+import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.domain.MessageState
 
 class GatewayApi() {
     private val client = HttpClient(OkHttp) {
+        install(UserAgent) {
+            agent = "me.capcom.smsgateway/" + BuildConfig.VERSION_NAME
+        }
         install(ContentNegotiation) {
             gson()
         }
