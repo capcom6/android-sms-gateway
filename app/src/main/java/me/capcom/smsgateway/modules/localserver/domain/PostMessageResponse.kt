@@ -1,4 +1,6 @@
-package me.capcom.smsgateway.domain
+package me.capcom.smsgateway.modules.localserver.domain
+
+import me.capcom.smsgateway.domain.MessageState
 
 data class PostMessageResponse(
     val id: String,

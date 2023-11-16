@@ -155,12 +155,13 @@ If you need to send messages with dynamic or shared device IP you can use the cl
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Ability to change the credentials.
-- [ ] Ability to change the local server port.
-- [ ] Send notifications to an external server on message status change.
-- [ ] Implement scheduling functionality to send messages at specified times.
-- [ ] Region restriction to block international SMS
-
+- [ ] Add functionality to modify user credentials.
+- [ ] Introduce option to adjust the local server port.
+- [ ] Send notifications to an external server when the status of a message changes.
+- [ ] Incorporate scheduling capabilities for dispatching messages at specific times.
+- [ ] Implement region-based restrictions to prevent international SMS.
+- [ ] Provide an API endpoint to retrieve the list of available SIM cards on the device.
+- [ ] Include detailed error messages in responses and logs.
 
 See the [open issues](https://github.com/capcom6/android-sms-gateway/issues) for a full list of proposed features (and known issues).
 

@@ -60,6 +60,7 @@ class GatewayModule(
     ) {
         val settings = storage.get<GatewayApi.DeviceRegisterResponse>(REGISTRATION_INFO)
             ?: return
+
         withContext(Dispatchers.IO) {
             api.patchMessages(
                 settings.token,
@@ -140,7 +141,8 @@ class GatewayModule(
                             it.id,
                             it.message,
                             it.phoneNumbers,
-                            Message.Source.Gateway
+                            Message.Source.Gateway,
+                            it.simNumber?.let { it - 1 }
                         )
                 } catch (th: Throwable) {
                     th.printStackTrace()

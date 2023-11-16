@@ -1,13 +1,17 @@
 package me.capcom.smsgateway.modules.messages
 
+import android.Manifest
 import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.telephony.SmsManager
+import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
+import androidx.core.app.ActivityCompat
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import me.capcom.smsgateway.data.dao.MessageDao
 import me.capcom.smsgateway.data.entities.Message
@@ -29,7 +33,8 @@ class MessagesService(
         id: String?,
         text: String,
         recipients: List<String>,
-        source: Message.Source
+        source: Message.Source,
+        simNumber: Int? = null,
     ): MessageWithRecipients {
         val id = id ?: NanoIdUtils.randomNanoId()
 
@@ -57,8 +62,11 @@ class MessagesService(
                 id,
                 text,
                 message.recipients.filter { it.state == Message.State.Pending }
-                    .map { it.phoneNumber })
+                    .map { it.phoneNumber },
+                simNumber
+            )
         } catch (e: Exception) {
+            e.printStackTrace()
             updateState(id, null, Message.State.Failed)
             return requireNotNull(getState(id))
         }
@@ -123,24 +131,35 @@ class MessagesService(
         )
     }
 
-    private suspend fun sendSMS(id: String, message: String, recipients: List<String>) {
-        val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            context.getSystemService(SmsManager::class.java)
-        } else {
-            SmsManager.getDefault()
-        }
+    private suspend fun sendSMS(
+        id: String,
+        message: String,
+        recipients: List<String>,
+        simNumber: Int?
+    ) {
+        val smsManager: SmsManager = getSmsManager(simNumber)
 
         recipients.forEach {
             val sentIntent = PendingIntent.getBroadcast(
                 context,
                 0,
-                Intent(EventsReceiver.ACTION_SENT, Uri.parse("$id|$it"), context, EventsReceiver::class.java),
+                Intent(
+                    EventsReceiver.ACTION_SENT,
+                    Uri.parse("$id|$it"),
+                    context,
+                    EventsReceiver::class.java
+                ),
                 PendingIntent.FLAG_IMMUTABLE
             )
             val deliveredIntent = PendingIntent.getBroadcast(
                 context,
                 0,
-                Intent(EventsReceiver.ACTION_DELIVERED, Uri.parse("$id|$it"), context, EventsReceiver::class.java),
+                Intent(
+                    EventsReceiver.ACTION_DELIVERED,
+                    Uri.parse("$id|$it"),
+                    context,
+                    EventsReceiver::class.java
+                ),
                 PendingIntent.FLAG_IMMUTABLE
             )
 
@@ -150,6 +169,45 @@ class MessagesService(
             } catch (th: Throwable) {
                 th.printStackTrace()
                 updateState(id, it, Message.State.Failed)
+            }
+        }
+    }
+
+    private fun getSmsManager(simNumber: Int?): SmsManager {
+        return if (simNumber != null) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_PHONE_STATE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                throw UnsupportedOperationException("SIM selection requires READ_PHONE_STATE permission")
+            }
+
+            val subscriptionManager: SubscriptionManager = when {
+                Build.VERSION.SDK_INT < 22 -> throw UnsupportedOperationException("SIM selection available from API 22")
+                Build.VERSION.SDK_INT < 31 -> SubscriptionManager.from(context)
+                else -> context.getSystemService(SubscriptionManager::class.java)
+            }
+
+            if (subscriptionManager.activeSubscriptionInfoCount <= simNumber) {
+                throw UnsupportedOperationException("SIM $simNumber not found")
+            }
+
+            subscriptionManager.activeSubscriptionInfoList.find {
+                it.simSlotIndex == simNumber
+            }?.let {
+                if (Build.VERSION.SDK_INT < 31) {
+                    SmsManager.getSmsManagerForSubscriptionId(it.subscriptionId)
+                } else {
+                    context.getSystemService(SmsManager::class.java)
+                        .createForSubscriptionId(it.subscriptionId)
+                }
+            } ?: throw UnsupportedOperationException("SIM $simNumber not found")
+        } else {
+            if (Build.VERSION.SDK_INT < 31) {
+                SmsManager.getDefault()
+            } else {
+                context.getSystemService(SmsManager::class.java)
             }
         }
     }
