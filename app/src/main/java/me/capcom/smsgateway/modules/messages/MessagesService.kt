@@ -137,7 +137,44 @@ class MessagesService(
         recipients: List<String>,
         simNumber: Int?
     ) {
-        val smsManager: SmsManager = if (simNumber != null) {
+        val smsManager: SmsManager = getSmsManager(simNumber)
+
+        recipients.forEach {
+            val sentIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent(
+                    EventsReceiver.ACTION_SENT,
+                    Uri.parse("$id|$it"),
+                    context,
+                    EventsReceiver::class.java
+                ),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+            val deliveredIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent(
+                    EventsReceiver.ACTION_DELIVERED,
+                    Uri.parse("$id|$it"),
+                    context,
+                    EventsReceiver::class.java
+                ),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+
+            try {
+                smsManager.sendTextMessage(it, null, message, sentIntent, deliveredIntent)
+                updateState(id, it, Message.State.Processed)
+            } catch (th: Throwable) {
+                th.printStackTrace()
+                updateState(id, it, Message.State.Failed)
+            }
+        }
+    }
+
+    private fun getSmsManager(simNumber: Int?): SmsManager {
+        return if (simNumber != null) {
             if (ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.READ_PHONE_STATE
@@ -156,7 +193,9 @@ class MessagesService(
                 throw UnsupportedOperationException("SIM $simNumber not found")
             }
 
-            subscriptionManager.activeSubscriptionInfoList[simNumber]?.let {
+            subscriptionManager.activeSubscriptionInfoList.find {
+                it.simSlotIndex == simNumber
+            }?.let {
                 if (Build.VERSION.SDK_INT < 31) {
                     SmsManager.getSmsManagerForSubscriptionId(it.subscriptionId)
                 } else {
@@ -165,38 +204,10 @@ class MessagesService(
                 }
             } ?: throw UnsupportedOperationException("SIM $simNumber not found")
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                context.getSystemService(SmsManager::class.java)
-            } else {
+            if (Build.VERSION.SDK_INT < 31) {
                 SmsManager.getDefault()
-            }
-        }
-
-        recipients.forEach {
-            val sentIntent = PendingIntent.getBroadcast(
-                context,
-                0,
-                Intent(
-                    EventsReceiver.ACTION_SENT,
-                    Uri.parse("$id|$it"),
-                    context,
-                    EventsReceiver::class.java
-                ),
-                PendingIntent.FLAG_IMMUTABLE
-            )
-            val deliveredIntent = PendingIntent.getBroadcast(
-                context,
-                0,
-                Intent(EventsReceiver.ACTION_DELIVERED, Uri.parse("$id|$it"), context, EventsReceiver::class.java),
-                PendingIntent.FLAG_IMMUTABLE
-            )
-
-            try {
-                smsManager.sendTextMessage(it, null, message, sentIntent, deliveredIntent)
-                updateState(id, it, Message.State.Processed)
-            } catch (th: Throwable) {
-                th.printStackTrace()
-                updateState(id, it, Message.State.Failed)
+            } else {
+                context.getSystemService(SmsManager::class.java)
             }
         }
     }
