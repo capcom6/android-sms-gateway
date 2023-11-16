@@ -140,7 +140,7 @@ class WebService : Service() {
                                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
                             val message = try {
-                                messagesService.getState(id)
+                                messagesService.getMessage(id)
                                     ?: return@get call.respond(HttpStatusCode.NotFound)
                             } catch (e: Throwable) {
                                 return@get call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
