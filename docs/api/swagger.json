@@ -16,7 +16,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://device-ip:8080",
       "description": "Device"
     },
     {
@@ -54,7 +54,7 @@
         ],
         "servers": [
           {
-            "url": "http://localhost:8080",
+            "url": "http://device-ip:8080",
             "description": "Device"
           },
           {
@@ -101,7 +101,7 @@
         ],
         "servers": [
           {
-            "url": "http://localhost:8080",
+            "url": "http://device-ip:8080",
             "description": "Device"
           },
           {
@@ -196,6 +196,13 @@
             "nullable": true,
             "description": "SIM card number, `null` - default",
             "minimum": 1
+          },
+          "ttl": {
+            "type": "integer",
+            "nullable": true,
+            "description": "*(cloud-only)* message storage time in `Pending` state, `null` - forever",
+            "minimum": 5,
+            "example": 86400
           }
         },
         "required": [
