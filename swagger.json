@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "title": "Android SMS Gateway - Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
@@ -16,7 +16,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://device-ip:8080",
       "description": "Device"
     },
     {
@@ -54,7 +54,7 @@
         ],
         "servers": [
           {
-            "url": "http://localhost:8080",
+            "url": "http://device-ip:8080",
             "description": "Device"
           },
           {
@@ -101,7 +101,7 @@
         ],
         "servers": [
           {
-            "url": "http://localhost:8080",
+            "url": "http://device-ip:8080",
             "description": "Device"
           },
           {
@@ -186,10 +186,23 @@
             "description": "recipients' phone numbers, international notation recommended",
             "items": {
               "type": "string",
-              "pattern": "^\\d{11}$",
-              "minLength": 11,
-              "maxLength": 11
+              "pattern": "^\\+?\\d+$",
+              "maxLength": 16,
+              "example": "+79990001234"
             }
+          },
+          "simNumber": {
+            "type": "integer",
+            "nullable": true,
+            "description": "SIM card number, `null` - default",
+            "minimum": 1
+          },
+          "ttl": {
+            "type": "integer",
+            "nullable": true,
+            "description": "*(cloud-only)* message storage time in `Pending` state, `null` - forever",
+            "minimum": 5,
+            "example": 86400
           }
         },
         "required": [
@@ -234,10 +247,9 @@
           "phoneNumber": {
             "type": "string",
             "description": "phone number",
-            "pattern": "^\\d{11}$",
-            "minLength": 11,
-            "maxLength": 11,
-            "example": "79990001234"
+            "pattern": "^\\+?\\d+$",
+            "maxLength": 16,
+            "example": "+79990001234"
           },
           "state": {
             "enum": [
