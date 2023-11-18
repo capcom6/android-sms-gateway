@@ -165,7 +165,20 @@ class MessagesService(
             )
 
             try {
-                smsManager.sendTextMessage(it, null, message, sentIntent, deliveredIntent)
+                val parts = smsManager.divideMessage(message)
+
+                if (parts.size > 1) {
+                    smsManager.sendMultipartTextMessage(
+                        it,
+                        null,
+                        parts,
+                        ArrayList(parts.map { sentIntent }),
+                        ArrayList(parts.map { deliveredIntent })
+                    )
+                } else {
+                    smsManager.sendTextMessage(it, null, message, sentIntent, deliveredIntent)
+                }
+
                 updateState(id, it, Message.State.Processed)
             } catch (th: Throwable) {
                 th.printStackTrace()
