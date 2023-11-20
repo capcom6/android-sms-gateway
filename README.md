@@ -37,11 +37,10 @@
   <p align="center">
     Turns your smartphone into an SMS gateway for sending messages via API.
     <br />
-    <!-- <a href="https://github.com/capcom6/android-sms-gateway"><strong>Explore the docs »</strong></a>
+    <a href="https://sms.capcom.me"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/capcom6/android-sms-gateway">View Demo</a> -->
-    ·
+    <!-- <a href="https://github.com/capcom6/android-sms-gateway">View Demo</a> -->
     <a href="https://github.com/capcom6/android-sms-gateway/issues">Report Bug</a>
     ·
     <a href="https://github.com/capcom6/android-sms-gateway/issues">Request Feature</a>
@@ -52,13 +51,16 @@
 
 <!-- TABLE OF CONTENTS -->
 - [About The Project](#about-the-project)
+  - [Features](#features)
+  - [Ideal For](#ideal-for)
   - [Built With](#built-with)
-- [Getting Started](#getting-started)
+- [Installation](#installation)
   - [Prerequisites](#prerequisites)
+    - [Permissions](#permissions)
   - [Installation from APK](#installation-from-apk)
-- [Usage](#usage)
-  - [Send SMS with local server](#send-sms-with-local-server)
-  - [Send SMS with sms.capcom.me](#send-sms-with-smscapcomme)
+- [Getting Started](#getting-started)
+  - [Local server](#local-server)
+  - [Cloud server](#cloud-server)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -67,12 +69,28 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-<p align="center"><img src="docs/screenshot.png" width="360"></p>
+<p align="center"><img src="assets/screenshot.png" width="360"></p>
 
 
-Android SMS Gateway is a lightweight application that allows you to use your Android smartphone as an SMS gateway. With this app, you can send SMS messages programmatically via API, making it ideal for integrating SMS functionality into your own applications or services. The application supports Android 5.0 and above, and offers features such as message status tracking, starting at boot, and protection from going to sleep. Whether you need to send notifications, alerts, or two-factor authentication codes, Android SMS Gateway provides a convenient and reliable solution.
+Android SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweight application allowing you to send SMS messages programmatically via API. This makes it ideal for integrating SMS functionality into your own applications or services.
 
-The project is in the MVP stage.
+### Features
+
+- **No registration:** No registration or email is required to create an account. In local mode you don't need an account at all!
+- **Send SMS by API:** Use our API to send messages directly from your own applications or services.
+- **Supports Android 5.0 and above:** The application is compatible with Android 5.0 and later versions.
+- **Message status tracking:** Monitor the status of your sent messages in real-time.
+- **Starts at boot:** The application starts running as soon as your device boots up.
+- **Multiple SIM cards:** The application supports multiple SIM cards.
+- **Multipart messages:** The application supports sending long messages with auto-partitioning.
+
+### Ideal For
+
+- Notifications
+- Alerts
+- Two-factor authentication codes
+
+Android SMS Gateway provides a convenient and reliable solution, whether you need to send notifications, alerts, or two-factor authentication codes.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -87,10 +105,7 @@ The project is in the MVP stage.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
-<!-- GETTING STARTED -->
-## Getting Started
+## Installation
 
 You can install app to your device from prebuilt APK or by building from sources.
 
@@ -98,9 +113,16 @@ You can install app to your device from prebuilt APK or by building from sources
 
 You need an Android device with Android 5.0 (Lollipop) or above for using the application.
 
+#### Permissions
+
+To use the application, you need to grant the following permissions:
+
+- **SEND_SMS**: This permission is required to send SMS messages.
+- **READ_PHONE_STATE**: This permission is required to select the SIM card. Optional, if you don't want to select the SIM card.
+
 ### Installation from APK
 
-1. Navigate to the [Releases](link-to-releases) page.
+1. Navigate to the [Releases](https://github.com/capcom6/android-sms-gateway/releases) page.
 2. Download the latest APK file from the list of available releases.
 3. Transfer the APK file to your Android device.
 4. On your Android device, go to **Settings** > **Security** (or **Privacy** on some devices).
@@ -111,40 +133,47 @@ You need an Android device with Android 5.0 (Lollipop) or above for using the ap
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-<!-- USAGE EXAMPLES -->
-## Usage
+<!-- GETTING STARTED -->
+## Getting Started
 
 The Android SMS Gateway can work in two modes: with a local server started on the device or with a cloud server at [sms.capcom.me](https://sms.capcom.me). The basic API is the same for both modes and is documented on the [Android SMS Gateway API Documentation](https://capcom6.github.io/android-sms-gateway/).
 
+### Local server
 
-### Send SMS with local server
+<div align="center">
+    <img src="/assets/local-server.png" alt="Local server example settings">
+</div>
 
-Application can start web-server on the device, so it can be used without any external services. This mode is recommended for sending messages from local network.
+This mode is recommended for sending messages from local network.
 
 1. Start the app on the device.
 2. Activate the `Local server` switch.
 3. Tap the `Offline` button at the bottom of the screen.
 4. In the `Local server` section, the local and public addresses of the device, along with the credentials for basic authentication, will be displayed. Please note that the public address is only usable if you have a "white" IP address and have correctly configured your firewall.
 5. Make a `curl` call from the local network using a command like the following, replacing `<username>`, `<password>`, and `<device_local_ip>` with the values obtained in step 4: 
-   
-   ```
-   curl -X POST -u <username>:<password> -H "Content-Type: application/json" -d '{ "message": "Hello, world!", "phoneNumbers": ["79990001234", "79995556677"] }' http://<device_local_ip>:8080/message
-   ```
 
-### Send SMS with sms.capcom.me
+    ```
+    curl -X POST -u <username>:<password> -H "Content-Type: application/json" -d '{ "message": "Hello, world!", "phoneNumbers": ["79990001234", "79995556677"] }' http://<device_local_ip>:8080/message
+    ```
 
-If you need to send messages with dynamic or shared device IP you can use the cloud server.
+### Cloud server
+
+<div align="center">
+    <img src="/assets/cloud-server.png" alt="Cloud server example settings">
+</div>
+
+If you need to send messages with dynamic or shared device IP, you can use the cloud server. The best part? No registration, email, or phone number is required to start using it.
 
 1. Start the app on the device.
 2. Activate the `Cloud server` switch.
 3. Tap the `Offline` button at the bottom of the screen.
 4. In the `Cloud server` section, the credentials for basic authentication will be displayed.
 5. Make a curl call using a command like the following, replacing `<username>` and `<password>` with the values obtained in step 4:
-   
+
     ```
     curl -X POST -u <username>:<password> -H "Content-Type: application/json" -d '{ "message": "Hello, world!", "phoneNumbers": ["79990001234", "79995556677"] }' https://sms.capcom.me/api/3rdparty/v1/message
     ```
+
 
 <!-- _For more examples, please refer to the [Documentation](https://example.com)_ -->
 
@@ -190,7 +219,7 @@ Don't forget to give the project a star! Thanks again!
 <!-- LICENSE -->
 ## License
 
-Distributed under the Apache-2.0 license. See `LICENSE.txt` for more information.
+Distributed under the Apache-2.0 license. See [LICENSE](LICENSE) for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -234,6 +263,6 @@ Use this space to list resources you find helpful and would like to give credit 
 [issues-shield]: https://img.shields.io/github/issues/capcom6/android-sms-gateway.svg?style=for-the-badge
 [issues-url]: https://github.com/capcom6/android-sms-gateway/issues
 [license-shield]: https://img.shields.io/github/license/capcom6/android-sms-gateway.svg?style=for-the-badge
-[license-url]: https://github.com/capcom6/android-sms-gateway/blob/master/LICENSE.txt
-[product-screenshot]: docs/screenshot.png
+[license-url]: https://github.com/capcom6/android-sms-gateway/blob/master/LICENSE
+
 
