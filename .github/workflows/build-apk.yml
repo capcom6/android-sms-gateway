@@ -34,6 +34,7 @@ jobs:
       - name: Set App Version
         run: |
           sed -i "s/versionName.*/versionName \"${GITHUB_REF_NAME#v}\"/" app/build.gradle
+          sed -i "s/versionCode.*/versionCode $(( ($(date +%s) - $(date -d "2022-06-15" +%s)) / 86400 ))/" app/build.gradle
 
       #1
       - name: Decode Keystore
