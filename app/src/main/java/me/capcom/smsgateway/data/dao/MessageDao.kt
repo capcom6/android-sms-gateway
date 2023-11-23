@@ -35,9 +35,9 @@ interface MessageDao {
     @Query("UPDATE message SET state = :state WHERE id = :id")
     fun updateMessageState(id: String, state: Message.State)
 
-    @Query("UPDATE messagerecipient SET state = :state WHERE messageId = :id AND phoneNumber = :phoneNumber")
-    fun updateRecipientState(id: String, phoneNumber: String, state: Message.State)
+    @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND phoneNumber = :phoneNumber")
+    fun updateRecipientState(id: String, phoneNumber: String, state: Message.State, error: String?)
 
-    @Query("UPDATE messagerecipient SET state = :state WHERE messageId = :id")
-    fun updateRecipientsState(id: String, state: Message.State)
+    @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id")
+    fun updateRecipientsState(id: String, state: Message.State, error: String?)
 }

@@ -130,7 +130,11 @@ class WebService : Service() {
                                     id = message.message.id,
                                     state = message.message.state.toApiState(),
                                     recipients = message.recipients.map {
-                                        PostMessageResponse.Recipient(it.phoneNumber, it.state.toApiState())
+                                        PostMessageResponse.Recipient(
+                                            it.phoneNumber,
+                                            it.state.toApiState(),
+                                            it.error
+                                        )
                                     }
                                 )
                             )
@@ -149,7 +153,13 @@ class WebService : Service() {
                             call.respond(PostMessageResponse(
                                 message.message.id,
                                 message.message.state.toApiState(),
-                                message.recipients.map { PostMessageResponse.Recipient(it.phoneNumber, it.state.toApiState()) }
+                                message.recipients.map {
+                                    PostMessageResponse.Recipient(
+                                        it.phoneNumber,
+                                        it.state.toApiState(),
+                                        it.error
+                                    )
+                                }
                             ))
                         }
                     }

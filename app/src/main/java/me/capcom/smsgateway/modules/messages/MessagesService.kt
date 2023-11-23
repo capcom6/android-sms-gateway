@@ -41,12 +41,22 @@ class MessagesService(
         val message = MessageWithRecipients(
             Message(id, text, source),
             recipients.map {
-                val phoneNumber = PhoneHelper.filterPhoneNumber(it, countryCode ?: "RU")
-                MessageRecipient(
-                    id,
-                    phoneNumber ?: it,
-                    phoneNumber?.let { Message.State.Pending } ?: Message.State.Failed
-                )
+                try {
+                    val phoneNumber = PhoneHelper.filterPhoneNumber(it, countryCode ?: "RU")
+                    MessageRecipient(
+                        id,
+                        phoneNumber,
+                        Message.State.Pending
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    MessageRecipient(
+                        id,
+                        it,
+                        Message.State.Failed,
+                        "Phone parsing: " + e.message
+                    )
+                }
             },
         )
 
@@ -67,7 +77,7 @@ class MessagesService(
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            updateState(id, null, Message.State.Failed)
+            updateState(id, null, Message.State.Failed, "Sending: " + e.message)
             return requireNotNull(getMessage(id))
         }
 
@@ -101,21 +111,27 @@ class MessagesService(
             EventsReceiver.ACTION_DELIVERED -> Message.State.Delivered
             else -> return
         }
+        val error = when (resultCode) {
+            Activity.RESULT_OK -> null
+            else -> "Send result: " + this.resultToErrorMessage(resultCode)
+        }
+
         val (id, phone) = intent.dataString?.split("|", limit = 2) ?: return
 
-        updateState(id, phone, state)
+        updateState(id, phone, state, error)
     }
 
     private suspend fun updateState(
         id: String,
         phone: String?,
-        state: Message.State
+        state: Message.State,
+        error: String? = null
     ) {
         phone?.let {
-            dao.updateRecipientState(id, it, state)
+            dao.updateRecipientState(id, it, state, error)
         }
             ?: kotlin.run {
-                dao.updateRecipientsState(id, state)
+                dao.updateRecipientsState(id, state, error)
             }
 
         val msg = requireNotNull(getMessage(id))
@@ -125,8 +141,12 @@ class MessagesService(
                 id,
                 msg.state,
                 msg.message.source,
-                msg.recipients.associate {
-                    it.phoneNumber to it.state
+                msg.recipients.map {
+                    MessageStateChangedEvent.Recipient(
+                        it.phoneNumber,
+                        it.state,
+                        it.error
+                    )
                 }
             )
         )
@@ -182,7 +202,7 @@ class MessagesService(
                 updateState(id, it, Message.State.Processed)
             } catch (th: Throwable) {
                 th.printStackTrace()
-                updateState(id, it, Message.State.Failed)
+                updateState(id, it, Message.State.Failed, "Sending: " + th.message)
             }
         }
     }
@@ -204,7 +224,7 @@ class MessagesService(
             }
 
             if (subscriptionManager.activeSubscriptionInfoCount <= simNumber) {
-                throw UnsupportedOperationException("SIM $simNumber not found")
+                throw UnsupportedOperationException("SIM ${simNumber + 1} not found")
             }
 
             subscriptionManager.activeSubscriptionInfoList.find {
@@ -216,13 +236,75 @@ class MessagesService(
                     context.getSystemService(SmsManager::class.java)
                         .createForSubscriptionId(it.subscriptionId)
                 }
-            } ?: throw UnsupportedOperationException("SIM $simNumber not found")
+            } ?: throw UnsupportedOperationException("SIM ${simNumber + 1} not found")
         } else {
             if (Build.VERSION.SDK_INT < 31) {
                 SmsManager.getDefault()
             } else {
                 context.getSystemService(SmsManager::class.java)
             }
+        }
+    }
+
+    private fun resultToErrorMessage(resultCode: Int): String {
+        return when (resultCode) {
+            SmsManager.RESULT_ERROR_GENERIC_FAILURE -> "RESULT_ERROR_GENERIC_FAILURE"
+            SmsManager.RESULT_ERROR_RADIO_OFF -> "RESULT_ERROR_RADIO_OFF"
+            SmsManager.RESULT_ERROR_NULL_PDU -> "RESULT_ERROR_NULL_PDU"
+            SmsManager.RESULT_ERROR_NO_SERVICE -> "RESULT_ERROR_NO_SERVICE"
+            SmsManager.RESULT_ERROR_LIMIT_EXCEEDED -> "RESULT_ERROR_LIMIT_EXCEEDED"
+            SmsManager.RESULT_ERROR_FDN_CHECK_FAILURE -> "RESULT_ERROR_FDN_CHECK_FAILURE"
+            SmsManager.RESULT_ERROR_SHORT_CODE_NOT_ALLOWED -> "RESULT_ERROR_SHORT_CODE_NOT_ALLOWED"
+            SmsManager.RESULT_ERROR_SHORT_CODE_NEVER_ALLOWED -> "RESULT_ERROR_SHORT_CODE_NEVER_ALLOWED"
+            SmsManager.RESULT_RADIO_NOT_AVAILABLE -> "RESULT_RADIO_NOT_AVAILABLE"
+            SmsManager.RESULT_NETWORK_REJECT -> "RESULT_NETWORK_REJECT"
+            SmsManager.RESULT_INVALID_ARGUMENTS -> "RESULT_INVALID_ARGUMENTS"
+            SmsManager.RESULT_INVALID_STATE -> "RESULT_INVALID_STATE"
+            SmsManager.RESULT_NO_MEMORY -> "RESULT_NO_MEMORY"
+            SmsManager.RESULT_INVALID_SMS_FORMAT -> "RESULT_INVALID_SMS_FORMAT"
+            SmsManager.RESULT_SYSTEM_ERROR -> "RESULT_SYSTEM_ERROR"
+            SmsManager.RESULT_MODEM_ERROR -> "RESULT_MODEM_ERROR"
+            SmsManager.RESULT_NETWORK_ERROR -> "RESULT_NETWORK_ERROR"
+            SmsManager.RESULT_ENCODING_ERROR -> "RESULT_ENCODING_ERROR"
+            SmsManager.RESULT_INVALID_SMSC_ADDRESS -> "RESULT_INVALID_SMSC_ADDRESS"
+            SmsManager.RESULT_OPERATION_NOT_ALLOWED -> "RESULT_OPERATION_NOT_ALLOWED"
+            SmsManager.RESULT_INTERNAL_ERROR -> "RESULT_INTERNAL_ERROR"
+            SmsManager.RESULT_NO_RESOURCES -> "RESULT_NO_RESOURCES"
+            SmsManager.RESULT_CANCELLED -> "RESULT_CANCELLED"
+            SmsManager.RESULT_REQUEST_NOT_SUPPORTED -> "RESULT_REQUEST_NOT_SUPPORTED"
+            SmsManager.RESULT_NO_BLUETOOTH_SERVICE -> "RESULT_NO_BLUETOOTH_SERVICE"
+            SmsManager.RESULT_INVALID_BLUETOOTH_ADDRESS -> "RESULT_INVALID_BLUETOOTH_ADDRESS"
+            SmsManager.RESULT_BLUETOOTH_DISCONNECTED -> "RESULT_BLUETOOTH_DISCONNECTED"
+            SmsManager.RESULT_UNEXPECTED_EVENT_STOP_SENDING -> "RESULT_UNEXPECTED_EVENT_STOP_SENDING"
+            SmsManager.RESULT_SMS_BLOCKED_DURING_EMERGENCY -> "RESULT_SMS_BLOCKED_DURING_EMERGENCY"
+            SmsManager.RESULT_SMS_SEND_RETRY_FAILED -> "RESULT_SMS_SEND_RETRY_FAILED"
+            SmsManager.RESULT_REMOTE_EXCEPTION -> "RESULT_REMOTE_EXCEPTION"
+            SmsManager.RESULT_NO_DEFAULT_SMS_APP -> "RESULT_NO_DEFAULT_SMS_APP"
+            SmsManager.RESULT_RIL_RADIO_NOT_AVAILABLE -> "RESULT_RIL_RADIO_NOT_AVAILABLE"
+            SmsManager.RESULT_RIL_SMS_SEND_FAIL_RETRY -> "RESULT_RIL_SMS_SEND_FAIL_RETRY"
+            SmsManager.RESULT_RIL_NETWORK_REJECT -> "RESULT_RIL_NETWORK_REJECT"
+            SmsManager.RESULT_RIL_INVALID_STATE -> "RESULT_RIL_INVALID_STATE"
+            SmsManager.RESULT_RIL_INVALID_ARGUMENTS -> "RESULT_RIL_INVALID_ARGUMENTS"
+            SmsManager.RESULT_RIL_NO_MEMORY -> "RESULT_RIL_NO_MEMORY"
+            SmsManager.RESULT_RIL_REQUEST_RATE_LIMITED -> "RESULT_RIL_REQUEST_RATE_LIMITED"
+            SmsManager.RESULT_RIL_INVALID_SMS_FORMAT -> "RESULT_RIL_INVALID_SMS_FORMAT"
+            SmsManager.RESULT_RIL_SYSTEM_ERR -> "RESULT_RIL_SYSTEM_ERR"
+            SmsManager.RESULT_RIL_ENCODING_ERR -> "RESULT_RIL_ENCODING_ERR"
+            SmsManager.RESULT_RIL_INVALID_SMSC_ADDRESS -> "RESULT_RIL_INVALID_SMSC_ADDRESS"
+            SmsManager.RESULT_RIL_MODEM_ERR -> "RESULT_RIL_MODEM_ERR"
+            SmsManager.RESULT_RIL_NETWORK_ERR -> "RESULT_RIL_NETWORK_ERR"
+            SmsManager.RESULT_RIL_INTERNAL_ERR -> "RESULT_RIL_INTERNAL_ERR"
+            SmsManager.RESULT_RIL_REQUEST_NOT_SUPPORTED -> "RESULT_RIL_REQUEST_NOT_SUPPORTED"
+            SmsManager.RESULT_RIL_INVALID_MODEM_STATE -> "RESULT_RIL_INVALID_MODEM_STATE"
+            SmsManager.RESULT_RIL_NETWORK_NOT_READY -> "RESULT_RIL_NETWORK_NOT_READY"
+            SmsManager.RESULT_RIL_OPERATION_NOT_ALLOWED -> "RESULT_RIL_OPERATION_NOT_ALLOWED"
+            SmsManager.RESULT_RIL_NO_RESOURCES -> "RESULT_RIL_NO_RESOURCES"
+            SmsManager.RESULT_RIL_CANCELLED -> "RESULT_RIL_CANCELLED"
+            SmsManager.RESULT_RIL_SIM_ABSENT -> "RESULT_RIL_SIM_ABSENT"
+            SmsManager.RESULT_RIL_SIMULTANEOUS_SMS_AND_CALL_NOT_ALLOWED -> "RESULT_RIL_SIMULTANEOUS_SMS_AND_CALL_NOT_ALLOWED"
+            SmsManager.RESULT_RIL_ACCESS_BARRED -> "RESULT_RIL_ACCESS_BARRED"
+            SmsManager.RESULT_RIL_BLOCKED_DUE_TO_CALL -> "RESULT_RIL_BLOCKED_DUE_TO_CALL"
+            else -> "UNKNOWN"
         }
     }
 }

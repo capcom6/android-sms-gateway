@@ -10,6 +10,7 @@ data class PostMessageResponse(
 
     data class Recipient(
         val phoneNumber: String,
-        val state: MessageState
+        val state: MessageState,
+        val error: String?
     )
 }

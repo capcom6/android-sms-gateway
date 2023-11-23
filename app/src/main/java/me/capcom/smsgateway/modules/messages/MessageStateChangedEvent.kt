@@ -7,9 +7,15 @@ class MessageStateChangedEvent(
     val id: String,
     val state: Message.State,
     val source: Message.Source,
-    val recipients: Map<String, Message.State>,
+    val recipients: List<Recipient>,
 ): AppEvent(NAME) {
     companion object {
         const val NAME = "MessageStateChangedEvent"
     }
+
+    data class Recipient(
+        val phoneNumber: String,
+        val state: Message.State,
+        val error: String?,
+    )
 }
