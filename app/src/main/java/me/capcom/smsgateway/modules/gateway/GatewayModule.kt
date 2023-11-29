@@ -70,10 +70,11 @@ class GatewayModule(
                     GatewayApi.MessagePatchRequest(
                         event.id,
                         event.state.toApiState(),
-                        event.recipients.entries.map {
+                        event.recipients.map {
                             GatewayApi.RecipientState(
-                                it.key,
-                                it.value.toApiState()
+                                it.phoneNumber,
+                                it.state.toApiState(),
+                                it.error
                             )
                         }
                     )
@@ -136,7 +137,13 @@ class GatewayModule(
                                     it.message.id,
                                     it.message.state,
                                     it.message.source,
-                                    it.recipients.associate { it.phoneNumber to it.state }
+                                    it.recipients.map { rcp ->
+                                        MessageStateChangedEvent.Recipient(
+                                            rcp.phoneNumber,
+                                            rcp.state,
+                                            rcp.error
+                                        )
+                                    }
                                 )
                             )
                         }

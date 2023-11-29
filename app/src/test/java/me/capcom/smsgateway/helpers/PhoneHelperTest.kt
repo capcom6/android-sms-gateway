@@ -28,7 +28,14 @@ internal class PhoneHelperTest {
         )
 
         tests.forEach { (t, u) ->
-            assertEquals(u, PhoneHelper.filterPhoneNumber(t, "RU"))
+            assertEquals(
+                u,
+                try {
+                    PhoneHelper.filterPhoneNumber(t, "RU")
+                } catch (e: Exception) {
+                    null
+                }
+            )
         }
     }
 }

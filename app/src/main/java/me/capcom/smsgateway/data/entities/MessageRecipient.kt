@@ -12,5 +12,6 @@ import androidx.room.ForeignKey
 data class MessageRecipient(
     val messageId: String,
     val phoneNumber: String,
-    val state: Message.State = Message.State.Pending
+    val state: Message.State = Message.State.Pending,
+    val error: String? = null
 )

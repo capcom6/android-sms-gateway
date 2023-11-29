@@ -95,6 +95,7 @@ class GatewayApi() {
     data class RecipientState(
         val phoneNumber: String,
         val state: MessageState,
+        val error: String?,
     )
 
     companion object {
