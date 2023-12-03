@@ -5,4 +5,5 @@ data class PostMessageRequest(
     val message: String,
     val phoneNumbers: List<String>,
     val simNumber: Int? = null,
+    val withDeliveryReport: Boolean? = null,
 )

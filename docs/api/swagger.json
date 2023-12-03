@@ -204,6 +204,11 @@
             "description": "*(cloud-only)* message storage time in `Pending` state, `null` - forever",
             "minimum": 5,
             "example": 86400
+          },
+          "withDeliveryReport": {
+            "type": "boolean",
+            "description": "request delivery report",
+            "default": true
           }
         },
         "required": [

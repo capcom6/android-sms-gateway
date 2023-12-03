@@ -152,7 +152,8 @@ class GatewayModule(
                             it.message,
                             it.phoneNumbers,
                             Message.Source.Gateway,
-                            it.simNumber?.let { it - 1 }
+                            it.simNumber?.let { it - 1 },
+                            it.withDeliveryReport
                         )
                 } catch (th: Throwable) {
                     th.printStackTrace()
