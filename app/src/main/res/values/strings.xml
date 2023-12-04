@@ -14,4 +14,7 @@
     <string name="settings_public_address_is">Public address is %1$s:%2$d</string>
     <string name="settings_basic_auth">Authorization: Basic &lt;a href&gt;%1$s:%2$s&lt;/a&gt;</string>
     <string name="copied_to_clipboard">Copied</string>
+    <string name="sms_gateway">SMS Gateway</string>
+    <string name="local_sms_gateway_notifications">Local SMS Gateway notifications</string>
+    <string name="sms_gateway_is_running_on_port">SMS gateway is running on port %1$d</string>
 </resources>
