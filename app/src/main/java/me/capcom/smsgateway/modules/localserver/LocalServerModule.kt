@@ -27,8 +27,8 @@ class LocalServerModule(
         WebService.start(context)
 
         scope.launch(Dispatchers.IO) {
-            val localIP = LocalIPProvider(context).getIP() ?: "n/a"
-            val remoteIP = PublicIPProvider().getIP() ?: "n/a"
+            val localIP = LocalIPProvider(context).getIP()
+            val remoteIP = PublicIPProvider().getIP()
 
             events.emitEvent(IPReceivedEvent(localIP, remoteIP))
         }

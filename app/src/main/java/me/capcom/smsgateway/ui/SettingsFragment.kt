@@ -107,18 +107,22 @@ class SettingsFragment : Fragment() {
             App.instance.localServerModule.events.events.collect { event ->
                 val event = event as? IPReceivedEvent ?: return@collect
 
-                binding.textLocalIP.text =
+                binding.textLocalIP.text = event.localIP?.let {
                     getString(
                         R.string.settings_local_address_is,
                         event.localIP,
                         settingsHelper.serverPort
                     )
-                binding.textPublicIP.text =
+                } ?: getString(R.string.settings_local_address_not_found)
+
+                binding.textPublicIP.text = event.publicIP?.let {
                     getString(
                         R.string.settings_public_address_is,
                         event.publicIP,
                         settingsHelper.serverPort
                     )
+                } ?: getString(R.string.settings_public_address_not_found)
+
             }
         }
 

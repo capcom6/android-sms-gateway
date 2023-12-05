@@ -182,8 +182,8 @@ class WebService : Service() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Create the NotificationChannel
-            val name = "SMS-шлюз"
-            val descriptionText = "Уведомления о работе шлюза"
+            val name = getString(R.string.sms_gateway)
+            val descriptionText = getString(R.string.local_sms_gateway_notifications)
             val importance = NotificationManager.IMPORTANCE_LOW
             val mChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance)
             mChannel.description = descriptionText
@@ -202,7 +202,12 @@ class WebService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(getText(R.string.notification_title))
-            .setContentText("Шлюз запущен на порту ${settingsHelper.serverPort}")
+            .setContentText(
+                getString(
+                    R.string.sms_gateway_is_running_on_port,
+                    settingsHelper.serverPort
+                )
+            )
             .setSmallIcon(R.drawable.ic_sms)
             .build()
 

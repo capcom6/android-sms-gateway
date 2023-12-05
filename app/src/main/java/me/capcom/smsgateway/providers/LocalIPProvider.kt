@@ -10,14 +10,20 @@ import java.nio.ByteOrder
 
 class LocalIPProvider(private val context: Context): IPProvider {
     override suspend fun getIP(): String? {
-        var ipAddress = (context.applicationContext.getSystemService(WIFI_SERVICE) as WifiManager).connectionInfo.ipAddress
-        // Convert little-endian to big-endianif needed
-        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
-            ipAddress = Integer.reverseBytes(ipAddress)
+        return try {
+            var ipAddress =
+                (context.applicationContext.getSystemService(WIFI_SERVICE) as WifiManager).connectionInfo.ipAddress
+            // Convert little-endian to big-endianif needed
+            if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+                ipAddress = Integer.reverseBytes(ipAddress)
+            }
+
+            val ipByteArray: ByteArray = BigInteger.valueOf(0L + ipAddress).toByteArray()
+
+            (InetAddress.getByAddress(ipByteArray).hostAddress)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
-
-        val ipByteArray: ByteArray = BigInteger.valueOf(0L+ipAddress).toByteArray()
-
-        return (InetAddress.getByAddress(ipByteArray).hostAddress)
     }
 }
