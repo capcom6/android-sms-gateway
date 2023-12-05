@@ -17,4 +17,6 @@
     <string name="sms_gateway">SMS Gateway</string>
     <string name="local_sms_gateway_notifications">Local SMS Gateway notifications</string>
     <string name="sms_gateway_is_running_on_port">SMS gateway is running on port %1$d</string>
+    <string name="settings_local_address_not_found">Local address not available</string>
+    <string name="settings_public_address_not_found">Public address not available</string>
 </resources>
