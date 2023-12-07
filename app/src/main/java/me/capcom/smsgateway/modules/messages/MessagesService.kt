@@ -34,7 +34,8 @@ class MessagesService(
         text: String,
         recipients: List<String>,
         source: Message.Source,
-        simNumber: Int? = null,
+        simNumber: Int?,
+        withDeliveryReport: Boolean?
     ): MessageWithRecipients {
         val id = id ?: NanoIdUtils.randomNanoId()
 
@@ -73,7 +74,8 @@ class MessagesService(
                 text,
                 message.recipients.filter { it.state == Message.State.Pending }
                     .map { it.phoneNumber },
-                simNumber
+                simNumber,
+                withDeliveryReport ?: true
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -156,7 +158,8 @@ class MessagesService(
         id: String,
         message: String,
         recipients: List<String>,
-        simNumber: Int?
+        simNumber: Int?,
+        withDeliveryReport: Boolean
     ) {
         val smsManager: SmsManager = getSmsManager(simNumber)
 
@@ -172,17 +175,20 @@ class MessagesService(
                 ),
                 PendingIntent.FLAG_IMMUTABLE
             )
-            val deliveredIntent = PendingIntent.getBroadcast(
-                context,
-                0,
-                Intent(
-                    EventsReceiver.ACTION_DELIVERED,
-                    Uri.parse("$id|$it"),
+            val deliveredIntent = when (withDeliveryReport) {
+                false -> null
+                true -> PendingIntent.getBroadcast(
                     context,
-                    EventsReceiver::class.java
-                ),
-                PendingIntent.FLAG_IMMUTABLE
-            )
+                    0,
+                    Intent(
+                        EventsReceiver.ACTION_DELIVERED,
+                        Uri.parse("$id|$it"),
+                        context,
+                        EventsReceiver::class.java
+                    ),
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+            }
 
             try {
                 val parts = smsManager.divideMessage(message)
@@ -193,7 +199,7 @@ class MessagesService(
                         null,
                         parts,
                         ArrayList(parts.map { sentIntent }),
-                        ArrayList(parts.map { deliveredIntent })
+                        deliveredIntent?.let { ArrayList(parts.map { deliveredIntent }) }
                     )
                 } else {
                     smsManager.sendTextMessage(it, null, message, sentIntent, deliveredIntent)

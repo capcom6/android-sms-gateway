@@ -113,7 +113,8 @@ class WebService : Service() {
                                     request.message,
                                     request.phoneNumbers,
                                     Message.Source.Local,
-                                    request.simNumber?.let { it - 1 }
+                                    request.simNumber?.let { it - 1 },
+                                    request.withDeliveryReport
                                 )
                             } catch (e: IllegalArgumentException) {
                                 return@post call.respond(
