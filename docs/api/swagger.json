@@ -179,7 +179,8 @@
           },
           "message": {
             "type": "string",
-            "description": "message text"
+            "description": "message text",
+            "maxLength": 65535
           },
           "phoneNumbers": {
             "type": "array",
@@ -226,6 +227,7 @@
             "readOnly": true
           },
           "state": {
+            "type": "string",
             "enum": [
               "Pending",
               "Processed",
@@ -258,6 +260,7 @@
             "example": "+79990001234"
           },
           "state": {
+            "type": "string",
             "enum": [
               "Pending",
               "Processed",
