@@ -1,11 +1,12 @@
 package me.capcom.smsgateway
 
 import android.os.Bundle
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.tabs.TabLayoutMediator
 import me.capcom.smsgateway.databinding.ActivityMainBinding
-import me.capcom.smsgateway.ui.MessagesListFragment
+import me.capcom.smsgateway.ui.HolderFragment
 import me.capcom.smsgateway.ui.SettingsFragment
 
 class MainActivity : AppCompatActivity() {
@@ -18,7 +19,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.viewPager.adapter = FragmentsAdapter(this)
+        val adapter = FragmentsAdapter(this)
+        binding.viewPager.adapter = adapter
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             when (position) {
@@ -33,16 +35,26 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }.attach()
+
+        onBackPressedDispatcher.addCallback {
+            if (binding.viewPager.currentItem == 1) {
+                adapter.holderFragment.onBackPressed()
+                return@addCallback
+            }
+            this.handleOnBackPressed()
+        }
     }
 
     class FragmentsAdapter(activity: AppCompatActivity) :
         androidx.viewpager2.adapter.FragmentStateAdapter(activity) {
+        val holderFragment = HolderFragment.newInstance()
+
         override fun getItemCount(): Int = 2
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
                 0 -> SettingsFragment.newInstance()
-                else -> MessagesListFragment.newInstance()
+                else -> holderFragment
             }
         }
 

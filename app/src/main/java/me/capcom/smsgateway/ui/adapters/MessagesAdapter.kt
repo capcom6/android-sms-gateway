@@ -10,11 +10,18 @@ import me.capcom.smsgateway.databinding.ItemMessageBinding
 import java.text.DateFormat
 import java.util.Date
 
-class MessagesAdapter :
+class MessagesAdapter(
+    private val onItemClickListener: OnItemClickListener<Message>
+) :
     ListAdapter<Message, MessagesAdapter.MessageViewHolder>(MessageDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
-        return MessageViewHolder.create(parent)
+        return MessageViewHolder.create(parent).also { holder ->
+            holder.itemView.setOnClickListener {
+                val message = getItem(holder.adapterPosition)
+                onItemClickListener.onItemClick(message)
+            }
+        }
     }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
@@ -60,5 +67,9 @@ class MessagesAdapter :
         override fun areContentsTheSame(oldItem: Message, newItem: Message): Boolean {
             return oldItem == newItem
         }
+    }
+
+    interface OnItemClickListener<T> {
+        fun onItemClick(item: T)
     }
 }
