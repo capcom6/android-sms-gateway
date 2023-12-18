@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.databinding.ItemMessageBinding
+import me.capcom.smsgateway.ui.styles.color
 
 class MessageRecipientsAdapter :
     ListAdapter<MessageRecipient, MessageRecipientsAdapter.RecipientViewHolder>(
@@ -31,6 +32,7 @@ class MessageRecipientsAdapter :
             binding.textViewId.text = recipient.phoneNumber
             binding.textViewState.text = recipient.state.name
             binding.textViewDate.text = recipient.error
+            binding.imageViewState.setColorFilter(recipient.state.color)
         }
 
         companion object {

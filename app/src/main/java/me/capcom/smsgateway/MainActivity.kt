@@ -1,7 +1,6 @@
 package me.capcom.smsgateway
 
 import android.os.Bundle
-import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.tabs.TabLayoutMediator
@@ -35,26 +34,17 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }.attach()
-
-        onBackPressedDispatcher.addCallback {
-            if (binding.viewPager.currentItem == 1) {
-                adapter.holderFragment.onBackPressed()
-                return@addCallback
-            }
-            this.handleOnBackPressed()
-        }
     }
 
     class FragmentsAdapter(activity: AppCompatActivity) :
         androidx.viewpager2.adapter.FragmentStateAdapter(activity) {
-        val holderFragment = HolderFragment.newInstance()
 
         override fun getItemCount(): Int = 2
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
                 0 -> SettingsFragment.newInstance()
-                else -> holderFragment
+                else -> HolderFragment.newInstance()
             }
         }
 

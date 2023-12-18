@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.ui
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,8 +10,11 @@ import androidx.fragment.app.commit
 import me.capcom.smsgateway.R
 
 class HolderFragment : Fragment() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        parentFragmentManager.commit {
+            setPrimaryNavigationFragment(this@HolderFragment)
+        }
     }
 
     override fun onCreateView(
@@ -27,10 +31,6 @@ class HolderFragment : Fragment() {
         childFragmentManager.commit {
             add(R.id.rootLayout, MessagesListFragment.newInstance())
         }
-    }
-
-    fun onBackPressed(): Unit {
-        childFragmentManager.popBackStack()
     }
 
     companion object {

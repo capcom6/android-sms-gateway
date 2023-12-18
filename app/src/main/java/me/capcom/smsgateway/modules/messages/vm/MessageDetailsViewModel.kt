@@ -1,11 +1,22 @@
 package me.capcom.smsgateway.modules.messages.vm
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.liveData
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.modules.messages.repositories.MessagesRepository
 
 class MessageDetailsViewModel(
     private val messagesRepo: MessagesRepository
 ) : ViewModel() {
-    fun get(id: String) = liveData { emit(messagesRepo.get(id)) }
+    private val _message = MutableLiveData<MessageWithRecipients>()
+    val message: LiveData<MessageWithRecipients> = _message
+
+    fun get(id: String) {
+        viewModelScope.launch {
+            _message.value = messagesRepo.get(id)
+        }
+    }
 }

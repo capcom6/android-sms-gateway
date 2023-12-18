@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.DividerItemDecoration
 import me.capcom.smsgateway.databinding.FragmentMessageDetailsBinding
 import me.capcom.smsgateway.modules.messages.vm.MessageDetailsViewModel
 import me.capcom.smsgateway.ui.adapters.MessageRecipientsAdapter
@@ -20,10 +21,6 @@ class MessageDetailsFragment : Fragment() {
 
     private val recipientsAdapter by lazy { MessageRecipientsAdapter() }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -37,17 +34,17 @@ class MessageDetailsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.recyclerViewRecipients.adapter = recipientsAdapter
+        binding.recyclerViewRecipients.addItemDecoration(
+            DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL)
+        )
 
-        viewModel.get(id).observe(viewLifecycleOwner) {
-            if (it == null) {
-                return@observe
-            }
-
+        viewModel.message.observe(viewLifecycleOwner) {
             binding.textMessageId.text = it.message.id
             binding.textMessage.text = it.message.text
             binding.textMessageState.text = it.state.name
             recipientsAdapter.submitList(it.recipients)
         }
+        viewModel.get(id)
     }
 
     override fun onDestroyView() {

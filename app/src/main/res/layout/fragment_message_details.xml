@@ -20,7 +20,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Message ID"
+            tools:text="Message ID"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="Message State"
+            tools:text="Message State"
             android:textSize="16sp" />
     </LinearLayout>
 
@@ -43,7 +43,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        android:text="Message Text"
+        tools:text="Message Text"
         android:textSize="18sp"
         android:textStyle="bold" />
 
