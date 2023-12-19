@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.modules.messages.repositories.MessagesRepository
@@ -15,8 +16,8 @@ class MessageDetailsViewModel(
     val message: LiveData<MessageWithRecipients> = _message
 
     fun get(id: String) {
-        viewModelScope.launch {
-            _message.value = messagesRepo.get(id)
+        viewModelScope.launch(Dispatchers.IO) {
+            _message.postValue(messagesRepo.get(id))
         }
     }
 }
