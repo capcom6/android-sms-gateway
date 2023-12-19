@@ -1,10 +1,10 @@
 package me.capcom.smsgateway.data.dao
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
-import kotlinx.coroutines.flow.Flow
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
@@ -12,7 +12,7 @@ import me.capcom.smsgateway.data.entities.MessageWithRecipients
 @Dao
 interface MessageDao {
     @Query("SELECT * FROM message ORDER BY createdAt DESC LIMIT 50")
-    fun selectLast(): Flow<List<Message>>
+    fun selectLast(): LiveData<List<Message>>
 
     @Transaction
     @Query("SELECT * FROM message WHERE id = :id")
