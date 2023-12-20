@@ -1,20 +1,27 @@
 package me.capcom.smsgateway.ui.adapters
 
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.databinding.ItemMessageBinding
+import me.capcom.smsgateway.ui.styles.color
 import java.text.DateFormat
 import java.util.Date
 
-class MessagesAdapter :
+class MessagesAdapter(
+    private val onItemClickListener: OnItemClickListener<Message>
+) :
     ListAdapter<Message, MessagesAdapter.MessageViewHolder>(MessageDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
-        return MessageViewHolder.create(parent)
+        return MessageViewHolder.create(parent).also { holder ->
+            holder.itemView.setOnClickListener {
+                val message = getItem(holder.adapterPosition)
+                onItemClickListener.onItemClick(message)
+            }
+        }
     }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
@@ -30,15 +37,7 @@ class MessagesAdapter :
             binding.textViewDate.text =
                 DateFormat.getDateTimeInstance().format(Date(message.createdAt))
             binding.textViewState.text = message.state.name
-            val tintColor = when (message.state) {
-                Message.State.Pending -> Color.parseColor("#FFBB86FC")
-                Message.State.Processed -> Color.parseColor("#FF6200EE")
-                Message.State.Sent -> Color.parseColor("#FF3700B3")
-                Message.State.Delivered -> Color.parseColor("#FF03DAC5")
-                Message.State.Failed -> Color.parseColor("#FF018786")
-            }
-
-            binding.imageViewState.setColorFilter(tintColor)
+            binding.imageViewState.setColorFilter(message.state.color)
         }
 
         companion object {
@@ -60,5 +59,9 @@ class MessagesAdapter :
         override fun areContentsTheSame(oldItem: Message, newItem: Message): Boolean {
             return oldItem == newItem
         }
+    }
+
+    interface OnItemClickListener<T> {
+        fun onItemClick(item: T)
     }
 }

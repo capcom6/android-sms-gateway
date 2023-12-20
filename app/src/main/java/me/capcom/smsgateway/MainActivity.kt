@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.tabs.TabLayoutMediator
 import me.capcom.smsgateway.databinding.ActivityMainBinding
-import me.capcom.smsgateway.ui.MessagesListFragment
+import me.capcom.smsgateway.ui.HolderFragment
 import me.capcom.smsgateway.ui.SettingsFragment
 
 class MainActivity : AppCompatActivity() {
@@ -18,7 +18,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.viewPager.adapter = FragmentsAdapter(this)
+        val adapter = FragmentsAdapter(this)
+        binding.viewPager.adapter = adapter
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             when (position) {
@@ -37,12 +38,13 @@ class MainActivity : AppCompatActivity() {
 
     class FragmentsAdapter(activity: AppCompatActivity) :
         androidx.viewpager2.adapter.FragmentStateAdapter(activity) {
+
         override fun getItemCount(): Int = 2
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
                 0 -> SettingsFragment.newInstance()
-                else -> MessagesListFragment.newInstance()
+                else -> HolderFragment.newInstance()
             }
         }
 

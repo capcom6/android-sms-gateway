@@ -5,16 +5,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
 import androidx.recyclerview.widget.DividerItemDecoration
+import me.capcom.smsgateway.R
+import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.databinding.FragmentMessagesListBinding
 import me.capcom.smsgateway.modules.messages.vm.MessagesListViewModel
 import me.capcom.smsgateway.ui.adapters.MessagesAdapter
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class MessagesListFragment : Fragment() {
+class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Message> {
 
     private val viewModel: MessagesListViewModel by viewModel()
-    private val messagesAdapter = MessagesAdapter()
+    private val messagesAdapter = MessagesAdapter(this)
     private var _binding: FragmentMessagesListBinding? = null
     private val binding get() = _binding!!
 
@@ -54,5 +57,12 @@ class MessagesListFragment : Fragment() {
     companion object {
         fun newInstance() =
             MessagesListFragment()
+    }
+
+    override fun onItemClick(item: Message) {
+        parentFragmentManager.commit {
+            replace(R.id.rootLayout, MessageDetailsFragment.newInstance(item.id))
+            addToBackStack(null)
+        }
     }
 }
