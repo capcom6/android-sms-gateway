@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "title": "Android SMS Gateway - Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
@@ -239,6 +239,11 @@
             "readOnly": true,
             "default": "Pending"
           },
+          "isHashed": {
+            "type": "boolean",
+            "description": "*(cloud-only)* message data is hashed, `phoneNumber` is the first 16 characters of the SHA256 hash of the E164 formatted phone number",
+            "readOnly": true
+          },
           "recipients": {
             "type": "array",
             "description": "recipients' statuses",
@@ -255,8 +260,8 @@
           "phoneNumber": {
             "type": "string",
             "description": "phone number",
-            "pattern": "^\\+?\\d+$",
             "maxLength": 16,
+            "readOnly": true,
             "example": "+79990001234"
           },
           "state": {
@@ -268,12 +273,14 @@
               "Delivered",
               "Failed"
             ],
-            "description": "state"
+            "description": "state",
+            "readOnly": true
           },
           "error": {
             "type": "string",
             "nullable": true,
-            "description": "error message"
+            "description": "error message for `Failed` state",
+            "readOnly": true
           }
         }
       }
