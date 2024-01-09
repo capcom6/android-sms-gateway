@@ -19,4 +19,10 @@
     <string name="sms_gateway_is_running_on_port">SMS gateway is running on port %1$d</string>
     <string name="settings_local_address_not_found">Local address not available</string>
     <string name="settings_public_address_not_found">Public address not available</string>
+    <string name="settings_encryption">Encryption</string>
+    <string name="settings_encryption_description">Please enter passphrase for end-to-end encryption.</string>
+    <string name="settings_encryption_hint">passphrase</string>
+    <string name="settings_setup_encryption">Setup encryption</string>
+    <string name="button_ok">OK</string>
+    <string name="button_cancel">Cancel</string>
 </resources>

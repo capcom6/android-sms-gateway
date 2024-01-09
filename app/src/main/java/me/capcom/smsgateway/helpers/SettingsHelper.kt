@@ -30,20 +30,17 @@ class SettingsHelper(private val context: Context) {
 
     var serverToken: String
         get() = settings.getString(PREF_KEY_SERVER_TOKEN, null)
-            ?: NanoIdUtils.randomNanoId(NanoIdUtils.DEFAULT_NUMBER_GENERATOR, NanoIdUtils.DEFAULT_ALPHABET, 8)
+            ?: NanoIdUtils.randomNanoId(
+                NanoIdUtils.DEFAULT_NUMBER_GENERATOR,
+                NanoIdUtils.DEFAULT_ALPHABET,
+                8
+            )
                 .also { serverToken = it }
         set(value) = settings.edit { putString(PREF_KEY_SERVER_TOKEN, value) }
 
     var fcmToken: String?
         get() = settings.getString(PREF_KEY_FCM_TOKEN, null)
         set(value) = settings.edit { putString(PREF_KEY_FCM_TOKEN, value) }
-
-    data class GatewaySettings(
-        val id: String,
-        val token: String,
-        val login: String,
-        val password: String,
-    )
 
     companion object {
         private const val PREF_KEY_AUTOSTART = "autostart"

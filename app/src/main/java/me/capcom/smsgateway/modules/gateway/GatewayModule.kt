@@ -14,20 +14,20 @@ import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.messages.MessageStateChangedEvent
 import me.capcom.smsgateway.modules.messages.MessagesService
-import me.capcom.smsgateway.modules.settings.KeyValueStorage
-import me.capcom.smsgateway.modules.settings.get
 import me.capcom.smsgateway.services.PushService
 
 class GatewayModule(
     private val messagesService: MessagesService,
-    private val storage: KeyValueStorage,
+    private val settings: GatewaySettings,
 ) {
     private val api = GatewayApi()
 
     val events = EventBus()
     var enabled: Boolean
-        get() = storage.get<Boolean>(ENABLED) ?: false
-        set(value) = storage.set(ENABLED, value)
+        get() = settings.enabled
+        set(value) {
+            settings.enabled = value
+        }
 
     fun start(context: Context) {
         if (!enabled) return
@@ -60,8 +60,7 @@ class GatewayModule(
     private suspend fun sendState(
         event: MessageStateChangedEvent
     ) {
-        val settings = storage.get<GatewayApi.DeviceRegisterResponse>(REGISTRATION_INFO)
-            ?: return
+        val settings = settings.registrationInfo ?: return
 
         withContext(Dispatchers.IO) {
             api.patchMessages(
@@ -86,7 +85,7 @@ class GatewayModule(
     suspend fun registerFcmToken(token: String) {
         if (!enabled) return
 
-        val settings = storage.get<GatewayApi.DeviceRegisterResponse>(REGISTRATION_INFO)
+        val settings = settings.registrationInfo
         settings?.token?.let {
             withContext(Dispatchers.IO) {
                 api.devicePatch(
@@ -104,61 +103,63 @@ class GatewayModule(
                     settings.password,
                 )
             )
-        } ?: kotlin.run {
-            val response = withContext(Dispatchers.IO) {
-                api.deviceRegister(
-                    GatewayApi.DeviceRegisterRequest(
-                        Build.MANUFACTURER + Build.PRODUCT,
-                        token
+        }
+            ?: kotlin.run {
+                val response = withContext(Dispatchers.IO) {
+                    api.deviceRegister(
+                        GatewayApi.DeviceRegisterRequest(
+                            "${Build.MANUFACTURER}/${Build.PRODUCT}",
+                            token
+                        )
+                    )
+                }
+                this.settings.registrationInfo = response
+
+                events.emitEvent(
+                    DeviceRegisteredEvent(
+                        response.login,
+                        response.password,
                     )
                 )
             }
-            storage.set(REGISTRATION_INFO, response)
-
-            events.emitEvent(
-                DeviceRegisteredEvent(
-                    response.login,
-                    response.password,
-                )
-            )
-        }
     }
 
     internal suspend fun getNewMessages() {
-        val settings = storage.get<GatewayApi.DeviceRegisterResponse>(REGISTRATION_INFO) ?: return
+        val settings = settings.registrationInfo ?: return
         withContext(Dispatchers.IO) {
-            val messages = api.getMessages(settings.token)
-            messages.forEach {
-                try {
-                    messagesService.getMessage(it.id)
-                        ?.also {
-                            sendState(
-                                MessageStateChangedEvent(
-                                    it.message.id,
-                                    it.message.state,
-                                    it.message.source,
-                                    it.recipients.map { rcp ->
-                                        MessageStateChangedEvent.Recipient(
-                                            rcp.phoneNumber,
-                                            rcp.state,
-                                            rcp.error
-                                        )
-                                    }
+            api.getMessages(settings.token)
+                .forEach {
+                    try {
+                        messagesService.getMessage(it.id)
+                            ?.also {
+                                sendState(
+                                    MessageStateChangedEvent(
+                                        it.message.id,
+                                        it.message.state,
+                                        it.message.source,
+                                        it.recipients.map { rcp ->
+                                            MessageStateChangedEvent.Recipient(
+                                                rcp.phoneNumber,
+                                                rcp.state,
+                                                rcp.error
+                                            )
+                                        }
+                                    )
                                 )
+                            }
+                            ?: messagesService.sendMessage(
+                                it.id,
+                                it.message,
+                                it.phoneNumbers,
+                                Message.Source.Gateway,
+                                it.simNumber?.let { it - 1 },
+                                it.withDeliveryReport,
+                                it.isEncrypted ?: false,
                             )
-                        }
-                        ?: messagesService.sendMessage(
-                            it.id,
-                            it.message,
-                            it.phoneNumbers,
-                            Message.Source.Gateway,
-                            it.simNumber?.let { it - 1 },
-                            it.withDeliveryReport
-                        )
-                } catch (th: Throwable) {
-                    th.printStackTrace()
+                    } catch (th: Throwable) {
+                        th.printStackTrace()
+                    }
                 }
-            }
         }
     }
 
@@ -173,8 +174,5 @@ class GatewayModule(
     companion object {
         private val job = SupervisorJob()
         private val scope = CoroutineScope(job)
-
-        private const val REGISTRATION_INFO = "REGISTRATION_INFO"
-        private const val ENABLED = "ENABLED"
     }
 }

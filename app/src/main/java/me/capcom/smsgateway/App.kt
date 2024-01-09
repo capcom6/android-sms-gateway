@@ -3,10 +3,12 @@ package me.capcom.smsgateway
 import android.app.Application
 import androidx.preference.PreferenceManager
 import me.capcom.smsgateway.data.dbModule
+import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.gateway.GatewayModule
 import me.capcom.smsgateway.modules.localserver.LocalServerModule
 import me.capcom.smsgateway.modules.messages.messagesModule
 import me.capcom.smsgateway.modules.settings.PreferencesStorage
+import me.capcom.smsgateway.modules.settings.settingsModule
 import me.capcom.smsgateway.receivers.EventsReceiver
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
@@ -21,8 +23,10 @@ class App: Application() {
             androidLogger()
             androidContext(this@App)
             modules(
+                settingsModule,
                 dbModule,
                 messagesModule,
+                encryptionModule,
             )
         }
 
@@ -32,11 +36,11 @@ class App: Application() {
     }
 
     val settings by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
-    
+
     val gatewayModule by lazy {
         GatewayModule(
             get(),
-            PreferencesStorage(settings, "gateway")
+            get(),
         )
     }
     val localServerModule by lazy {

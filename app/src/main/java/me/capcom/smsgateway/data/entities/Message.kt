@@ -10,6 +10,8 @@ data class Message(
     val text: String,
     @ColumnInfo(defaultValue = "Local")
     val source: Source,
+    @ColumnInfo(defaultValue = "0")
+    val isEncrypted: Boolean,
     val state: State = State.Pending,
     @ColumnInfo(defaultValue = "0")
     val createdAt: Long = System.currentTimeMillis(),   // do we need index here for querying in UI?
