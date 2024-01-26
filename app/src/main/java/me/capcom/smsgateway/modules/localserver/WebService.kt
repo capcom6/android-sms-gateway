@@ -114,7 +114,8 @@ class WebService : Service() {
                                     request.phoneNumbers,
                                     Message.Source.Local,
                                     request.simNumber?.let { it - 1 },
-                                    request.withDeliveryReport
+                                    request.withDeliveryReport,
+                                    request.isEncrypted ?: false,
                                 )
                             } catch (e: IllegalArgumentException) {
                                 return@post call.respond(
@@ -136,7 +137,8 @@ class WebService : Service() {
                                             it.state.toApiState(),
                                             it.error
                                         )
-                                    }
+                                    },
+                                    isEncrypted = message.message.isEncrypted
                                 )
                             )
                         }
@@ -148,20 +150,26 @@ class WebService : Service() {
                                 messagesService.getMessage(id)
                                     ?: return@get call.respond(HttpStatusCode.NotFound)
                             } catch (e: Throwable) {
-                                return@get call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
+                                return@get call.respond(
+                                    HttpStatusCode.InternalServerError,
+                                    mapOf("message" to e.message)
+                                )
                             }
 
-                            call.respond(PostMessageResponse(
-                                message.message.id,
-                                message.message.state.toApiState(),
-                                message.recipients.map {
-                                    PostMessageResponse.Recipient(
-                                        it.phoneNumber,
-                                        it.state.toApiState(),
-                                        it.error
-                                    )
-                                }
-                            ))
+                            call.respond(
+                                PostMessageResponse(
+                                    message.message.id,
+                                    message.message.state.toApiState(),
+                                    message.recipients.map {
+                                        PostMessageResponse.Recipient(
+                                            it.phoneNumber,
+                                            it.state.toApiState(),
+                                            it.error
+                                        )
+                                    },
+                                    message.message.isEncrypted
+                                )
+                            )
                         }
                     }
                 }

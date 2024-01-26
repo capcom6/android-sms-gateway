@@ -22,6 +22,7 @@ internal class PhoneHelperTest {
             "+49 171 1234567" to "+491711234567", // Germany mobile
             "+61 2 1234 5678" to null, // Australia fixed line
             "+61 4 1234 5678" to "+61412345678", // Australia mobile
+            "+61493563919" to "+61493563919", // Australia mobile from https://github.com/capcom6/android-sms-gateway/issues/28
             "+81 3 1234 5678" to null, // Japan fixed line
             "+1 416-555-1234" to "+14165551234", // Canada
             "+91 98765 43210" to "+919876543210", // India

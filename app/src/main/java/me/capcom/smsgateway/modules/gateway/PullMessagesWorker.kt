@@ -16,8 +16,9 @@ import androidx.work.WorkerParameters
 import me.capcom.smsgateway.App
 import java.util.concurrent.TimeUnit
 
-class PullMessagesWorker(appContext: Context,
-                         params: WorkerParameters
+class PullMessagesWorker(
+    appContext: Context,
+    params: WorkerParameters
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
         try {

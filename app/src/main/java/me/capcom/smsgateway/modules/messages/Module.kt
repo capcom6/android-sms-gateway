@@ -8,7 +8,7 @@ import org.koin.dsl.module
 
 val messagesModule = module {
     single { MessagesRepository(get()) }
-    single { MessagesService(get(), get()) }
+    single { MessagesService(get(), get(), get()) }
     viewModel { MessagesListViewModel(get()) }
     viewModel { MessageDetailsViewModel(get()) }
 }

@@ -30,15 +30,19 @@ import me.capcom.smsgateway.App
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.databinding.FragmentSettingsBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.encryption.EncryptionSettings
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
+import me.capcom.smsgateway.ui.dialogs.EncryptionDialog
+import org.koin.android.ext.android.inject
 
 class SettingsFragment : Fragment() {
 
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private val settingsHelper by lazy { SettingsHelper(requireContext()) }
+    private val settingsHelper: SettingsHelper by inject()
+    private val encryptionSettings: EncryptionSettings by inject()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -62,6 +66,10 @@ class SettingsFragment : Fragment() {
                     )
                 )
         )
+
+        binding.buttonSetUpEncryption.setOnClickListener {
+            actionSetUpEncryption()
+        }
 
         binding.switchAutostart.isChecked = settingsHelper.autostart
 
@@ -129,6 +137,20 @@ class SettingsFragment : Fragment() {
         stateLiveData.observe(viewLifecycleOwner) {
             binding.buttonStart.isChecked = it
         }
+
+        parentFragmentManager.setFragmentResultListener(
+            ENCRYPTION_DIALOG_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, bundle ->
+            encryptionSettings.passphrase = EncryptionDialog.getPassphrase(bundle)
+        }
+    }
+
+    private fun actionSetUpEncryption() {
+        EncryptionDialog.newInstance(
+            ENCRYPTION_DIALOG_REQUEST_KEY,
+            encryptionSettings.passphrase ?: ""
+        ).show(parentFragmentManager, EncryptionDialog::class.java.name)
     }
 
     private fun makeCopyableLink(source: Spanned): Spanned {
@@ -243,6 +265,8 @@ class SettingsFragment : Fragment() {
     }
 
     companion object {
+        private const val ENCRYPTION_DIALOG_REQUEST_KEY = "encryption_dialog_request_key"
+
         @JvmStatic
         fun newInstance() =
             SettingsFragment()

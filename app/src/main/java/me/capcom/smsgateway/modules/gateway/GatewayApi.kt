@@ -91,6 +91,7 @@ class GatewayApi() {
         val phoneNumbers: List<String>,
         val simNumber: Int? = null,
         val withDeliveryReport: Boolean? = null,
+        val isEncrypted: Boolean? = null,
     )
 
     data class RecipientState(

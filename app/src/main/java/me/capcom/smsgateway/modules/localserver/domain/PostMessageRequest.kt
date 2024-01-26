@@ -6,4 +6,5 @@ data class PostMessageRequest(
     val phoneNumbers: List<String>,
     val simNumber: Int? = null,
     val withDeliveryReport: Boolean? = null,
+    val isEncrypted: Boolean? = null,
 )

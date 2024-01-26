@@ -6,6 +6,7 @@ data class PostMessageResponse(
     val id: String,
     val state: MessageState,
     val recipients: List<Recipient>,
+    val isEncrypted: Boolean,
 ) {
 
     data class Recipient(

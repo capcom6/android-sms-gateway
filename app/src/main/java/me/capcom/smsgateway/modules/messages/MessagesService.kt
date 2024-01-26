@@ -18,12 +18,14 @@ import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.helpers.PhoneHelper
+import me.capcom.smsgateway.modules.encryption.EncryptionService
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.receivers.EventsReceiver
 
 class MessagesService(
     private val context: Context,
     private val dao: MessageDao,    // todo: use MessagesRepository
+    private val encryptionService: EncryptionService,
 ) {
     val events = EventBus()
     private val countryCode: String? =
@@ -35,29 +37,19 @@ class MessagesService(
         recipients: List<String>,
         source: Message.Source,
         simNumber: Int?,
-        withDeliveryReport: Boolean?
+        withDeliveryReport: Boolean?,
+        isEncrypted: Boolean,
     ): MessageWithRecipients {
         val id = id ?: NanoIdUtils.randomNanoId()
 
         val message = MessageWithRecipients(
-            Message(id, text, source),
+            Message(id, text, source, isEncrypted),
             recipients.map {
-                try {
-                    val phoneNumber = PhoneHelper.filterPhoneNumber(it, countryCode ?: "RU")
-                    MessageRecipient(
-                        id,
-                        phoneNumber,
-                        Message.State.Pending
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    MessageRecipient(
-                        id,
-                        it,
-                        Message.State.Failed,
-                        "Phone parsing: " + e.message
-                    )
-                }
+                MessageRecipient(
+                    id,
+                    it,
+                    Message.State.Pending
+                )
             },
         )
 
@@ -75,7 +67,8 @@ class MessagesService(
                 message.recipients.filter { it.state == Message.State.Pending }
                     .map { it.phoneNumber },
                 simNumber,
-                withDeliveryReport ?: true
+                withDeliveryReport ?: true,
+                isEncrypted
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -159,9 +152,14 @@ class MessagesService(
         message: String,
         recipients: List<String>,
         simNumber: Int?,
-        withDeliveryReport: Boolean
+        withDeliveryReport: Boolean,
+        isEncrypted: Boolean
     ) {
         val smsManager: SmsManager = getSmsManager(simNumber)
+        val message = when (isEncrypted) {
+            true -> encryptionService.decrypt(message)
+            false -> message
+        }
 
         recipients.forEach {
             val sentIntent = PendingIntent.getBroadcast(
@@ -192,17 +190,28 @@ class MessagesService(
 
             try {
                 val parts = smsManager.divideMessage(message)
-
+                val phoneNumber = when (isEncrypted) {
+                    true -> encryptionService.decrypt(it)
+                    false -> it
+                }
+                val normalizedPhoneNumber =
+                    PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
                 if (parts.size > 1) {
                     smsManager.sendMultipartTextMessage(
-                        it,
+                        normalizedPhoneNumber,
                         null,
                         parts,
                         ArrayList(parts.map { sentIntent }),
                         deliveredIntent?.let { ArrayList(parts.map { deliveredIntent }) }
                     )
                 } else {
-                    smsManager.sendTextMessage(it, null, message, sentIntent, deliveredIntent)
+                    smsManager.sendTextMessage(
+                        normalizedPhoneNumber,
+                        null,
+                        message,
+                        sentIntent,
+                        deliveredIntent
+                    )
                 }
 
                 updateState(id, it, Message.State.Processed)
