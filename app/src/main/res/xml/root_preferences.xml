@@ -1,0 +1,18 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/messages_header">
+
+        <SeekBarPreference
+            android:max="600"
+            app:defaultValue="0"
+            app:enabled="true"
+            app:icon="@drawable/ic_timer"
+            app:key="messages.SECONDS_BETWEEN_MESSAGES"
+            app:showSeekBarValue="true"
+            app:summary="@string/random_value_from_0_to_selected_value_will_be_used"
+            app:title="@string/delay_between_messages_seconds" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

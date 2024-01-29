@@ -1,12 +1,13 @@
-package me.capcom.smsgateway.modules.messages
+package me.capcom.smsgateway.modules.messages.events
 
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.modules.events.AppEvent
+import me.capcom.smsgateway.modules.messages.data.MessageSource
 
 class MessageStateChangedEvent(
     val id: String,
     val state: Message.State,
-    val source: Message.Source,
+    val source: MessageSource,
     val recipients: List<Recipient>,
 ): AppEvent(NAME) {
     companion object {

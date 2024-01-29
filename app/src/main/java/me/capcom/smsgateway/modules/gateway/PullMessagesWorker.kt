@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.modules.gateway
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.map
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
@@ -13,6 +14,8 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.App
 import java.util.concurrent.TimeUnit
 
@@ -22,7 +25,8 @@ class PullMessagesWorker(
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
         try {
-            App.instance.gatewayModule.getNewMessages()
+            Log.d(this.javaClass.name, "Pulling messages")
+            withContext(Dispatchers.IO) { App.instance.gatewayModule.getNewMessages() }
             return Result.success()
         } catch (th: Throwable) {
             th.printStackTrace()

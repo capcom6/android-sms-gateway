@@ -11,6 +11,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -38,6 +39,8 @@ import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
 import me.capcom.smsgateway.modules.messages.MessagesService
+import me.capcom.smsgateway.modules.messages.data.MessageSource
+import me.capcom.smsgateway.modules.messages.data.SendRequest
 import org.koin.android.ext.android.inject
 import kotlin.concurrent.thread
 
@@ -107,38 +110,48 @@ class WebService : Service() {
                                 )
                             }
 
-                            val message = try {
-                                messagesService.sendMessage(
-                                    request.id,
-                                    request.message,
-                                    request.phoneNumbers,
-                                    Message.Source.Local,
-                                    request.simNumber?.let { it - 1 },
-                                    request.withDeliveryReport,
-                                    request.isEncrypted ?: false,
+                            val messageId = try {
+                                val sendRequest = SendRequest(
+                                    MessageSource.Local,
+                                    me.capcom.smsgateway.modules.messages.data.Message(
+                                        request.id ?: NanoIdUtils.randomNanoId(),
+                                        request.message,
+                                        request.phoneNumbers,
+                                        request.isEncrypted ?: false
+                                    ),
+                                    me.capcom.smsgateway.modules.messages.data.SendParams(
+                                        request.withDeliveryReport ?: true,
+                                        request.simNumber
+                                    )
                                 )
+                                messagesService.enqueueMessage(sendRequest)
+
+                                sendRequest.message.id
                             } catch (e: IllegalArgumentException) {
                                 return@post call.respond(
                                     HttpStatusCode.BadRequest,
                                     mapOf("message" to e.message)
                                 )
                             } catch (e: Throwable) {
-                                return@post call.respond(HttpStatusCode.InternalServerError, mapOf("message" to e.message))
+                                return@post call.respond(
+                                    HttpStatusCode.InternalServerError,
+                                    mapOf("message" to e.message)
+                                )
                             }
 
                             call.respond(
-                                HttpStatusCode.Created,
+                                HttpStatusCode.Accepted,
                                 PostMessageResponse(
-                                    id = message.message.id,
-                                    state = message.message.state.toApiState(),
-                                    recipients = message.recipients.map {
+                                    id = messageId,
+                                    state = MessageState.Pending,
+                                    recipients = request.phoneNumbers.map {
                                         PostMessageResponse.Recipient(
-                                            it.phoneNumber,
-                                            it.state.toApiState(),
-                                            it.error
+                                            it,
+                                            MessageState.Pending,
+                                            null
                                         )
                                     },
-                                    isEncrypted = message.message.isEncrypted
+                                    isEncrypted = request.isEncrypted ?: false
                                 )
                             )
                         }

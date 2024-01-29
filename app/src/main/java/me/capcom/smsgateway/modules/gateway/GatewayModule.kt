@@ -2,6 +2,7 @@ package me.capcom.smsgateway.modules.gateway
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,8 +13,11 @@ import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
-import me.capcom.smsgateway.modules.messages.MessageStateChangedEvent
 import me.capcom.smsgateway.modules.messages.MessagesService
+import me.capcom.smsgateway.modules.messages.data.MessageSource
+import me.capcom.smsgateway.modules.messages.data.SendParams
+import me.capcom.smsgateway.modules.messages.data.SendRequest
+import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.services.PushService
 
 class GatewayModule(
@@ -38,7 +42,7 @@ class GatewayModule(
             withContext(Dispatchers.IO) {
                 messagesService.events.events.collect { event ->
                     val event = event as? MessageStateChangedEvent ?: return@collect
-                    if (event.source != Message.Source.Gateway) return@collect
+                    if (event.source != MessageSource.Gateway) return@collect
 
                     try {
                         sendState(event)
@@ -126,41 +130,64 @@ class GatewayModule(
 
     internal suspend fun getNewMessages() {
         val settings = settings.registrationInfo ?: return
-        withContext(Dispatchers.IO) {
-            api.getMessages(settings.token)
-                .forEach {
-                    try {
-                        messagesService.getMessage(it.id)
-                            ?.also {
-                                sendState(
-                                    MessageStateChangedEvent(
-                                        it.message.id,
-                                        it.message.state,
-                                        it.message.source,
-                                        it.recipients.map { rcp ->
-                                            MessageStateChangedEvent.Recipient(
-                                                rcp.phoneNumber,
-                                                rcp.state,
-                                                rcp.error
-                                            )
-                                        }
-                                    )
-                                )
-                            }
-                            ?: messagesService.sendMessage(
-                                it.id,
-                                it.message,
-                                it.phoneNumbers,
-                                Message.Source.Gateway,
-                                it.simNumber?.let { it - 1 },
-                                it.withDeliveryReport,
-                                it.isEncrypted ?: false,
-                            )
-                    } catch (th: Throwable) {
-                        th.printStackTrace()
-                    }
-                }
+        Log.d(
+            this.javaClass.name,
+            "Thread: ${Thread.currentThread().name}. Registration info: $settings"
+        )
+
+        Log.d(
+            this.javaClass.name,
+            "Thread: ${Thread.currentThread().name}. Getting messages"
+        )
+        val messages = api.getMessages(settings.token)
+        for (message in messages) {
+            Log.d(
+                this.javaClass.name,
+                "Thread: ${Thread.currentThread().name}. Got message: $message"
+            )
+
+            try {
+                processMessage(message)
+            } catch (th: Throwable) {
+                th.printStackTrace()
+            }
         }
+    }
+
+    private suspend fun processMessage(message: GatewayApi.Message) {
+        val messageState = messagesService.getMessage(message.id)
+        if (messageState != null) {
+            sendState(
+                MessageStateChangedEvent(
+                    messageState.message.id,
+                    messageState.message.state,
+                    messageState.message.source,
+                    messageState.recipients.map { rcp ->
+                        MessageStateChangedEvent.Recipient(
+                            rcp.phoneNumber,
+                            rcp.state,
+                            rcp.error
+                        )
+                    }
+                )
+            )
+            return
+        }
+
+        val request = SendRequest(
+            MessageSource.Gateway,
+            me.capcom.smsgateway.modules.messages.data.Message(
+                message.id,
+                message.message,
+                message.phoneNumbers,
+                message.isEncrypted ?: false
+            ),
+            SendParams(
+                message.withDeliveryReport ?: true,
+                message.simNumber
+            )
+        )
+        messagesService.enqueueMessage(request)
     }
 
     private fun Message.State.toApiState(): MessageState = when (this) {
