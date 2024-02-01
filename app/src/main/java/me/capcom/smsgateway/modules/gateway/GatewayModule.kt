@@ -2,7 +2,6 @@ package me.capcom.smsgateway.modules.gateway
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -130,22 +129,8 @@ class GatewayModule(
 
     internal suspend fun getNewMessages() {
         val settings = settings.registrationInfo ?: return
-        Log.d(
-            this.javaClass.name,
-            "Thread: ${Thread.currentThread().name}. Registration info: $settings"
-        )
-
-        Log.d(
-            this.javaClass.name,
-            "Thread: ${Thread.currentThread().name}. Getting messages"
-        )
         val messages = api.getMessages(settings.token)
         for (message in messages) {
-            Log.d(
-                this.javaClass.name,
-                "Thread: ${Thread.currentThread().name}. Got message: $message"
-            )
-
             try {
                 processMessage(message)
             } catch (th: Throwable) {

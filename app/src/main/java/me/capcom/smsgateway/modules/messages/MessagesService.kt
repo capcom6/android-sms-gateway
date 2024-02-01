@@ -49,13 +49,9 @@ class MessagesService(
         // 3. Worker: select all Pending messages from DB
         // 4. Worker: send one by one with delays setting Sent state
         // 5. Worker: repeat from step 3 while there are Pending messages
+        // Notes: we need to dismiss old messages in Pending state, so we need to introduce TTL
         scope.launch(Dispatchers.Default) {
             for (msg in queue) {
-                Log.d(
-                    this.javaClass.simpleName,
-                    "Thread: ${Thread.currentThread().name} Sending: ${msg.message.id}"
-                )
-
                 try {
                     sendMessage(msg)
                 } catch (e: Exception) {
@@ -66,19 +62,11 @@ class MessagesService(
                 if (settings.secondsBetweenMessages > 0) {
                     delay((0..settings.secondsBetweenMessages).random() * 1000L)
                 }
-//                Log.d(
-//                    this.javaClass.simpleName,
-//                    "Thread: ${Thread.currentThread().name} Delay: ${settings.secondsBetweenMessages}"
-//                )
             }
         }
     }
 
     suspend fun enqueueMessage(request: SendRequest) {
-        Log.d(
-            this.javaClass.simpleName,
-            "Thread: ${Thread.currentThread().name} Enqueuing: ${request.message.id}"
-        )
         queue.send(request)
     }
 
@@ -201,6 +189,8 @@ class MessagesService(
         isEncrypted: Boolean
     ) {
         val smsManager: SmsManager = getSmsManager(simNumber)
+
+        @Suppress("NAME_SHADOWING")
         val message = when (isEncrypted) {
             true -> encryptionService.decrypt(message)
             false -> message
@@ -277,6 +267,7 @@ class MessagesService(
                 throw UnsupportedOperationException("SIM selection requires READ_PHONE_STATE permission")
             }
 
+            @Suppress("DEPRECATION")
             val subscriptionManager: SubscriptionManager = when {
                 Build.VERSION.SDK_INT < 22 -> throw UnsupportedOperationException("SIM selection available from API 22")
                 Build.VERSION.SDK_INT < 31 -> SubscriptionManager.from(context)
@@ -291,6 +282,7 @@ class MessagesService(
                 it.simSlotIndex == simNumber
             }?.let {
                 if (Build.VERSION.SDK_INT < 31) {
+                    @Suppress("DEPRECATION")
                     SmsManager.getSmsManagerForSubscriptionId(it.subscriptionId)
                 } else {
                     context.getSystemService(SmsManager::class.java)
@@ -299,6 +291,7 @@ class MessagesService(
             } ?: throw UnsupportedOperationException("SIM ${simNumber + 1} not found")
         } else {
             if (Build.VERSION.SDK_INT < 31) {
+                @Suppress("DEPRECATION")
                 SmsManager.getDefault()
             } else {
                 context.getSystemService(SmsManager::class.java)
