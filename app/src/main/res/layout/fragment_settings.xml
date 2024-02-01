@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".ui.SettingsFragment">
+    tools:context=".ui.HomeFragment">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -89,13 +89,6 @@
                     tools:text="Basic auth: sms:token" />
 
             </androidx.appcompat.widget.LinearLayoutCompat>
-
-            <Button
-                android:id="@+id/buttonSetUpEncryption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="4dp"
-                android:text="@string/settings_setup_encryption" />
 
         </LinearLayout>
 

@@ -5,8 +5,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.tabs.TabLayoutMediator
 import me.capcom.smsgateway.databinding.ActivityMainBinding
-import me.capcom.smsgateway.ui.AdvancedSettingsFragment
 import me.capcom.smsgateway.ui.HolderFragment
+import me.capcom.smsgateway.ui.HomeFragment
 import me.capcom.smsgateway.ui.SettingsFragment
 
 class MainActivity : AppCompatActivity() {
@@ -25,8 +25,8 @@ class MainActivity : AppCompatActivity() {
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             when (position) {
                 0 -> tab.apply {
-                    text = getString(R.string.tab_text_settings)
-                    setIcon(R.drawable.ic_settings_24)
+                    text = getString(R.string.tab_text_home)
+                    setIcon(R.drawable.ic_home)
                 }
 
                 1 -> tab.apply {
@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 2 -> tab.apply {
-                    text = getString(R.string.tab_text_advanced)
+                    text = getString(R.string.tab_text_settings)
                     setIcon(R.drawable.ic_advanced)
                 }
             }
@@ -49,9 +49,9 @@ class MainActivity : AppCompatActivity() {
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
-                0 -> SettingsFragment.newInstance()
+                0 -> HomeFragment.newInstance()
                 1 -> HolderFragment.newInstance()
-                else -> AdvancedSettingsFragment.newInstance()
+                else -> SettingsFragment.newInstance()
             }
         }
 

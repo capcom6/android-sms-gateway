@@ -18,16 +18,14 @@ class PreferencesStorage(
                 return@edit
             }
 
-            if (value is Long) {
-                putLong("${prefix}.${key}", value)
-                return@edit
+            when (value) {
+                is Long -> putLong("${prefix}.${key}", value)
+                is Int -> putInt("${prefix}.${key}", value)
+                is String -> putString("${prefix}.${key}", value)
+                is Boolean -> putBoolean("${prefix}.${key}", value)
+                is Float -> putFloat("${prefix}.${key}", value)
+                else -> putString("${prefix}.${key}", serializer.serialize(value))
             }
-            if (value is Int) {
-                putInt("${prefix}.${key}", value)
-                return@edit
-            }
-
-            putString("${prefix}.${key}", serializer.serialize(value))
         }
     }
 
@@ -36,15 +34,23 @@ class PreferencesStorage(
             return null
         }
 
-        if (typeOfT == java.lang.Long::class.java) {
-            return preferences.getLong("${prefix}.${key}", 0) as T
-        }
-        if (typeOfT == java.lang.Integer::class.java) {
-            return preferences.getInt("${prefix}.${key}", 0) as T
-        }
+        return try {
+            preferences.getString("${prefix}.${key}", null)?.let {
+                serializer.deserialize(it, typeOfT)
+            }
+        } catch (th: ClassCastException) {
+            when (typeOfT) {
+                java.lang.Long::class.java -> preferences.getLong("${prefix}.${key}", 0) as T
+                java.lang.Integer::class.java -> preferences.getInt("${prefix}.${key}", 0) as T
+                java.lang.String::class.java -> preferences.getString("${prefix}.${key}", "") as T
+                java.lang.Boolean::class.java -> preferences.getBoolean(
+                    "${prefix}.${key}",
+                    false
+                ) as T
 
-        return preferences.getString("${prefix}.${key}", null)?.let {
-            serializer.deserialize(it, typeOfT)
+                java.lang.Float::class.java -> preferences.getFloat("${prefix}.${key}", 0.0f) as T
+                else -> throw RuntimeException("Unknown type for key $key")
+            }
         }
     }
 }
