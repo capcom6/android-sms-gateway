@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.5.0",
+    "version": "1.6.0",
     "title": "Android SMS Gateway - Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
@@ -37,7 +37,7 @@
           "$ref": "#/components/requestBodies/SendMessageRequest"
         },
         "responses": {
-          "201": {
+          "202": {
             "$ref": "#/components/responses/MessageStatusResponse"
           },
           "400": {
@@ -133,7 +133,7 @@
     "securitySchemes": {
       "BasicAuth": {
         "type": "http",
-        "description": "Авторизация по логину и паролю",
+        "description": "Login-password auth",
         "scheme": "basic"
       }
     },
