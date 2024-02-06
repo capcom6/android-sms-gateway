@@ -1,7 +1,6 @@
 package me.capcom.smsgateway
 
 import android.app.Application
-import androidx.preference.PreferenceManager
 import me.capcom.smsgateway.data.dbModule
 import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.gateway.GatewayModule
@@ -35,8 +34,6 @@ class App: Application() {
         EventsReceiver.register(this)
     }
 
-    val settings by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
-
     val gatewayModule by lazy {
         GatewayModule(
             get(),
@@ -46,7 +43,7 @@ class App: Application() {
     val localServerModule by lazy {
         LocalServerModule(
             get(),
-            PreferencesStorage(settings, "localserver")
+            PreferencesStorage(get(), "localserver")
         )
     }
 

@@ -11,8 +11,14 @@ import android.os.Build
 import android.telephony.SmsManager
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
+import android.util.Log
 import androidx.core.app.ActivityCompat
-import com.aventrix.jnanoid.jnanoid.NanoIdUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import me.capcom.smsgateway.data.dao.MessageDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
@@ -20,63 +26,48 @@ import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.helpers.PhoneHelper
 import me.capcom.smsgateway.modules.encryption.EncryptionService
 import me.capcom.smsgateway.modules.events.EventBus
+import me.capcom.smsgateway.modules.messages.data.SendRequest
+import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.receivers.EventsReceiver
 
 class MessagesService(
     private val context: Context,
+    private val settings: MessagesSettings,
     private val dao: MessageDao,    // todo: use MessagesRepository
     private val encryptionService: EncryptionService,
 ) {
     val events = EventBus()
+
+    private val queue = Channel<SendRequest>(Channel.Factory.UNLIMITED)
     private val countryCode: String? =
         (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
 
-    suspend fun sendMessage(
-        id: String?,
-        text: String,
-        recipients: List<String>,
-        source: Message.Source,
-        simNumber: Int?,
-        withDeliveryReport: Boolean?,
-        isEncrypted: Boolean,
-    ): MessageWithRecipients {
-        val id = id ?: NanoIdUtils.randomNanoId()
+    init {
+        // another way is to use WorkManager:
+        // 1. Insert message to DB
+        // 2. Start worker with KEEP policy
+        // 3. Worker: select all Pending messages from DB
+        // 4. Worker: send one by one with delays setting Sent state
+        // 5. Worker: repeat from step 3 while there are Pending messages
+        // Notes: we need to dismiss old messages in Pending state, so we need to introduce TTL
+        scope.launch(Dispatchers.Default) {
+            for (msg in queue) {
+                try {
+                    sendMessage(msg)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
 
-        val message = MessageWithRecipients(
-            Message(id, text, source, isEncrypted),
-            recipients.map {
-                MessageRecipient(
-                    id,
-                    it,
-                    Message.State.Pending
-                )
-            },
-        )
-
-        dao.insert(message)
-
-        if (message.state != Message.State.Pending) {
-            updateState(id, null, message.state)
-            return message
+                // random delay from 100ms to 5s
+                if (settings.secondsBetweenMessages > 0) {
+                    delay((0..settings.secondsBetweenMessages).random() * 1000L)
+                }
+            }
         }
+    }
 
-        try {
-            sendSMS(
-                id,
-                text,
-                message.recipients.filter { it.state == Message.State.Pending }
-                    .map { it.phoneNumber },
-                simNumber,
-                withDeliveryReport ?: true,
-                isEncrypted
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            updateState(id, null, Message.State.Failed, "Sending: " + e.message)
-            return requireNotNull(getMessage(id))
-        }
-
-        return message
+    suspend fun enqueueMessage(request: SendRequest) {
+        queue.send(request)
     }
 
     fun getMessage(id: String): MessageWithRecipients? {
@@ -114,6 +105,48 @@ class MessagesService(
         val (id, phone) = intent.dataString?.split("|", limit = 2) ?: return
 
         updateState(id, phone, state, error)
+    }
+
+    private suspend fun sendMessage(request: SendRequest) {
+        val message = MessageWithRecipients(
+            Message(
+                request.message.id,
+                request.message.text,
+                request.source,
+                request.message.isEncrypted
+            ),
+            request.message.phoneNumbers.map {
+                MessageRecipient(
+                    request.message.id,
+                    it,
+                    Message.State.Pending
+                )
+            },
+        )
+
+        dao.insert(message)
+
+        if (message.state != Message.State.Pending) {
+            // не ясно когда такая ситуация может возникнуть
+            Log.w(this.javaClass.simpleName, "Unexpected state for message: $message")
+            updateState(request.message.id, null, message.state)
+            return
+        }
+
+        try {
+            sendSMS(
+                message.message.id,
+                message.message.text,
+                message.recipients.filter { it.state == Message.State.Pending }
+                    .map { it.phoneNumber },
+                request.params.simNumber?.let { it - 1 },
+                request.params.withDeliveryReport,
+                message.message.isEncrypted
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            updateState(message.message.id, null, Message.State.Failed, "Sending: " + e.message)
+        }
     }
 
     private suspend fun updateState(
@@ -156,6 +189,8 @@ class MessagesService(
         isEncrypted: Boolean
     ) {
         val smsManager: SmsManager = getSmsManager(simNumber)
+
+        @Suppress("NAME_SHADOWING")
         val message = when (isEncrypted) {
             true -> encryptionService.decrypt(message)
             false -> message
@@ -232,6 +267,7 @@ class MessagesService(
                 throw UnsupportedOperationException("SIM selection requires READ_PHONE_STATE permission")
             }
 
+            @Suppress("DEPRECATION")
             val subscriptionManager: SubscriptionManager = when {
                 Build.VERSION.SDK_INT < 22 -> throw UnsupportedOperationException("SIM selection available from API 22")
                 Build.VERSION.SDK_INT < 31 -> SubscriptionManager.from(context)
@@ -246,6 +282,7 @@ class MessagesService(
                 it.simSlotIndex == simNumber
             }?.let {
                 if (Build.VERSION.SDK_INT < 31) {
+                    @Suppress("DEPRECATION")
                     SmsManager.getSmsManagerForSubscriptionId(it.subscriptionId)
                 } else {
                     context.getSystemService(SmsManager::class.java)
@@ -254,6 +291,7 @@ class MessagesService(
             } ?: throw UnsupportedOperationException("SIM ${simNumber + 1} not found")
         } else {
             if (Build.VERSION.SDK_INT < 31) {
+                @Suppress("DEPRECATION")
                 SmsManager.getDefault()
             } else {
                 context.getSystemService(SmsManager::class.java)
@@ -321,5 +359,10 @@ class MessagesService(
             SmsManager.RESULT_RIL_BLOCKED_DUE_TO_CALL -> "RESULT_RIL_BLOCKED_DUE_TO_CALL"
             else -> "UNKNOWN"
         }
+    }
+
+    companion object {
+        private val job = SupervisorJob()
+        private val scope = CoroutineScope(job)
     }
 }

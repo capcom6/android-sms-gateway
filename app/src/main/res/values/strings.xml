@@ -25,4 +25,12 @@
     <string name="settings_setup_encryption">Setup encryption</string>
     <string name="button_ok">OK</string>
     <string name="button_cancel">Cancel</string>
+    <string name="tab_text_advanced">Advanced</string>
+    <string name="messages_header">Messages</string>
+    <string name="delay_between_messages_seconds">Delay between messages, seconds</string>
+    <string name="random_value_from_0_to_selected_value_will_be_used">random value from 0 to selected value will be used</string>
+    <string name="tab_text_home">Home</string>
+    <string name="encryption">Encryption</string>
+    <string name="use_empty_to_disable">Use empty to disable</string>
+    <string name="passphrase">Passphrase</string>
 </resources>

@@ -83,6 +83,8 @@ Android SMS Gateway turns your Android smartphone into an SMS gateway. It's a li
 - **Starts at boot:** The application starts running as soon as your device boots up.
 - **Multiple SIM cards:** The application supports multiple SIM cards.
 - **Multipart messages:** The application supports sending long messages with auto-partitioning.
+- **End-to-end encryption:** No one in the middle can access the content and recipients of the
+  messages.
 
 ### Ideal For
 
@@ -190,7 +192,7 @@ If you need to send messages with dynamic or shared device IP, you can use the c
 - [ ] Incorporate scheduling capabilities for dispatching messages at specific times.
 - [ ] Implement region-based restrictions to prevent international SMS.
 - [ ] Provide an API endpoint to retrieve the list of available SIM cards on the device.
-- [ ] Include detailed error messages in responses and logs.
+- [x] Include detailed error messages in responses and logs.
 
 See the [open issues](https://github.com/capcom6/android-sms-gateway/issues) for a full list of proposed features (and known issues).
 

@@ -25,8 +25,8 @@ class PushService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
-        PullMessagesWorker.start(this)
         Log.d(this.javaClass.name, message.data.toString())
+        PullMessagesWorker.start(this)
     }
 
     override fun onDestroy() {
