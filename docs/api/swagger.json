@@ -37,7 +37,7 @@
           "$ref": "#/components/requestBodies/SendMessageRequest"
         },
         "responses": {
-          "201": {
+          "202": {
             "$ref": "#/components/responses/MessageStatusResponse"
           },
           "400": {
@@ -133,7 +133,7 @@
     "securitySchemes": {
       "BasicAuth": {
         "type": "http",
-        "description": "Авторизация по логину и паролю",
+        "description": "Login-password auth",
         "scheme": "basic"
       }
     },
