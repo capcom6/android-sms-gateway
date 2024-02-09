@@ -169,7 +169,8 @@ class GatewayModule(
             ),
             SendParams(
                 message.withDeliveryReport ?: true,
-                message.simNumber
+                message.simNumber,
+                message.validUntil
             )
         )
         messagesService.enqueueMessage(request)

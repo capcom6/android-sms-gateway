@@ -29,6 +29,7 @@ import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.receivers.EventsReceiver
+import java.util.Date
 
 class MessagesService(
     private val context: Context,
@@ -53,6 +54,11 @@ class MessagesService(
         scope.launch(Dispatchers.Default) {
             for (msg in queue) {
                 try {
+                    if (msg.params.validUntil?.before(Date()) == true) {
+                        updateState(msg.message.id, null, Message.State.Failed, "TTL expired")
+                        continue
+                    }
+
                     sendMessage(msg)
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -112,8 +118,11 @@ class MessagesService(
             Message(
                 request.message.id,
                 request.message.text,
+                request.params.withDeliveryReport,
+                request.params.simNumber,
+                request.params.validUntil,
+                request.message.isEncrypted,
                 request.source,
-                request.message.isEncrypted
             ),
             request.message.phoneNumbers.map {
                 MessageRecipient(

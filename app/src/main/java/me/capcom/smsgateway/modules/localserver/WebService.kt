@@ -91,13 +91,13 @@ class WebService : Service() {
                     route("/message") {
                         post {
                             val request = call.receive<PostMessageRequest>()
-                            if (request.message.isNullOrEmpty()) {
+                            if (request.message.isEmpty()) {
                                 call.respond(
                                     HttpStatusCode.BadRequest,
                                     mapOf("message" to "message is empty")
                                 )
                             }
-                            if (request.phoneNumbers.isNullOrEmpty()) {
+                            if (request.phoneNumbers.isEmpty()) {
                                 call.respond(
                                     HttpStatusCode.BadRequest,
                                     mapOf("message" to "phoneNumbers is empty")
@@ -121,7 +121,8 @@ class WebService : Service() {
                                     ),
                                     me.capcom.smsgateway.modules.messages.data.SendParams(
                                         request.withDeliveryReport ?: true,
-                                        request.simNumber
+                                        request.simNumber,
+                                        request.validUntil
                                     )
                                 )
                                 messagesService.enqueueMessage(sendRequest)

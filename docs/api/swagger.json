@@ -202,9 +202,15 @@
           "ttl": {
             "type": "integer",
             "nullable": true,
-            "description": "*(cloud-only)* message storage time in `Pending` state, `null` - forever",
+            "description": "expiration timeout, conflicts with `validUntil`",
             "minimum": 5,
             "example": 86400
+          },
+          "validUntil": {
+            "type": "string",
+            "nullable": true,
+            "description": "expiration date, conflicts with `ttl`",
+            "format": "date-time"
           },
           "withDeliveryReport": {
             "type": "boolean",
