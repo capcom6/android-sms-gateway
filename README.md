@@ -155,7 +155,10 @@ This mode is recommended for sending messages from local network.
 5. Make a `curl` call from the local network using a command like the following, replacing `<username>`, `<password>`, and `<device_local_ip>` with the values obtained in step 4: 
 
     ```
-    curl -X POST -u <username>:<password> -H "Content-Type: application/json" -d '{ "message": "Hello, world!", "phoneNumbers": ["79990001234", "79995556677"] }' http://<device_local_ip>:8080/message
+    curl -X POST -u <username>:<password> \
+      -H "Content-Type: application/json" \
+      -d '{ "message": "Hello, world!", "phoneNumbers": ["79990001234", "79995556677"] }' \
+      http://<device_local_ip>:8080/message
     ```
 
 ### Cloud server
@@ -173,11 +176,14 @@ If you need to send messages with dynamic or shared device IP, you can use the c
 5. Make a curl call using a command like the following, replacing `<username>` and `<password>` with the values obtained in step 4:
 
     ```
-    curl -X POST -u <username>:<password> -H "Content-Type: application/json" -d '{ "message": "Hello, world!", "phoneNumbers": ["79990001234", "79995556677"] }' https://sms.capcom.me/api/3rdparty/v1/message
+    curl -X POST -u <username>:<password> \
+      -H "Content-Type: application/json" \
+      -d '{ "message": "Hello, world!", "phoneNumbers": ["79990001234", "79995556677"] }' \
+      https://sms.capcom.me/api/3rdparty/v1/message
     ```
 
 
-<!-- _For more examples, please refer to the [Documentation](https://example.com)_ -->
+_For more examples, please refer to the [API Documentation](https://sms.capcom.me/api/)_
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
