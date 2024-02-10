@@ -109,6 +109,9 @@ class WebService : Service() {
                                     mapOf("message" to "simNumber must be >= 1")
                                 )
                             }
+                            val skipPhoneValidation =
+                                call.request.queryParameters["skipPhoneValidation"]
+                                    ?.toBoolean() ?: false
 
                             val messageId = try {
                                 val sendRequest = SendRequest(
@@ -121,7 +124,8 @@ class WebService : Service() {
                                     ),
                                     me.capcom.smsgateway.modules.messages.data.SendParams(
                                         request.withDeliveryReport ?: true,
-                                        request.simNumber
+                                        skipPhoneValidation = skipPhoneValidation,
+                                        simNumber = request.simNumber,
                                     )
                                 )
                                 messagesService.enqueueMessage(sendRequest)
