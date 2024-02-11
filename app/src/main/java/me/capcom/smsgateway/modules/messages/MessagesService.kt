@@ -223,7 +223,7 @@ class MessagesService(
                     false -> it
                 }
                 val normalizedPhoneNumber = when (params.skipPhoneValidation) {
-                    true -> phoneNumber
+                    true -> phoneNumber.filter { it.isDigit() || it == '+' }
                     false -> PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
                 }
 
