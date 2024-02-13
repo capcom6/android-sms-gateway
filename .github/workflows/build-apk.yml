@@ -1,15 +1,28 @@
-name: Build Release APK
+name: Build APK
 
 on:
-  push:
-    branches: master
-    tags:
-      - v*
+  workflow_call:
+    inputs:
+      version-name:
+        required: true
+        type: string
+    secrets:
+      google-services-json:
+        required: true
+      signing-key-store-base64:
+        required: true
+      signing-key-alias:
+        required: true
+      signing-key-password:
+        required: true
+      signing-store-password:
+        required: true
 
 jobs:
-  release_build:
+  build-apk:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -29,17 +42,18 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
 
       - name: Setup Google Services
-        run: echo ${{ secrets.GOOGLE_SERVICES_JSON }} | base64 --decode > ./app/google-services.json
+        run: echo ${{ secrets.google-services-json }} | base64 --decode > ./app/google-services.json
 
       - name: Set App Version
         run: |
-          sed -i "s/versionName.*/versionName \"${GITHUB_REF_NAME#v}\"/" app/build.gradle
+          export VERSION_NAME='${{ inputs.version-name }}'
+          sed -i "s/versionName.*/versionName \"${VERSION_NAME#v}\"/" app/build.gradle
           sed -i "s/versionCode.*/versionCode $(( ($(date +%s) - $(date -d "2022-06-15" +%s)) / 86400 ))/" app/build.gradle
 
       #1
       - name: Decode Keystore
         env:
-          ENCODED_STRING: ${{ secrets.SIGNING_KEY_STORE_BASE64 }}
+          ENCODED_STRING: ${{ secrets.signing-key-store-base64 }}
           SIGNING_KEY_STORE_PATH: app/keystore.jks
 
         run: |
@@ -49,18 +63,18 @@ jobs:
       #2
       - name: Build Release apk
         env:
-          SIGNING_KEY_STORE_PATH: ${{ secrets.SIGNING_KEY_STORE_PATH }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
-          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_STORE_PATH: app/keystore.jks
+          SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password }}
         run: ./gradlew assembleRelease
 
       - name: Build Release bundle
         env:
-          SIGNING_KEY_STORE_PATH: ${{ secrets.SIGNING_KEY_STORE_PATH }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
-          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_STORE_PATH: app/keystore.jks
+          SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password }}
         run: ./gradlew bundleRelease
       #3
       - name: Upload Release Build to Artifacts
@@ -70,12 +84,4 @@ jobs:
           path: |
             app/build/outputs/apk/release/
             app/build/outputs/bundle/release/
-      #4
-      - name: Create Github Release
-        uses: softprops/action-gh-release@v1
-        with:
-          generate_release_notes: true
-          prerelease: true
-          files: |
-            app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/bundle/release/app-release.aab
+
