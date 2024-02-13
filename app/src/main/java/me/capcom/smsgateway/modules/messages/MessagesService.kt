@@ -135,13 +135,7 @@ class MessagesService(
 
         try {
             sendSMS(
-                message.message.id,
-                message.message.text,
-                message.recipients.filter { it.state == Message.State.Pending }
-                    .map { it.phoneNumber },
-                request.params.simNumber?.let { it - 1 },
-                request.params.withDeliveryReport,
-                message.message.isEncrypted
+                request
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -181,22 +175,21 @@ class MessagesService(
     }
 
     private suspend fun sendSMS(
-        id: String,
-        message: String,
-        recipients: List<String>,
-        simNumber: Int?,
-        withDeliveryReport: Boolean,
-        isEncrypted: Boolean
+        request: SendRequest
     ) {
-        val smsManager: SmsManager = getSmsManager(simNumber)
+        val message = request.message
+        val params = request.params
+        val id = message.id
+
+        val smsManager: SmsManager = getSmsManager(params.simNumber?.let { it - 1 })
 
         @Suppress("NAME_SHADOWING")
-        val message = when (isEncrypted) {
-            true -> encryptionService.decrypt(message)
-            false -> message
+        val messageText = when (message.isEncrypted) {
+            true -> encryptionService.decrypt(message.text)
+            false -> message.text
         }
 
-        recipients.forEach {
+        message.phoneNumbers.forEach {
             val sentIntent = PendingIntent.getBroadcast(
                 context,
                 0,
@@ -208,7 +201,7 @@ class MessagesService(
                 ),
                 PendingIntent.FLAG_IMMUTABLE
             )
-            val deliveredIntent = when (withDeliveryReport) {
+            val deliveredIntent = when (params.withDeliveryReport) {
                 false -> null
                 true -> PendingIntent.getBroadcast(
                     context,
@@ -224,13 +217,16 @@ class MessagesService(
             }
 
             try {
-                val parts = smsManager.divideMessage(message)
-                val phoneNumber = when (isEncrypted) {
+                val parts = smsManager.divideMessage(messageText)
+                val phoneNumber = when (message.isEncrypted) {
                     true -> encryptionService.decrypt(it)
                     false -> it
                 }
-                val normalizedPhoneNumber =
-                    PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
+                val normalizedPhoneNumber = when (params.skipPhoneValidation) {
+                    true -> phoneNumber.filter { it.isDigit() || it == '+' }
+                    false -> PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
+                }
+
                 if (parts.size > 1) {
                     smsManager.sendMultipartTextMessage(
                         normalizedPhoneNumber,
@@ -243,7 +239,7 @@ class MessagesService(
                     smsManager.sendTextMessage(
                         normalizedPhoneNumber,
                         null,
-                        message,
+                        messageText,
                         sentIntent,
                         deliveredIntent
                     )
