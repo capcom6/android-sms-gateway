@@ -169,8 +169,9 @@ class GatewayModule(
             ),
             SendParams(
                 message.withDeliveryReport ?: true,
-                message.simNumber,
-                message.validUntil
+                skipPhoneValidation = true,
+                simNumber = message.simNumber,
+                validUntil = message.validUntil
             )
         )
         messagesService.enqueueMessage(request)

@@ -26,6 +26,7 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
+import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -69,14 +70,25 @@ class WebService : Service() {
                     }
                 }
             }
-            routing {
-                install(ContentNegotiation) {
-                    gson {
-                        if (me.capcom.smsgateway.BuildConfig.DEBUG) {
-                            setPrettyPrinting()
-                        }
+            install(ContentNegotiation) {
+                gson {
+                    if (me.capcom.smsgateway.BuildConfig.DEBUG) {
+                        setPrettyPrinting()
                     }
                 }
+            }
+            install(StatusPages) {
+                exception<Throwable> { call, cause ->
+                    call.respond(
+                        when (cause) {
+                            is IllegalArgumentException -> HttpStatusCode.BadRequest
+                            else -> HttpStatusCode.InternalServerError
+                        },
+                        mapOf("message" to cause.message)
+                    )
+                }
+            }
+            routing {
                 install(CORS) {
                     anyHost()
                     allowHeader(HttpHeaders.ContentType)
@@ -109,36 +121,28 @@ class WebService : Service() {
                                     mapOf("message" to "simNumber must be >= 1")
                                 )
                             }
+                            val skipPhoneValidation =
+                                call.request.queryParameters["skipPhoneValidation"]
+                                    ?.toBooleanStrict() ?: false
 
-                            val messageId = try {
-                                val sendRequest = SendRequest(
-                                    MessageSource.Local,
-                                    me.capcom.smsgateway.modules.messages.data.Message(
-                                        request.id ?: NanoIdUtils.randomNanoId(),
-                                        request.message,
-                                        request.phoneNumbers,
-                                        request.isEncrypted ?: false
-                                    ),
-                                    me.capcom.smsgateway.modules.messages.data.SendParams(
-                                        request.withDeliveryReport ?: true,
-                                        request.simNumber,
-                                        request.validUntil
-                                    )
+                            val sendRequest = SendRequest(
+                                MessageSource.Local,
+                                me.capcom.smsgateway.modules.messages.data.Message(
+                                    request.id ?: NanoIdUtils.randomNanoId(),
+                                    request.message,
+                                    request.phoneNumbers,
+                                    request.isEncrypted ?: false
+                                ),
+                                me.capcom.smsgateway.modules.messages.data.SendParams(
+                                    request.withDeliveryReport ?: true,
+                                    skipPhoneValidation = skipPhoneValidation,
+                                    simNumber = request.simNumber,
+                                    validUntil = request.validUntil,
                                 )
-                                messagesService.enqueueMessage(sendRequest)
+                            )
+                            messagesService.enqueueMessage(sendRequest)
 
-                                sendRequest.message.id
-                            } catch (e: IllegalArgumentException) {
-                                return@post call.respond(
-                                    HttpStatusCode.BadRequest,
-                                    mapOf("message" to e.message)
-                                )
-                            } catch (e: Throwable) {
-                                return@post call.respond(
-                                    HttpStatusCode.InternalServerError,
-                                    mapOf("message" to e.message)
-                                )
-                            }
+                            val messageId = sendRequest.message.id
 
                             call.respond(
                                 HttpStatusCode.Accepted,

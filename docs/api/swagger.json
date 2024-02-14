@@ -33,6 +33,17 @@
         "summary": "Send message",
         "description": "Adds a message to the queue for sending",
         "operationId": "post-message",
+        "parameters": [
+          {
+            "name": "skipPhoneValidation",
+            "in": "query",
+            "description": "if `true` phone numbers will be used as is",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
         "requestBody": {
           "$ref": "#/components/requestBodies/SendMessageRequest"
         },

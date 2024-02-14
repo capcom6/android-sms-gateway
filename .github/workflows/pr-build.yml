@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  pull_request: { types: [ opened, synchronize ] }
+
+jobs:
+  build:
+    name: Build
+    uses: ./.github/workflows/build-apk.yml
+    with:
+      version-name: ${{ github.sha }}
+    secrets:
+      google-services-json: ${{ secrets.GOOGLE_SERVICES_JSON }}
+      signing-key-store-base64: ${{ secrets.SIGNING_KEY_STORE_BASE64 }}
+      signing-key-alias: ${{ secrets.SIGNING_KEY_ALIAS }}
+      signing-key-password: ${{ secrets.SIGNING_KEY_PASSWORD }}
+      signing-store-password: ${{ secrets.SIGNING_STORE_PASSWORD }}
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: release-artifacts
+      - name: Pull request artifacts
+        uses: gavv/pull-request-artifacts@v2
+        with:
+          # Commit hash that triggered PR
+          commit: ${{ github.event.pull_request.head.sha }}
+          # Token for current repo (used to post PR comment)
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts-branch: artifacts
+          artifacts: |
+            ./apk/release/app-release.apk
+            ./bundle/release/app-release.aab
