@@ -54,11 +54,6 @@ class MessagesService(
         scope.launch(Dispatchers.Default) {
             for (msg in queue) {
                 try {
-                    if (msg.params.validUntil?.before(Date()) == true) {
-                        updateState(msg.message.id, null, Message.State.Failed, "TTL expired")
-                        continue
-                    }
-
                     sendMessage(msg)
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -134,6 +129,11 @@ class MessagesService(
         )
 
         dao.insert(message)
+
+        if (request.params.validUntil?.before(Date()) == true) {
+            updateState(request.message.id, null, Message.State.Failed, "TTL expired")
+            return
+        }
 
         if (message.state != Message.State.Pending) {
             // не ясно когда такая ситуация может возникнуть
