@@ -17,6 +17,7 @@ import io.ktor.http.contentType
 import io.ktor.serialization.gson.gson
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.domain.MessageState
+import java.util.Date
 
 class GatewayApi() {
     private val client = HttpClient(OkHttp) {
@@ -89,9 +90,10 @@ class GatewayApi() {
         val id: String,
         val message: String,
         val phoneNumbers: List<String>,
-        val simNumber: Int? = null,
-        val withDeliveryReport: Boolean? = null,
-        val isEncrypted: Boolean? = null,
+        val simNumber: Int?,
+        val withDeliveryReport: Boolean?,
+        val isEncrypted: Boolean?,
+        val validUntil: Date?
     )
 
     data class RecipientState(

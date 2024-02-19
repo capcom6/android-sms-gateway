@@ -171,6 +171,7 @@ class GatewayModule(
                 message.withDeliveryReport ?: true,
                 skipPhoneValidation = true,
                 simNumber = message.simNumber,
+                validUntil = message.validUntil
             )
         )
         messagesService.enqueueMessage(request)
