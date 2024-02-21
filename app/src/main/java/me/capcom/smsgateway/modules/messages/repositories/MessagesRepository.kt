@@ -6,5 +6,6 @@ import me.capcom.smsgateway.data.dao.MessageDao
 class MessagesRepository(private val dao: MessageDao) {
     val lastMessages = dao.selectLast().distinctUntilChanged()
 
+    fun selectPending() = dao.selectPending()
     fun get(id: String) = dao.get(id)
 }

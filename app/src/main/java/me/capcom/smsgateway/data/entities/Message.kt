@@ -16,6 +16,8 @@ data class Message(
     val validUntil: Date?,
     @ColumnInfo(defaultValue = "0")
     val isEncrypted: Boolean,
+    @ColumnInfo(defaultValue = "0")
+    val skipPhoneValidation: Boolean,
 
     @ColumnInfo(defaultValue = "Local")
     val source: MessageSource,
