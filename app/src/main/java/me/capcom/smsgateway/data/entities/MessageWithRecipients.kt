@@ -13,10 +13,11 @@ data class MessageWithRecipients(
 ) {
     val state: Message.State
         get() = when {
+            recipients.any { it.state == Message.State.Pending } -> Message.State.Pending
+            recipients.any { it.state == Message.State.Processed } -> Message.State.Processed
+
             recipients.all { it.state == Message.State.Failed } -> Message.State.Failed
             recipients.all { it.state == Message.State.Delivered } -> Message.State.Delivered
-            recipients.all { it.state == Message.State.Sent } -> Message.State.Sent
-            recipients.any { it.state == Message.State.Pending } -> Message.State.Pending
-            else -> Message.State.Processed
+            else -> Message.State.Sent
         }
 }
