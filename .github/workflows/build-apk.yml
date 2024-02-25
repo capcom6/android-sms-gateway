@@ -50,6 +50,9 @@ jobs:
           sed -i "s/versionName.*/versionName \"${VERSION_NAME#v}\"/" app/build.gradle
           sed -i "s/versionCode.*/versionCode $(( ($(date +%s) - $(date -d "2022-06-15" +%s)) / 86400 ))/" app/build.gradle
 
+      - name: Test
+        run: ./gradlew test
+
       #1
       - name: Decode Keystore
         env:
