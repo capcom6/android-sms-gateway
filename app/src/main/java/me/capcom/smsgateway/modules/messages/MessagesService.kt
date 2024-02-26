@@ -38,8 +38,12 @@ class MessagesService(
     private val countryCode: String? =
         (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
 
-    init {
+    fun start() {
         SendMessagesWorker.start(context)
+    }
+
+    fun stop() {
+        SendMessagesWorker.stop(context)
     }
 
     fun enqueueMessage(request: SendRequest) {
