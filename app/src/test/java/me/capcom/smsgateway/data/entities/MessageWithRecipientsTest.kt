@@ -16,7 +16,8 @@ class MessageWithRecipientsTest {
             isEncrypted = false,
             source = MessageSource.Local,
             state = Message.State.Pending,
-            createdAt = System.currentTimeMillis()
+            createdAt = System.currentTimeMillis(),
+            skipPhoneValidation = true,
         )
         val recipients = listOf(
             MessageRecipient("1", "1234567890", Message.State.Pending, null),
@@ -38,7 +39,8 @@ class MessageWithRecipientsTest {
             isEncrypted = false,
             source = MessageSource.Local,
             state = Message.State.Pending,
-            createdAt = System.currentTimeMillis()
+            createdAt = System.currentTimeMillis(),
+            skipPhoneValidation = true,
         )
         val recipients = listOf(
             MessageRecipient("1", "1234567890", Message.State.Delivered, null),
@@ -60,7 +62,8 @@ class MessageWithRecipientsTest {
             isEncrypted = false,
             source = MessageSource.Local,
             state = Message.State.Pending,
-            createdAt = System.currentTimeMillis()
+            createdAt = System.currentTimeMillis(),
+            skipPhoneValidation = true,
         )
         val recipients = listOf(
             MessageRecipient("2", "1234567890", Message.State.Delivered, null),
