@@ -1,14 +1,11 @@
 package me.capcom.smsgateway.modules.localserver
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
-import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
@@ -42,13 +39,15 @@ import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.MessageSource
 import me.capcom.smsgateway.modules.messages.data.SendRequest
+import me.capcom.smsgateway.modules.notifications.NotificationsService
 import org.koin.android.ext.android.inject
 import kotlin.concurrent.thread
 
 class WebService : Service() {
 
-    private val settingsHelper by lazy { SettingsHelper(this) }
+    private val settingsHelper: SettingsHelper by inject()
     private val messagesService: MessagesService by inject()
+    private val notificationsService: NotificationsService by inject()
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -207,19 +206,6 @@ class WebService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Create the NotificationChannel
-            val name = getString(R.string.sms_gateway)
-            val descriptionText = getString(R.string.local_sms_gateway_notifications)
-            val importance = NotificationManager.IMPORTANCE_LOW
-            val mChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance)
-            mChannel.description = descriptionText
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(mChannel)
-        }
-
         server.start()
         wakeLock.acquire()
 
@@ -227,18 +213,15 @@ class WebService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(getText(R.string.notification_title))
-            .setContentText(
-                getString(
-                    R.string.sms_gateway_is_running_on_port,
-                    settingsHelper.serverPort
-                )
+        val notification = notificationsService.makeNotification(
+            this,
+            getString(
+                R.string.sms_gateway_is_running_on_port,
+                settingsHelper.serverPort
             )
-            .setSmallIcon(R.drawable.ic_sms)
-            .build()
+        )
 
-        startForeground(NOTIFICATION_ID, notification)
+        startForeground(NotificationsService.NOTIFICATION_ID_LOCAL_SERVICE, notification)
 
         return super.onStartCommand(intent, flags, startId)
     }
@@ -259,9 +242,6 @@ class WebService : Service() {
     }
 
     companion object {
-        private const val NOTIFICATION_CHANNEL_ID = "WEBSERVICE"
-        private const val NOTIFICATION_ID = 1
-
         private val status = MutableLiveData<Boolean>(false)
         val STATUS: LiveData<Boolean> = status
 
