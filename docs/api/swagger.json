@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.5.0",
+    "version": "1.8.0",
     "title": "Android SMS Gateway - Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
@@ -121,6 +121,43 @@
           }
         ]
       }
+    },
+    "/device": {
+      "get": {
+        "summary": "Get devices",
+        "description": "Returns a list of registered devices in the account",
+        "operationId": "get-device",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Device"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://device-ip:8080",
+            "description": "Device"
+          },
+          {
+            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "description": "Cloud"
+          }
+        ]
+      }
     }
   },
   "tags": [
@@ -180,6 +217,35 @@
       }
     },
     "schemas": {
+      "Device": {
+        "type": "object",
+        "title": "Device",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Created at",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Updated at",
+            "format": "date-time"
+          },
+          "lastSeen": {
+            "type": "string",
+            "description": "Last seen date",
+            "format": "date-time"
+          }
+        }
+      },
       "Message": {
         "type": "object",
         "title": "Message",

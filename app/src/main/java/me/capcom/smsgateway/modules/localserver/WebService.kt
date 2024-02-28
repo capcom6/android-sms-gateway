@@ -34,6 +34,7 @@ import me.capcom.smsgateway.R
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
 import me.capcom.smsgateway.modules.messages.MessagesService
@@ -41,6 +42,7 @@ import me.capcom.smsgateway.modules.messages.data.MessageSource
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import org.koin.android.ext.android.inject
+import java.util.Date
 import kotlin.concurrent.thread
 
 class WebService : Service() {
@@ -74,6 +76,10 @@ class WebService : Service() {
                     if (me.capcom.smsgateway.BuildConfig.DEBUG) {
                         setPrettyPrinting()
                     }
+                    // ISO_8601
+                    this.setDateFormat(
+                        "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+                    )
                 }
             }
             install(StatusPages) {
@@ -98,6 +104,28 @@ class WebService : Service() {
                 authenticate("auth-basic") {
                     get("/") {
                         call.respond(mapOf("status" to "ok", "model" to Build.MODEL))
+                    }
+                    route("/device") {
+                        get {
+                            val firstInstallTime = packageManager.getPackageInfo(
+                                packageName,
+                                0
+                            ).firstInstallTime
+                            val deviceName = "${Build.MANUFACTURER}/${Build.PRODUCT}"
+                            val deviceId =
+                                deviceName.hashCode().toULong()
+                                    .toString(16).padStart(16, '0') + firstInstallTime.toULong()
+                                    .toString(16).padStart(16, '0')
+                            val device = Device(
+                                deviceId,
+                                deviceName,
+                                Date(firstInstallTime),
+                                Date(),
+                                Date()
+                            )
+
+                            call.respond(listOf(device))
+                        }
                     }
                     route("/message") {
                         post {
