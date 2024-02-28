@@ -13,12 +13,7 @@ import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import me.capcom.smsgateway.data.dao.MessageDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
@@ -28,6 +23,7 @@ import me.capcom.smsgateway.modules.encryption.EncryptionService
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
+import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.receivers.EventsReceiver
 import java.util.Date
 
@@ -39,36 +35,46 @@ class MessagesService(
 ) {
     val events = EventBus()
 
-    private val queue = Channel<SendRequest>(Channel.Factory.UNLIMITED)
     private val countryCode: String? =
         (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
 
-    init {
-        // another way is to use WorkManager:
-        // 1. Insert message to DB
-        // 2. Start worker with KEEP policy
-        // 3. Worker: select all Pending messages from DB
-        // 4. Worker: send one by one with delays setting Sent state
-        // 5. Worker: repeat from step 3 while there are Pending messages
-        // Notes: we need to dismiss old messages in Pending state, so we need to introduce TTL
-        scope.launch(Dispatchers.Default) {
-            for (msg in queue) {
-                try {
-                    sendMessage(msg)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-
-                // random delay from 100ms to 5s
-                if (settings.secondsBetweenMessages > 0) {
-                    delay((0..settings.secondsBetweenMessages).random() * 1000L)
-                }
-            }
-        }
+    fun start() {
+        SendMessagesWorker.start(context)
     }
 
-    suspend fun enqueueMessage(request: SendRequest) {
-        queue.send(request)
+    fun stop() {
+        SendMessagesWorker.stop(context)
+    }
+
+    fun enqueueMessage(request: SendRequest) {
+        if (getMessage(request.message.id) != null) {
+            Log.d(this.javaClass.name, "Message already exists: ${request.message.id}")
+            return
+        }
+
+        val message = MessageWithRecipients(
+            Message(
+                request.message.id,
+                request.message.text,
+                request.params.withDeliveryReport,
+                request.params.simNumber,
+                request.params.validUntil,
+                request.message.isEncrypted,
+                request.params.skipPhoneValidation,
+                request.source,
+            ),
+            request.message.phoneNumbers.map {
+                MessageRecipient(
+                    request.message.id,
+                    it,
+                    Message.State.Pending
+                )
+            },
+        )
+
+        dao.insert(message)
+
+        SendMessagesWorker.start(context)
     }
 
     fun getMessage(id: String): MessageWithRecipients? {
@@ -108,47 +114,41 @@ class MessagesService(
         updateState(id, phone, state, error)
     }
 
-    private suspend fun sendMessage(request: SendRequest) {
-        val message = MessageWithRecipients(
-            Message(
-                request.message.id,
-                request.message.text,
-                request.params.withDeliveryReport,
-                request.params.simNumber,
-                request.params.validUntil,
-                request.message.isEncrypted,
-                request.source,
-            ),
-            request.message.phoneNumbers.map {
-                MessageRecipient(
-                    request.message.id,
-                    it,
-                    Message.State.Pending
-                )
-            },
-        )
+    internal suspend fun sendPendingMessages(): Boolean {
+        val messages = dao.selectPending()
+        if (messages.isEmpty()) {
+            return false
+        }
 
-        dao.insert(message)
+        for (message in messages) {
+            sendMessage(message)
 
-        if (request.params.validUntil?.before(Date()) == true) {
+            if (settings.secondsBetweenMessages > 0) {
+                delay((0..settings.secondsBetweenMessages).random() * 1000L)
+            }
+        }
+
+        return true
+    }
+
+    private suspend fun sendMessage(request: MessageWithRecipients) {
+        if (request.message.validUntil?.before(Date()) == true) {
             updateState(request.message.id, null, Message.State.Failed, "TTL expired")
             return
         }
 
-        if (message.state != Message.State.Pending) {
+        if (request.state != Message.State.Pending) {
             // не ясно когда такая ситуация может возникнуть
-            Log.w(this.javaClass.simpleName, "Unexpected state for message: $message")
-            updateState(request.message.id, null, message.state)
+            Log.w(this.javaClass.simpleName, "Unexpected state for message: $request")
+            updateState(request.message.id, null, request.state)
             return
         }
 
         try {
-            sendSMS(
-                request
-            )
+            sendSMS(request)
         } catch (e: Exception) {
             e.printStackTrace()
-            updateState(message.message.id, null, Message.State.Failed, "Sending: " + e.message)
+            updateState(request.message.id, null, Message.State.Failed, "Sending: " + e.message)
         }
     }
 
@@ -183,14 +183,11 @@ class MessagesService(
         )
     }
 
-    private suspend fun sendSMS(
-        request: SendRequest
-    ) {
+    private suspend fun sendSMS(request: MessageWithRecipients) {
         val message = request.message
-        val params = request.params
         val id = message.id
 
-        val smsManager: SmsManager = getSmsManager(params.simNumber?.let { it - 1 })
+        val smsManager: SmsManager = getSmsManager(message.simNumber?.let { it - 1 })
 
         @Suppress("NAME_SHADOWING")
         val messageText = when (message.isEncrypted) {
@@ -198,67 +195,75 @@ class MessagesService(
             false -> message.text
         }
 
-        message.phoneNumbers.forEach {
-            val sentIntent = PendingIntent.getBroadcast(
-                context,
-                0,
-                Intent(
-                    EventsReceiver.ACTION_SENT,
-                    Uri.parse("$id|$it"),
-                    context,
-                    EventsReceiver::class.java
-                ),
-                PendingIntent.FLAG_IMMUTABLE
-            )
-            val deliveredIntent = when (params.withDeliveryReport) {
-                false -> null
-                true -> PendingIntent.getBroadcast(
+        request.recipients
+            .filter { it.state == Message.State.Pending }
+            .forEach { rcp ->
+                val sourcePhoneNumber = rcp.phoneNumber
+                val sentIntent = PendingIntent.getBroadcast(
                     context,
                     0,
                     Intent(
-                        EventsReceiver.ACTION_DELIVERED,
-                        Uri.parse("$id|$it"),
+                        EventsReceiver.ACTION_SENT,
+                        Uri.parse("$id|$sourcePhoneNumber"),
                         context,
                         EventsReceiver::class.java
                     ),
                     PendingIntent.FLAG_IMMUTABLE
                 )
-            }
-
-            try {
-                val parts = smsManager.divideMessage(messageText)
-                val phoneNumber = when (message.isEncrypted) {
-                    true -> encryptionService.decrypt(it)
-                    false -> it
-                }
-                val normalizedPhoneNumber = when (params.skipPhoneValidation) {
-                    true -> phoneNumber.filter { it.isDigit() || it == '+' }
-                    false -> PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
-                }
-
-                if (parts.size > 1) {
-                    smsManager.sendMultipartTextMessage(
-                        normalizedPhoneNumber,
-                        null,
-                        parts,
-                        ArrayList(parts.map { sentIntent }),
-                        deliveredIntent?.let { ArrayList(parts.map { deliveredIntent }) }
-                    )
-                } else {
-                    smsManager.sendTextMessage(
-                        normalizedPhoneNumber,
-                        null,
-                        messageText,
-                        sentIntent,
-                        deliveredIntent
+                val deliveredIntent = when (message.withDeliveryReport) {
+                    false -> null
+                    true -> PendingIntent.getBroadcast(
+                        context,
+                        0,
+                        Intent(
+                            EventsReceiver.ACTION_DELIVERED,
+                            Uri.parse("$id|$sourcePhoneNumber"),
+                            context,
+                            EventsReceiver::class.java
+                        ),
+                        PendingIntent.FLAG_IMMUTABLE
                     )
                 }
 
-                updateState(id, it, Message.State.Processed)
-            } catch (th: Throwable) {
-                th.printStackTrace()
-                updateState(id, it, Message.State.Failed, "Sending: " + th.message)
-            }
+                try {
+                    val parts = smsManager.divideMessage(messageText)
+                    val phoneNumber = when (message.isEncrypted) {
+                        true -> encryptionService.decrypt(sourcePhoneNumber)
+                        false -> sourcePhoneNumber
+                    }
+                    val normalizedPhoneNumber = when (message.skipPhoneValidation) {
+                        true -> phoneNumber.filter { it.isDigit() || it == '+' }
+                        false -> PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
+                    }
+
+                    if (parts.size > 1) {
+                        smsManager.sendMultipartTextMessage(
+                            normalizedPhoneNumber,
+                            null,
+                            parts,
+                            ArrayList(parts.map { sentIntent }),
+                            deliveredIntent?.let { ArrayList(parts.map { deliveredIntent }) }
+                        )
+                    } else {
+                        smsManager.sendTextMessage(
+                            normalizedPhoneNumber,
+                            null,
+                            messageText,
+                            sentIntent,
+                            deliveredIntent
+                        )
+                    }
+
+                    updateState(id, sourcePhoneNumber, Message.State.Processed)
+                } catch (th: Throwable) {
+                    th.printStackTrace()
+                    updateState(
+                        id,
+                        sourcePhoneNumber,
+                        Message.State.Failed,
+                        "Sending: " + th.message
+                    )
+                }
         }
     }
 
@@ -364,10 +369,5 @@ class MessagesService(
             SmsManager.RESULT_RIL_BLOCKED_DUE_TO_CALL -> "RESULT_RIL_BLOCKED_DUE_TO_CALL"
             else -> "UNKNOWN"
         }
-    }
-
-    companion object {
-        private val job = SupervisorJob()
-        private val scope = CoroutineScope(job)
     }
 }

@@ -6,6 +6,7 @@ import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.gateway.GatewayModule
 import me.capcom.smsgateway.modules.localserver.LocalServerModule
 import me.capcom.smsgateway.modules.messages.messagesModule
+import me.capcom.smsgateway.modules.notifications.notificationsModule
 import me.capcom.smsgateway.modules.settings.PreferencesStorage
 import me.capcom.smsgateway.modules.settings.settingsModule
 import me.capcom.smsgateway.receivers.EventsReceiver
@@ -24,6 +25,7 @@ class App: Application() {
             modules(
                 settingsModule,
                 dbModule,
+                notificationsModule,
                 messagesModule,
                 encryptionModule,
             )

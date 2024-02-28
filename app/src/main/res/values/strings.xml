@@ -33,4 +33,5 @@
     <string name="encryption">Encryption</string>
     <string name="use_empty_to_disable">Use empty to disable</string>
     <string name="passphrase">Passphrase</string>
+    <string name="send_messages_notification">Sending messages...</string>
 </resources>

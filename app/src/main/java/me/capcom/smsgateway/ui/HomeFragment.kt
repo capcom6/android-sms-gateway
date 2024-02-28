@@ -32,6 +32,7 @@ import me.capcom.smsgateway.databinding.FragmentSettingsBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
+import me.capcom.smsgateway.modules.messages.MessagesService
 import org.koin.android.ext.android.inject
 
 class HomeFragment : Fragment() {
@@ -40,6 +41,7 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val settingsHelper: SettingsHelper by inject()
+    private val messagesSvc: MessagesService by inject()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -177,10 +179,12 @@ class HomeFragment : Fragment() {
         } else {
             App.instance.localServerModule.stop(requireContext())
             App.instance.gatewayModule.stop(requireContext())
+            messagesSvc.stop()
         }
     }
 
     private fun start() {
+        messagesSvc.start()
         App.instance.gatewayModule.start(requireContext())
         App.instance.localServerModule.start(requireContext())
     }
