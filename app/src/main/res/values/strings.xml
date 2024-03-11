@@ -34,4 +34,9 @@
     <string name="use_empty_to_disable">Use empty to disable</string>
     <string name="passphrase">Passphrase</string>
     <string name="send_messages_notification">Sending messages...</string>
+    <string name="private_server">Private Server</string>
+    <string name="api_url">API URL</string>
+    <string name="private_token">Private Token</string>
+    <string name="use_empty_for_public_server">Use empty for public server</string>
+    <string name="ignored_for_public_server">Ignored for public server</string>
 </resources>

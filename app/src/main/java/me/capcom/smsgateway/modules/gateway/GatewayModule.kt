@@ -23,7 +23,7 @@ class GatewayModule(
     private val messagesService: MessagesService,
     private val settings: GatewaySettings,
 ) {
-    private val api = GatewayApi()
+    private val api = GatewayApi(settings.privateUrl ?: PUBLIC_URL, settings.privateToken)
 
     val events = EventBus()
     var enabled: Boolean
@@ -188,5 +188,7 @@ class GatewayModule(
     companion object {
         private val job = SupervisorJob()
         private val scope = CoroutineScope(job)
+
+        private const val PUBLIC_URL = "https://sms.capcom.me/api/mobile/v1"
     }
 }
