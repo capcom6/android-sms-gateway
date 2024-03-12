@@ -34,4 +34,21 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/limits">
+        <DropDownPreference
+            android:defaultValue="Disabled"
+            android:entries="@array/limit_periods_titles"
+            android:entryValues="@array/limit_periods_values"
+            android:icon="@drawable/ic_period"
+            android:key="messages.limit_period"
+            app:title="@string/period"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            android:defaultValue="0"
+            android:icon="@drawable/ic_send"
+            android:key="messages.limit_value"
+            app:title="@string/messages_count"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
 </PreferenceScreen>
