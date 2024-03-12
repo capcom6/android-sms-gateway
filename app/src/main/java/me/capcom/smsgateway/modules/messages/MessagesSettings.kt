@@ -6,11 +6,26 @@ import me.capcom.smsgateway.modules.settings.get
 class MessagesSettings(
     private val storage: KeyValueStorage,
 ) {
+    enum class Period {
+        Disabled,
+        PerHour,
+        PerDay,
+    }
 
     val secondsBetweenMessages: Int
         get() = storage.get<Int>(SECONDS_BETWEEN_MESSAGES) ?: 0
 
+    val limitEnabled: Boolean
+        get() = limitValue != null && limitPeriod != Period.Disabled
+    val limitPeriod: Period
+        get() = storage.get<Period>(LIMIT_PERIOD) ?: Period.Disabled
+    val limitValue: Int?
+        get() = storage.get(LIMIT_VALUE)
+
     companion object {
         private const val SECONDS_BETWEEN_MESSAGES = "SECONDS_BETWEEN_MESSAGES"
+
+        private const val LIMIT_PERIOD = "limit_period"
+        private const val LIMIT_VALUE = "limit_value"
     }
 }
