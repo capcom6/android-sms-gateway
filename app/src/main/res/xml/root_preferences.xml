@@ -1,10 +1,9 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <PreferenceCategory app:title="@string/private_server">
+    <PreferenceCategory app:title="@string/cloud_server">
         <EditTextPreference
             app:icon="@drawable/ic_server"
-            app:key="gateway.private_url"
-            app:summary="@string/use_empty_for_public_server"
+            app:key="gateway.cloud_url"
             app:title="@string/api_url" />
         <EditTextPreference
             app:icon="@drawable/ic_token"

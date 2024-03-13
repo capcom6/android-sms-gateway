@@ -5,7 +5,7 @@
     <string name="tab_text_settings">SETTINGS</string>
     <string name="tab_text_messages">MESSAGES</string>
     <string name="settings_local_server">Local server</string>
-    <string name="settings_cloud_server">Cloud server</string>
+    <string name="cloud_server">Cloud server</string>
     <string name="settings_address_is_sms_capcom_me">Address is sms.capcom.me</string>
     <string name="settings_start_on_boot">Start on boot</string>
     <string name="settings_offline">Offline</string>
@@ -33,10 +33,9 @@
     <string name="encryption">Encryption</string>
     <string name="use_empty_to_disable">Use empty to disable</string>
     <string name="passphrase">Passphrase</string>
-    <string name="send_messages_notification">Sending messages...</string>
-    <string name="private_server">Private Server</string>
+    <string name="send_messages_notification">Sending messages…</string>
     <string name="api_url">API URL</string>
     <string name="private_token">Private Token</string>
-    <string name="use_empty_for_public_server">Use empty for public server</string>
     <string name="ignored_for_public_server">Ignored for public server</string>
+    <string name="address_is">Address is %1$s</string>
 </resources>

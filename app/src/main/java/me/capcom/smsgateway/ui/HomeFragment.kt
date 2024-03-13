@@ -92,6 +92,7 @@ class HomeFragment : Fragment() {
             App.instance.gatewayModule.events.events.collect { event ->
                 val event = event as? DeviceRegisteredEvent ?: return@collect
 
+                binding.textRemoteAddress.text = getString(R.string.address_is, event.server)
                 binding.textRemoteAuth.movementMethod = LinkMovementMethod.getInstance()
                 binding.textRemoteAuth.text = makeCopyableLink(
                     Html

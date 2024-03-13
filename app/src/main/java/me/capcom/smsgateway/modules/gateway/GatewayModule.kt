@@ -28,7 +28,7 @@ class GatewayModule(
     private var _api: GatewayApi? = null
     private val api
         get() = _api ?: GatewayApi(
-            settings.privateUrl ?: PUBLIC_URL,
+            settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
             settings.privateToken
         ).also { _api = it }
 
@@ -42,7 +42,7 @@ class GatewayModule(
     fun start(context: Context) {
         if (!enabled) return
         this._api = GatewayApi(
-            settings.privateUrl ?: PUBLIC_URL,
+            settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
             settings.privateToken
         )
 
@@ -116,6 +116,7 @@ class GatewayModule(
                 )
                 events.emitEvent(
                     DeviceRegisteredEvent(
+                        api.hostname,
                         settings.login,
                         settings.password,
                     )
@@ -139,6 +140,7 @@ class GatewayModule(
 
         events.emitEvent(
             DeviceRegisteredEvent(
+                api.hostname,
                 response.login,
                 response.password,
             )
@@ -206,7 +208,5 @@ class GatewayModule(
     companion object {
         private val job = SupervisorJob()
         private val scope = CoroutineScope(job)
-
-        private const val PUBLIC_URL = "https://sms.capcom.me/api/mobile/v1"
     }
 }
