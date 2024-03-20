@@ -13,13 +13,21 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.Url
 import io.ktor.http.contentType
+import io.ktor.http.hostWithPort
 import io.ktor.serialization.gson.gson
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.domain.MessageState
 import java.util.Date
 
-class GatewayApi() {
+class GatewayApi(
+    private val baseUrl: String,
+    private val privateToken: String?
+) {
+    val hostname: String
+        get() = Url(baseUrl).hostWithPort
+
     private val client = HttpClient(OkHttp) {
         install(UserAgent) {
             agent = "me.capcom.smsgateway/" + BuildConfig.VERSION_NAME
@@ -30,15 +38,18 @@ class GatewayApi() {
         expectSuccess = true
     }
 
-    suspend fun deviceRegister(request: DeviceRegisterRequest): DeviceRegisterResponse {
-        return client.post("$BASE_URL/device") {
+    suspend fun deviceRegister(
+        request: DeviceRegisterRequest
+    ): DeviceRegisterResponse {
+        return client.post("$baseUrl/device") {
+            privateToken?.let { auth(it) }
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
     }
 
     suspend fun devicePatch(token: String, request: DevicePatchRequest) {
-        client.patch("$BASE_URL/device") {
+        client.patch("$baseUrl/device") {
             auth(token)
             contentType(ContentType.Application.Json)
             setBody(request)
@@ -46,20 +57,20 @@ class GatewayApi() {
     }
 
     suspend fun getMessages(token: String): List<Message> {
-        return client.get("$BASE_URL/message") {
+        return client.get("$baseUrl/message") {
             auth(token)
         }.body()
     }
 
     suspend fun patchMessages(token: String, request: List<MessagePatchRequest>) {
-        client.patch("$BASE_URL/message") {
+        client.patch("$baseUrl/message") {
             auth(token)
             contentType(ContentType.Application.Json)
             setBody(request)
         }
     }
 
-    fun HttpRequestBuilder.auth(token: String) {
+    private fun HttpRequestBuilder.auth(token: String) {
         header(HttpHeaders.Authorization, "Bearer $token")
     }
 
@@ -101,8 +112,4 @@ class GatewayApi() {
         val state: MessageState,
         val error: String?,
     )
-
-    companion object {
-        private const val BASE_URL = "https://sms.capcom.me/api/mobile/v1"
-    }
 }

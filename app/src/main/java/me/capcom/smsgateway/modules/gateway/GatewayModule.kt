@@ -2,6 +2,8 @@ package me.capcom.smsgateway.modules.gateway
 
 import android.content.Context
 import android.os.Build
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,7 +25,12 @@ class GatewayModule(
     private val messagesService: MessagesService,
     private val settings: GatewaySettings,
 ) {
-    private val api = GatewayApi()
+    private var _api: GatewayApi? = null
+    private val api
+        get() = _api ?: GatewayApi(
+            settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
+            settings.privateToken
+        ).also { _api = it }
 
     val events = EventBus()
     var enabled: Boolean
@@ -34,6 +41,11 @@ class GatewayModule(
 
     fun start(context: Context) {
         if (!enabled) return
+        this._api = GatewayApi(
+            settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
+            settings.privateToken
+        )
+
         PushService.register(context)
         PullMessagesWorker.start(context)
 
@@ -58,6 +70,7 @@ class GatewayModule(
     fun stop(context: Context) {
         scope.cancel()
         PullMessagesWorker.stop(context)
+        this._api = null
     }
 
     private suspend fun sendState(
@@ -85,46 +98,53 @@ class GatewayModule(
         }
     }
 
-    suspend fun registerFcmToken(token: String) {
+    suspend fun registerFcmToken(pushToken: String) {
         if (!enabled) return
 
         val settings = settings.registrationInfo
-        settings?.token?.let {
-            withContext(Dispatchers.IO) {
+        val accessToken = settings?.token
+
+        if (accessToken != null) {
+            // if there's an access token, try to update push token
+            try {
                 api.devicePatch(
-                    it,
+                    accessToken,
                     GatewayApi.DevicePatchRequest(
                         settings.id,
-                        token
+                        pushToken
                     )
                 )
-            }
-
-            events.emitEvent(
-                DeviceRegisteredEvent(
-                    settings.login,
-                    settings.password,
-                )
-            )
-        }
-            ?: kotlin.run {
-                val response = withContext(Dispatchers.IO) {
-                    api.deviceRegister(
-                        GatewayApi.DeviceRegisterRequest(
-                            "${Build.MANUFACTURER}/${Build.PRODUCT}",
-                            token
-                        )
-                    )
-                }
-                this.settings.registrationInfo = response
-
                 events.emitEvent(
                     DeviceRegisteredEvent(
-                        response.login,
-                        response.password,
+                        api.hostname,
+                        settings.login,
+                        settings.password,
                     )
                 )
+                return
+            } catch (e: ClientRequestException) {
+                // if token is invalid, try to register new one
+                if (e.response.status != HttpStatusCode.Unauthorized) {
+                    throw e
+                }
             }
+        }
+
+        val response = api.deviceRegister(
+            GatewayApi.DeviceRegisterRequest(
+                "${Build.MANUFACTURER}/${Build.PRODUCT}",
+                pushToken
+            )
+        )
+        this.settings.registrationInfo = response
+
+        events.emitEvent(
+            DeviceRegisteredEvent(
+                api.hostname,
+                response.login,
+                response.password,
+            )
+        )
     }
 
     internal suspend fun getNewMessages() {

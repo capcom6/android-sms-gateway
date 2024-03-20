@@ -39,18 +39,22 @@ class PreferencesStorage(
                 serializer.deserialize(it, typeOfT)
             }
         } catch (th: ClassCastException) {
-            when (typeOfT) {
-                java.lang.Long::class.java -> preferences.getLong("${prefix}.${key}", 0) as T
-                java.lang.Integer::class.java -> preferences.getInt("${prefix}.${key}", 0) as T
-                java.lang.String::class.java -> preferences.getString("${prefix}.${key}", "") as T
-                java.lang.Boolean::class.java -> preferences.getBoolean(
-                    "${prefix}.${key}",
-                    false
-                ) as T
-
-                java.lang.Float::class.java -> preferences.getFloat("${prefix}.${key}", 0.0f) as T
-                else -> throw RuntimeException("Unknown type for key $key")
-            }
+            getFallback<T>(typeOfT, key)
+        } catch (th: com.google.gson.JsonParseException) {
+            getFallback<T>(typeOfT, key)
         }
+    }
+
+    private fun <T> getFallback(typeOfT: Type, key: String) = when (typeOfT) {
+        java.lang.Long::class.java -> preferences.getLong("${prefix}.${key}", 0) as T
+        Integer::class.java -> preferences.getInt("${prefix}.${key}", 0) as T
+        java.lang.String::class.java -> preferences.getString("${prefix}.${key}", "") as T
+        java.lang.Boolean::class.java -> preferences.getBoolean(
+            "${prefix}.${key}",
+            false
+        ) as T
+
+        java.lang.Float::class.java -> preferences.getFloat("${prefix}.${key}", 0.0f) as T
+        else -> throw RuntimeException("Unknown type for key $key")
     }
 }

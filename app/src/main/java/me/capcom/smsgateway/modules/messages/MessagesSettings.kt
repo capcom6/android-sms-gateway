@@ -9,7 +9,6 @@ class MessagesSettings(
 
     val secondsBetweenMessages: Int
         get() = storage.get<Int>(SECONDS_BETWEEN_MESSAGES) ?: 0
-//        set(value) = storage.set(SECONDS_BETWEEN_MESSAGES, value)
 
     companion object {
         private const val SECONDS_BETWEEN_MESSAGES = "SECONDS_BETWEEN_MESSAGES"

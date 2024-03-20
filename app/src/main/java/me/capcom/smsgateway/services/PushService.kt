@@ -6,9 +6,6 @@ import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.gateway.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.RegistrationWorker
@@ -19,9 +16,7 @@ class PushService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         settingsHelper.fcmToken = token
 
-        scope.launch {
-            RegistrationWorker.start(this@PushService, token)
-        }
+        RegistrationWorker.start(this@PushService, token)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -29,15 +24,7 @@ class PushService : FirebaseMessagingService() {
         PullMessagesWorker.start(this)
     }
 
-    override fun onDestroy() {
-        job.cancel()
-        super.onDestroy()
-    }
-
     companion object {
-        private val job = SupervisorJob()
-        private val scope = CoroutineScope(job)
-
         fun register(context: Context): Unit {
             FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
                 if (!task.isSuccessful) {
@@ -49,9 +36,7 @@ class PushService : FirebaseMessagingService() {
                 val token = task.result
 
                 // Log and toast
-                scope.launch {
-                    RegistrationWorker.start(context, token)
-                }
+                RegistrationWorker.start(context, token)
             })
         }
     }

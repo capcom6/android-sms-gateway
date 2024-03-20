@@ -68,13 +68,15 @@
                 tools:visibility="visible">
 
                 <TextView
+                    android:id="@+id/textRemoteServer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="8dp"
-                    android:text="@string/settings_cloud_server"
+                    android:text="@string/cloud_server"
                     android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
 
                 <TextView
+                    android:id="@+id/textRemoteAddress"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="4dp"
@@ -113,7 +115,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            android:text="@string/settings_cloud_server" />
+            android:text="@string/cloud_server" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.appcompat.widget.SwitchCompat

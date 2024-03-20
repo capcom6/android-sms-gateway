@@ -28,6 +28,7 @@ class App: Application() {
                 notificationsModule,
                 messagesModule,
                 encryptionModule,
+                me.capcom.smsgateway.modules.gateway.gatewayModule,
             )
         }
 
@@ -36,12 +37,10 @@ class App: Application() {
         EventsReceiver.register(this)
     }
 
-    val gatewayModule by lazy {
-        GatewayModule(
-            get(),
-            get(),
-        )
+    val gatewayModule: GatewayModule by lazy {
+        get()
     }
+
     val localServerModule by lazy {
         LocalServerModule(
             get(),
