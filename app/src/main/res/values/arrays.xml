@@ -1,8 +1,8 @@
 <resources>
     <string-array name="limit_periods_titles">
         <item>disabled</item>
-        <item>per hour</item>
-        <item>per day</item>
+        <item>hour</item>
+        <item>day</item>
     </string-array>
     <string-array name="limit_periods_values">
         <item>Disabled</item>

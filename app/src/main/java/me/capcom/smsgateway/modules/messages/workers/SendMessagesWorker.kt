@@ -26,6 +26,7 @@ class SendMessagesWorker(appContext: Context, params: WorkerParameters) :
     override suspend fun doWork(): Result {
         return try {
             while (messagesSvc.sendPendingMessages()) {
+                // why not to `Result.retry()`?
             }
 
             Result.success()
