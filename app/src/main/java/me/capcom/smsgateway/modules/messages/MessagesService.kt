@@ -126,9 +126,23 @@ class MessagesService(
             if (settings.secondsBetweenMessages > 0) {
                 delay((0..settings.secondsBetweenMessages).random() * 1000L)
             }
+
+            while (isLimitReached()) {
+                delay(1000L) // wait for limit to be reset
+            }
         }
 
         return true
+    }
+
+    protected fun isLimitReached(): Boolean {
+        if (!settings.limitEnabled) {
+            return false
+        }
+
+        val processedCount =
+            dao.countProcessedFrom(System.currentTimeMillis() - settings.limitPeriod.duration)
+        return processedCount >= settings.limitValue
     }
 
     private suspend fun sendMessage(request: MessageWithRecipients) {

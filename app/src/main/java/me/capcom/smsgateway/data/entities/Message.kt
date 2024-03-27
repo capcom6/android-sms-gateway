@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import me.capcom.smsgateway.modules.messages.data.MessageSource
 import java.util.Date
 
-@Entity
+@Entity(indices = [androidx.room.Index(value = ["createdAt"])])
 data class Message(
     @PrimaryKey val id: String,
     val text: String,

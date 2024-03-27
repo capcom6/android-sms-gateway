@@ -11,6 +11,9 @@ import me.capcom.smsgateway.data.entities.MessageWithRecipients
 
 @Dao
 interface MessageDao {
+    @Query("SELECT COUNT(*) FROM message WHERE state <> 'Pending' and state <> 'Failed' AND createdAt >= :timestamp")
+    fun countProcessedFrom(timestamp: Long): Int
+
     @Query("SELECT * FROM message ORDER BY createdAt DESC LIMIT 50")
     fun selectLast(): LiveData<List<Message>>
 
