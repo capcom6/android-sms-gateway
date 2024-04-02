@@ -4,7 +4,8 @@
         <EditTextPreference
             app:icon="@drawable/ic_server"
             app:key="gateway.cloud_url"
-            app:title="@string/api_url" />
+            app:title="@string/api_url"
+            app:enableCopying="true"/>
         <EditTextPreference
             app:icon="@drawable/ic_token"
             app:key="gateway.private_token"
