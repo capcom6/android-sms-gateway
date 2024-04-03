@@ -23,6 +23,7 @@ import me.capcom.smsgateway.modules.encryption.EncryptionService
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
+import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.receivers.EventsReceiver
 import java.util.Date
@@ -40,9 +41,11 @@ class MessagesService(
 
     fun start() {
         SendMessagesWorker.start(context)
+        LogTruncateWorker.start(context)
     }
 
     fun stop() {
+        LogTruncateWorker.stop(context)
         SendMessagesWorker.stop(context)
     }
 
@@ -115,6 +118,12 @@ class MessagesService(
         val (id, phone) = intent.dataString?.split("|", limit = 2) ?: return
 
         updateState(id, phone, state, error)
+    }
+
+    suspend fun truncateLog() {
+        val lifetime = settings.logLifetimeDays ?: return
+
+        dao.truncateLog(System.currentTimeMillis() - lifetime * 86400000L)
     }
 
     internal suspend fun sendPendingMessages(): Boolean {
