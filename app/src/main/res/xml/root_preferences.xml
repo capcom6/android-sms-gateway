@@ -4,7 +4,8 @@
         <EditTextPreference
             app:icon="@drawable/ic_server"
             app:key="gateway.cloud_url"
-            app:title="@string/api_url" />
+            app:title="@string/api_url"
+            app:enableCopying="true"/>
         <EditTextPreference
             app:icon="@drawable/ic_token"
             app:key="gateway.private_token"
@@ -32,6 +33,23 @@
             app:summary="@string/random_value_from_0_to_selected_value_will_be_used"
             app:title="@string/delay_between_messages_seconds" />
 
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/limits">
+        <DropDownPreference
+            android:defaultValue="Disabled"
+            android:entries="@array/limit_periods_titles"
+            android:entryValues="@array/limit_periods_values"
+            android:icon="@drawable/ic_period"
+            android:key="messages.limit_period"
+            app:title="@string/period"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            android:defaultValue="0"
+            android:icon="@drawable/ic_send"
+            android:key="messages.limit_value"
+            app:title="@string/messages_count"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -88,7 +88,10 @@ class MessagesService(
         }
 
         if (state != message.message.state) {
-            dao.updateMessageState(message.message.id, state)
+            when (state) {
+                Message.State.Processed -> dao.setMessageProcessed(message.message.id)
+                else -> dao.updateMessageState(message.message.id, state)
+            }
         }
 
         return dao.get(id)
@@ -121,7 +124,12 @@ class MessagesService(
         }
 
         for (message in messages) {
-            sendMessage(message)
+            applyLimit()
+
+            if (!sendMessage(message)) {
+                // if message was not sent - don't need any delay before next message
+                continue
+            }
 
             if (settings.secondsBetweenMessages > 0) {
                 delay((0..settings.secondsBetweenMessages).random() * 1000L)
@@ -131,25 +139,45 @@ class MessagesService(
         return true
     }
 
-    private suspend fun sendMessage(request: MessageWithRecipients) {
+    private suspend fun applyLimit() {
+        if (!settings.limitEnabled) {
+            return
+        }
+
+        val processedStats =
+            dao.countProcessedFrom(System.currentTimeMillis() - settings.limitPeriod.duration)
+        if (processedStats.count < settings.limitValue) {
+            return
+        }
+
+        delay(settings.limitPeriod.duration - (System.currentTimeMillis() - processedStats.lastTimestamp) + 1000L)
+    }
+
+    /**
+     * @return `true` if message was sent
+     */
+    private suspend fun sendMessage(request: MessageWithRecipients): Boolean {
         if (request.message.validUntil?.before(Date()) == true) {
             updateState(request.message.id, null, Message.State.Failed, "TTL expired")
-            return
+            return false
         }
 
         if (request.state != Message.State.Pending) {
             // не ясно когда такая ситуация может возникнуть
             Log.w(this.javaClass.simpleName, "Unexpected state for message: $request")
             updateState(request.message.id, null, request.state)
-            return
+            return false
         }
 
         try {
             sendSMS(request)
+            return true
         } catch (e: Exception) {
             e.printStackTrace()
             updateState(request.message.id, null, Message.State.Failed, "Sending: " + e.message)
         }
+
+        return false
     }
 
     private suspend fun updateState(

@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import me.capcom.smsgateway.modules.messages.data.MessageSource
 import java.util.Date
 
-@Entity
+@Entity(indices = [androidx.room.Index(value = ["createdAt"]), androidx.room.Index(value = ["processedAt"])])
 data class Message(
     @PrimaryKey val id: String,
     val text: String,
@@ -24,7 +24,8 @@ data class Message(
 
     val state: State = State.Pending,
     @ColumnInfo(defaultValue = "0")
-    val createdAt: Long = System.currentTimeMillis(),   // do we need index here for querying in UI?
+    val createdAt: Long = System.currentTimeMillis(),
+    val processedAt: Long? = null,
 ) {
     enum class State {
         Pending,

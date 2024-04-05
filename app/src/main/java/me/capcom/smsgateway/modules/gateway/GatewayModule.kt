@@ -6,8 +6,8 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.data.entities.Message
@@ -26,6 +26,8 @@ class GatewayModule(
     private val settings: GatewaySettings,
 ) {
     private var _api: GatewayApi? = null
+    private var _job: Job? = null
+
     private val api
         get() = _api ?: GatewayApi(
             settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
@@ -49,17 +51,15 @@ class GatewayModule(
         PushService.register(context)
         PullMessagesWorker.start(context)
 
-        scope.launch {
-            withContext(Dispatchers.IO) {
-                messagesService.events.events.collect { event ->
-                    val event = event as? MessageStateChangedEvent ?: return@collect
-                    if (event.source != MessageSource.Gateway) return@collect
+        _job = scope.launch {
+            messagesService.events.events.collect { event ->
+                val event = event as? MessageStateChangedEvent ?: return@collect
+                if (event.source != MessageSource.Gateway) return@collect
 
-                    try {
-                        sendState(event)
-                    } catch (th: Throwable) {
-                        th.printStackTrace()
-                    }
+                try {
+                    sendState(event)
+                } catch (th: Throwable) {
+                    th.printStackTrace()
                 }
             }
         }
@@ -68,7 +68,8 @@ class GatewayModule(
     fun isActiveLiveData(context: Context) = PullMessagesWorker.getStateLiveData(context)
 
     fun stop(context: Context) {
-        scope.cancel()
+        _job?.cancel()
+        _job = null
         PullMessagesWorker.stop(context)
         this._api = null
     }
@@ -207,6 +208,6 @@ class GatewayModule(
 
     companion object {
         private val job = SupervisorJob()
-        private val scope = CoroutineScope(job)
+        private val scope = CoroutineScope(job + Dispatchers.IO)
     }
 }

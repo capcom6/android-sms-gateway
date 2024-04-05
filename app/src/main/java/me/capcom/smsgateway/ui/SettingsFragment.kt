@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.ui
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.InputType
 import androidx.core.content.edit
@@ -10,6 +11,26 @@ import me.capcom.smsgateway.R
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 
 class SettingsFragment : PreferenceFragmentCompat() {
+
+    override fun onResume() {
+        super.onResume()
+
+        onPreferenceChanged.onSharedPreferenceChanged(
+            preferenceManager.sharedPreferences,
+            "messages.limit_period"
+        )
+        preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(
+            onPreferenceChanged
+        )
+    }
+
+    override fun onPause() {
+        preferenceManager.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(
+            onPreferenceChanged
+        )
+
+        super.onPause()
+    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey)
@@ -32,17 +53,36 @@ class SettingsFragment : PreferenceFragmentCompat() {
         ) {
             (preference as EditTextPreference).setOnBindEditTextListener {
                 it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                it.setSelectAllOnFocus(true)
+                it.selectAll()
             }
         }
 
         if (preference.key == "gateway.cloud_url") {
             (preference as EditTextPreference).setOnBindEditTextListener {
                 it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+                it.setSelectAllOnFocus(true)
+            }
+        }
+
+        if (preference.key == "messages.limit_value") {
+            (preference as EditTextPreference).setOnBindEditTextListener {
+                it.inputType = InputType.TYPE_CLASS_NUMBER
+                it.setSelectAllOnFocus(true)
+                it.selectAll()
             }
         }
 
         super.onDisplayPreferenceDialog(preference)
     }
+
+    private val onPreferenceChanged =
+        SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
+            if (key == "messages.limit_period") {
+                findPreference<EditTextPreference>("messages.limit_value")?.isEnabled =
+                    sharedPreferences?.getString(key, "Disabled") != "Disabled"
+            }
+        }
 
     companion object {
         fun newInstance() = SettingsFragment()
