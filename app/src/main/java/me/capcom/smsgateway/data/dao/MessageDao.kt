@@ -51,4 +51,7 @@ interface MessageDao {
 
     @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id")
     fun updateRecipientsState(id: String, state: Message.State, error: String?)
+
+    @Query("DELETE FROM message WHERE createdAt < :until AND state <> 'Pending'")
+    suspend fun truncateLog(until: Long)
 }

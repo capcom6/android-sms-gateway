@@ -23,10 +23,15 @@ class MessagesSettings(
     val limitValue: Int
         get() = storage.get(LIMIT_VALUE) ?: 0
 
+    val logLifetimeDays: Int?
+        get() = storage.get<Int?>(LOG_LIFETIME_DAYS)?.takeIf { it > 0 }
+
     companion object {
         private const val SECONDS_BETWEEN_MESSAGES = "SECONDS_BETWEEN_MESSAGES"
 
         private const val LIMIT_PERIOD = "limit_period"
         private const val LIMIT_VALUE = "limit_value"
+
+        private const val LOG_LIFETIME_DAYS = "log_lifetime_days"
     }
 }

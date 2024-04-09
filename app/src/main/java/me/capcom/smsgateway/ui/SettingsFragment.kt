@@ -73,6 +73,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
+        if (preference.key == "messages.log_lifetime_days") {
+            (preference as EditTextPreference).setOnBindEditTextListener {
+                it.inputType = InputType.TYPE_CLASS_NUMBER
+                it.setSelectAllOnFocus(true)
+                it.selectAll()
+            }
+        }
+
         super.onDisplayPreferenceDialog(preference)
     }
 

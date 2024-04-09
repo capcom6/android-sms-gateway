@@ -38,6 +38,7 @@
     <string name="private_token">Private Token</string>
     <string name="ignored_for_public_server">Ignored for public server</string>
     <string name="address_is">Address is %1$s</string>
+    <string name="log_lifetime_days">Log lifetime, days</string>
     <string name="limits">Limits</string>
     <string name="period">Period</string>
     <string name="messages_count">Messages count</string>
