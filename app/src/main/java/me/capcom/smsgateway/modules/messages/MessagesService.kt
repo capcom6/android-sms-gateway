@@ -140,8 +140,8 @@ class MessagesService(
                 continue
             }
 
-            if (settings.secondsBetweenMessages > 0) {
-                delay((0..settings.secondsBetweenMessages).random() * 1000L)
+            settings.sendIntervalRange?.let {
+                delay(it.random() * 1000L)
             }
         }
 

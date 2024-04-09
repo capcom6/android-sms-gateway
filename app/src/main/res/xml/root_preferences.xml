@@ -28,16 +28,22 @@
             app:useSimpleSummaryProvider="true"
             app:title="@string/log_lifetime_days" />
 
-        <SeekBarPreference
-            android:max="600"
-            app:defaultValue="0"
-            app:enabled="true"
-            app:icon="@drawable/ic_timer"
-            app:key="messages.SECONDS_BETWEEN_MESSAGES"
-            app:showSeekBarValue="true"
-            app:summary="@string/random_value_from_0_to_selected_value_will_be_used"
-            app:title="@string/delay_between_messages_seconds" />
 
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:summary="@string/set_maximum_value_to_activate"
+        app:title="@string/delays_seconds">
+        <EditTextPreference
+            app:key="messages.send_interval_min"
+            app:title="@string/minimum"
+            app:icon="@drawable/ic_timer"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:icon="@drawable/ic_timer"
+            app:key="messages.send_interval_max"
+            app:title="@string/maximum"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/limits">

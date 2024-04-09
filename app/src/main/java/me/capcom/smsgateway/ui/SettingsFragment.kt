@@ -65,15 +65,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        if (preference.key == "messages.limit_value") {
-            (preference as EditTextPreference).setOnBindEditTextListener {
-                it.inputType = InputType.TYPE_CLASS_NUMBER
-                it.setSelectAllOnFocus(true)
-                it.selectAll()
-            }
-        }
-
-        if (preference.key == "messages.log_lifetime_days") {
+        if (preference.key == "messages.limit_value"
+            || preference.key == "messages.log_lifetime_days"
+            || preference.key == "messages.send_interval_min"
+            || preference.key == "messages.send_interval_max"
+        ) {
             (preference as EditTextPreference).setOnBindEditTextListener {
                 it.inputType = InputType.TYPE_CLASS_NUMBER
                 it.setSelectAllOnFocus(true)
