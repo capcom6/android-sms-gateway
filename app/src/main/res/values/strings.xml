@@ -42,4 +42,8 @@
     <string name="limits">Limits</string>
     <string name="period">Period</string>
     <string name="messages_count">Messages count</string>
+    <string name="delays_seconds">Delays, seconds</string>
+    <string name="minimum">Minimum</string>
+    <string name="maximum">Maximum</string>
+    <string name="set_maximum_value_to_activate">Set maximum value to activate</string>
 </resources>
