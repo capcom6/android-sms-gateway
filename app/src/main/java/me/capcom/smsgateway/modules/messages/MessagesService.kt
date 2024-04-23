@@ -183,7 +183,12 @@ class MessagesService(
             return true
         } catch (e: Exception) {
             e.printStackTrace()
-            updateState(request.message.id, null, Message.State.Failed, "Sending: " + e.message)
+            updateState(
+                request.message.id,
+                null,
+                Message.State.Failed,
+                "Can't send message: " + e.message
+            )
         }
 
         return false

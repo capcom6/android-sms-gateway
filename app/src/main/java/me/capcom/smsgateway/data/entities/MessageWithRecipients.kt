@@ -10,6 +10,11 @@ data class MessageWithRecipients(
         entityColumn = "messageId",
     )
     val recipients: List<MessageRecipient>,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "messageId",
+    )
+    val states: List<RecipientState> = emptyList()
 ) {
     val state: Message.State
         get() = when {
