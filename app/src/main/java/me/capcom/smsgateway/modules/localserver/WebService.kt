@@ -198,7 +198,8 @@ class WebService : Service() {
                                             null
                                         )
                                     },
-                                    isEncrypted = request.isEncrypted ?: false
+                                    isEncrypted = request.isEncrypted ?: false,
+                                    mapOf(MessageState.Pending to Date())
                                 )
                             )
                         }
@@ -227,7 +228,10 @@ class WebService : Service() {
                                             it.error
                                         )
                                     },
-                                    message.message.isEncrypted
+                                    message.message.isEncrypted,
+                                    message.states.associate {
+                                        it.state.toApiState() to Date(it.updatedAt)
+                                    }
                                 )
                             )
                         }
