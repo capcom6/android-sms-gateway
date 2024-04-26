@@ -1,11 +1,11 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.9.0",
-    "title": "Android SMS Gateway - Integration API",
+    "version": "1.10.0",
+    "title": "Android SMS Gateway Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
-      "name": "Soloshenko Aleksandr",
+      "name": "Aleksandr Soloshenko",
       "email": "i@capcom.me",
       "url": "https://github.com/capcom6"
     },
@@ -17,11 +17,11 @@
   "servers": [
     {
       "url": "http://device-ip:8080",
-      "description": "Device"
+      "description": "Local Server"
     },
     {
       "url": "https://sms.capcom.me/api/3rdparty/v1",
-      "description": "Cloud"
+      "description": "Cloud Server"
     }
   ],
   "paths": {
@@ -30,14 +30,14 @@
         "tags": [
           "Messages"
         ],
-        "summary": "Send message",
-        "description": "Adds a message to the queue for sending",
+        "summary": "Send a message",
+        "description": "Adds a message to the queue for sending.",
         "operationId": "post-message",
         "parameters": [
           {
             "name": "skipPhoneValidation",
             "in": "query",
-            "description": "if `true` phone numbers will be used as is",
+            "description": "If `true`, phone numbers will be used as is.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -66,11 +66,11 @@
         "servers": [
           {
             "url": "http://device-ip:8080",
-            "description": "Device"
+            "description": "Local Server"
           },
           {
             "url": "https://sms.capcom.me/api/3rdparty/v1",
-            "description": "Cloud"
+            "description": "Cloud Server"
           }
         ]
       }
@@ -81,13 +81,13 @@
           "Messages"
         ],
         "summary": "Get message status",
-        "description": "Returns the current state of a message by its ID",
+        "description": "Returns the current status of a message by its ID.",
         "operationId": "get-message-id",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "идентификатор рассылки",
+            "description": "The unique identifier of the message.",
             "required": true,
             "schema": {
               "type": "string"
@@ -113,11 +113,11 @@
         "servers": [
           {
             "url": "http://device-ip:8080",
-            "description": "Device"
+            "description": "Local Server"
           },
           {
             "url": "https://sms.capcom.me/api/3rdparty/v1",
-            "description": "Cloud"
+            "description": "Cloud Server"
           }
         ]
       }
@@ -128,11 +128,11 @@
           "Devices"
         ],
         "summary": "Get devices",
-        "description": "Returns a list of registered devices in the account",
-        "operationId": "get-device",
+        "description": "Returns a list of registered devices in the account.",
+        "operationId": "get-devices",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "A list of registered devices.",
             "content": {
               "application/json": {
                 "schema": {
@@ -153,11 +153,11 @@
         "servers": [
           {
             "url": "http://device-ip:8080",
-            "description": "Device"
+            "description": "Local Server"
           },
           {
             "url": "https://sms.capcom.me/api/3rdparty/v1",
-            "description": "Cloud"
+            "description": "Cloud Server"
           }
         ]
       }
@@ -174,7 +174,7 @@
   "components": {
     "requestBodies": {
       "SendMessageRequest": {
-        "description": "Message sending request",
+        "description": "The request body for sending a message.",
         "content": {
           "application/json": {
             "schema": {
@@ -193,7 +193,7 @@
     },
     "responses": {
       "ErrorResponse": {
-        "description": "",
+        "description": "A generic error response containing the error message.",
         "content": {
           "application/json": {
             "schema": {
@@ -201,7 +201,7 @@
               "properties": {
                 "message": {
                   "type": "string",
-                  "description": "error message"
+                  "description": "The error message describing the issue."
                 }
               },
               "required": [
@@ -212,7 +212,7 @@
         }
       },
       "MessageStatusResponse": {
-        "description": "",
+        "description": "A response containing the status of a message.",
         "content": {
           "application/json": {
             "schema": {
@@ -229,11 +229,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "ID"
+            "description": "The unique identifier of the device."
           },
           "name": {
             "type": "string",
-            "description": "Name"
+            "description": "The name of the device."
           },
           "createdAt": {
             "type": "string",
@@ -247,7 +247,7 @@
           },
           "lastSeen": {
             "type": "string",
-            "description": "Last seen date",
+            "description": "Last seen at",
             "format": "date-time"
           }
         }
@@ -258,16 +258,16 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "ID"
+            "description": "The unique identifier of the message."
           },
           "message": {
             "type": "string",
-            "description": "message text",
+            "description": "The message text.",
             "maxLength": 65535
           },
           "phoneNumbers": {
             "type": "array",
-            "description": "recipients' phone numbers, international notation recommended",
+            "description": "The recipients' phone numbers in international notation.",
             "items": {
               "type": "string",
               "pattern": "^\\+?\\d+$",
@@ -278,31 +278,31 @@
           "simNumber": {
             "type": "integer",
             "nullable": true,
-            "description": "SIM card number, `null` - default",
+            "description": "The SIM card number; if `null`, the default is used.",
             "minimum": 1,
             "maximum": 3
           },
           "ttl": {
             "type": "integer",
             "nullable": true,
-            "description": "expiration timeout, conflicts with `validUntil`",
+            "description": "The expiration timeout in seconds; conflicts with `validUntil`.",
             "minimum": 5,
             "example": 86400
           },
           "validUntil": {
             "type": "string",
             "nullable": true,
-            "description": "expiration date, conflicts with `ttl`",
+            "description": "The expiration date; conflicts with `ttl`.",
             "format": "date-time"
           },
           "withDeliveryReport": {
             "type": "boolean",
-            "description": "request delivery report",
+            "description": "Whether to request a delivery report.",
             "default": true
           },
           "isEncrypted": {
             "type": "boolean",
-            "description": "message text and phone numbers are encrypted, see https://sms.capcom.me/privacy/encryption",
+            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms.capcom.me/privacy/encryption).",
             "default": false
           }
         },
@@ -317,7 +317,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "ID",
+            "description": "The unique identifier of the message.",
             "readOnly": true
           },
           "state": {
@@ -329,31 +329,47 @@
               "Delivered",
               "Failed"
             ],
-            "description": "state",
+            "description": "The message state.",
             "readOnly": true,
             "default": "Pending"
           },
           "isHashed": {
             "type": "boolean",
-            "description": "*(cloud-only)* message data is hashed, `phoneNumber` is the first 16 characters of the SHA256 hash of the E164 formatted phone number",
-            "readOnly": true
+            "description": "*(cloud-only)* Whether the `phoneNumber` is the first 16 characters of the SHA256 hash of the E164 formatted phone number",
+            "readOnly": true,
+            "default": false
+          },
+          "isEncrypted": {
+            "type": "boolean",
+            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms.capcom.me/privacy/encryption).",
+            "readOnly": true,
+            "default": false
           },
           "recipients": {
             "type": "array",
-            "description": "recipients' statuses",
+            "description": "The list of recipients and their states.",
             "items": {
               "$ref": "#/components/schemas/MessageRecipient"
+            }
+          },
+          "states": {
+            "type": "object",
+            "description": "The history of states of the message.",
+            "additionalProperties": {
+              "type": "string",
+              "format": "date-time",
+              "readOnly": true
             }
           }
         }
       },
       "MessageRecipient": {
         "type": "object",
-        "title": "Recipient status",
+        "title": "Message recipient state",
         "properties": {
           "phoneNumber": {
             "type": "string",
-            "description": "phone number",
+            "description": "The recipient's phone number in international notation.",
             "maxLength": 16,
             "readOnly": true,
             "example": "+79990001234"
@@ -367,13 +383,13 @@
               "Delivered",
               "Failed"
             ],
-            "description": "state",
+            "description": "The state of the recipient.",
             "readOnly": true
           },
           "error": {
             "type": "string",
             "nullable": true,
-            "description": "error message for `Failed` state",
+            "description": "The error message if the state is `Failed`.",
             "readOnly": true
           }
         }
