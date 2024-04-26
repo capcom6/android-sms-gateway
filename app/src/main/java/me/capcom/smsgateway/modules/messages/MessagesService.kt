@@ -212,15 +212,7 @@ class MessagesService(
         events.emitEvent(
             MessageStateChangedEvent(
                 id,
-                msg.state,
                 msg.message.source,
-                msg.recipients.map {
-                    MessageStateChangedEvent.Recipient(
-                        it.phoneNumber,
-                        it.state,
-                        it.error
-                    )
-                }
             )
         )
     }

@@ -14,7 +14,7 @@ data class MessageWithRecipients(
         parentColumn = "id",
         entityColumn = "messageId",
     )
-    val states: List<RecipientState> = emptyList()
+    val states: List<MessageState> = emptyList()
 ) {
     val state: Message.State
         get() = when {

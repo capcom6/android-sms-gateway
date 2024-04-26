@@ -95,6 +95,7 @@ class GatewayApi(
         val id: String,
         val state: MessageState,
         val recipients: List<RecipientState>,
+        val states: Map<MessageState, Long>
     )
 
     data class Message(

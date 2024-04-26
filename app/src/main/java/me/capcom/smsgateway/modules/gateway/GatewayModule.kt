@@ -9,11 +9,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.data.entities.Message
+import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
+import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
+import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.MessageSource
 import me.capcom.smsgateway.modules.messages.data.SendParams
@@ -56,11 +58,7 @@ class GatewayModule(
                 val event = event as? MessageStateChangedEvent ?: return@collect
                 if (event.source != MessageSource.Gateway) return@collect
 
-                try {
-                    sendState(event)
-                } catch (th: Throwable) {
-                    th.printStackTrace()
-                }
+                SendStateWorker.start(context, event.id)
             }
         }
     }
@@ -74,29 +72,28 @@ class GatewayModule(
         this._api = null
     }
 
-    private suspend fun sendState(
-        event: MessageStateChangedEvent
+    internal suspend fun sendState(
+        message: MessageWithRecipients
     ) {
         val settings = settings.registrationInfo ?: return
 
-        withContext(Dispatchers.IO) {
-            api.patchMessages(
-                settings.token,
-                listOf(
-                    GatewayApi.MessagePatchRequest(
-                        event.id,
-                        event.state.toApiState(),
-                        event.recipients.map {
-                            GatewayApi.RecipientState(
-                                it.phoneNumber,
-                                it.state.toApiState(),
-                                it.error
-                            )
-                        }
-                    )
+        api.patchMessages(
+            settings.token,
+            listOf(
+                GatewayApi.MessagePatchRequest(
+                    message.message.id,
+                    message.message.state.toApiState(),
+                    message.recipients.map {
+                        GatewayApi.RecipientState(
+                            it.phoneNumber,
+                            it.state.toApiState(),
+                            it.error
+                        )
+                    },
+                    message.states.associate { it.state.toApiState() to it.updatedAt }
                 )
             )
-        }
+        )
     }
 
     suspend fun registerFcmToken(pushToken: String) {
@@ -148,35 +145,22 @@ class GatewayModule(
         )
     }
 
-    internal suspend fun getNewMessages() {
+    internal suspend fun getNewMessages(context: Context) {
         val settings = settings.registrationInfo ?: return
         val messages = api.getMessages(settings.token)
         for (message in messages) {
             try {
-                processMessage(message)
+                processMessage(context, message)
             } catch (th: Throwable) {
                 th.printStackTrace()
             }
         }
     }
 
-    private suspend fun processMessage(message: GatewayApi.Message) {
+    private fun processMessage(context: Context, message: GatewayApi.Message) {
         val messageState = messagesService.getMessage(message.id)
         if (messageState != null) {
-            sendState(
-                MessageStateChangedEvent(
-                    messageState.message.id,
-                    messageState.message.state,
-                    messageState.message.source,
-                    messageState.recipients.map { rcp ->
-                        MessageStateChangedEvent.Recipient(
-                            rcp.phoneNumber,
-                            rcp.state,
-                            rcp.error
-                        )
-                    }
-                )
-            )
+            SendStateWorker.start(context, message.id)
             return
         }
 

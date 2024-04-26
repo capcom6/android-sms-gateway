@@ -7,8 +7,8 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import me.capcom.smsgateway.helpers.SettingsHelper
-import me.capcom.smsgateway.modules.gateway.PullMessagesWorker
-import me.capcom.smsgateway.modules.gateway.RegistrationWorker
+import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
+import me.capcom.smsgateway.modules.gateway.workers.RegistrationWorker
 
 class PushService : FirebaseMessagingService() {
     private val settingsHelper by lazy { SettingsHelper(this) }
