@@ -43,6 +43,7 @@ import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import org.koin.android.ext.android.inject
 import java.util.Date
+import java.util.TimeZone
 import kotlin.concurrent.thread
 
 class WebService : Service() {
@@ -76,10 +77,24 @@ class WebService : Service() {
                     if (me.capcom.smsgateway.BuildConfig.DEBUG) {
                         setPrettyPrinting()
                     }
-                    // ISO_8601
-                    this.setDateFormat(
-                        "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
-                    )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        this.setDateFormat(
+                            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+                        )
+                    } else {
+                        //get device timezone
+                        val timeZone = TimeZone.getDefault()
+                        this.setDateFormat(
+                            "yyyy-MM-dd'T'HH:mm:ss.SSS" + when (timeZone.rawOffset) {
+                                0 -> "Z"
+                                else -> "+" + (timeZone.rawOffset / 3600000).toString().padStart(
+                                    2,
+                                    '0'
+                                ) + ":" + ((timeZone.rawOffset % 3600000) / 60000).toString()
+                                    .padStart(2, '0')
+                            }
+                        )
+                    }
                 }
             }
             install(StatusPages) {
