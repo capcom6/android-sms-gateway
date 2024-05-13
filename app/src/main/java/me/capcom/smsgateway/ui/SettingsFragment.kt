@@ -7,6 +7,7 @@ import androidx.core.content.edit
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 
@@ -45,6 +46,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
             return@setSummaryProvider hostname
         }
+
+        findPreference<Preference>("transient.app_version")?.summary =
+            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
