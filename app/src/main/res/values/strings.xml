@@ -46,4 +46,6 @@
     <string name="minimum">Minimum</string>
     <string name="maximum">Maximum</string>
     <string name="set_maximum_value_to_activate">Set maximum value to activate</string>
+    <string name="information">Information</string>
+    <string name="app_version_build">App version (build)</string>
 </resources>

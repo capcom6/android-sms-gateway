@@ -63,4 +63,12 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/information">
+        <Preference
+            android:key="transient.app_version"
+            android:title="@string/app_version_build"
+            app:persistent="false"
+            app:selectable="false" />
+    </PreferenceCategory>
+
 </PreferenceScreen>
