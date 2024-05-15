@@ -22,6 +22,7 @@ import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.services.PushService
+import java.util.Date
 
 class GatewayModule(
     private val messagesService: MessagesService,
@@ -90,7 +91,7 @@ class GatewayModule(
                             it.error
                         )
                     },
-                    message.states.associate { it.state.toApiState() to it.updatedAt }
+                    message.states.associate { it.state.toApiState() to Date(it.updatedAt) }
                 )
             )
         )

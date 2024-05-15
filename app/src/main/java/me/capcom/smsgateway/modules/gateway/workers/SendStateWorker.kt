@@ -41,7 +41,7 @@ class SendStateWorker(appContext: Context, params: WorkerParameters) :
     }
 
     companion object {
-        private const val RETRY_COUNT = 3
+        private const val RETRY_COUNT = 10
 
         private const val MESSAGE_ID = "messageId"
 
