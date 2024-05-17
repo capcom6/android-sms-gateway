@@ -8,10 +8,12 @@ import androidx.room.TypeConverters
 import me.capcom.smsgateway.data.dao.MessageDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
+import me.capcom.smsgateway.data.entities.MessageState
+import me.capcom.smsgateway.data.entities.RecipientState
 
 @Database(
-    entities = [Message::class, MessageRecipient::class],
-    version = 9,
+    entities = [Message::class, MessageRecipient::class, RecipientState::class, MessageState::class],
+    version = 10,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -21,6 +23,7 @@ import me.capcom.smsgateway.data.entities.MessageRecipient
         AutoMigration(from = 6, to = 7),
 //        AutoMigration(from = 7, to = 8),  // manual migration
         AutoMigration(from = 8, to = 9),
+        AutoMigration(from = 9, to = 10)
     ]
 )
 @TypeConverters(Converters::class)

@@ -33,6 +33,7 @@ import io.ktor.server.routing.routing
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.domain.MessageState
+import me.capcom.smsgateway.extensions.setDateFormatISO8601
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
@@ -43,7 +44,6 @@ import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import org.koin.android.ext.android.inject
 import java.util.Date
-import java.util.TimeZone
 import kotlin.concurrent.thread
 
 class WebService : Service() {
@@ -77,24 +77,7 @@ class WebService : Service() {
                     if (me.capcom.smsgateway.BuildConfig.DEBUG) {
                         setPrettyPrinting()
                     }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        this.setDateFormat(
-                            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
-                        )
-                    } else {
-                        //get device timezone
-                        val timeZone = TimeZone.getDefault()
-                        this.setDateFormat(
-                            "yyyy-MM-dd'T'HH:mm:ss.SSS" + when (timeZone.rawOffset) {
-                                0 -> "Z"
-                                else -> "+" + (timeZone.rawOffset / 3600000).toString().padStart(
-                                    2,
-                                    '0'
-                                ) + ":" + ((timeZone.rawOffset % 3600000) / 60000).toString()
-                                    .padStart(2, '0')
-                            }
-                        )
-                    }
+                    this.setDateFormatISO8601()
                 }
             }
             install(StatusPages) {
@@ -198,7 +181,8 @@ class WebService : Service() {
                                             null
                                         )
                                     },
-                                    isEncrypted = request.isEncrypted ?: false
+                                    isEncrypted = request.isEncrypted ?: false,
+                                    mapOf(MessageState.Pending to Date())
                                 )
                             )
                         }
@@ -227,7 +211,10 @@ class WebService : Service() {
                                             it.error
                                         )
                                     },
-                                    message.message.isEncrypted
+                                    message.message.isEncrypted,
+                                    message.states.associate {
+                                        it.state.toApiState() to Date(it.updatedAt)
+                                    }
                                 )
                             )
                         }

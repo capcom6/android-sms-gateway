@@ -183,7 +183,12 @@ class MessagesService(
             return true
         } catch (e: Exception) {
             e.printStackTrace()
-            updateState(request.message.id, null, Message.State.Failed, "Sending: " + e.message)
+            updateState(
+                request.message.id,
+                null,
+                Message.State.Failed,
+                "Can't send message: " + e.message
+            )
         }
 
         return false
@@ -207,15 +212,7 @@ class MessagesService(
         events.emitEvent(
             MessageStateChangedEvent(
                 id,
-                msg.state,
                 msg.message.source,
-                msg.recipients.map {
-                    MessageStateChangedEvent.Recipient(
-                        it.phoneNumber,
-                        it.state,
-                        it.error
-                    )
-                }
             )
         )
     }
