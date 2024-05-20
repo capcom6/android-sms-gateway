@@ -1,6 +1,7 @@
 package me.capcom.smsgateway
 
 import android.app.Application
+import healthModule
 import me.capcom.smsgateway.data.dbModule
 import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.gateway.GatewayModule
@@ -29,6 +30,7 @@ class App: Application() {
                 messagesModule,
                 encryptionModule,
                 me.capcom.smsgateway.modules.gateway.gatewayModule,
+                healthModule,
             )
         }
 

@@ -10,13 +10,16 @@ import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageState
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
-import me.capcom.smsgateway.data.entities.ProcessedStats
+import me.capcom.smsgateway.data.entities.MessagesStats
 import me.capcom.smsgateway.data.entities.RecipientState
 
 @Dao
 interface MessageDao {
     @Query("SELECT COUNT(*) as count, MAX(processedAt) as lastTimestamp FROM message WHERE state <> 'Pending' AND state <> 'Failed' AND processedAt >= :timestamp")
-    fun countProcessedFrom(timestamp: Long): ProcessedStats
+    fun countProcessedFrom(timestamp: Long): MessagesStats
+
+    @Query("SELECT COUNT(*) as count, MAX(processedAt) as lastTimestamp FROM message WHERE state = 'Failed' AND processedAt >= :timestamp")
+    fun countFailedFrom(timestamp: Long): MessagesStats
 
     @Query("SELECT * FROM message ORDER BY createdAt DESC LIMIT 50")
     fun selectLast(): LiveData<List<Message>>
