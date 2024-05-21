@@ -10,8 +10,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.toHttpDate
 import io.ktor.serialization.gson.gson
 import io.ktor.server.application.call
+import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.UserIdPrincipal
@@ -22,11 +24,13 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import io.ktor.util.date.GMTDate
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.data.entities.Message
@@ -92,6 +96,17 @@ class WebService : Service() {
                     )
                 }
             }
+            install(createApplicationPlugin(name = "DateHeader") {
+                onCall { call ->
+                    call.response.header(
+                        "Date",
+                        GMTDate(null).toHttpDate()
+                    )
+                }
+            })
+//            install(DefaultHeaders) {
+//                header("Server", "")
+//            }
 //            install(CORS) {
 //                anyHost()
 //                allowHeader(HttpHeaders.Authorization)
