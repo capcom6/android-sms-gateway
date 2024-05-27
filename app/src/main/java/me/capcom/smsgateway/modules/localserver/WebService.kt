@@ -9,11 +9,11 @@ import android.os.PowerManager
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.toHttpDate
 import io.ktor.serialization.gson.gson
 import io.ktor.server.application.call
+import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.UserIdPrincipal
@@ -22,19 +22,23 @@ import io.ktor.server.auth.basic
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import io.ktor.util.date.GMTDate
+import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.extensions.setDateFormatISO8601
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.health.HealthService
+import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
@@ -51,6 +55,7 @@ class WebService : Service() {
     private val settingsHelper: SettingsHelper by inject()
     private val messagesService: MessagesService by inject()
     private val notificationsService: NotificationsService by inject()
+    private val healthService: HealthService by inject()
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -91,13 +96,39 @@ class WebService : Service() {
                     )
                 }
             }
+            install(createApplicationPlugin(name = "DateHeader") {
+                onCall { call ->
+                    call.response.header(
+                        "Date",
+                        GMTDate(null).toHttpDate()
+                    )
+                }
+            })
+//            install(DefaultHeaders) {
+//                header("Server", "")
+//            }
+//            install(CORS) {
+//                anyHost()
+//                allowHeader(HttpHeaders.Authorization)
+//                allowHeader(HttpHeaders.ContentType)
+//                allowCredentials = true
+//            }
             routing {
-                install(CORS) {
-                    anyHost()
-                    allowHeader(HttpHeaders.ContentType)
-                    allowHeader(HttpHeaders.Authorization)
-                    allowMethod(HttpMethod.Get)
-                    allowMethod(HttpMethod.Post)
+                get("/health") {
+                    val healthResult = healthService.healthCheck()
+                    call.respond(
+                        when (healthResult.status) {
+                            Status.FAIL -> HttpStatusCode.InternalServerError
+                            Status.WARN -> HttpStatusCode.OK
+                            Status.PASS -> HttpStatusCode.OK
+                        },
+                        mapOf(
+                            "status" to healthResult.status,
+                            "version" to BuildConfig.VERSION_NAME,
+                            "releaseId" to BuildConfig.VERSION_CODE,
+                            "checks" to healthResult.checks
+                        )
+                    )
                 }
                 authenticate("auth-basic") {
                     get("/") {

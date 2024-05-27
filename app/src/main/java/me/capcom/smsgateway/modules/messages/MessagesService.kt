@@ -21,6 +21,8 @@ import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.helpers.PhoneHelper
 import me.capcom.smsgateway.modules.encryption.EncryptionService
 import me.capcom.smsgateway.modules.events.EventBus
+import me.capcom.smsgateway.modules.health.domain.CheckResult
+import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
@@ -38,6 +40,24 @@ class MessagesService(
 
     private val countryCode: String? =
         (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
+
+    fun healthCheck(): Map<String, CheckResult> {
+        val timestamp = System.currentTimeMillis() - 3600 * 1000L
+        val failedStats = dao.countFailedFrom(timestamp)
+        val processedStats = dao.countProcessedFrom(timestamp)
+        return mapOf(
+            "failed" to CheckResult(
+                when {
+                    failedStats.count > 0 && processedStats.count == 0 -> Status.FAIL
+                    failedStats.count > 0 -> Status.WARN
+                    else -> Status.PASS
+                },
+                failedStats.count.toLong(),
+                "messages",
+                "Failed messages for last hour"
+            )
+        )
+    }
 
     fun start() {
         SendMessagesWorker.start(context)
