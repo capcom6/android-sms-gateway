@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.13.0",
+    "version": "1.14.0",
     "title": "Android SMS Gateway Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
@@ -161,6 +161,49 @@
           }
         ]
       }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Health Check",
+        "description": "Returns the health status of the service.",
+        "operationId": "get-health",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved health status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheck"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error or health check failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheck"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "servers": [
+          {
+            "url": "http://device-ip:8080",
+            "description": "Local Server"
+          },
+          {
+            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "description": "Cloud Server"
+          }
+        ]
+      }
     }
   },
   "tags": [
@@ -169,6 +212,9 @@
     },
     {
       "name": "Messages"
+    },
+    {
+      "name": "System"
     }
   ],
   "components": {
@@ -249,6 +295,61 @@
             "type": "string",
             "description": "Last seen at",
             "format": "date-time"
+          }
+        }
+      },
+      "HealthCheck": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "warn"
+            ],
+            "description": "Overall status of the health check. Possible values: \"pass\", \"fail\", \"warn\"."
+          },
+          "version": "1.14.0",
+            "type": "string",
+            "description": "Current version of the service or application."
+          },
+          "releaseId": {
+            "type": "integer",
+            "description": "Specific release or deployment identifier of the service or application."
+          },
+          "checks": {
+            "type": "object",
+            "description": "Detailed health check results for specific components or features.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CheckDetail"
+            }
+          }
+        }
+      },
+      "CheckDetail": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Human-readable explanation of the health check."
+          },
+          "observedUnit": {
+            "type": "string",
+            "description": "Unit of measurement for the observed value."
+          },
+          "observedValue": {
+            "type": "integer",
+            "description": "The result of the health check, represented as a number."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "warn"
+            ],
+            "description": "Status of this specific check. Possible values: \"pass\", \"fail\", \"warn\"."
           }
         }
       },
