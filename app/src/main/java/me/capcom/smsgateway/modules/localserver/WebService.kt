@@ -34,6 +34,7 @@ import io.ktor.util.date.GMTDate
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.data.entities.Message
+import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.extensions.setDateFormatISO8601
 import me.capcom.smsgateway.helpers.SettingsHelper
@@ -43,7 +44,6 @@ import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
 import me.capcom.smsgateway.modules.messages.MessagesService
-import me.capcom.smsgateway.modules.messages.data.MessageSource
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import org.koin.android.ext.android.inject
@@ -182,7 +182,7 @@ class WebService : Service() {
                                     ?.toBooleanStrict() ?: false
 
                             val sendRequest = SendRequest(
-                                MessageSource.Local,
+                                EntitySource.Local,
                                 me.capcom.smsgateway.modules.messages.data.Message(
                                     request.id ?: NanoIdUtils.randomNanoId(),
                                     request.message,

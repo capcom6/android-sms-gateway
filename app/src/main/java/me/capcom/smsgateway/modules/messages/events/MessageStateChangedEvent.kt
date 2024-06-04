@@ -1,11 +1,11 @@
 package me.capcom.smsgateway.modules.messages.events
 
+import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.modules.events.AppEvent
-import me.capcom.smsgateway.modules.messages.data.MessageSource
 
 class MessageStateChangedEvent(
     val id: String,
-    val source: MessageSource,
+    val source: EntitySource,
 ): AppEvent(NAME) {
     companion object {
         const val NAME = "MessageStateChangedEvent"

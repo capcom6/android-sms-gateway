@@ -3,7 +3,7 @@ package me.capcom.smsgateway.data.entities
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import me.capcom.smsgateway.modules.messages.data.MessageSource
+import me.capcom.smsgateway.domain.EntitySource
 import java.util.Date
 
 @Entity(indices = [androidx.room.Index(value = ["createdAt"]), androidx.room.Index(value = ["processedAt"])])
@@ -20,7 +20,7 @@ data class Message(
     val skipPhoneValidation: Boolean,
 
     @ColumnInfo(defaultValue = "Local")
-    val source: MessageSource,
+    val source: EntitySource,
 
     val state: State = State.Pending,
     @ColumnInfo(defaultValue = "0")

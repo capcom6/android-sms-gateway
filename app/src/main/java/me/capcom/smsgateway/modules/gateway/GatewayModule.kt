@@ -11,13 +11,13 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
+import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
 import me.capcom.smsgateway.modules.messages.MessagesService
-import me.capcom.smsgateway.modules.messages.data.MessageSource
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
@@ -55,9 +55,10 @@ class GatewayModule(
         PullMessagesWorker.start(context)
 
         _job = scope.launch {
+            val allowedSources = setOf(EntitySource.Cloud, EntitySource.Gateway)
             messagesService.events.events.collect { event ->
                 val event = event as? MessageStateChangedEvent ?: return@collect
-                if (event.source != MessageSource.Gateway) return@collect
+                if (event.source !in allowedSources) return@collect
 
                 SendStateWorker.start(context, event.id)
             }
@@ -166,7 +167,7 @@ class GatewayModule(
         }
 
         val request = SendRequest(
-            MessageSource.Gateway,
+            EntitySource.Cloud,
             me.capcom.smsgateway.modules.messages.data.Message(
                 message.id,
                 message.message,

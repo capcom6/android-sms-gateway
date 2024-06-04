@@ -192,7 +192,11 @@ class HomeFragment : Fragment() {
 
     private fun requestPermissionsAndStart() {
         val permissionsRequired =
-            listOf(Manifest.permission.SEND_SMS, Manifest.permission.READ_PHONE_STATE)
+            listOf(
+                Manifest.permission.SEND_SMS,
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.RECEIVE_SMS,
+            )
                 .filter {
                     ContextCompat.checkSelfPermission(
                         requireContext(),

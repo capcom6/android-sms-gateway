@@ -10,10 +10,11 @@ import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageState
 import me.capcom.smsgateway.data.entities.RecipientState
+import me.capcom.smsgateway.modules.webhooks.db.WebHook
 
 @Database(
-    entities = [Message::class, MessageRecipient::class, RecipientState::class, MessageState::class],
-    version = 10,
+    entities = [Message::class, MessageRecipient::class, RecipientState::class, MessageState::class, WebHook::class],
+    version = 11,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -23,7 +24,8 @@ import me.capcom.smsgateway.data.entities.RecipientState
         AutoMigration(from = 6, to = 7),
 //        AutoMigration(from = 7, to = 8),  // manual migration
         AutoMigration(from = 8, to = 9),
-        AutoMigration(from = 9, to = 10)
+        AutoMigration(from = 9, to = 10),
+        AutoMigration(from = 10, to = 11),
     ]
 )
 @TypeConverters(Converters::class)
