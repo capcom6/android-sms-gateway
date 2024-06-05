@@ -5,12 +5,13 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import me.capcom.smsgateway.data.dao.MessageDao
+import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageState
 import me.capcom.smsgateway.data.entities.RecipientState
 import me.capcom.smsgateway.modules.webhooks.db.WebHook
+import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
 
 @Database(
     entities = [Message::class, MessageRecipient::class, RecipientState::class, MessageState::class, WebHook::class],
@@ -30,7 +31,8 @@ import me.capcom.smsgateway.modules.webhooks.db.WebHook
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun messageDao(): MessageDao
+    abstract fun messagesDao(): MessagesDao
+    abstract fun webhooksDao(): WebHooksDao
 
     companion object {
         fun getDatabase(context: android.content.Context): AppDatabase {

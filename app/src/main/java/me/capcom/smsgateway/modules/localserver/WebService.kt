@@ -43,9 +43,11 @@ import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
+import me.capcom.smsgateway.modules.localserver.routes.WebhooksRoutes
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.notifications.NotificationsService
+import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import java.util.Date
 import kotlin.concurrent.thread
@@ -64,7 +66,11 @@ class WebService : Service() {
     }
 
     private val server by lazy {
-        embeddedServer(Netty, settingsHelper.serverPort, watchPaths = emptyList()) {
+        embeddedServer(
+            Netty,
+            port = settingsHelper.serverPort,
+            watchPaths = emptyList(),
+        ) {
             install(Authentication) {
                 basic("auth-basic") {
                     realm = "Access to SMS Gateway"
@@ -104,15 +110,6 @@ class WebService : Service() {
                     )
                 }
             })
-//            install(DefaultHeaders) {
-//                header("Server", "")
-//            }
-//            install(CORS) {
-//                anyHost()
-//                allowHeader(HttpHeaders.Authorization)
-//                allowHeader(HttpHeaders.ContentType)
-//                allowCredentials = true
-//            }
             routing {
                 get("/health") {
                     val healthResult = healthService.healthCheck()
@@ -251,8 +248,8 @@ class WebService : Service() {
                         }
                     }
                 }
-
             }
+            WebhooksRoutes(get()).register(this)
         }
     }
 

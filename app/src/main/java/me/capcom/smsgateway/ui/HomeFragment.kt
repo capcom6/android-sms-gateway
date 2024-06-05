@@ -31,6 +31,8 @@ import me.capcom.smsgateway.R
 import me.capcom.smsgateway.databinding.FragmentSettingsBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
+import me.capcom.smsgateway.modules.localserver.LocalServerService
+import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
 import me.capcom.smsgateway.modules.messages.MessagesService
 import org.koin.android.ext.android.inject
@@ -41,6 +43,9 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val settingsHelper: SettingsHelper by inject()
+    private val localServerSettings: LocalServerSettings by inject()
+
+    private val localServerService: LocalServerService by inject()
     private val messagesSvc: MessagesService by inject()
 
     override fun onCreateView(
@@ -76,7 +81,7 @@ class HomeFragment : Fragment() {
             binding.layoutRemoteServer.isVisible = isChecked
         }
         binding.switchUseLocalServer.setOnCheckedChangeListener { _, isChecked ->
-            App.instance.localServerModule.enabled = isChecked
+            localServerSettings.enabled = isChecked
             binding.layoutLocalServer.isVisible = isChecked
         }
 
@@ -108,7 +113,7 @@ class HomeFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            App.instance.localServerModule.events.events.collect { event ->
+            localServerService.events.events.collect { event ->
                 val event = event as? IPReceivedEvent ?: return@collect
 
                 binding.textLocalIP.text = event.localIP?.let {
@@ -171,14 +176,14 @@ class HomeFragment : Fragment() {
         super.onResume()
 
         binding.switchUseRemoteServer.isChecked = App.instance.gatewayModule.enabled
-        binding.switchUseLocalServer.isChecked = App.instance.localServerModule.enabled
+        binding.switchUseLocalServer.isChecked = localServerSettings.enabled
     }
 
     private fun actionStart(start: Boolean) {
         if (start) {
             requestPermissionsAndStart()
         } else {
-            App.instance.localServerModule.stop(requireContext())
+            localServerService.stop(requireContext())
             App.instance.gatewayModule.stop(requireContext())
             messagesSvc.stop()
         }
@@ -187,7 +192,7 @@ class HomeFragment : Fragment() {
     private fun start() {
         messagesSvc.start()
         App.instance.gatewayModule.start(requireContext())
-        App.instance.localServerModule.start(requireContext())
+        localServerService.start(requireContext())
     }
 
     private fun requestPermissionsAndStart() {
@@ -238,7 +243,7 @@ class HomeFragment : Fragment() {
 
                     value = gatewayStatus || localServerStatus
                 }
-                addSource(App.instance.localServerModule.isActiveLiveData(requireContext())) {
+                addSource(localServerService.isActiveLiveData(requireContext())) {
                     localServerStatus = it
 
                     value = gatewayStatus || localServerStatus

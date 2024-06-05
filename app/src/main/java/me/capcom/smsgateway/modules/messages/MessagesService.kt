@@ -14,7 +14,7 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.delay
-import me.capcom.smsgateway.data.dao.MessageDao
+import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
@@ -33,7 +33,7 @@ import java.util.Date
 class MessagesService(
     private val context: Context,
     private val settings: MessagesSettings,
-    private val dao: MessageDao,    // todo: use MessagesRepository
+    private val dao: MessagesDao,    // todo: use MessagesRepository
     private val encryptionService: EncryptionService,
 ) {
     val events = EventBus()
