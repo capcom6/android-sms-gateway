@@ -36,7 +36,7 @@ import me.capcom.smsgateway.R
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageState
-import me.capcom.smsgateway.extensions.setDateFormatISO8601
+import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.health.HealthService
 import me.capcom.smsgateway.modules.health.domain.Status
@@ -88,7 +88,7 @@ class WebService : Service() {
                     if (me.capcom.smsgateway.BuildConfig.DEBUG) {
                         setPrettyPrinting()
                     }
-                    this.setDateFormatISO8601()
+                    configure()
                 }
             }
             install(StatusPages) {
@@ -247,9 +247,9 @@ class WebService : Service() {
                             )
                         }
                     }
+                    WebhooksRoutes(get()).register(this)
                 }
             }
-            WebhooksRoutes(get()).register(this)
         }
     }
 

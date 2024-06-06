@@ -19,7 +19,7 @@ import io.ktor.http.hostWithPort
 import io.ktor.serialization.gson.gson
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.domain.MessageState
-import me.capcom.smsgateway.extensions.setDateFormatISO8601
+import me.capcom.smsgateway.extensions.configure
 import java.util.Date
 
 class GatewayApi(
@@ -35,7 +35,7 @@ class GatewayApi(
         }
         install(ContentNegotiation) {
             gson {
-                this.setDateFormatISO8601()
+                configure()
             }
         }
         expectSuccess = true

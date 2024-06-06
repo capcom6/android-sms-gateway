@@ -4,7 +4,11 @@ import android.os.Build
 import com.google.gson.GsonBuilder
 import java.util.TimeZone
 
-fun GsonBuilder.setDateFormatISO8601() {
+fun GsonBuilder.configure(): GsonBuilder {
+    return this.setDateFormatISO8601()
+}
+
+private fun GsonBuilder.setDateFormatISO8601(): GsonBuilder {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
         this.setDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
@@ -23,4 +27,6 @@ fun GsonBuilder.setDateFormatISO8601() {
             }
         )
     }
+
+    return this
 }

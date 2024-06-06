@@ -5,10 +5,15 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import me.capcom.smsgateway.domain.EntitySource
+import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 
 
 @Dao
 interface WebHooksDao {
+
+    @Query("SELECT * FROM webHook WHERE event = :event")
+    fun selectByEvent(event: WebHookEvent): List<WebHook>
+
     @Query("SELECT * FROM webHook WHERE source = :source")
     fun selectBySource(source: EntitySource): List<WebHook>
 
