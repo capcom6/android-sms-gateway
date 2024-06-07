@@ -25,7 +25,7 @@ class WebHooksService(
     }
 
     fun replace(source: EntitySource, webHook: WebHookDTO) {
-        if (!URLUtil.isHttpUrl(webHook.url) && !URLUtil.isHttpsUrl(webHook.url)) {
+        if (!URLUtil.isHttpsUrl(webHook.url)) {
             throw IllegalArgumentException("Invalid URL")
         }
         if (webHook.event !in WebHookEvent.values()) {
