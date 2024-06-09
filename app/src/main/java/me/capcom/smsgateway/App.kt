@@ -4,7 +4,7 @@ import android.app.Application
 import healthModule
 import me.capcom.smsgateway.data.dbModule
 import me.capcom.smsgateway.modules.encryption.encryptionModule
-import me.capcom.smsgateway.modules.gateway.GatewayModule
+import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.localserver.localserverService
 import me.capcom.smsgateway.modules.messages.messagesModule
 import me.capcom.smsgateway.modules.notifications.notificationsModule
@@ -29,7 +29,7 @@ class App: Application() {
                 notificationsModule,
                 messagesModule,
                 encryptionModule,
-                me.capcom.smsgateway.modules.gateway.gatewayModule,
+                me.capcom.smsgateway.modules.gateway.gatewayService,
                 healthModule,
                 webhooksModule,
                 localserverService,
@@ -41,7 +41,7 @@ class App: Application() {
         EventsReceiver.register(this)
     }
 
-    val gatewayModule: GatewayModule by lazy {
+    val gatewayService: GatewayService by lazy {
         get()
     }
 

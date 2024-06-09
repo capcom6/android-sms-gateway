@@ -24,6 +24,17 @@ class WebHooksService(
         }
     }
 
+    fun sync(source: EntitySource, webHooks: List<WebHookDTO>) {
+        webHooksDao.replaceAll(source, webHooks.map {
+            WebHook(
+                id = requireNotNull(it.id) { "ID is required for sync" },
+                url = it.url,
+                event = it.event,
+                source = source,
+            )
+        })
+    }
+
     fun replace(source: EntitySource, webHook: WebHookDTO) {
         if (!URLUtil.isHttpsUrl(webHook.url)) {
             throw IllegalArgumentException("Invalid URL")
@@ -34,7 +45,7 @@ class WebHooksService(
             )
         }
 
-        webHooksDao.replace(
+        webHooksDao.upsert(
             WebHook(
                 id = webHook.id ?: NanoIdUtils.randomNanoId(),
                 url = webHook.url,

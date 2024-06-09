@@ -24,7 +24,7 @@ import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.services.PushService
 import java.util.Date
 
-class GatewayModule(
+class GatewayService(
     private val messagesService: MessagesService,
     private val settings: GatewaySettings,
 ) {
@@ -67,6 +67,15 @@ class GatewayModule(
 
     fun isActiveLiveData(context: Context) = PullMessagesWorker.getStateLiveData(context)
 
+    suspend fun getWebHooks(): List<GatewayApi.WebHook> {
+        val settings = settings.registrationInfo
+        return if (settings != null) {
+            api.getWebHooks(settings.token)
+        } else {
+            emptyList()
+        }
+    }
+
     fun stop(context: Context) {
         _job?.cancel()
         _job = null
@@ -98,7 +107,7 @@ class GatewayModule(
         )
     }
 
-    suspend fun registerFcmToken(pushToken: String) {
+    internal suspend fun registerFcmToken(pushToken: String) {
         if (!enabled) return
 
         val settings = settings.registrationInfo

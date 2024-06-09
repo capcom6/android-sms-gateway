@@ -73,6 +73,12 @@ class GatewayApi(
         }
     }
 
+    suspend fun getWebHooks(token: String): List<WebHook> {
+        return client.get("$baseUrl/webhook") {
+            auth(token)
+        }.body()
+    }
+
     private fun HttpRequestBuilder.auth(token: String) {
         header(HttpHeaders.Authorization, "Bearer $token")
     }
@@ -115,5 +121,11 @@ class GatewayApi(
         val phoneNumber: String,
         val state: MessageState,
         val error: String?,
+    )
+
+    data class WebHook(
+        val id: String,
+        val url: String,
+        val event: String,
     )
 }

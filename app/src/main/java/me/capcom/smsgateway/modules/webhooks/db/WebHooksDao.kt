@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 
@@ -18,8 +19,20 @@ interface WebHooksDao {
     fun selectBySource(source: EntitySource): List<WebHook>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun replace(webHook: WebHook)
+    fun upsert(webHook: WebHook)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun upsertAll(webHooks: List<WebHook>)
+
+    @Transaction
+    fun replaceAll(source: EntitySource, webHooks: List<WebHook>) {
+        deleteBySource(source)
+        upsertAll(webHooks)
+    }
 
     @Query("DELETE FROM webHook WHERE id = :id AND source = :source")
     fun delete(source: EntitySource, id: String)
+
+    @Query("DELETE FROM webHook WHERE source = :source")
+    fun deleteBySource(source: EntitySource)
 }

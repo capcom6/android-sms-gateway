@@ -11,7 +11,7 @@ import org.koin.core.component.get
 class BootReceiver : BroadcastReceiver(), KoinComponent {
 
     override fun onReceive(context: Context, intent: Intent) {
-        App.instance.gatewayModule.start(context)
+        App.instance.gatewayService.start(context)
         get<LocalServerService>().start(context)
     }
 }

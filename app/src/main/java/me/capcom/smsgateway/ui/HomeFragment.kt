@@ -77,7 +77,7 @@ class HomeFragment : Fragment() {
             settingsHelper.autostart = isChecked
         }
         binding.switchUseRemoteServer.setOnCheckedChangeListener { _, isChecked ->
-            App.instance.gatewayModule.enabled = isChecked
+            App.instance.gatewayService.enabled = isChecked
             binding.layoutRemoteServer.isVisible = isChecked
         }
         binding.switchUseLocalServer.setOnCheckedChangeListener { _, isChecked ->
@@ -94,7 +94,7 @@ class HomeFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            App.instance.gatewayModule.events.events.collect { event ->
+            App.instance.gatewayService.events.events.collect { event ->
                 val event = event as? DeviceRegisteredEvent ?: return@collect
 
                 binding.textRemoteAddress.text = getString(R.string.address_is, event.server)
@@ -175,7 +175,7 @@ class HomeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        binding.switchUseRemoteServer.isChecked = App.instance.gatewayModule.enabled
+        binding.switchUseRemoteServer.isChecked = App.instance.gatewayService.enabled
         binding.switchUseLocalServer.isChecked = localServerSettings.enabled
     }
 
@@ -184,14 +184,14 @@ class HomeFragment : Fragment() {
             requestPermissionsAndStart()
         } else {
             localServerService.stop(requireContext())
-            App.instance.gatewayModule.stop(requireContext())
+            App.instance.gatewayService.stop(requireContext())
             messagesSvc.stop()
         }
     }
 
     private fun start() {
         messagesSvc.start()
-        App.instance.gatewayModule.start(requireContext())
+        App.instance.gatewayService.start(requireContext())
         localServerService.start(requireContext())
     }
 
@@ -238,7 +238,7 @@ class HomeFragment : Fragment() {
             private var localServerStatus = false
 
             init {
-                addSource(App.instance.gatewayModule.isActiveLiveData(requireContext())) {
+                addSource(App.instance.gatewayService.isActiveLiveData(requireContext())) {
                     gatewayStatus = it
 
                     value = gatewayStatus || localServerStatus
