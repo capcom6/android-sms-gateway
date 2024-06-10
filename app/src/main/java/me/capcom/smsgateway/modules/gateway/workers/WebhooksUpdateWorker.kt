@@ -1,4 +1,4 @@
-package me.capcom.smsgateway.modules.webhooks.workers
+package me.capcom.smsgateway.modules.gateway.workers
 
 import android.content.Context
 import androidx.work.BackoffPolicy
@@ -21,7 +21,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import java.util.concurrent.TimeUnit
 
-class CloudUpdateWorker(appContext: Context, params: WorkerParameters) :
+class WebhooksUpdateWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params), KoinComponent {
     override suspend fun doWork(): Result {
         val gatewaySvc: GatewayService = get()
@@ -49,7 +49,7 @@ class CloudUpdateWorker(appContext: Context, params: WorkerParameters) :
         private const val NAME = "CloudUpdateWorker"
 
         fun start(context: Context) {
-            val work = PeriodicWorkRequestBuilder<CloudUpdateWorker>(
+            val work = PeriodicWorkRequestBuilder<WebhooksUpdateWorker>(
                 PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS,
                 TimeUnit.MILLISECONDS
             )
@@ -70,6 +70,11 @@ class CloudUpdateWorker(appContext: Context, params: WorkerParameters) :
                     ExistingPeriodicWorkPolicy.REPLACE,
                     work
                 )
+        }
+
+        fun stop(context: Context) {
+            WorkManager.getInstance(context)
+                .cancelUniqueWork(NAME)
         }
     }
 }

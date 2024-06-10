@@ -17,6 +17,7 @@ import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
+import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
@@ -53,6 +54,7 @@ class GatewayService(
 
         PushService.register(context)
         PullMessagesWorker.start(context)
+        WebhooksUpdateWorker.start(context)
 
         _job = scope.launch {
             val allowedSources = setOf(EntitySource.Cloud, EntitySource.Gateway)
@@ -67,20 +69,21 @@ class GatewayService(
 
     fun isActiveLiveData(context: Context) = PullMessagesWorker.getStateLiveData(context)
 
-    suspend fun getWebHooks(): List<GatewayApi.WebHook> {
+    fun stop(context: Context) {
+        _job?.cancel()
+        _job = null
+        WebhooksUpdateWorker.stop(context)
+        PullMessagesWorker.stop(context)
+        this._api = null
+    }
+
+    internal suspend fun getWebHooks(): List<GatewayApi.WebHook> {
         val settings = settings.registrationInfo
         return if (settings != null) {
             api.getWebHooks(settings.token)
         } else {
             emptyList()
         }
-    }
-
-    fun stop(context: Context) {
-        _job?.cancel()
-        _job = null
-        PullMessagesWorker.stop(context)
-        this._api = null
     }
 
     internal suspend fun sendState(

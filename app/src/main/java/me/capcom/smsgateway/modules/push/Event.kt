@@ -3,9 +3,9 @@ package me.capcom.smsgateway.modules.push
 import com.google.gson.annotations.SerializedName
 
 enum class Event {
-    @SerializedName("message_enqueued")
+    @SerializedName("MessageEnqueued")
     MessageEnqueued,
 
-    @SerializedName("webhooks_updated")
+    @SerializedName("WebhooksUpdated")
     WebhooksUpdated,
 }

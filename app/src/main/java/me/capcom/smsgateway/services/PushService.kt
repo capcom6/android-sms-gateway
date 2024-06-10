@@ -9,8 +9,8 @@ import com.google.firebase.messaging.RemoteMessage
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.RegistrationWorker
+import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
 import me.capcom.smsgateway.modules.push.Event
-import me.capcom.smsgateway.modules.webhooks.workers.CloudUpdateWorker
 
 class PushService : FirebaseMessagingService() {
     private val settingsHelper by lazy { SettingsHelper(this) }
@@ -28,7 +28,7 @@ class PushService : FirebaseMessagingService() {
             val event = message.data["event"]?.let { Event.valueOf(it) } ?: Event.MessageEnqueued
             when (event) {
                 Event.MessageEnqueued -> PullMessagesWorker.start(this)
-                Event.WebhooksUpdated -> CloudUpdateWorker.start(this)
+                Event.WebhooksUpdated -> WebhooksUpdateWorker.start(this)
             }
         } catch (e: Throwable) {
             e.printStackTrace()
