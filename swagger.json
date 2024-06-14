@@ -311,188 +311,187 @@
             "description": "Overall status of the health check. Possible values: \"pass\", \"fail\", \"warn\"."
           },
           "version": "1.14.0",
-            "type": "string",
-            "description": "Current version of the service or application."
-          },
-          "releaseId": {
-            "type": "integer",
-            "description": "Specific release or deployment identifier of the service or application."
-          },
-          "checks": {
-            "type": "object",
-            "description": "Detailed health check results for specific components or features.",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/CheckDetail"
-            }
+          "type": "string",
+          "description": "Current version of the service or application."
+        },
+        "releaseId": {
+          "type": "integer",
+          "description": "Specific release or deployment identifier of the service or application."
+        },
+        "checks": {
+          "type": "object",
+          "description": "Detailed health check results for specific components or features.",
+          "additionalProperties": {
+            "$ref": "#/components/schemas/CheckDetail"
           }
         }
-      },
-      "CheckDetail": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "type": "string",
-            "description": "Human-readable explanation of the health check."
-          },
-          "observedUnit": {
-            "type": "string",
-            "description": "Unit of measurement for the observed value."
-          },
-          "observedValue": {
-            "type": "integer",
-            "description": "The result of the health check, represented as a number."
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "pass",
-              "fail",
-              "warn"
-            ],
-            "description": "Status of this specific check. Possible values: \"pass\", \"fail\", \"warn\"."
-          }
+      }
+    },
+    "CheckDetail": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Human-readable explanation of the health check."
+        },
+        "observedUnit": {
+          "type": "string",
+          "description": "Unit of measurement for the observed value."
+        },
+        "observedValue": {
+          "type": "integer",
+          "description": "The result of the health check, represented as a number."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "warn"
+          ],
+          "description": "Status of this specific check. Possible values: \"pass\", \"fail\", \"warn\"."
         }
-      },
-      "Message": {
-        "type": "object",
-        "title": "Message",
-        "properties": {
-          "id": {
+      }
+    },
+    "Message": {
+      "type": "object",
+      "title": "Message",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier of the message."
+        },
+        "message": {
+          "type": "string",
+          "description": "The message text.",
+          "maxLength": 65535
+        },
+        "phoneNumbers": {
+          "type": "array",
+          "description": "The recipients' phone numbers in international notation.",
+          "items": {
             "type": "string",
-            "description": "The unique identifier of the message."
-          },
-          "message": {
-            "type": "string",
-            "description": "The message text.",
-            "maxLength": 65535
-          },
-          "phoneNumbers": {
-            "type": "array",
-            "description": "The recipients' phone numbers in international notation.",
-            "items": {
-              "type": "string",
-              "pattern": "^\\+?\\d+$",
-              "maxLength": 16,
-              "example": "+79990001234"
-            }
-          },
-          "simNumber": {
-            "type": "integer",
-            "nullable": true,
-            "description": "The SIM card number; if `null`, the default is used.",
-            "minimum": 1,
-            "maximum": 3
-          },
-          "ttl": {
-            "type": "integer",
-            "nullable": true,
-            "description": "The expiration timeout in seconds; conflicts with `validUntil`.",
-            "minimum": 5,
-            "example": 86400
-          },
-          "validUntil": {
-            "type": "string",
-            "nullable": true,
-            "description": "The expiration date; conflicts with `ttl`.",
-            "format": "date-time"
-          },
-          "withDeliveryReport": {
-            "type": "boolean",
-            "description": "Whether to request a delivery report.",
-            "default": true
-          },
-          "isEncrypted": {
-            "type": "boolean",
-            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms.capcom.me/privacy/encryption).",
-            "default": false
+            "pattern": "^\\+?\\d+$",
+            "maxLength": 16,
+            "example": "+79990001234"
           }
         },
-        "required": [
-          "message",
-          "phoneNumbers"
-        ]
-      },
-      "MessageStatus": {
-        "type": "object",
-        "title": "Message state",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The unique identifier of the message.",
-            "readOnly": true
-          },
-          "state": {
-            "type": "string",
-            "enum": [
-              "Pending",
-              "Processed",
-              "Sent",
-              "Delivered",
-              "Failed"
-            ],
-            "description": "The message state.",
-            "readOnly": true,
-            "default": "Pending"
-          },
-          "isHashed": {
-            "type": "boolean",
-            "description": "*(cloud-only)* Whether the `phoneNumber` is the first 16 characters of the SHA256 hash of the E164 formatted phone number",
-            "readOnly": true,
-            "default": false
-          },
-          "isEncrypted": {
-            "type": "boolean",
-            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms.capcom.me/privacy/encryption).",
-            "readOnly": true,
-            "default": false
-          },
-          "recipients": {
-            "type": "array",
-            "description": "The list of recipients and their states.",
-            "items": {
-              "$ref": "#/components/schemas/MessageRecipient"
-            }
-          },
-          "states": {
-            "type": "object",
-            "description": "The history of states of the message.",
-            "additionalProperties": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
-            }
-          }
+        "simNumber": {
+          "type": "integer",
+          "nullable": true,
+          "description": "The SIM card number; if `null`, the default is used.",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "ttl": {
+          "type": "integer",
+          "nullable": true,
+          "description": "The expiration timeout in seconds; conflicts with `validUntil`.",
+          "minimum": 5,
+          "example": 86400
+        },
+        "validUntil": {
+          "type": "string",
+          "nullable": true,
+          "description": "The expiration date; conflicts with `ttl`.",
+          "format": "date-time"
+        },
+        "withDeliveryReport": {
+          "type": "boolean",
+          "description": "Whether to request a delivery report.",
+          "default": true
+        },
+        "isEncrypted": {
+          "type": "boolean",
+          "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms.capcom.me/privacy/encryption).",
+          "default": false
         }
       },
-      "MessageRecipient": {
-        "type": "object",
-        "title": "Message recipient state",
-        "properties": {
-          "phoneNumber": {
+      "required": [
+        "message",
+        "phoneNumbers"
+      ]
+    },
+    "MessageStatus": {
+      "type": "object",
+      "title": "Message state",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier of the message.",
+          "readOnly": true
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "Pending",
+            "Processed",
+            "Sent",
+            "Delivered",
+            "Failed"
+          ],
+          "description": "The message state.",
+          "readOnly": true,
+          "default": "Pending"
+        },
+        "isHashed": {
+          "type": "boolean",
+          "description": "*(cloud-only)* Whether the `phoneNumber` is the first 16 characters of the SHA256 hash of the E164 formatted phone number",
+          "readOnly": true,
+          "default": false
+        },
+        "isEncrypted": {
+          "type": "boolean",
+          "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms.capcom.me/privacy/encryption).",
+          "readOnly": true,
+          "default": false
+        },
+        "recipients": {
+          "type": "array",
+          "description": "The list of recipients and their states.",
+          "items": {
+            "$ref": "#/components/schemas/MessageRecipient"
+          }
+        },
+        "states": {
+          "type": "object",
+          "description": "The history of states of the message.",
+          "additionalProperties": {
             "type": "string",
-            "description": "The recipient's phone number in international notation.",
-            "maxLength": 16,
-            "readOnly": true,
-            "example": "+79990001234"
-          },
-          "state": {
-            "type": "string",
-            "enum": [
-              "Pending",
-              "Processed",
-              "Sent",
-              "Delivered",
-              "Failed"
-            ],
-            "description": "The state of the recipient.",
-            "readOnly": true
-          },
-          "error": {
-            "type": "string",
-            "nullable": true,
-            "description": "The error message if the state is `Failed`.",
+            "format": "date-time",
             "readOnly": true
           }
+        }
+      }
+    },
+    "MessageRecipient": {
+      "type": "object",
+      "title": "Message recipient state",
+      "properties": {
+        "phoneNumber": {
+          "type": "string",
+          "description": "The recipient's phone number in international notation.",
+          "maxLength": 16,
+          "readOnly": true,
+          "example": "+79990001234"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "Pending",
+            "Processed",
+            "Sent",
+            "Delivered",
+            "Failed"
+          ],
+          "description": "The state of the recipient.",
+          "readOnly": true
+        },
+        "error": {
+          "type": "string",
+          "nullable": true,
+          "description": "The error message if the state is `Failed`.",
+          "readOnly": true
         }
       }
     }
