@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.modules.localserver
 
 import android.content.Context
+import android.os.Build
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,6 +15,18 @@ class LocalServerService(
     private val settings: LocalServerSettings,
 ) {
     val events = EventBus()
+
+    fun getDeviceId(context: Context): String? {
+        val firstInstallTime = context.packageManager.getPackageInfo(
+            context.packageName,
+            0
+        ).firstInstallTime
+        val deviceName = "${Build.MANUFACTURER}/${Build.PRODUCT}"
+
+        return deviceName.hashCode().toULong()
+            .toString(16).padStart(16, '0') + firstInstallTime.toULong()
+            .toString(16).padStart(16, '0')
+    }
 
     fun start(context: Context) {
         if (!settings.enabled) return

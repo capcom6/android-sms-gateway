@@ -16,7 +16,6 @@ import me.capcom.smsgateway.modules.gateway.GatewayApi
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookDTO
-import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import java.util.concurrent.TimeUnit
@@ -41,7 +40,7 @@ class WebhooksUpdateWorker(appContext: Context, params: WorkerParameters) :
         return WebHookDTO(
             id = id,
             url = url,
-            event = WebHookEvent.valueOf(event),
+            event = event,
         )
     }
 

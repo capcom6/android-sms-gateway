@@ -32,9 +32,10 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params), KoinComponent {
     override suspend fun doWork(): Result {
         try {
+            val url = inputData.getString(INPUT_URL) ?: return Result.failure()
+            val deviceId = inputData.getString(INPUT_DEVICE_ID) ?: return Result.failure()
             val event = inputData.getString(INPUT_EVENT)?.let { WebHookEvent.valueOf(it) }
                 ?: return Result.failure()
-            val url = inputData.getString(INPUT_URL) ?: return Result.failure()
             val payload = inputData.getString(INPUT_PAYLOAD)
                 ?.let { gson.fromJson(it, JsonObject::class.java) }
                 ?: return Result.failure()
@@ -43,6 +44,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
                 setBody(
                     WebHookEventDTO(
                         event,
+                        deviceId,
                         payload
                     )
                 )
@@ -74,12 +76,19 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
     }
 
     companion object {
-        fun start(context: Context, event: WebHookEvent, url: String, payload: Any) {
+        fun start(
+            context: Context,
+            url: String,
+            deviceId: String,
+            event: WebHookEvent,
+            payload: Any
+        ) {
             val work = OneTimeWorkRequestBuilder<SendWebhookWorker>()
                 .setInputData(
                     workDataOf(
-                        INPUT_EVENT to event.name,
                         INPUT_URL to url,
+                        INPUT_DEVICE_ID to deviceId,
+                        INPUT_EVENT to event.name,
                         INPUT_PAYLOAD to gson.toJson(payload)
                     )
                 )
@@ -101,8 +110,9 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
 
         private val gson = GsonBuilder().configure().create()
 
-        private const val INPUT_EVENT = "event"
         private const val INPUT_URL = "url"
+        private const val INPUT_EVENT = "event"
+        private const val INPUT_DEVICE_ID = "device_id"
         private const val INPUT_PAYLOAD = "payload"
     }
 }

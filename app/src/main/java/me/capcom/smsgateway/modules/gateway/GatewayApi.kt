@@ -20,6 +20,7 @@ import io.ktor.serialization.gson.gson
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.extensions.configure
+import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 import java.util.Date
 
 class GatewayApi(
@@ -74,7 +75,7 @@ class GatewayApi(
     }
 
     suspend fun getWebHooks(token: String): List<WebHook> {
-        return client.get("$baseUrl/webhook") {
+        return client.get("$baseUrl/webhooks") {
             auth(token)
         }.body()
     }
@@ -126,6 +127,6 @@ class GatewayApi(
     data class WebHook(
         val id: String,
         val url: String,
-        val event: String,
+        val event: WebHookEvent,
     )
 }

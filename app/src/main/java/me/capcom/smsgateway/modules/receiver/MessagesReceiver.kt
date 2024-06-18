@@ -18,15 +18,17 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
             return
         }
 
-        Intents.getMessagesFromIntent(intent)?.onEach {
-            val event = MessageReceivedEvent(
-                message = it.displayMessageBody,
-                phoneNumber = it.displayOriginatingAddress,
-                receivedAt = Date(it.timestampMillis),
-            )
+        val messages = Intents.getMessagesFromIntent(intent) ?: return
+        val firstMessage = messages.first()
+        val text = messages.joinToString(separator = "") { it.displayMessageBody }
 
-            webHooksService.emit(WebHookEvent.SmsReceived, event)
-        }
+        val event = MessageReceivedEvent(
+            message = text,
+            phoneNumber = firstMessage.displayOriginatingAddress,
+            receivedAt = Date(firstMessage.timestampMillis),
+        )
+
+        webHooksService.emit(WebHookEvent.SmsReceived, event)
     }
 
     private val webHooksService: WebHooksService by inject()

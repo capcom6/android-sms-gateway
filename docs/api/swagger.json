@@ -533,6 +533,10 @@
       "WebHookEvent": {
         "type": "object",
         "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "The unique identifier of the device."
+          },
           "event": {
             "type": "string",
             "enum": [
