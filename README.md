@@ -231,6 +231,8 @@ Follow these steps to set up webhooks:
       http://<device_local_ip>:8080/webhooks/unique-id
     ```
 
+For cloud mode the process is similar, simply change the URL to https://sms.capcom.me/api/3rdparty/v1/webhooks. Webhooks in Local and Cloud mode are independent.
+
 *Note*: Webhooks are transmitted directly from the device; therefore, the device must have an outgoing internet connection. As the requests originate from the device, incoming messages remain inaccessible to us.
 
 
