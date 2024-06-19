@@ -11,20 +11,21 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
+import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
+import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
 import me.capcom.smsgateway.modules.messages.MessagesService
-import me.capcom.smsgateway.modules.messages.data.MessageSource
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.services.PushService
 import java.util.Date
 
-class GatewayModule(
+class GatewayService(
     private val messagesService: MessagesService,
     private val settings: GatewaySettings,
 ) {
@@ -44,6 +45,10 @@ class GatewayModule(
             settings.enabled = value
         }
 
+    fun getDeviceId(context: Context): String? {
+        return settings.registrationInfo?.id
+    }
+
     fun start(context: Context) {
         if (!enabled) return
         this._api = GatewayApi(
@@ -53,11 +58,13 @@ class GatewayModule(
 
         PushService.register(context)
         PullMessagesWorker.start(context)
+        WebhooksUpdateWorker.start(context)
 
         _job = scope.launch {
+            val allowedSources = setOf(EntitySource.Cloud, EntitySource.Gateway)
             messagesService.events.events.collect { event ->
                 val event = event as? MessageStateChangedEvent ?: return@collect
-                if (event.source != MessageSource.Gateway) return@collect
+                if (event.source !in allowedSources) return@collect
 
                 SendStateWorker.start(context, event.id)
             }
@@ -69,8 +76,18 @@ class GatewayModule(
     fun stop(context: Context) {
         _job?.cancel()
         _job = null
+        WebhooksUpdateWorker.stop(context)
         PullMessagesWorker.stop(context)
         this._api = null
+    }
+
+    internal suspend fun getWebHooks(): List<GatewayApi.WebHook> {
+        val settings = settings.registrationInfo
+        return if (settings != null) {
+            api.getWebHooks(settings.token)
+        } else {
+            emptyList()
+        }
     }
 
     internal suspend fun sendState(
@@ -97,7 +114,7 @@ class GatewayModule(
         )
     }
 
-    suspend fun registerFcmToken(pushToken: String) {
+    internal suspend fun registerFcmToken(pushToken: String) {
         if (!enabled) return
 
         val settings = settings.registrationInfo
@@ -166,7 +183,7 @@ class GatewayModule(
         }
 
         val request = SendRequest(
-            MessageSource.Gateway,
+            EntitySource.Cloud,
             me.capcom.smsgateway.modules.messages.data.Message(
                 message.id,
                 message.message,

@@ -4,6 +4,7 @@ import androidx.preference.PreferenceManager
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.encryption.EncryptionSettings
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
+import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.messages.MessagesSettings
 import org.koin.dsl.module
 
@@ -23,6 +24,11 @@ val settingsModule = module {
     factory {
         MessagesSettings(
             PreferencesStorage(get(), "messages")
+        )
+    }
+    factory {
+        LocalServerSettings(
+            PreferencesStorage(get(), "localserver")
         )
     }
 }

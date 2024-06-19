@@ -61,6 +61,7 @@
 - [Getting Started](#getting-started)
   - [Local server](#local-server)
   - [Cloud server](#cloud-server)
+  - [Webhooks](#webhooks)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -72,27 +73,33 @@
 <p align="center"><img src="assets/screenshot.png" width="360"></p>
 
 
-Android SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweight application allowing you to send SMS messages programmatically via API. This makes it ideal for integrating SMS functionality into your own applications or services.
+Android SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweight application that allows you to send SMS messages programmatically via an API and receive webhooks on incoming SMS. This makes it ideal for integrating SMS functionality into your own applications or services.
 
 ### Features
 
-- **No registration:** No registration or email is required to create an account. In local mode you don't need an account at all!
-- **Send SMS by API:** Use our API to send messages directly from your own applications or services.
-- **Supports Android 5.0 and above:** The application is compatible with Android 5.0 and later versions.
-- **Message status tracking:** Monitor the status of your sent messages in real-time.
-- **Starts at boot:** The application starts running as soon as your device boots up.
-- **Multiple SIM cards:** The application supports multiple SIM cards.
+- **No registration required:** No registration or email is required to create an account. In local mode, you don't need an account at all!
+- **Send SMS via API:** Use our API to send messages directly from your applications or services.
+- **Support for Android 5.0 and above:** The application is compatible with Android 5.0 and later versions.
+- **Message status tracking:** Monitor the status of sent messages in real-time.
+- **Automatic startup:** The application starts running as soon as your device boots up.
+- **Support for multiple SIM cards:** The application supports devices with multiple SIM cards.
 - **Multipart messages:** The application supports sending long messages with auto-partitioning.
-- **End-to-end encryption:** No one in the middle can access the content and recipients of the
-  messages.
+- **End-to-end encryption:** The application provides end-to-end encryption by encrypting message content and recipients' phone numbers before sending them to the API and decrypting them on the device.
+- **Message expiration:** The application allows setting an expiration time for messages. Messages will not be sent if they have expired.
+- **Random delay between messages:** Introduces a random delay between sending messages to avoid mobile operator restrictions.
+- **Private server support:** The application allows for the use of a backend server in the user's infrastructure for enhanced security.
+- **Webhooks on incoming SMS:** The application allows setting up webhooks to be sent to a specified URL whenever an SMS is received.
 
 ### Ideal For
 
 - Notifications
 - Alerts
 - Two-factor authentication codes
+- Receiving incoming SMS
 
-Android SMS Gateway provides a convenient and reliable solution, whether you need to send notifications, alerts, or two-factor authentication codes.
+Android SMS Gateway offers a convenient and reliable solution for sending notifications, alerts, or two-factor authentication codes, and also allows you to receive webhooks when an SMS is received.
+
+*Note*: It is not recommended to use this for batch sending due to potential mobile operator restrictions.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -120,7 +127,8 @@ You need an Android device with Android 5.0 (Lollipop) or above for using the ap
 To use the application, you need to grant the following permissions:
 
 - **SEND_SMS**: This permission is required to send SMS messages.
-- **READ_PHONE_STATE**: This permission is required to select the SIM card. Optional, if you don't want to select the SIM card.
+- **READ_PHONE_STATE**: This permission is optional. If you want to select the SIM card, you can grant this permission.
+- **RECEIVE_SMS**: This permission is optional. If you want to receive webhooks on incoming SMS, you need to grant this permission.
 
 ### Installation from APK
 
@@ -138,6 +146,8 @@ To use the application, you need to grant the following permissions:
 <!-- GETTING STARTED -->
 ## Getting Started
 
+_For integration examples, please refer to the [API Documentation](https://sms.capcom.me/integration/api/)_
+
 The Android SMS Gateway can work in two modes: with a local server started on the device or with a cloud server at [sms.capcom.me](https://sms.capcom.me). The basic API is the same for both modes and is documented on the [Android SMS Gateway API Documentation](https://capcom6.github.io/android-sms-gateway/).
 
 ### Local server
@@ -146,19 +156,19 @@ The Android SMS Gateway can work in two modes: with a local server started on th
     <img src="/assets/local-server.png" alt="Local server example settings">
 </div>
 
-This mode is recommended for sending messages from local network.
+This mode is ideal for sending messages from a local network.
 
-1. Start the app on the device.
-2. Activate the `Local server` switch.
-3. Tap the `Offline` button at the bottom of the screen.
-4. In the `Local server` section, the local and public addresses of the device, along with the credentials for basic authentication, will be displayed. Please note that the public address is only usable if you have a "white" IP address and have correctly configured your firewall.
-5. Make a `curl` call from the local network using a command like the following, replacing `<username>`, `<password>`, and `<device_local_ip>` with the values obtained in step 4: 
+1. Launch the app on your device.
+2. Toggle the `Local Server` switch to the "on" position.
+3. Tap the `Offline` button located at the bottom of the screen to activate the server.
+4. The `Local Server` section will display your device's local and public IP addresses, as well as the credentials for basic authentication. Please note that the public IP address is only accessible if you have a public (also known as "white") IP and your firewall is configured appropriately.
+    <div align="center">
+        <img src="/assets/local-server.png" alt="Example settings for Local Server mode">
+    </div>
+5. To send a message from within the local network, execute a `curl` command like the following. Be sure to replace `<username>`, `<password>`, and `<device_local_ip>` with the actual values provided in the previous step:
 
-    ```
-    curl -X POST -u <username>:<password> \
-      -H "Content-Type: application/json" \
-      -d '{ "message": "Hello, world!", "phoneNumbers": ["79990001234", "79995556677"] }' \
-      http://<device_local_ip>:8080/message
+    ```sh
+    curl -X POST -u <username>:<password> -H "Content-Type: application/json" -d '{ "message": "Hello, world!", "phoneNumbers": ["+79990001234", "+79995556677"] }' http://<device_local_ip>:8080/message
     ```
 
 ### Cloud server
@@ -167,23 +177,64 @@ This mode is recommended for sending messages from local network.
     <img src="/assets/cloud-server.png" alt="Cloud server example settings">
 </div>
 
-If you need to send messages with dynamic or shared device IP, you can use the cloud server. The best part? No registration, email, or phone number is required to start using it.
+Use the cloud server mode when dealing with dynamic or shared device IP addresses. The best part? No registration, email, or phone number is required to start using it.
 
-1. Start the app on the device.
-2. Activate the `Cloud server` switch.
-3. Tap the `Offline` button at the bottom of the screen.
-4. In the `Cloud server` section, the credentials for basic authentication will be displayed.
-5. Make a curl call using a command like the following, replacing `<username>` and `<password>` with the values obtained in step 4:
+1. Launch the app on your device.
+2. Toggle the `Cloud Server` switch to the "on" position.
+3. Tap the `Online` button located at the bottom of the screen to connect to the cloud server.
+4. In the `Cloud Server` section, the credentials for basic authentication will be displayed.
+   <div align="center">
+      <img src="/assets/cloud-server.png" alt="Example settings for Cloud Server mode">
+   </div>
+5. To send a message via the cloud server, perform a `curl` request with a command similar to the following, substituting `<username>` and `<password>` with the actual values obtained in step 4:
 
+    ```sh
+    curl -X POST -u <username>:<password> -H "Content-Type: application/json" -d '{ "message": "Hello, world!", "phoneNumbers": ["+79990001234", "+79995556677"] }' https://sms.capcom.me/api/3rdparty/v1/message
     ```
+
+For further privacy, you can deploy your own private server. See the [Private Server](https://sms.capcom.me/getting-started/private-server/) section for more details.
+
+### Webhooks
+
+Webhooks can be utilized to get notifications of incoming SMS messages.
+
+Follow these steps to set up webhooks:
+
+1. Set up your own HTTP server with a valid SSL certificate to receive webhooks. For testing purposes, [webhook.site](https://webhook.site) can be useful.
+2. Register your webhook with an API request:
+
+    ```sh
     curl -X POST -u <username>:<password> \
       -H "Content-Type: application/json" \
-      -d '{ "message": "Hello, world!", "phoneNumbers": ["79990001234", "79995556677"] }' \
-      https://sms.capcom.me/api/3rdparty/v1/message
+      -d '{ "id": "unique-id", "url": "https://webhook.site/<your-uuid>", "event": "sms:received" }' \
+      http://<device_local_ip>:8080/webhooks
+    ```
+    
+3. Send an SMS to the device.
+4. The application will dispatch POST request to the specified URL with a payload such as:
+
+    ```json
+    {
+      "event": "sms:received",
+      "payload": {
+        "message": "Received SMS text",
+        "phoneNumber": "+79990001234",
+        "receivedAt": "2024-06-07T11:41:31.000+07:00"
+      }
+    }
     ```
 
+5. To deregister a webhook, execute a `curl` request using the following pattern:
 
-_For more examples, please refer to the [API Documentation](https://sms.capcom.me/api/)_
+    ```sh
+    curl -X DELETE -u <username>:<password> \
+      http://<device_local_ip>:8080/webhooks/unique-id
+    ```
+
+For cloud mode the process is similar, simply change the URL to https://sms.capcom.me/api/3rdparty/v1/webhooks. Webhooks in Local and Cloud mode are independent.
+
+*Note*: Webhooks are transmitted directly from the device; therefore, the device must have an outgoing internet connection. As the requests originate from the device, incoming messages remain inaccessible to us.
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

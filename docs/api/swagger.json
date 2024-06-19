@@ -204,6 +204,151 @@
           }
         ]
       }
+    },
+    "/webhooks": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "List webhooks",
+        "description": "List all registered webhooks. Please note that webhooks registered in Local mode are distinct from those registered in Cloud mode.",
+        "operationId": "get-webhooks",
+        "responses": {
+          "200": {
+            "description": "A list of all registered webhooks.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WebHook"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://device-ip:8080",
+            "description": "Local Server"
+          },
+          {
+            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "description": "Cloud Server"
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Register a webhook",
+        "description": "Register a new webhook. If the `id` field is provided and a webhook with such an `id` already exists, it will be updated.",
+        "operationId": "post-webhooks",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebHook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook successfully registered or updated."
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        },
+        "callbacks": {
+          "onEvent": {
+            "{$request.body#/url}": {
+              "post": {
+                "requestBody": {
+                  "description": "Event details.",
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/WebHookEvent"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "The server should return this HTTP status code if the data was received successfully."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://device-ip:8080",
+            "description": "Local Server"
+          },
+          {
+            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "description": "Cloud Server"
+          }
+        ]
+      }
+    },
+    "/webhooks/{id}": {
+      "delete": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Delete a webhook",
+        "description": "Delete a specific webhook by its unique identifier.",
+        "operationId": "delete-webhooks-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the webhook to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Webhook successfully deleted; no content to return."
+          }
+        },
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://device-ip:8080",
+            "description": "Local Server"
+          },
+          {
+            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "description": "Cloud Server"
+          }
+        ]
+      }
     }
   },
   "tags": [
@@ -215,6 +360,9 @@
     },
     {
       "name": "System"
+    },
+    {
+      "name": "Webhooks"
     }
   ],
   "components": {
@@ -350,6 +498,70 @@
               "warn"
             ],
             "description": "Status of this specific check. Possible values: \"pass\", \"fail\", \"warn\"."
+          }
+        }
+      },
+      "WebHook": {
+        "type": "object",
+        "title": "WebHook",
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "sms:received"
+            ],
+            "description": "The type of event being reported. For example, 'sms:received'.",
+            "example": "sms:received"
+          },
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the webhook.",
+            "example": "vWPwfPE-13ajPGniCZgdK"
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL to which the event data will be POSTed.",
+            "format": "uri",
+            "example": "https://webhook.site/0e07d6e1-d5f0-4d18-b340-d22e8a272ba0"
+          }
+        },
+        "required": [
+          "event",
+          "url"
+        ]
+      },
+      "WebHookEvent": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "The unique identifier of the device."
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "sms:received"
+            ],
+            "description": "The type of event that triggered the webhook."
+          },
+          "payload": {
+            "type": "object",
+            "description": "The data associated with the event.",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "The content of the SMS message received."
+              },
+              "phoneNumber": {
+                "type": "string",
+                "description": "The phone number from which the SMS message was sent."
+              },
+              "receivedAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message was received.",
+                "format": "date-time"
+              }
+            }
           }
         }
       },

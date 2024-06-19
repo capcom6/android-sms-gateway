@@ -1,6 +1,6 @@
 package me.capcom.smsgateway.data.entities
 
-import me.capcom.smsgateway.modules.messages.data.MessageSource
+import me.capcom.smsgateway.domain.EntitySource
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -14,7 +14,7 @@ class MessageWithRecipientsTest {
             simNumber = 1,
             validUntil = null,
             isEncrypted = false,
-            source = MessageSource.Local,
+            source = EntitySource.Local,
             state = Message.State.Pending,
             createdAt = System.currentTimeMillis(),
             skipPhoneValidation = true,
@@ -37,7 +37,7 @@ class MessageWithRecipientsTest {
             simNumber = 1,
             validUntil = null,
             isEncrypted = false,
-            source = MessageSource.Local,
+            source = EntitySource.Local,
             state = Message.State.Pending,
             createdAt = System.currentTimeMillis(),
             skipPhoneValidation = true,
@@ -60,7 +60,7 @@ class MessageWithRecipientsTest {
             simNumber = 1,
             validUntil = null,
             isEncrypted = false,
-            source = MessageSource.Local,
+            source = EntitySource.Local,
             state = Message.State.Pending,
             createdAt = System.currentTimeMillis(),
             skipPhoneValidation = true,

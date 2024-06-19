@@ -9,6 +9,8 @@ import com.google.firebase.messaging.RemoteMessage
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.RegistrationWorker
+import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
+import me.capcom.smsgateway.modules.push.Event
 
 class PushService : FirebaseMessagingService() {
     private val settingsHelper by lazy { SettingsHelper(this) }
@@ -20,15 +22,28 @@ class PushService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
-        Log.d(this.javaClass.name, message.data.toString())
-        PullMessagesWorker.start(this)
+        try {
+            Log.d(this.javaClass.name, message.data.toString())
+
+            val event = message.data["event"]?.let { Event.valueOf(it) } ?: Event.MessageEnqueued
+            when (event) {
+                Event.MessageEnqueued -> PullMessagesWorker.start(this)
+                Event.WebhooksUpdated -> WebhooksUpdateWorker.start(this)
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
     }
 
     companion object {
         fun register(context: Context): Unit {
             FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
                 if (!task.isSuccessful) {
-                    Log.w(this.javaClass.name, "Fetching FCM registration token failed", task.exception)
+                    Log.w(
+                        this::class.java.name,
+                        "Fetching FCM registration token failed",
+                        task.exception
+                    )
                     return@OnCompleteListener
                 }
 

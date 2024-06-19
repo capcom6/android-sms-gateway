@@ -1,29 +1,35 @@
 package me.capcom.smsgateway.modules.localserver
 
 import android.content.Context
+import android.os.Build
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
-import me.capcom.smsgateway.modules.messages.MessagesService
-import me.capcom.smsgateway.modules.settings.KeyValueStorage
-import me.capcom.smsgateway.modules.settings.get
 import me.capcom.smsgateway.providers.LocalIPProvider
 import me.capcom.smsgateway.providers.PublicIPProvider
 
-class LocalServerModule(
-    private val messagesService: MessagesService,
-    private val storage: KeyValueStorage,
+class LocalServerService(
+    private val settings: LocalServerSettings,
 ) {
     val events = EventBus()
-    var enabled: Boolean
-        get() = storage.get<Boolean>(ENABLED) ?: false
-        set(value) = storage.set(ENABLED, value)
+
+    fun getDeviceId(context: Context): String? {
+        val firstInstallTime = context.packageManager.getPackageInfo(
+            context.packageName,
+            0
+        ).firstInstallTime
+        val deviceName = "${Build.MANUFACTURER}/${Build.PRODUCT}"
+
+        return deviceName.hashCode().toULong()
+            .toString(16).padStart(16, '0') + firstInstallTime.toULong()
+            .toString(16).padStart(16, '0')
+    }
 
     fun start(context: Context) {
-        if (!enabled) return
+        if (!settings.enabled) return
         WebService.start(context)
 
         scope.launch(Dispatchers.IO) {
@@ -43,7 +49,5 @@ class LocalServerModule(
     companion object {
         private val job = SupervisorJob()
         private val scope = CoroutineScope(job)
-
-        private const val ENABLED = "ENABLED"
     }
 }

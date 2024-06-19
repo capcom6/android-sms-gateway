@@ -34,18 +34,20 @@ import io.ktor.util.date.GMTDate
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.data.entities.Message
+import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageState
-import me.capcom.smsgateway.extensions.setDateFormatISO8601
+import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.health.HealthService
 import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
+import me.capcom.smsgateway.modules.localserver.routes.WebhooksRoutes
 import me.capcom.smsgateway.modules.messages.MessagesService
-import me.capcom.smsgateway.modules.messages.data.MessageSource
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.notifications.NotificationsService
+import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import java.util.Date
 import kotlin.concurrent.thread
@@ -64,7 +66,11 @@ class WebService : Service() {
     }
 
     private val server by lazy {
-        embeddedServer(Netty, settingsHelper.serverPort, watchPaths = emptyList()) {
+        embeddedServer(
+            Netty,
+            port = settingsHelper.serverPort,
+            watchPaths = emptyList(),
+        ) {
             install(Authentication) {
                 basic("auth-basic") {
                     realm = "Access to SMS Gateway"
@@ -82,7 +88,7 @@ class WebService : Service() {
                     if (me.capcom.smsgateway.BuildConfig.DEBUG) {
                         setPrettyPrinting()
                     }
-                    this.setDateFormatISO8601()
+                    configure()
                 }
             }
             install(StatusPages) {
@@ -104,15 +110,6 @@ class WebService : Service() {
                     )
                 }
             })
-//            install(DefaultHeaders) {
-//                header("Server", "")
-//            }
-//            install(CORS) {
-//                anyHost()
-//                allowHeader(HttpHeaders.Authorization)
-//                allowHeader(HttpHeaders.ContentType)
-//                allowCredentials = true
-//            }
             routing {
                 get("/health") {
                     val healthResult = healthService.healthCheck()
@@ -182,7 +179,7 @@ class WebService : Service() {
                                     ?.toBooleanStrict() ?: false
 
                             val sendRequest = SendRequest(
-                                MessageSource.Local,
+                                EntitySource.Local,
                                 me.capcom.smsgateway.modules.messages.data.Message(
                                     request.id ?: NanoIdUtils.randomNanoId(),
                                     request.message,
@@ -250,8 +247,8 @@ class WebService : Service() {
                             )
                         }
                     }
+                    WebhooksRoutes(get()).register(this)
                 }
-
             }
         }
     }

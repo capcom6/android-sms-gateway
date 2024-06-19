@@ -14,7 +14,7 @@ import me.capcom.smsgateway.data.entities.MessagesStats
 import me.capcom.smsgateway.data.entities.RecipientState
 
 @Dao
-interface MessageDao {
+interface MessagesDao {
     @Query("SELECT COUNT(*) as count, MAX(processedAt) as lastTimestamp FROM message WHERE state <> 'Pending' AND state <> 'Failed' AND processedAt >= :timestamp")
     fun countProcessedFrom(timestamp: Long): MessagesStats
 

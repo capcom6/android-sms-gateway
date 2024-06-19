@@ -5,15 +5,17 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import me.capcom.smsgateway.data.dao.MessageDao
+import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageState
 import me.capcom.smsgateway.data.entities.RecipientState
+import me.capcom.smsgateway.modules.webhooks.db.WebHook
+import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
 
 @Database(
-    entities = [Message::class, MessageRecipient::class, RecipientState::class, MessageState::class],
-    version = 10,
+    entities = [Message::class, MessageRecipient::class, RecipientState::class, MessageState::class, WebHook::class],
+    version = 11,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -23,12 +25,14 @@ import me.capcom.smsgateway.data.entities.RecipientState
         AutoMigration(from = 6, to = 7),
 //        AutoMigration(from = 7, to = 8),  // manual migration
         AutoMigration(from = 8, to = 9),
-        AutoMigration(from = 9, to = 10)
+        AutoMigration(from = 9, to = 10),
+        AutoMigration(from = 10, to = 11),
     ]
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun messageDao(): MessageDao
+    abstract fun messagesDao(): MessagesDao
+    abstract fun webhooksDao(): WebHooksDao
 
     companion object {
         fun getDatabase(context: android.content.Context): AppDatabase {

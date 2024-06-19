@@ -19,7 +19,8 @@ import io.ktor.http.hostWithPort
 import io.ktor.serialization.gson.gson
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.domain.MessageState
-import me.capcom.smsgateway.extensions.setDateFormatISO8601
+import me.capcom.smsgateway.extensions.configure
+import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 import java.util.Date
 
 class GatewayApi(
@@ -35,7 +36,7 @@ class GatewayApi(
         }
         install(ContentNegotiation) {
             gson {
-                this.setDateFormatISO8601()
+                configure()
             }
         }
         expectSuccess = true
@@ -71,6 +72,12 @@ class GatewayApi(
             contentType(ContentType.Application.Json)
             setBody(request)
         }
+    }
+
+    suspend fun getWebHooks(token: String): List<WebHook> {
+        return client.get("$baseUrl/webhooks") {
+            auth(token)
+        }.body()
     }
 
     private fun HttpRequestBuilder.auth(token: String) {
@@ -115,5 +122,11 @@ class GatewayApi(
         val phoneNumber: String,
         val state: MessageState,
         val error: String?,
+    )
+
+    data class WebHook(
+        val id: String,
+        val url: String,
+        val event: WebHookEvent,
     )
 }

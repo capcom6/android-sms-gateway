@@ -4,11 +4,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import me.capcom.smsgateway.App
+import me.capcom.smsgateway.modules.localserver.LocalServerService
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
-class BootReceiver : BroadcastReceiver() {
+class BootReceiver : BroadcastReceiver(), KoinComponent {
 
     override fun onReceive(context: Context, intent: Intent) {
-        App.instance.gatewayModule.start(context)
-        App.instance.localServerModule.start(context)
+        App.instance.gatewayService.start(context)
+        get<LocalServerService>().start(context)
     }
 }
