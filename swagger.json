@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.15.0",
+    "version": "1.15.1",
     "title": "Android SMS Gateway Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
@@ -458,7 +458,7 @@
             ],
             "description": "Overall status of the health check. Possible values: \"pass\", \"fail\", \"warn\"."
           },
-          "version": "1.15.0",
+          "version": "1.15.1",
             "type": "string",
             "description": "Current version of the service or application."
           },
