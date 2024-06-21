@@ -51,7 +51,10 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
             return Result.failure()
         } catch (e: Throwable) {
             e.printStackTrace()
-            return Result.retry()
+            return when (runAttemptCount >= MAX_RETRIES) {
+                false -> Result.retry()
+                else -> Result.failure()
+            }
         } finally {
             client.close()
         }
@@ -83,7 +86,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
                     )
                 )
                 .setBackoffCriteria(
-                    BackoffPolicy.LINEAR,
+                    BackoffPolicy.EXPONENTIAL,
                     WorkRequest.MIN_BACKOFF_MILLIS,
                     TimeUnit.MILLISECONDS
                 )
@@ -99,6 +102,8 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         }
 
         private val gson = GsonBuilder().configure().create()
+
+        private const val MAX_RETRIES = 14
 
         private const val INPUT_URL = "url"
         private const val INPUT_DATA = "data"
