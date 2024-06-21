@@ -3,7 +3,9 @@ package me.capcom.smsgateway.modules.webhooks.workers
 import android.content.Context
 import androidx.work.BackoffPolicy
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
@@ -21,14 +23,20 @@ import io.ktor.http.contentType
 import io.ktor.http.userAgent
 import io.ktor.serialization.gson.gson
 import me.capcom.smsgateway.BuildConfig
+import me.capcom.smsgateway.R
 import me.capcom.smsgateway.extensions.configure
+import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
 import org.json.JSONException
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
 
 class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params), KoinComponent {
+
+    private val notificationsSvc: NotificationsService by inject()
+
     override suspend fun doWork(): Result {
         try {
             val url = inputData.getString(INPUT_URL) ?: return Result.failure()
@@ -61,6 +69,22 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         return Result.success()
     }
 
+    override suspend fun getForegroundInfo(): ForegroundInfo {
+        return createForegroundInfo()
+    }
+
+    // Creates an instance of ForegroundInfo which can be used to update the
+    // ongoing notification.
+    private fun createForegroundInfo(): ForegroundInfo {
+        val notificationId = NotificationsService.NOTIFICATION_ID_SEND_WORKER
+        val notification = notificationsSvc.makeNotification(
+            applicationContext,
+            applicationContext.getString(R.string.sending_webhook)
+        )
+
+        return ForegroundInfo(notificationId, notification)
+    }
+
     private val client = HttpClient(OkHttp) {
         install(ContentNegotiation) {
             gson {
@@ -85,6 +109,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
                         INPUT_DATA to gson.toJson(data),
                     )
                 )
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setBackoffCriteria(
                     BackoffPolicy.EXPONENTIAL,
                     WorkRequest.MIN_BACKOFF_MILLIS,
