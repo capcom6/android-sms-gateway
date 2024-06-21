@@ -48,4 +48,5 @@
     <string name="set_maximum_value_to_activate">Set maximum value to activate</string>
     <string name="information">Information</string>
     <string name="app_version_build">App version (build)</string>
+    <string name="sending_webhook">Sending webhook...</string>
 </resources>
