@@ -1,63 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.MessageDetailsFragment">
 
     <!-- Message ID and State -->
-    <LinearLayout
-        android:id="@+id/layoutMessageIdState"
-        android:layout_width="match_parent"
+
+
+    <!-- Message ID -->
+    <TextView
+        android:id="@+id/textMessageId"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/textMessageState"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Message ID" />
 
-        <!-- Message ID -->
-        <TextView
-            android:id="@+id/textMessageId"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            tools:text="Message ID"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+    <!-- Message State -->
+    <TextView
+        android:id="@+id/textMessageState"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textMessageId"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Message State" />
 
-        <!-- Message State -->
-        <TextView
-            android:id="@+id/textMessageState"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            tools:text="Message State"
-            android:textSize="16sp" />
-    </LinearLayout>
 
     <!-- Message Text -->
-    <TextView
-        android:id="@+id/textMessage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/layoutMessageIdState"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        tools:text="Message Text"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+
 
     <!-- Recipients List -->
+
+    <ScrollView
+        android:id="@+id/scrollViewMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/recyclerViewRecipients"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="128dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textMessageId"
+        app:layout_constraintVertical_weight="1">
+
+        <TextView
+            android:id="@+id/textMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="@tools:sample/lorem/random" />
+    </ScrollView>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewRecipients"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_below="@id/textMessage"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginTop="8dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/scrollViewMessage"
+        app:layout_constraintVertical_weight="3"
         tools:listitem="@layout/item_message" />
 
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
