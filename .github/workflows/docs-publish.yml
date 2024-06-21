@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Set App Version
         run: |
-          sed -i "s/\"version\".*/\"version\": \"${GITHUB_REF_NAME#v}\",/" docs/api/swagger.json
+          sed -i "s/{{VERSION}}/${GITHUB_REF_NAME#v}/" docs/api/swagger.json
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
