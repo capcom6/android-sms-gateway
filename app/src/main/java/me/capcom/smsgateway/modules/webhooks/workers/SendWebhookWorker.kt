@@ -39,6 +39,10 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
 
     override suspend fun doWork(): Result {
         try {
+            if (runAttemptCount > MAX_RETRIES) {
+                return Result.failure()
+            }
+
             val url = inputData.getString(INPUT_URL) ?: return Result.failure()
             val data = inputData.getString(INPUT_DATA)
                 ?.let { gson.fromJson(it, JsonObject::class.java) }
@@ -59,10 +63,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
             return Result.failure()
         } catch (e: Throwable) {
             e.printStackTrace()
-            return when (runAttemptCount >= MAX_RETRIES) {
-                false -> Result.retry()
-                else -> Result.failure()
-            }
+            return Result.retry()
         } finally {
             client.close()
         }
