@@ -533,6 +533,14 @@
       "WebHookEvent": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the webhook event."
+          },
+          "webhookId": {
+            "type": "string",
+            "description": "The identifier of the webhook configuration that triggered this event."
+          },
           "deviceId": {
             "type": "string",
             "description": "The unique identifier of the device."

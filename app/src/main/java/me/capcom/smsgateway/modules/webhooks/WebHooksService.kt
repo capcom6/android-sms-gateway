@@ -4,17 +4,22 @@ import android.webkit.URLUtil
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.modules.gateway.GatewayService
+import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import me.capcom.smsgateway.modules.localserver.LocalServerService
+import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.webhooks.db.WebHook
 import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookDTO
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
+import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
 import me.capcom.smsgateway.modules.webhooks.workers.SendWebhookWorker
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 
 class WebHooksService(
     private val webHooksDao: WebHooksDao,
+    private val localServerSettings: LocalServerSettings,
+    private val gatewaySettings: GatewaySettings,
     localserverSvc: LocalServerService,
     gatewayService: GatewayService,
 ) : KoinComponent {
@@ -73,6 +78,12 @@ class WebHooksService(
 
     fun emit(event: WebHookEvent, payload: Any) {
         webHooksDao.selectByEvent(event).forEach {
+            // skip emitting if source is disabled
+            when {
+                it.source == EntitySource.Local && !localServerSettings.enabled -> return@forEach
+                (it.source == EntitySource.Cloud || it.source == EntitySource.Gateway) && !gatewaySettings.enabled -> return@forEach
+            }
+
             val deviceId = when (it.source) {
                 EntitySource.Local -> localDeviceId
                 EntitySource.Cloud, EntitySource.Gateway -> cloudDeviceId
@@ -81,9 +92,13 @@ class WebHooksService(
             SendWebhookWorker.start(
                 get(),
                 url = it.url,
-                deviceId = deviceId,
-                event = event,
-                payload = payload
+                WebHookEventDTO(
+                    id = NanoIdUtils.randomNanoId(),
+                    webhookId = it.id,
+                    event = event,
+                    deviceId = deviceId,
+                    payload = payload,
+                )
             )
         }
     }
