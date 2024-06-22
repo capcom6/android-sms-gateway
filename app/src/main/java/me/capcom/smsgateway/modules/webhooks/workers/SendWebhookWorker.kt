@@ -22,7 +22,6 @@ import io.ktor.http.userAgent
 import io.ktor.serialization.gson.gson
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.extensions.configure
-import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
 import org.json.JSONException
 import org.koin.core.component.KoinComponent
@@ -33,21 +32,16 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
     override suspend fun doWork(): Result {
         try {
             val url = inputData.getString(INPUT_URL) ?: return Result.failure()
-            val deviceId = inputData.getString(INPUT_DEVICE_ID) ?: return Result.failure()
-            val event = inputData.getString(INPUT_EVENT)?.let { WebHookEvent.valueOf(it) }
-                ?: return Result.failure()
-            val payload = inputData.getString(INPUT_PAYLOAD)
+            val data = inputData.getString(INPUT_DATA)
                 ?.let { gson.fromJson(it, JsonObject::class.java) }
                 ?: return Result.failure()
-            client.post(url) {
+            val response = client.post(url) {
                 contentType(ContentType.Application.Json)
-                setBody(
-                    WebHookEventDTO(
-                        event,
-                        deviceId,
-                        payload
-                    )
-                )
+                setBody(data)
+            }
+
+            if (response.status.value !in 200..299) {
+                return Result.retry()
             }
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
@@ -79,17 +73,13 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         fun start(
             context: Context,
             url: String,
-            deviceId: String,
-            event: WebHookEvent,
-            payload: Any
+            data: WebHookEventDTO
         ) {
             val work = OneTimeWorkRequestBuilder<SendWebhookWorker>()
                 .setInputData(
                     workDataOf(
                         INPUT_URL to url,
-                        INPUT_DEVICE_ID to deviceId,
-                        INPUT_EVENT to event.name,
-                        INPUT_PAYLOAD to gson.toJson(payload)
+                        INPUT_DATA to gson.toJson(data),
                     )
                 )
                 .setBackoffCriteria(
@@ -111,8 +101,6 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         private val gson = GsonBuilder().configure().create()
 
         private const val INPUT_URL = "url"
-        private const val INPUT_EVENT = "event"
-        private const val INPUT_DEVICE_ID = "device_id"
-        private const val INPUT_PAYLOAD = "payload"
+        private const val INPUT_DATA = "data"
     }
 }
