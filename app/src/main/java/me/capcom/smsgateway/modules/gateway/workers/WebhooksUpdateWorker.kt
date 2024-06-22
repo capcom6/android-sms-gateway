@@ -6,7 +6,6 @@ import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
@@ -49,8 +48,8 @@ class WebhooksUpdateWorker(appContext: Context, params: WorkerParameters) :
 
         fun start(context: Context) {
             val work = PeriodicWorkRequestBuilder<WebhooksUpdateWorker>(
-                PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS,
-                TimeUnit.MILLISECONDS
+                24,
+                TimeUnit.HOURS
             )
                 .setBackoffCriteria(
                     BackoffPolicy.EXPONENTIAL,
