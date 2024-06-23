@@ -15,6 +15,7 @@ import com.google.gson.JsonObject
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -87,6 +88,11 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
     }
 
     private val client = HttpClient(OkHttp) {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30000
+            connectTimeoutMillis = 5000
+            socketTimeoutMillis = 5000
+        }
         install(ContentNegotiation) {
             gson {
                 configure()
