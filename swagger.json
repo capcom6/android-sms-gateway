@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.15.1",
-    "title": "Android SMS Gateway Integration API",
+    "version": "1.15.2",
+    "title": "SMS Gateway for Android™ Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
       "name": "Aleksandr Soloshenko",
@@ -533,6 +533,14 @@
       "WebHookEvent": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the webhook event."
+          },
+          "webhookId": {
+            "type": "string",
+            "description": "The identifier of the webhook configuration that triggered this event."
+          },
           "deviceId": {
             "type": "string",
             "description": "The unique identifier of the device."
