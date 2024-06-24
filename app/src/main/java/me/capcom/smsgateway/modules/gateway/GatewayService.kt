@@ -45,10 +45,6 @@ class GatewayService(
             settings.enabled = value
         }
 
-    fun getDeviceId(context: Context): String? {
-        return settings.registrationInfo?.id
-    }
-
     fun start(context: Context) {
         if (!enabled) return
         this._api = GatewayApi(

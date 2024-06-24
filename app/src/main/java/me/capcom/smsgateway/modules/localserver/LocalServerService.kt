@@ -16,7 +16,7 @@ class LocalServerService(
 ) {
     val events = EventBus()
 
-    fun getDeviceId(context: Context): String? {
+    private fun getDeviceId(context: Context): String {
         val firstInstallTime = context.packageManager.getPackageInfo(
             context.packageName,
             0
@@ -30,6 +30,8 @@ class LocalServerService(
 
     fun start(context: Context) {
         if (!settings.enabled) return
+        settings.deviceId = settings.deviceId ?: getDeviceId(context)
+
         WebService.start(context)
 
         scope.launch(Dispatchers.IO) {
