@@ -8,10 +8,11 @@ import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.localserver.localserverService
 import me.capcom.smsgateway.modules.messages.messagesModule
 import me.capcom.smsgateway.modules.notifications.notificationsModule
+import me.capcom.smsgateway.modules.ping.pingModule
 import me.capcom.smsgateway.modules.settings.settingsModule
 import me.capcom.smsgateway.modules.webhooks.webhooksModule
 import me.capcom.smsgateway.receivers.EventsReceiver
-import org.koin.android.ext.android.get
+import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -33,6 +34,7 @@ class App: Application() {
                 healthModule,
                 webhooksModule,
                 localserverService,
+                pingModule,
             )
         }
 
@@ -41,9 +43,7 @@ class App: Application() {
         EventsReceiver.register(this)
     }
 
-    val gatewayService: GatewayService by lazy {
-        get()
-    }
+    val gatewayService: GatewayService by inject()
 
     companion object {
         lateinit var instance: App

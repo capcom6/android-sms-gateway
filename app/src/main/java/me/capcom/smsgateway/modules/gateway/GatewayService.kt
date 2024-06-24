@@ -39,14 +39,9 @@ class GatewayService(
         ).also { _api = it }
 
     val events = EventBus()
-    var enabled: Boolean
-        get() = settings.enabled
-        set(value) {
-            settings.enabled = value
-        }
 
     fun start(context: Context) {
-        if (!enabled) return
+        if (!settings.enabled) return
         this._api = GatewayApi(
             settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
             settings.privateToken
@@ -67,7 +62,18 @@ class GatewayService(
         }
     }
 
+    fun forcePull(context: Context) {
+        if (!settings.enabled) return
+        PullMessagesWorker.start(context)
+    }
+
     fun isActiveLiveData(context: Context) = PullMessagesWorker.getStateLiveData(context)
+
+    fun ping(context: Context) {
+        if (!settings.enabled) return
+
+        forcePull(context)
+    }
 
     fun stop(context: Context) {
         _job?.cancel()
@@ -111,7 +117,7 @@ class GatewayService(
     }
 
     internal suspend fun registerFcmToken(pushToken: String) {
-        if (!enabled) return
+        if (!settings.enabled) return
 
         val settings = settings.registrationInfo
         val accessToken = settings?.token
@@ -160,6 +166,7 @@ class GatewayService(
     }
 
     internal suspend fun getNewMessages(context: Context) {
+        if (!settings.enabled) return
         val settings = settings.registrationInfo ?: return
         val messages = api.getMessages(settings.token)
         for (message in messages) {
