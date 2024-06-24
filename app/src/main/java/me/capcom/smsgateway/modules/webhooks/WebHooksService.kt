@@ -3,9 +3,7 @@ package me.capcom.smsgateway.modules.webhooks
 import android.webkit.URLUtil
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import me.capcom.smsgateway.domain.EntitySource
-import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
-import me.capcom.smsgateway.modules.localserver.LocalServerService
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.webhooks.db.WebHook
 import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
@@ -20,17 +18,7 @@ class WebHooksService(
     private val webHooksDao: WebHooksDao,
     private val localServerSettings: LocalServerSettings,
     private val gatewaySettings: GatewaySettings,
-    localserverSvc: LocalServerService,
-    gatewayService: GatewayService,
 ) : KoinComponent {
-    val localDeviceId: String?
-    val cloudDeviceId: String?
-
-    init {
-        localDeviceId = localserverSvc.getDeviceId(get())
-        cloudDeviceId = gatewayService.getDeviceId(get())
-    }
-
     fun select(source: EntitySource): List<WebHookDTO> {
         return webHooksDao.selectBySource(source).map {
             WebHookDTO(
@@ -85,8 +73,8 @@ class WebHooksService(
             }
 
             val deviceId = when (it.source) {
-                EntitySource.Local -> localDeviceId
-                EntitySource.Cloud, EntitySource.Gateway -> cloudDeviceId
+                EntitySource.Local -> localServerSettings.deviceId
+                EntitySource.Cloud, EntitySource.Gateway -> gatewaySettings.deviceId
             } ?: return@forEach
 
             SendWebhookWorker.start(

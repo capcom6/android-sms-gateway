@@ -10,6 +10,9 @@ class GatewaySettings(
         get() = storage.get<Boolean>(ENABLED) ?: false
         set(value) = storage.set(ENABLED, value)
 
+    val deviceId: String?
+        get() = registrationInfo?.id
+
     var registrationInfo: GatewayApi.DeviceRegisterResponse?
         get() = storage.get(REGISTRATION_INFO)
         set(value) = storage.set(REGISTRATION_INFO, value)

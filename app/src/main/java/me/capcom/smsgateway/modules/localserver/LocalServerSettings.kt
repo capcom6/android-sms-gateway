@@ -10,7 +10,13 @@ class LocalServerSettings(
         get() = storage.get<Boolean>(ENABLED) ?: false
         set(value) = storage.set(ENABLED, value)
 
+    var deviceId: String?
+        get() = storage.get<String?>(DEVICE_ID)
+        set(value) = storage.set(DEVICE_ID, value)
+
     companion object {
         private const val ENABLED = "ENABLED"
+
+        private const val DEVICE_ID = "DEVICE_ID"
     }
 }
