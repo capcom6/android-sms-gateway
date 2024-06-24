@@ -40,8 +40,6 @@ class PullMessagesWorker(
         const val NAME = "PullMessagesWorker"
 
         fun start(context: Context) {
-            if (!App.instance.gatewayService.enabled) return
-
             val work = PeriodicWorkRequestBuilder<PullMessagesWorker>(PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS, TimeUnit.MILLISECONDS)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
                 .setConstraints(

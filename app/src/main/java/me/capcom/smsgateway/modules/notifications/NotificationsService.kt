@@ -42,5 +42,6 @@ class NotificationsService(
         const val NOTIFICATION_ID_LOCAL_SERVICE = 1
         const val NOTIFICATION_ID_SEND_WORKER = 2
         const val NOTIFICATION_ID_WEBHOOK_WORKER = 3
+        const val NOTIFICATION_ID_PING_SERVICE = 4
     }
 }

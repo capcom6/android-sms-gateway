@@ -78,7 +78,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
     // Creates an instance of ForegroundInfo which can be used to update the
     // ongoing notification.
     private fun createForegroundInfo(): ForegroundInfo {
-        val notificationId = NotificationsService.NOTIFICATION_ID_SEND_WORKER
+        val notificationId = NotificationsService.NOTIFICATION_ID_WEBHOOK_WORKER
         val notification = notificationsSvc.makeNotification(
             applicationContext,
             applicationContext.getString(R.string.sending_webhook)
