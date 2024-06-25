@@ -8,8 +8,8 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import me.capcom.smsgateway.R
-import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.notifications.NotificationsService
+import me.capcom.smsgateway.modules.orchestrator.OrchestratorService
 import me.capcom.smsgateway.modules.ping.PingSettings
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
@@ -19,8 +19,6 @@ class PingForegroundService : Service() {
     private val settings: PingSettings by inject()
 
     private val notificationsSvc: NotificationsService by inject()
-
-    private val gatewaySvc: GatewayService by inject()
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -34,10 +32,10 @@ class PingForegroundService : Service() {
     private val workingThread = thread(start = false) {
         val interval = settings.intervalSeconds ?: return@thread
         while (!stopRequested) {
-            Thread.sleep(interval * 1000L)
-
             Log.d(this.javaClass.name, "Sending ping")
-            gatewaySvc.ping(get())
+            get<OrchestratorService>().ping(this)
+            
+            Thread.sleep(interval * 1000L)
         }
     }
 

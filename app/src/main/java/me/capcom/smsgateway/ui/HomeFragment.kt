@@ -35,8 +35,7 @@ import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.localserver.LocalServerService
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
-import me.capcom.smsgateway.modules.messages.MessagesService
-import me.capcom.smsgateway.modules.ping.PingService
+import me.capcom.smsgateway.modules.orchestrator.OrchestratorService
 import org.koin.android.ext.android.inject
 
 class HomeFragment : Fragment() {
@@ -50,8 +49,8 @@ class HomeFragment : Fragment() {
 
     private val localServerSvc: LocalServerService by inject()
     private val gatewaySvc: GatewayService by inject()
-    private val messagesSvc: MessagesService by inject()
-    private val pingSvc: PingService by inject()
+
+    private val orchestratorSvc: OrchestratorService by inject()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -193,17 +192,11 @@ class HomeFragment : Fragment() {
     }
 
     private fun stop() {
-        pingSvc.stop(requireContext())
-        localServerSvc.stop(requireContext())
-        gatewaySvc.stop(requireContext())
-        messagesSvc.stop()
+        orchestratorSvc.stop(requireContext())
     }
 
     private fun start() {
-        messagesSvc.start()
-        gatewaySvc.start(requireContext())
-        localServerSvc.start(requireContext())
-        pingSvc.start(requireContext())
+        orchestratorSvc.start(requireContext())
     }
 
     private fun requestPermissionsAndStart() {
