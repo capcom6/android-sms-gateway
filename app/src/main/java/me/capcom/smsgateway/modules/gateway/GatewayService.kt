@@ -28,6 +28,7 @@ import java.util.Date
 class GatewayService(
     private val messagesService: MessagesService,
     private val settings: GatewaySettings,
+    private val events: EventBus,
 ) {
     private var _api: GatewayApi? = null
     private var _job: Job? = null
@@ -37,8 +38,6 @@ class GatewayService(
             settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
             settings.privateToken
         ).also { _api = it }
-
-    val events = EventBus()
 
     fun start(context: Context) {
         if (!settings.enabled) return
@@ -53,8 +52,7 @@ class GatewayService(
 
         _job = scope.launch {
             val allowedSources = setOf(EntitySource.Cloud, EntitySource.Gateway)
-            messagesService.events.events.collect { event ->
-                val event = event as? MessageStateChangedEvent ?: return@collect
+            events.collect<MessageStateChangedEvent> { event ->
                 if (event.source !in allowedSources) return@collect
 
                 SendStateWorker.start(context, event.id)
@@ -132,7 +130,7 @@ class GatewayService(
                         pushToken
                     )
                 )
-                events.emitEvent(
+                events.emit(
                     DeviceRegisteredEvent(
                         api.hostname,
                         settings.login,
@@ -156,7 +154,7 @@ class GatewayService(
         )
         this.settings.registrationInfo = response
 
-        events.emitEvent(
+        events.emit(
             DeviceRegisteredEvent(
                 api.hostname,
                 response.login,

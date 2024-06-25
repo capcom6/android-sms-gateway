@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.databinding.FragmentSettingsBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
@@ -46,6 +47,8 @@ class HomeFragment : Fragment() {
     private val settingsHelper: SettingsHelper by inject()
     private val localServerSettings: LocalServerSettings by inject()
     private val gatewaySettings: GatewaySettings by inject()
+
+    private val events: EventBus by inject()
 
     private val localServerSvc: LocalServerService by inject()
     private val gatewaySvc: GatewayService by inject()
@@ -98,9 +101,7 @@ class HomeFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            gatewaySvc.events.events.collect { event ->
-                val event = event as? DeviceRegisteredEvent ?: return@collect
-
+            events.collect<DeviceRegisteredEvent> { event ->
                 binding.textRemoteAddress.text = getString(R.string.address_is, event.server)
                 binding.textRemoteAuth.movementMethod = LinkMovementMethod.getInstance()
                 binding.textRemoteAuth.text = makeCopyableLink(
@@ -117,9 +118,7 @@ class HomeFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            localServerSvc.events.events.collect { event ->
-                val event = event as? IPReceivedEvent ?: return@collect
-
+            events.collect<IPReceivedEvent> { event ->
                 binding.textLocalIP.text = event.localIP?.let {
                     getString(
                         R.string.settings_local_address_is,
@@ -135,7 +134,6 @@ class HomeFragment : Fragment() {
                         settingsHelper.serverPort
                     )
                 } ?: getString(R.string.settings_public_address_not_found)
-
             }
         }
 

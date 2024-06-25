@@ -35,8 +35,8 @@ class MessagesService(
     private val settings: MessagesSettings,
     private val dao: MessagesDao,    // todo: use MessagesRepository
     private val encryptionService: EncryptionService,
+    private val events: EventBus,
 ) {
-    val events = EventBus()
 
     private val countryCode: String? =
         (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
@@ -229,7 +229,7 @@ class MessagesService(
 
         val msg = requireNotNull(getMessage(id))
 
-        events.emitEvent(
+        events.emit(
             MessageStateChangedEvent(
                 id,
                 msg.message.source,

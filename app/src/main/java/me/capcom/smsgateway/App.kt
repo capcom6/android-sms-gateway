@@ -4,6 +4,7 @@ import android.app.Application
 import healthModule
 import me.capcom.smsgateway.data.dbModule
 import me.capcom.smsgateway.modules.encryption.encryptionModule
+import me.capcom.smsgateway.modules.events.eventBusModule
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.localserver.localserverService
 import me.capcom.smsgateway.modules.messages.messagesModule
@@ -26,6 +27,7 @@ class App: Application() {
             androidLogger()
             androidContext(this@App)
             modules(
+                eventBusModule,
                 settingsModule,
                 dbModule,
                 notificationsModule,
