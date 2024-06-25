@@ -59,12 +59,12 @@ class MessagesService(
         )
     }
 
-    fun start() {
+    fun start(context: Context) {
         SendMessagesWorker.start(context)
         LogTruncateWorker.start(context)
     }
 
-    fun stop() {
+    fun stop(context: Context) {
         LogTruncateWorker.stop(context)
         SendMessagesWorker.stop(context)
     }

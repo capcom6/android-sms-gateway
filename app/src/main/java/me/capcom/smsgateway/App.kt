@@ -8,6 +8,7 @@ import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.localserver.localserverService
 import me.capcom.smsgateway.modules.messages.messagesModule
 import me.capcom.smsgateway.modules.notifications.notificationsModule
+import me.capcom.smsgateway.modules.orchestrator.orchestratorModule
 import me.capcom.smsgateway.modules.ping.pingModule
 import me.capcom.smsgateway.modules.settings.settingsModule
 import me.capcom.smsgateway.modules.webhooks.webhooksModule
@@ -35,6 +36,7 @@ class App: Application() {
                 webhooksModule,
                 localserverService,
                 pingModule,
+                orchestratorModule,
             )
         }
 
