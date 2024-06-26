@@ -16,7 +16,7 @@ import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.workers.RegistrationWorker
 import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
 import me.capcom.smsgateway.modules.push.Event
-import me.capcom.smsgateway.modules.push.events.MessageEnqueuedEvent
+import me.capcom.smsgateway.modules.push.events.PushMessageEnqueuedEvent
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -38,7 +38,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
 
             val event = message.data["event"]?.let { Event.valueOf(it) } ?: Event.MessageEnqueued
             when (event) {
-                Event.MessageEnqueued -> scope.launch { eventBus.emit(MessageEnqueuedEvent()) }
+                Event.MessageEnqueued -> scope.launch { eventBus.emit(PushMessageEnqueuedEvent()) }
                 Event.WebhooksUpdated -> WebhooksUpdateWorker.start(this)
             }
         } catch (e: Throwable) {

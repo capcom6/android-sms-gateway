@@ -47,17 +47,12 @@ class GatewayService(
         eventsReceiver.start()
     }
 
-    fun forcePull(context: Context) {
-        if (!settings.enabled) return
-        PullMessagesWorker.start(context)
-    }
-
     fun isActiveLiveData(context: Context) = PullMessagesWorker.getStateLiveData(context)
 
     fun ping(context: Context) {
         if (!settings.enabled) return
 
-        forcePull(context)
+        PullMessagesWorker.start(context)
     }
 
     fun stop(context: Context) {
