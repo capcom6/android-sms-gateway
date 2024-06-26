@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.modules.events
 
+import android.util.Log
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filter
@@ -9,6 +10,7 @@ class EventBus {
     val events = _events.asSharedFlow()
 
     suspend fun emit(event: AppEvent) {
+        Log.d("EventBus", "${Thread.currentThread().name} emitted ${event.name}")
         _events.emit(event)
     }
 

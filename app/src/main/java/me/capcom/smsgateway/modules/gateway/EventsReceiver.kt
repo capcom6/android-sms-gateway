@@ -8,8 +8,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.modules.events.EventBus
+import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
+import me.capcom.smsgateway.modules.push.events.PushMessageEnqueuedEvent
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.component.inject
@@ -27,15 +29,30 @@ class EventsReceiver : KoinComponent {
         stop()
 
         this.job = scope.launch {
-            val allowedSources = setOf(EntitySource.Cloud, EntitySource.Gateway)
-            eventBus.collect<MessageStateChangedEvent> { event ->
-                Log.d("EventsReceiver", "Event: $event")
+            Log.d("EventsReceiver", "launched")
 
-                if (!settings.enabled) return@collect
+            launch {
+                Log.d("EventsReceiver", "launched PushMessageEnqueuedEvent")
+                eventBus.collect<PushMessageEnqueuedEvent> { event ->
+                    Log.d("EventsReceiver", "Event: $event")
 
-                if (event.source !in allowedSources) return@collect
+                    if (!settings.enabled) return@collect
 
-                SendStateWorker.start(get(), event.id)
+                    PullMessagesWorker.start(get())
+                }
+            }
+            launch {
+                Log.d("EventsReceiver", "launched MessageStateChangedEvent")
+                val allowedSources = setOf(EntitySource.Cloud, EntitySource.Gateway)
+                eventBus.collect<MessageStateChangedEvent> { event ->
+                    Log.d("EventsReceiver", "Event: $event")
+
+                    if (!settings.enabled) return@collect
+
+                    if (event.source !in allowedSources) return@collect
+
+                    SendStateWorker.start(get(), event.id)
+                }
             }
         }
     }
