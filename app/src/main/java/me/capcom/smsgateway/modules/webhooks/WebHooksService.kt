@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.modules.webhooks
 
+import android.content.Context
 import android.webkit.URLUtil
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import me.capcom.smsgateway.domain.EntitySource
@@ -19,6 +20,16 @@ class WebHooksService(
     private val localServerSettings: LocalServerSettings,
     private val gatewaySettings: GatewaySettings,
 ) : KoinComponent {
+    private val eventsReceiver by lazy { EventsReceiver() }
+
+    fun start(context: Context) {
+        eventsReceiver.start()
+    }
+
+    fun stop(context: Context) {
+        eventsReceiver.stop()
+    }
+
     fun select(source: EntitySource): List<WebHookDTO> {
         return webHooksDao.selectBySource(source).map {
             WebHookDTO(

@@ -49,12 +49,6 @@ class GatewayService(
 
     fun isActiveLiveData(context: Context) = PullMessagesWorker.getStateLiveData(context)
 
-    fun ping(context: Context) {
-        if (!settings.enabled) return
-
-        PullMessagesWorker.start(context)
-    }
-
     fun stop(context: Context) {
         eventsReceiver.stop()
         WebhooksUpdateWorker.stop(context)
