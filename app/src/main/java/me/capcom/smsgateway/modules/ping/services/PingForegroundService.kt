@@ -7,16 +7,26 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.notifications.NotificationsService
-import me.capcom.smsgateway.modules.orchestrator.OrchestratorService
 import me.capcom.smsgateway.modules.ping.PingSettings
+import me.capcom.smsgateway.modules.ping.events.PingEvent
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import kotlin.concurrent.thread
 
 class PingForegroundService : Service() {
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     private val settings: PingSettings by inject()
+
+    private val eventBus = get<EventBus>()
 
     private val notificationsSvc: NotificationsService by inject()
 
@@ -29,12 +39,12 @@ class PingForegroundService : Service() {
     @Volatile
     private var stopRequested = false
 
-    private val workingThread = thread(start = false) {
+    private val workingThread = thread(start = false, priority = Thread.MIN_PRIORITY) {
         val interval = settings.intervalSeconds ?: return@thread
         while (!stopRequested) {
             Log.d(this.javaClass.name, "Sending ping")
-            get<OrchestratorService>().ping(this)
-            
+            scope.launch { eventBus.emit(PingEvent()) }
+
             Thread.sleep(interval * 1000L)
         }
     }
@@ -64,6 +74,7 @@ class PingForegroundService : Service() {
 
     override fun onDestroy() {
         stopRequested = true
+        scope.cancel()
         workingThread.join()
         wakeLock.release()
         stopForeground(true)
