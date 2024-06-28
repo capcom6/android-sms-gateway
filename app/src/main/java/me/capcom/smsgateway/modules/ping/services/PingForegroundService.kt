@@ -42,10 +42,14 @@ class PingForegroundService : Service() {
     private val workingThread = thread(start = false, priority = Thread.MIN_PRIORITY) {
         val interval = settings.intervalSeconds ?: return@thread
         while (!stopRequested) {
-            Log.d(this.javaClass.name, "Sending ping")
-            scope.launch { eventBus.emit(PingEvent()) }
+            try {
+                Log.d(this.javaClass.name, "Sending ping")
+                scope.launch { eventBus.emit(PingEvent()) }
 
-            Thread.sleep(interval * 1000L)
+                Thread.sleep(interval * 1000L)
+            } catch (_: Throwable) {
+
+            }
         }
     }
 
@@ -75,6 +79,7 @@ class PingForegroundService : Service() {
     override fun onDestroy() {
         stopRequested = true
         scope.cancel()
+        workingThread.interrupt()
         workingThread.join()
         wakeLock.release()
         stopForeground(true)
