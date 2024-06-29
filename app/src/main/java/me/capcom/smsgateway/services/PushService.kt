@@ -6,14 +6,25 @@ import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import me.capcom.smsgateway.helpers.SettingsHelper
-import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
+import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.workers.RegistrationWorker
 import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
 import me.capcom.smsgateway.modules.push.Event
+import me.capcom.smsgateway.modules.push.events.PushMessageEnqueuedEvent
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class PushService : FirebaseMessagingService() {
+class PushService : FirebaseMessagingService(), KoinComponent {
     private val settingsHelper by lazy { SettingsHelper(this) }
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val eventBus by inject<EventBus>()
 
     override fun onNewToken(token: String) {
         settingsHelper.fcmToken = token
@@ -27,12 +38,17 @@ class PushService : FirebaseMessagingService() {
 
             val event = message.data["event"]?.let { Event.valueOf(it) } ?: Event.MessageEnqueued
             when (event) {
-                Event.MessageEnqueued -> PullMessagesWorker.start(this)
+                Event.MessageEnqueued -> scope.launch { eventBus.emit(PushMessageEnqueuedEvent()) }
                 Event.WebhooksUpdated -> WebhooksUpdateWorker.start(this)
             }
         } catch (e: Throwable) {
             e.printStackTrace()
         }
+    }
+
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
     }
 
     companion object {

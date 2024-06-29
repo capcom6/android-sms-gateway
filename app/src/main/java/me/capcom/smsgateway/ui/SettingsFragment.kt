@@ -73,6 +73,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             || preference.key == "messages.log_lifetime_days"
             || preference.key == "messages.send_interval_min"
             || preference.key == "messages.send_interval_max"
+            || preference.key == "ping.interval_seconds"
         ) {
             (preference as EditTextPreference).setOnBindEditTextListener {
                 it.inputType = InputType.TYPE_CLASS_NUMBER

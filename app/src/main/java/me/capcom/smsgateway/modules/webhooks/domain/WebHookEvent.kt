@@ -5,4 +5,7 @@ import com.google.gson.annotations.SerializedName
 enum class WebHookEvent {
     @SerializedName("sms:received")
     SmsReceived,
+
+    @SerializedName("system:ping")
+    SystemPing,
 }

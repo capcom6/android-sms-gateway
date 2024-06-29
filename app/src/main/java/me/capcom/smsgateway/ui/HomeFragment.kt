@@ -26,15 +26,17 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import me.capcom.smsgateway.App
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.databinding.FragmentSettingsBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.events.EventBus
+import me.capcom.smsgateway.modules.gateway.GatewayService
+import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.localserver.LocalServerService
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
-import me.capcom.smsgateway.modules.messages.MessagesService
+import me.capcom.smsgateway.modules.orchestrator.OrchestratorService
 import org.koin.android.ext.android.inject
 
 class HomeFragment : Fragment() {
@@ -44,9 +46,14 @@ class HomeFragment : Fragment() {
 
     private val settingsHelper: SettingsHelper by inject()
     private val localServerSettings: LocalServerSettings by inject()
+    private val gatewaySettings: GatewaySettings by inject()
 
-    private val localServerService: LocalServerService by inject()
-    private val messagesSvc: MessagesService by inject()
+    private val events: EventBus by inject()
+
+    private val localServerSvc: LocalServerService by inject()
+    private val gatewaySvc: GatewayService by inject()
+
+    private val orchestratorSvc: OrchestratorService by inject()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -77,7 +84,7 @@ class HomeFragment : Fragment() {
             settingsHelper.autostart = isChecked
         }
         binding.switchUseRemoteServer.setOnCheckedChangeListener { _, isChecked ->
-            App.instance.gatewayService.enabled = isChecked
+            gatewaySettings.enabled = isChecked
             binding.layoutRemoteServer.isVisible = isChecked
         }
         binding.switchUseLocalServer.setOnCheckedChangeListener { _, isChecked ->
@@ -89,14 +96,12 @@ class HomeFragment : Fragment() {
             actionStart(binding.buttonStart.isChecked)
         }
 
-        if (settingsHelper.autostart) {
-            actionStart(true)
-        }
+//        if (settingsHelper.autostart) {
+//            actionStart(true)
+//        }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            App.instance.gatewayService.events.events.collect { event ->
-                val event = event as? DeviceRegisteredEvent ?: return@collect
-
+            events.collect<DeviceRegisteredEvent> { event ->
                 binding.textRemoteAddress.text = getString(R.string.address_is, event.server)
                 binding.textRemoteAuth.movementMethod = LinkMovementMethod.getInstance()
                 binding.textRemoteAuth.text = makeCopyableLink(
@@ -113,9 +118,7 @@ class HomeFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            localServerService.events.events.collect { event ->
-                val event = event as? IPReceivedEvent ?: return@collect
-
+            events.collect<IPReceivedEvent> { event ->
                 binding.textLocalIP.text = event.localIP?.let {
                     getString(
                         R.string.settings_local_address_is,
@@ -131,7 +134,6 @@ class HomeFragment : Fragment() {
                         settingsHelper.serverPort
                     )
                 } ?: getString(R.string.settings_public_address_not_found)
-
             }
         }
 
@@ -175,7 +177,7 @@ class HomeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        binding.switchUseRemoteServer.isChecked = App.instance.gatewayService.enabled
+        binding.switchUseRemoteServer.isChecked = gatewaySettings.enabled
         binding.switchUseLocalServer.isChecked = localServerSettings.enabled
     }
 
@@ -183,16 +185,16 @@ class HomeFragment : Fragment() {
         if (start) {
             requestPermissionsAndStart()
         } else {
-            localServerService.stop(requireContext())
-            App.instance.gatewayService.stop(requireContext())
-            messagesSvc.stop()
+            stop()
         }
     }
 
+    private fun stop() {
+        orchestratorSvc.stop(requireContext())
+    }
+
     private fun start() {
-        messagesSvc.start()
-        App.instance.gatewayService.start(requireContext())
-        localServerService.start(requireContext())
+        orchestratorSvc.start(requireContext())
     }
 
     private fun requestPermissionsAndStart() {
@@ -238,12 +240,12 @@ class HomeFragment : Fragment() {
             private var localServerStatus = false
 
             init {
-                addSource(App.instance.gatewayService.isActiveLiveData(requireContext())) {
+                addSource(gatewaySvc.isActiveLiveData(requireContext())) {
                     gatewayStatus = it
 
                     value = gatewayStatus || localServerStatus
                 }
-                addSource(localServerService.isActiveLiveData(requireContext())) {
+                addSource(localServerSvc.isActiveLiveData(requireContext())) {
                     localServerStatus = it
 
                     value = gatewayStatus || localServerStatus

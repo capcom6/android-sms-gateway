@@ -13,8 +13,8 @@ import me.capcom.smsgateway.providers.PublicIPProvider
 
 class LocalServerService(
     private val settings: LocalServerSettings,
+    private val events: EventBus,
 ) {
-    val events = EventBus()
 
     private fun getDeviceId(context: Context): String {
         val firstInstallTime = context.packageManager.getPackageInfo(
@@ -38,7 +38,7 @@ class LocalServerService(
             val localIP = LocalIPProvider(context).getIP()
             val remoteIP = PublicIPProvider().getIP()
 
-            events.emitEvent(IPReceivedEvent(localIP, remoteIP))
+            events.emit(IPReceivedEvent(localIP, remoteIP))
         }
     }
 

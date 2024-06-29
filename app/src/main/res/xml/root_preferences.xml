@@ -63,6 +63,15 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:summary="Online status at the cost of battery life"
+        app:title="Ping">
+        <EditTextPreference
+            android:key="ping.interval_seconds"
+            app:title="Interval (seconds)"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/information">
         <Preference
             android:key="transient.app_version"

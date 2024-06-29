@@ -4,11 +4,6 @@ import android.content.Context
 import android.os.Build
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.domain.EntitySource
@@ -21,16 +16,17 @@ import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
-import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.services.PushService
 import java.util.Date
 
 class GatewayService(
     private val messagesService: MessagesService,
     private val settings: GatewaySettings,
+    private val events: EventBus,
 ) {
+    private val eventsReceiver by lazy { EventsReceiver() }
+
     private var _api: GatewayApi? = null
-    private var _job: Job? = null
 
     private val api
         get() = _api ?: GatewayApi(
@@ -38,15 +34,8 @@ class GatewayService(
             settings.privateToken
         ).also { _api = it }
 
-    val events = EventBus()
-    var enabled: Boolean
-        get() = settings.enabled
-        set(value) {
-            settings.enabled = value
-        }
-
     fun start(context: Context) {
-        if (!enabled) return
+        if (!settings.enabled) return
         this._api = GatewayApi(
             settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
             settings.privateToken
@@ -55,23 +44,13 @@ class GatewayService(
         PushService.register(context)
         PullMessagesWorker.start(context)
         WebhooksUpdateWorker.start(context)
-
-        _job = scope.launch {
-            val allowedSources = setOf(EntitySource.Cloud, EntitySource.Gateway)
-            messagesService.events.events.collect { event ->
-                val event = event as? MessageStateChangedEvent ?: return@collect
-                if (event.source !in allowedSources) return@collect
-
-                SendStateWorker.start(context, event.id)
-            }
-        }
+        eventsReceiver.start()
     }
 
     fun isActiveLiveData(context: Context) = PullMessagesWorker.getStateLiveData(context)
 
     fun stop(context: Context) {
-        _job?.cancel()
-        _job = null
+        eventsReceiver.stop()
         WebhooksUpdateWorker.stop(context)
         PullMessagesWorker.stop(context)
         this._api = null
@@ -111,7 +90,7 @@ class GatewayService(
     }
 
     internal suspend fun registerFcmToken(pushToken: String) {
-        if (!enabled) return
+        if (!settings.enabled) return
 
         val settings = settings.registrationInfo
         val accessToken = settings?.token
@@ -126,7 +105,7 @@ class GatewayService(
                         pushToken
                     )
                 )
-                events.emitEvent(
+                events.emit(
                     DeviceRegisteredEvent(
                         api.hostname,
                         settings.login,
@@ -150,7 +129,7 @@ class GatewayService(
         )
         this.settings.registrationInfo = response
 
-        events.emitEvent(
+        events.emit(
             DeviceRegisteredEvent(
                 api.hostname,
                 response.login,
@@ -160,6 +139,7 @@ class GatewayService(
     }
 
     internal suspend fun getNewMessages(context: Context) {
+        if (!settings.enabled) return
         val settings = settings.registrationInfo ?: return
         val messages = api.getMessages(settings.token)
         for (message in messages) {
@@ -202,10 +182,5 @@ class GatewayService(
         Message.State.Sent -> MessageState.Sent
         Message.State.Delivered -> MessageState.Delivered
         Message.State.Failed -> MessageState.Failed
-    }
-
-    companion object {
-        private val job = SupervisorJob()
-        private val scope = CoroutineScope(job + Dispatchers.IO)
     }
 }
