@@ -34,6 +34,7 @@ If applicable, add screenshots to help explain your problem.
 **Smartphone**
 - Device: [e.g., Google Pixel]
 - OS: [e.g., Android 11]
+- SIM Card Count: [e.g., 1 or 2] (Please specify the number of active SIM cards in the device)
 
 **Additional Context**
 Add any other context about the problem here, such as log file excerpts.
