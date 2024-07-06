@@ -3,6 +3,7 @@ package me.capcom.smsgateway.modules.ping.services
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -35,6 +36,12 @@ class PingForegroundService : Service() {
             newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, this.javaClass.name)
         }
     }
+    private val wifiLock: WifiManager.WifiLock by lazy {
+        (getSystemService(Context.WIFI_SERVICE) as WifiManager).createWifiLock(
+            WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+            this.javaClass.name
+        )
+    }
 
     @Volatile
     private var stopRequested = false
@@ -57,6 +64,7 @@ class PingForegroundService : Service() {
         super.onCreate()
 
         wakeLock.acquire()
+        wifiLock.acquire()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -81,6 +89,7 @@ class PingForegroundService : Service() {
         scope.cancel()
         workingThread.interrupt()
         workingThread.join()
+        wifiLock.release()
         wakeLock.release()
         stopForeground(true)
 
