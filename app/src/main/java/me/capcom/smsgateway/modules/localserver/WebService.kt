@@ -3,6 +3,7 @@ package me.capcom.smsgateway.modules.localserver
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -63,6 +64,12 @@ class WebService : Service() {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
             newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, this.javaClass.name)
         }
+    }
+    private val wifiLock: WifiManager.WifiLock by lazy {
+        (getSystemService(Context.WIFI_SERVICE) as WifiManager).createWifiLock(
+            WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+            this.javaClass.name
+        )
     }
 
     private val server by lazy {
@@ -266,6 +273,7 @@ class WebService : Service() {
 
         server.start()
         wakeLock.acquire()
+        wifiLock.acquire()
 
         status.postValue(true)
     }
@@ -289,6 +297,7 @@ class WebService : Service() {
     }
 
     override fun onDestroy() {
+        wifiLock.release()
         wakeLock.release()
         thread { server.stop() }
 
