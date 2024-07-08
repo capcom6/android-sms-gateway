@@ -75,7 +75,7 @@
 
         <service
             android:name=".modules.localserver.WebService"
-            android:foregroundServiceType="dataSync"
+            android:foregroundServiceType="connectedDevice"
             android:enabled="true" />
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
