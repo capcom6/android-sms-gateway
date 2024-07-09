@@ -70,6 +70,7 @@ class PingForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = notificationsSvc.makeNotification(
             this,
+            NotificationsService.NOTIFICATION_ID_PING_SERVICE,
             getString(R.string.ping_service_is_active)
         )
 

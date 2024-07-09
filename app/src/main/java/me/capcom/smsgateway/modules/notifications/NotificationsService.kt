@@ -15,6 +15,13 @@ class NotificationsService(
         context.getSystemService(Context.NOTIFICATION_SERVICE) as
                 NotificationManager
 
+    private val icons = mapOf(
+        NOTIFICATION_ID_LOCAL_SERVICE to R.drawable.notif_server,
+        NOTIFICATION_ID_SEND_WORKER to R.drawable.notif_send,
+        NOTIFICATION_ID_WEBHOOK_WORKER to R.drawable.notif_webhook,
+        NOTIFICATION_ID_PING_SERVICE to R.drawable.notif_ping,
+    )
+
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = context.getString(R.string.sms_gateway)
@@ -28,11 +35,11 @@ class NotificationsService(
         }
     }
 
-    fun makeNotification(context: Context, contentText: String): Notification {
+    fun makeNotification(context: Context, id: Int, contentText: String): Notification {
         return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(context.getText(R.string.notification_title))
             .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_sms)
+            .setSmallIcon(icons[id] ?: R.drawable.ic_sms)
             .build()
     }
 

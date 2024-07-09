@@ -81,6 +81,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         val notificationId = NotificationsService.NOTIFICATION_ID_WEBHOOK_WORKER
         val notification = notificationsSvc.makeNotification(
             applicationContext,
+            notificationId,
             applicationContext.getString(R.string.sending_webhook)
         )
 
