@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">SmsGateway</string>
-    <string name="notification_title">SmsGateway</string>
+    <string name="app_name">SMS Gateway</string>
+    <string name="notification_title">SMS Gateway</string>
     <string name="notification_message">Waiting for messages…</string>
     <string name="tab_text_settings">SETTINGS</string>
     <string name="tab_text_messages">MESSAGES</string>

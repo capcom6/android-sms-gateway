@@ -47,6 +47,7 @@ class SendMessagesWorker(appContext: Context, params: WorkerParameters) :
         val notificationId = NotificationsService.NOTIFICATION_ID_SEND_WORKER
         val notification = notificationsSvc.makeNotification(
             applicationContext,
+            notificationId,
             applicationContext.getString(R.string.send_messages_notification)
         )
 

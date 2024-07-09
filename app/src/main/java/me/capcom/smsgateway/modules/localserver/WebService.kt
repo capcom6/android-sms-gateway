@@ -281,6 +281,7 @@ class WebService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = notificationsService.makeNotification(
             this,
+            NotificationsService.NOTIFICATION_ID_LOCAL_SERVICE,
             getString(
                 R.string.sms_gateway_is_running_on_port,
                 settingsHelper.serverPort
