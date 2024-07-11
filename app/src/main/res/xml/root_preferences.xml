@@ -26,7 +26,7 @@
             app:icon="@drawable/ic_log_lifetime"
             app:key="messages.log_lifetime_days"
             app:useSimpleSummaryProvider="true"
-            app:title="@string/log_lifetime_days" />
+            app:title="@string/delete_after_days" />
 
 
     </PreferenceCategory>
@@ -64,12 +64,21 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:summary="Online status at the cost of battery life"
-        app:title="Ping">
+        android:summary="@string/online_status_at_the_cost_of_battery_life"
+        app:title="@string/ping">
         <EditTextPreference
             android:key="ping.interval_seconds"
-            app:title="Interval (seconds)"
+            app:title="@string/interval_seconds"
             app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:title="@string/logs">
+        <EditTextPreference
+            app:icon="@drawable/ic_log_lifetime"
+            app:key="logs.lifetime_days"
+            app:useSimpleSummaryProvider="true"
+            app:title="@string/delete_after_days" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/information">

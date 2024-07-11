@@ -8,6 +8,7 @@ import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.events.eventBusModule
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.localserver.localserverModule
+import me.capcom.smsgateway.modules.logs.logsModule
 import me.capcom.smsgateway.modules.messages.messagesModule
 import me.capcom.smsgateway.modules.notifications.notificationsModule
 import me.capcom.smsgateway.modules.orchestrator.OrchestratorService
@@ -33,6 +34,7 @@ class App: Application() {
                 eventBusModule,
                 settingsModule,
                 dbModule,
+                logsModule,
                 notificationsModule,
                 messagesModule,
                 encryptionModule,

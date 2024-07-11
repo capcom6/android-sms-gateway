@@ -2,6 +2,7 @@ package me.capcom.smsgateway.data
 
 import androidx.room.TypeConverter
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonElement
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -28,6 +29,16 @@ class Converters {
     @TypeConverter
     fun dateFromString(value: String?): Date? {
         return value?.let { DATE_FORMAT.parse(it) }
+    }
+
+    @TypeConverter
+    fun jsonToString(value: JsonElement?): String? {
+        return value?.let { gson.toJson(it) }
+    }
+
+    @TypeConverter
+    fun stringToJson(value: String?): JsonElement? {
+        return value?.let { gson.fromJson(it, JsonElement::class.java) }
     }
 
     companion object {
