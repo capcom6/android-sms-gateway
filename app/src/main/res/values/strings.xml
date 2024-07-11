@@ -50,4 +50,9 @@
     <string name="app_version_build">App version (build)</string>
     <string name="sending_webhook">Sending webhook...</string>
     <string name="ping_service_is_active">Ping service is active</string>
+    <string name="delete_after_days">Delete after, days</string>
+    <string name="interval_seconds">Interval (seconds)</string>
+    <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery life</string>
+    <string name="ping">Ping</string>
+    <string name="logs">Logs</string>
 </resources>
