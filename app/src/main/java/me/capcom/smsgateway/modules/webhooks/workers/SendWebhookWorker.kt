@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.BackoffPolicy
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
+import androidx.work.ListenableWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
@@ -26,7 +27,10 @@ import io.ktor.serialization.gson.gson
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.extensions.configure
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.notifications.NotificationsService
+import me.capcom.smsgateway.modules.webhooks.NAME
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
 import org.json.JSONException
 import org.koin.core.component.KoinComponent
@@ -37,38 +41,88 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params), KoinComponent {
 
     private val notificationsSvc: NotificationsService by inject()
+    private val logsSvc: LogsService by inject()
 
-    override suspend fun doWork(): Result {
-        try {
-            if (runAttemptCount > MAX_RETRIES) {
-                return Result.failure()
+    override suspend fun doWork(): ListenableWorker.Result {
+        return when (val result = sendData()) {
+            Result.Success -> {
+                logsSvc.insert(
+                    priority = LogEntry.Priority.INFO,
+                    module = NAME,
+                    message = "Webhook sent successfully",
+                    context = mapOf(
+                        "url" to inputData.getString(INPUT_URL),
+                        "data" to inputData.getString(INPUT_DATA),
+                    )
+                )
+
+                ListenableWorker.Result.success()
             }
 
-            val url = inputData.getString(INPUT_URL) ?: return Result.failure()
+            is Result.Failure -> {
+                logsSvc.insert(
+                    priority = LogEntry.Priority.ERROR,
+                    module = NAME,
+                    message = "Webhook failed: ${result.error}",
+                    context = mapOf(
+                        "url" to inputData.getString(INPUT_URL),
+                        "data" to inputData.getString(INPUT_DATA),
+                    )
+                )
+                ListenableWorker.Result.failure()
+            }
+
+            is Result.Retry -> {
+                logsSvc.insert(
+                    priority = LogEntry.Priority.WARN,
+                    module = NAME,
+                    message = "Webhook failed with retry: ${result.reason}",
+                    context = mapOf(
+                        "url" to inputData.getString(INPUT_URL),
+                        "data" to inputData.getString(INPUT_DATA),
+                    )
+                )
+                ListenableWorker.Result.retry()
+            }
+        }
+    }
+
+    private suspend fun sendData(): Result {
+        try {
+            if (runAttemptCount > MAX_RETRIES) {
+                return Result.Failure("Retry limit exceeded")
+            }
+
+            val url = inputData.getString(INPUT_URL)
+                ?: return Result.Failure("Empty url")
             val data = inputData.getString(INPUT_DATA)
                 ?.let { gson.fromJson(it, JsonObject::class.java) }
-                ?: return Result.failure()
+                ?: return Result.Failure("Empty data")
+
             val response = client.post(url) {
                 contentType(ContentType.Application.Json)
                 setBody(data)
             }
 
             if (response.status.value !in 200..299) {
-                return Result.retry()
+                return Result.Retry("Status code: ${response.status.value}")
             }
+
+            Result.Success
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
-            return Result.failure()
+            return Result.Failure(e.message ?: e.toString())
         } catch (e: JSONException) {
             e.printStackTrace()
-            return Result.failure()
+            return Result.Failure(e.message ?: e.toString())
         } catch (e: Throwable) {
             e.printStackTrace()
-            return Result.retry()
+            return Result.Retry(e.message ?: e.toString())
         } finally {
             client.close()
         }
-        return Result.success()
+
+        return Result.Success
     }
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
@@ -102,6 +156,12 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         install(DefaultRequest) {
             userAgent("${BuildConfig.APPLICATION_ID}/${BuildConfig.VERSION_NAME}")
         }
+    }
+
+    private sealed class Result {
+        object Success : Result()
+        class Failure(val error: String) : Result()
+        class Retry(val reason: String) : Result()
     }
 
     companion object {
