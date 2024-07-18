@@ -292,7 +292,7 @@ If you have any questions or suggestions, feel free to reach out through the fol
 
 - **Issue Tracker:** [https://github.com/capcom6/android-sms-gateway/issues](https://github.com/capcom6/android-sms-gateway/issues)
 - **Email:** [sms@capcom.me](mailto:sms@capcom.me)
-- **Discord:** [Join our Discord server](https://discord.gg/GwJXXvhU)
+- **Discord:** [Join our Discord server](https://discord.gg/vv9raFK4gX)
 
 ### Links
 
