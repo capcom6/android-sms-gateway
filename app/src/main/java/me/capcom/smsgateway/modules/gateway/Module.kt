@@ -6,3 +6,5 @@ import org.koin.dsl.module
 val gatewayModule = module {
     singleOf(::GatewayService)
 }
+
+val NAME = "gateway"

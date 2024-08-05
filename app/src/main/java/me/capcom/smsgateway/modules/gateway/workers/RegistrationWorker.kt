@@ -12,12 +12,17 @@ import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import me.capcom.smsgateway.App
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
 
 class RegistrationWorker(
     appContext: Context,
     params: WorkerParameters
-) : CoroutineWorker(appContext, params) {
+) : CoroutineWorker(appContext, params), KoinComponent {
+    private val logsSvc: LogsService by inject()
 
     override suspend fun doWork(): Result {
         try {
@@ -27,6 +32,14 @@ class RegistrationWorker(
 
             return Result.success()
         } catch (e: Exception) {
+            logsSvc.insert(
+                priority = LogEntry.Priority.ERROR,
+                module = NAME,
+                message = "Registration failed: ${e.message}",
+                context = mapOf(
+                    "token" to inputData.getString(DATA_TOKEN)
+                )
+            )
             e.printStackTrace()
             return Result.retry()
         }
