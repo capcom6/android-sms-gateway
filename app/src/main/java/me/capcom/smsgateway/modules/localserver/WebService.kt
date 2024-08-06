@@ -44,6 +44,7 @@ import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
+import me.capcom.smsgateway.modules.localserver.routes.LogsRoutes
 import me.capcom.smsgateway.modules.localserver.routes.WebhooksRoutes
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.SendRequest
@@ -255,6 +256,7 @@ class WebService : Service() {
                         }
                     }
                     WebhooksRoutes(get()).register(this)
+                    LogsRoutes(get()).register(this)
                 }
             }
         }
