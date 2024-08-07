@@ -255,8 +255,18 @@ class WebService : Service() {
                             )
                         }
                     }
-                    WebhooksRoutes(get()).register(this)
-                    LogsRoutes(get()).register(this)
+                    WebhooksRoutes(get()).let {
+                        route("/webhook") {
+                            it.register(this)
+                        }
+                        route("/webhooks") {
+                            it.register(this)
+                        }
+                    }
+
+                    route("/logs") {
+                        LogsRoutes(get()).register(this)
+                    }
                 }
             }
         }

@@ -8,7 +8,6 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
-import io.ktor.server.routing.route
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookDTO
@@ -18,12 +17,7 @@ class WebhooksRoutes(
 ) {
     fun register(routing: Route) {
         routing.apply {
-            route("/webhook") {
-                webhooksRoutes()
-            }
-            route("/webhooks") {
-                webhooksRoutes()
-            }
+            webhooksRoutes()
         }
     }
 
@@ -33,8 +27,9 @@ class WebhooksRoutes(
         }
         post {
             val webhook = call.receive<WebHookDTO>()
-            webHooksService.replace(EntitySource.Local, webhook)
-            call.respond(HttpStatusCode.Created)
+            val updated = webHooksService.replace(EntitySource.Local, webhook)
+
+            call.respond(HttpStatusCode.Created, updated)
         }
         delete("/{id}") {
             val id = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
