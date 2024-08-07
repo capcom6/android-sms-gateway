@@ -262,7 +262,14 @@
         },
         "responses": {
           "201": {
-            "description": "Webhook successfully registered or updated."
+            "description": "Webhook successfully registered or updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebHook"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/ErrorResponse"
