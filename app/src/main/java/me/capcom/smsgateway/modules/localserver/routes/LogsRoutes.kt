@@ -5,7 +5,6 @@ import io.ktor.server.application.call
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
-import io.ktor.server.routing.route
 import me.capcom.smsgateway.helpers.DateHelper
 import me.capcom.smsgateway.modules.localserver.domain.GetLogsResponse
 import me.capcom.smsgateway.modules.logs.LogsService
@@ -17,9 +16,7 @@ class LogsRoutes(
 
     fun register(routing: Route) {
         routing.apply {
-            route("/logs") {
-                logsRoutes()
-            }
+            logsRoutes()
         }
     }
 

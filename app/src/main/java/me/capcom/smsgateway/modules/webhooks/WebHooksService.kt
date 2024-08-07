@@ -51,7 +51,7 @@ class WebHooksService(
         })
     }
 
-    fun replace(source: EntitySource, webHook: WebHookDTO) {
+    fun replace(source: EntitySource, webHook: WebHookDTO): WebHookDTO {
         if (!URLUtil.isHttpsUrl(webHook.url)) {
             throw IllegalArgumentException("Invalid URL")
         }
@@ -61,13 +61,18 @@ class WebHooksService(
             )
         }
 
-        webHooksDao.upsert(
-            WebHook(
-                id = webHook.id ?: NanoIdUtils.randomNanoId(),
-                url = webHook.url,
-                event = webHook.event,
-                source = source,
-            )
+        val webHookEntity = WebHook(
+            id = webHook.id ?: NanoIdUtils.randomNanoId(),
+            url = webHook.url,
+            event = webHook.event,
+            source = source,
+        )
+        webHooksDao.upsert(webHookEntity)
+
+        return WebHookDTO(
+            id = webHookEntity.id,
+            url = webHookEntity.url,
+            event = webHookEntity.event,
         )
     }
 
