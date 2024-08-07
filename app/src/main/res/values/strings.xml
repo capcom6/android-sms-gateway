@@ -55,4 +55,6 @@
     <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery life</string>
     <string name="ping">Ping</string>
     <string name="logs">Logs</string>
+    <string name="view">View</string>
+    <string name="list_of_last_50_log_entries">List of last 50 log entries</string>
 </resources>
