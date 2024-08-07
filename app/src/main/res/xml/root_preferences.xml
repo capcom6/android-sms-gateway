@@ -74,6 +74,10 @@
 
     <PreferenceCategory
         app:title="@string/logs">
+        <Preference
+            app:fragment="me.capcom.smsgateway.ui.LogsListFragment"
+            app:title="@string/view"
+            app:summary="@string/list_of_last_50_log_entries"/>
         <EditTextPreference
             app:icon="@drawable/ic_log_lifetime"
             app:key="logs.lifetime_days"

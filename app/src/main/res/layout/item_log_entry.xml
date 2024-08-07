@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:attr/selectableItemBackground"
+    android:minHeight="?android:attr/listPreferredItemHeight"
+    android:paddingEnd="16dp">
+
+    <ImageView
+        android:id="@+id/imageViewPriority"
+        android:layout_width="?android:attr/listPreferredItemHeight"
+        android:layout_height="0dp"
+        android:layout_margin="4dp"
+        android:scaleType="center"
+        android:src="@drawable/ic_sms"
+        app:layout_constraintBottom_toTopOf="@id/textViewModule"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewModule"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/imageViewPriority"
+        app:layout_constraintStart_toStartOf="@id/imageViewPriority"
+        app:layout_constraintTop_toBottomOf="@id/imageViewPriority"
+        tools:text="core" />
+
+    <TextView
+        android:id="@+id/textViewMessage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:ellipsize="end"
+        android:gravity="end"
+        android:lines="2"
+        app:layout_constraintBottom_toTopOf="@id/textViewDate"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/imageViewPriority"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Some description" />
+
+    <TextView
+        android:id="@+id/textViewDate"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:gravity="end"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/imageViewPriority"
+        app:layout_constraintTop_toBottomOf="@id/textViewMessage"
+        tools:text="2024-08-07 08:52" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
