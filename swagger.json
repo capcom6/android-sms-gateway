@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.16.2",
+    "version": "1.17.0",
     "title": "SMS Gateway for Android™ Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
@@ -262,7 +262,14 @@
         },
         "responses": {
           "201": {
-            "description": "Webhook successfully registered or updated."
+            "description": "Webhook successfully registered or updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebHook"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/ErrorResponse"
@@ -349,11 +356,75 @@
           }
         ]
       }
+    },
+    "/logs": {
+      "get": {
+        "tags": [
+          "System",
+          "Logs"
+        ],
+        "summary": "Get logs",
+        "description": "Retrieve a list of log entries within a specified time range.",
+        "operationId": "get-logs",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "description": "The start of the time range for the logs to retrieve. Logs created after this timestamp will be included.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "The end of the time range for the logs to retrieve. Logs created before this timestamp will be included.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LogEntry"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://device-ip:8080",
+            "description": "Local Server"
+          },
+          {
+            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "description": "Cloud Server"
+          }
+        ]
+      }
     }
   },
   "tags": [
     {
       "name": "Devices"
+    },
+    {
+      "name": "Logs"
     },
     {
       "name": "Messages"
@@ -570,6 +641,52 @@
                 "format": "date-time"
               }
             }
+          }
+        }
+      },
+      "LogEntry": {
+        "type": "object",
+        "title": "LogEntry",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "A unique identifier for the log entry.",
+            "readOnly": true
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "DEBUG",
+              "INFO",
+              "WARN",
+              "ERROR"
+            ],
+            "description": "The priority level of the log entry.",
+            "readOnly": true
+          },
+          "module": {
+            "type": "string",
+            "description": "The module or component of the system that generated the log entry.",
+            "readOnly": true
+          },
+          "message": {
+            "type": "string",
+            "description": "A message describing the log event.",
+            "readOnly": true
+          },
+          "context": {
+            "type": "object",
+            "description": "Additional context information related to the log entry, typically including data relevant to the log event.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "readOnly": true
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The timestamp when this log entry was created.",
+            "format": "date-time",
+            "readOnly": true
           }
         }
       },
