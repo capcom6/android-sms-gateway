@@ -1,13 +1,12 @@
 package me.capcom.smsgateway.ui.styles
 
 import android.graphics.Color
-import me.capcom.smsgateway.data.entities.Message
 
-val Message.State.color: Int
+val me.capcom.smsgateway.domain.ProcessingState.color: Int
     get() = when (this) {
-        Message.State.Pending -> Color.parseColor("#FFBB86FC")
-        Message.State.Processed -> Color.parseColor("#FF6200EE")
-        Message.State.Sent -> Color.parseColor("#FF3700B3")
-        Message.State.Delivered -> Color.parseColor("#FF03DAC5")
-        Message.State.Failed -> Color.parseColor("#FF018786")
+        me.capcom.smsgateway.domain.ProcessingState.Pending -> Color.parseColor("#FFBB86FC")
+        me.capcom.smsgateway.domain.ProcessingState.Processed -> Color.parseColor("#FF6200EE")
+        me.capcom.smsgateway.domain.ProcessingState.Sent -> Color.parseColor("#FF3700B3")
+        me.capcom.smsgateway.domain.ProcessingState.Delivered -> Color.parseColor("#FF03DAC5")
+        me.capcom.smsgateway.domain.ProcessingState.Failed -> Color.parseColor("#FF018786")
     }

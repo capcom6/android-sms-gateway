@@ -1,6 +1,6 @@
 package me.capcom.smsgateway.domain
 
-enum class MessageState {
+enum class ProcessingState {
     Pending,
     Processed,
     Sent,

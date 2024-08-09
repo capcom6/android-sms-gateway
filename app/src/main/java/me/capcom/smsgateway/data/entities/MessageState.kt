@@ -16,6 +16,6 @@ import androidx.room.ForeignKey
 )
 data class MessageState(
     val messageId: String,
-    val state: Message.State,
+    val state: me.capcom.smsgateway.domain.ProcessingState,
     val updatedAt: Long
 )

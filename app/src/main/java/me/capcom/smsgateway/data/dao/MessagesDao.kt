@@ -51,7 +51,10 @@ interface MessagesDao {
                 "FROM messagerecipient " +
                 "WHERE messageId = :messageId"
     )
-    fun _insertRecipientStatesByMessage(messageId: String, state: Message.State)
+    fun _insertRecipientStatesByMessage(
+        messageId: String,
+        state: me.capcom.smsgateway.domain.ProcessingState
+    )
 
     @Transaction
     fun insert(message: MessageWithRecipients) {
@@ -75,9 +78,9 @@ interface MessagesDao {
     }
 
     @Query("UPDATE message SET state = :state WHERE id = :id")
-    fun _updateMessageState(id: String, state: Message.State)
+    fun _updateMessageState(id: String, state: me.capcom.smsgateway.domain.ProcessingState)
 
-    fun updateMessageState(id: String, state: Message.State) {
+    fun updateMessageState(id: String, state: me.capcom.smsgateway.domain.ProcessingState) {
         _updateMessageState(id, state)
         _insertMessageState(
             MessageState(
@@ -95,20 +98,25 @@ interface MessagesDao {
         _insertMessageState(
             MessageState(
                 id,
-                Message.State.Processed,
+                me.capcom.smsgateway.domain.ProcessingState.Processed,
                 System.currentTimeMillis()
             )
         )
     }
 
     @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND phoneNumber = :phoneNumber")
-    fun _updateRecipientState(id: String, phoneNumber: String, state: Message.State, error: String?)
+    fun _updateRecipientState(
+        id: String,
+        phoneNumber: String,
+        state: me.capcom.smsgateway.domain.ProcessingState,
+        error: String?
+    )
 
     @Transaction
     fun updateRecipientState(
         id: String,
         phoneNumber: String,
-        state: Message.State,
+        state: me.capcom.smsgateway.domain.ProcessingState,
         error: String?
     ) {
         _updateRecipientState(id, phoneNumber, state, error)
@@ -120,10 +128,18 @@ interface MessagesDao {
     }
 
     @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id")
-    fun _updateRecipientsState(id: String, state: Message.State, error: String?)
+    fun _updateRecipientsState(
+        id: String,
+        state: me.capcom.smsgateway.domain.ProcessingState,
+        error: String?
+    )
 
     @Transaction
-    fun updateRecipientsState(id: String, state: Message.State, error: String?) {
+    fun updateRecipientsState(
+        id: String,
+        state: me.capcom.smsgateway.domain.ProcessingState,
+        error: String?
+    ) {
         _updateRecipientsState(id, state, error)
         _insertRecipientStatesByMessage(id, state)
     }

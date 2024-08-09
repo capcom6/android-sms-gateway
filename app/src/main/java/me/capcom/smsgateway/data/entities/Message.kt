@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import me.capcom.smsgateway.domain.EntitySource
+import me.capcom.smsgateway.domain.ProcessingState
 import java.util.Date
 
 @Entity(indices = [androidx.room.Index(value = ["createdAt"]), androidx.room.Index(value = ["processedAt"])])
@@ -22,16 +23,9 @@ data class Message(
     @ColumnInfo(defaultValue = "Local")
     val source: EntitySource,
 
-    val state: State = State.Pending,
+    val state: ProcessingState = ProcessingState.Pending,
     @ColumnInfo(defaultValue = "0")
     val createdAt: Long = System.currentTimeMillis(),
     val processedAt: Long? = null,
 ) {
-    enum class State {
-        Pending,
-        Processed,
-        Sent,
-        Delivered,
-        Failed,
-    }
 }
