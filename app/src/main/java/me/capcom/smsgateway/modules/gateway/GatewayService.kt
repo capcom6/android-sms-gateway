@@ -4,10 +4,8 @@ import android.content.Context
 import android.os.Build
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
-import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.domain.EntitySource
-import me.capcom.smsgateway.domain.MessageState
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
@@ -75,15 +73,15 @@ class GatewayService(
             listOf(
                 GatewayApi.MessagePatchRequest(
                     message.message.id,
-                    message.message.state.toApiState(),
+                    message.message.state,
                     message.recipients.map {
                         GatewayApi.RecipientState(
                             it.phoneNumber,
-                            it.state.toApiState(),
+                            it.state,
                             it.error
                         )
                     },
-                    message.states.associate { it.state.toApiState() to Date(it.updatedAt) }
+                    message.states.associate { it.state to Date(it.updatedAt) }
                 )
             )
         )
@@ -174,13 +172,5 @@ class GatewayService(
             )
         )
         messagesService.enqueueMessage(request)
-    }
-
-    private fun Message.State.toApiState(): MessageState = when (this) {
-        Message.State.Pending -> MessageState.Pending
-        Message.State.Processed -> MessageState.Processed
-        Message.State.Sent -> MessageState.Sent
-        Message.State.Delivered -> MessageState.Delivered
-        Message.State.Failed -> MessageState.Failed
     }
 }

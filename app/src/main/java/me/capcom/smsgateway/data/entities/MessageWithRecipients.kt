@@ -16,13 +16,13 @@ data class MessageWithRecipients(
     )
     val states: List<MessageState> = emptyList()
 ) {
-    val state: Message.State
+    val state: me.capcom.smsgateway.domain.ProcessingState
         get() = when {
-            recipients.any { it.state == Message.State.Pending } -> Message.State.Pending
-            recipients.any { it.state == Message.State.Processed } -> Message.State.Processed
+            recipients.any { it.state == me.capcom.smsgateway.domain.ProcessingState.Pending } -> me.capcom.smsgateway.domain.ProcessingState.Pending
+            recipients.any { it.state == me.capcom.smsgateway.domain.ProcessingState.Processed } -> me.capcom.smsgateway.domain.ProcessingState.Processed
 
-            recipients.all { it.state == Message.State.Failed } -> Message.State.Failed
-            recipients.all { it.state == Message.State.Delivered } -> Message.State.Delivered
-            else -> Message.State.Sent
+            recipients.all { it.state == me.capcom.smsgateway.domain.ProcessingState.Failed } -> me.capcom.smsgateway.domain.ProcessingState.Failed
+            recipients.all { it.state == me.capcom.smsgateway.domain.ProcessingState.Delivered } -> me.capcom.smsgateway.domain.ProcessingState.Delivered
+            else -> me.capcom.smsgateway.domain.ProcessingState.Sent
         }
 }

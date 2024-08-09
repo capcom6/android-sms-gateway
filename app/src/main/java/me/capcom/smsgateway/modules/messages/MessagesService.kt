@@ -18,6 +18,7 @@ import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
+import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.helpers.PhoneHelper
 import me.capcom.smsgateway.modules.encryption.EncryptionService
 import me.capcom.smsgateway.modules.events.EventBus
@@ -90,7 +91,7 @@ class MessagesService(
                 MessageRecipient(
                     request.message.id,
                     it,
-                    Message.State.Pending
+                    ProcessingState.Pending
                 )
             },
         )
@@ -112,7 +113,7 @@ class MessagesService(
 
         if (state != message.message.state) {
             when (state) {
-                Message.State.Processed -> dao.setMessageProcessed(message.message.id)
+                ProcessingState.Processed -> dao.setMessageProcessed(message.message.id)
                 else -> dao.updateMessageState(message.message.id, state)
             }
         }
@@ -123,11 +124,11 @@ class MessagesService(
     suspend fun processStateIntent(intent: Intent, resultCode: Int) {
         val state = when (intent.action) {
             EventsReceiver.ACTION_SENT -> when (resultCode) {
-                Activity.RESULT_OK -> Message.State.Sent
-                else -> Message.State.Failed
+                Activity.RESULT_OK -> ProcessingState.Sent
+                else -> ProcessingState.Failed
             }
 
-            EventsReceiver.ACTION_DELIVERED -> Message.State.Delivered
+            EventsReceiver.ACTION_DELIVERED -> ProcessingState.Delivered
             else -> return
         }
         val error = when (resultCode) {
@@ -187,11 +188,11 @@ class MessagesService(
      */
     private suspend fun sendMessage(request: MessageWithRecipients): Boolean {
         if (request.message.validUntil?.before(Date()) == true) {
-            updateState(request.message.id, null, Message.State.Failed, "TTL expired")
+            updateState(request.message.id, null, ProcessingState.Failed, "TTL expired")
             return false
         }
 
-        if (request.state != Message.State.Pending) {
+        if (request.state != ProcessingState.Pending) {
             // не ясно когда такая ситуация может возникнуть
             Log.w(this.javaClass.simpleName, "Unexpected state for message: $request")
             updateState(request.message.id, null, request.state)
@@ -206,7 +207,7 @@ class MessagesService(
             updateState(
                 request.message.id,
                 null,
-                Message.State.Failed,
+                ProcessingState.Failed,
                 "Can't send message: " + e.message
             )
         }
@@ -217,15 +218,14 @@ class MessagesService(
     private suspend fun updateState(
         id: String,
         phone: String?,
-        state: Message.State,
+        state: ProcessingState,
         error: String? = null
     ) {
-        phone?.let {
-            dao.updateRecipientState(id, it, state, error)
+        if (phone == null) {
+            dao.updateRecipientsState(id, state, error)
+        } else {
+            dao.updateRecipientState(id, phone, state, error)
         }
-            ?: kotlin.run {
-                dao.updateRecipientsState(id, state, error)
-            }
 
         val msg = requireNotNull(getMessage(id))
 
@@ -233,6 +233,9 @@ class MessagesService(
             MessageStateChangedEvent(
                 id,
                 msg.message.source,
+                phone?.let { setOf(it) } ?: msg.recipients.map { it.phoneNumber }.toSet(),
+                state,
+                error
             )
         )
     }
@@ -250,7 +253,7 @@ class MessagesService(
         }
 
         request.recipients
-            .filter { it.state == Message.State.Pending }
+            .filter { it.state == ProcessingState.Pending }
             .forEach { rcp ->
                 val sourcePhoneNumber = rcp.phoneNumber
                 val sentIntent = PendingIntent.getBroadcast(
@@ -308,13 +311,13 @@ class MessagesService(
                         )
                     }
 
-                    updateState(id, sourcePhoneNumber, Message.State.Processed)
+                    updateState(id, sourcePhoneNumber, ProcessingState.Processed)
                 } catch (th: Throwable) {
                     th.printStackTrace()
                     updateState(
                         id,
                         sourcePhoneNumber,
-                        Message.State.Failed,
+                        ProcessingState.Failed,
                         "Sending: " + th.message
                     )
                 }

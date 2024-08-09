@@ -18,7 +18,7 @@ import io.ktor.http.contentType
 import io.ktor.http.hostWithPort
 import io.ktor.serialization.gson.gson
 import me.capcom.smsgateway.BuildConfig
-import me.capcom.smsgateway.domain.MessageState
+import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 import java.util.Date
@@ -103,9 +103,9 @@ class GatewayApi(
 
     data class MessagePatchRequest(
         val id: String,
-        val state: MessageState,
+        val state: ProcessingState,
         val recipients: List<RecipientState>,
-        val states: Map<MessageState, Date>
+        val states: Map<ProcessingState, Date>
     )
 
     data class Message(
@@ -120,7 +120,7 @@ class GatewayApi(
 
     data class RecipientState(
         val phoneNumber: String,
-        val state: MessageState,
+        val state: ProcessingState,
         val error: String?,
     )
 

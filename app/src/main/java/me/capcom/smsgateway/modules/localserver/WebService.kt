@@ -34,9 +34,8 @@ import io.ktor.server.routing.routing
 import io.ktor.util.date.GMTDate
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
-import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.domain.EntitySource
-import me.capcom.smsgateway.domain.MessageState
+import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.health.HealthService
@@ -209,16 +208,16 @@ class WebService : Service() {
                                 HttpStatusCode.Accepted,
                                 PostMessageResponse(
                                     id = messageId,
-                                    state = MessageState.Pending,
+                                    state = ProcessingState.Pending,
                                     recipients = request.phoneNumbers.map {
                                         PostMessageResponse.Recipient(
                                             it,
-                                            MessageState.Pending,
+                                            ProcessingState.Pending,
                                             null
                                         )
                                     },
                                     isEncrypted = request.isEncrypted ?: false,
-                                    mapOf(MessageState.Pending to Date())
+                                    mapOf(ProcessingState.Pending to Date())
                                 )
                             )
                         }
@@ -239,17 +238,17 @@ class WebService : Service() {
                             call.respond(
                                 PostMessageResponse(
                                     message.message.id,
-                                    message.message.state.toApiState(),
+                                    message.message.state,
                                     message.recipients.map {
                                         PostMessageResponse.Recipient(
                                             it.phoneNumber,
-                                            it.state.toApiState(),
+                                            it.state,
                                             it.error
                                         )
                                     },
                                     message.message.isEncrypted,
                                     message.states.associate {
-                                        it.state.toApiState() to Date(it.updatedAt)
+                                        it.state to Date(it.updatedAt)
                                     }
                                 )
                             )
@@ -270,14 +269,6 @@ class WebService : Service() {
                 }
             }
         }
-    }
-
-    private fun Message.State.toApiState(): MessageState = when (this) {
-        Message.State.Pending -> MessageState.Pending
-        Message.State.Processed -> MessageState.Processed
-        Message.State.Sent -> MessageState.Sent
-        Message.State.Delivered -> MessageState.Delivered
-        Message.State.Failed -> MessageState.Failed
     }
 
     override fun onCreate() {
