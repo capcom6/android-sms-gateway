@@ -579,7 +579,9 @@
           "event": {
             "type": "string",
             "enum": [
-              "sms:received"
+              "sms:received",
+              "sms:sent",
+              "system:ping"
             ],
             "description": "The type of event being reported. For example, 'sms:received'.",
             "example": "sms:received"
@@ -619,30 +621,72 @@
           "event": {
             "type": "string",
             "enum": [
-              "sms:received"
+              "sms:received",
+              "sms:sent",
+              "system:ping"
             ],
             "description": "The type of event that triggered the webhook."
           },
           "payload": {
-            "type": "object",
             "description": "The data associated with the event.",
-            "properties": {
-              "message": {
-                "type": "string",
-                "description": "The content of the SMS message received."
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SmsReceivedPayload"
               },
-              "phoneNumber": {
-                "type": "string",
-                "description": "The phone number from which the SMS message was sent."
+              {
+                "$ref": "#/components/schemas/SmsSentPayload"
               },
-              "receivedAt": {
-                "type": "string",
-                "description": "The timestamp when the SMS message was received.",
-                "format": "date-time"
+              {
+                "$ref": "#/components/schemas/SystemPingPayload"
               }
-            }
+            ]
           }
         }
+      },
+      "SmsReceivedPayload": {
+        "type": "object",
+        "title": "SmsReceivedPayload",
+        "description": "Payload of `sms:received` event",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "The content of the SMS message received."
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "The phone number from which the SMS message was sent."
+          },
+          "receivedAt": {
+            "type": "string",
+            "description": "The timestamp when the SMS message was received.",
+            "format": "date-time"
+          }
+        }
+      },
+      "SmsSentPayload": {
+        "type": "object",
+        "title": "SmsSentPayload",
+        "description": "Payload of `sms:sent` event",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the SMS message."
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "The phone number to which the SMS message was sent."
+          },
+          "sentAt": {
+            "type": "string",
+            "description": "The timestamp when the SMS message was sent.",
+            "format": "date-time"
+          }
+        }
+      },
+      "SystemPingPayload": {
+        "type": "object",
+        "title": "SystemPingPayload",
+        "description": "Payload of `system:ping` event"
       },
       "LogEntry": {
         "type": "object",
