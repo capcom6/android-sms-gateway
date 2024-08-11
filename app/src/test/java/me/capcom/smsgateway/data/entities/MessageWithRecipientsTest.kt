@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.data.entities
 
 import me.capcom.smsgateway.domain.EntitySource
+import me.capcom.smsgateway.domain.ProcessingState
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -15,17 +16,17 @@ class MessageWithRecipientsTest {
             validUntil = null,
             isEncrypted = false,
             source = EntitySource.Local,
-            state = Message.State.Pending,
+            state = ProcessingState.Pending,
             createdAt = System.currentTimeMillis(),
             skipPhoneValidation = true,
         )
         val recipients = listOf(
-            MessageRecipient("1", "1234567890", Message.State.Pending, null),
-            MessageRecipient("1", "9876543210", Message.State.Processed, null)
+            MessageRecipient("1", "1234567890", ProcessingState.Pending, null),
+            MessageRecipient("1", "9876543210", ProcessingState.Processed, null)
         )
         val messageWithRecipients = MessageWithRecipients(message, recipients)
 
-        assertEquals(Message.State.Pending, messageWithRecipients.state)
+        assertEquals(ProcessingState.Pending, messageWithRecipients.state)
     }
 
     @Test
@@ -38,17 +39,17 @@ class MessageWithRecipientsTest {
             validUntil = null,
             isEncrypted = false,
             source = EntitySource.Local,
-            state = Message.State.Pending,
+            state = ProcessingState.Pending,
             createdAt = System.currentTimeMillis(),
             skipPhoneValidation = true,
         )
         val recipients = listOf(
-            MessageRecipient("1", "1234567890", Message.State.Delivered, null),
-            MessageRecipient("1", "9876543210", Message.State.Sent, null)
+            MessageRecipient("1", "1234567890", ProcessingState.Delivered, null),
+            MessageRecipient("1", "9876543210", ProcessingState.Sent, null)
         )
         val messageWithRecipients = MessageWithRecipients(message, recipients)
 
-        assertEquals(Message.State.Sent, messageWithRecipients.state)
+        assertEquals(ProcessingState.Sent, messageWithRecipients.state)
     }
 
     @Test
@@ -61,17 +62,17 @@ class MessageWithRecipientsTest {
             validUntil = null,
             isEncrypted = false,
             source = EntitySource.Local,
-            state = Message.State.Pending,
+            state = ProcessingState.Pending,
             createdAt = System.currentTimeMillis(),
             skipPhoneValidation = true,
         )
         val recipients = listOf(
-            MessageRecipient("2", "1234567890", Message.State.Delivered, null),
-            MessageRecipient("2", "9876543210", Message.State.Delivered, null)
+            MessageRecipient("2", "1234567890", ProcessingState.Delivered, null),
+            MessageRecipient("2", "9876543210", ProcessingState.Delivered, null)
         )
         val messageWithRecipients = MessageWithRecipients(message, recipients)
 
-        assertEquals(Message.State.Delivered, messageWithRecipients.state)
+        assertEquals(ProcessingState.Delivered, messageWithRecipients.state)
     }
 
     // Add more test cases for other states
