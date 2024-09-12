@@ -45,4 +45,4 @@ Add any other context about the problem here, such as log file excerpts.
 - [ ] I have included screenshots (if applicable).
 - [ ] I have provided environment details.
 - [ ] I have included relevant log file excerpts (if applicable).
-- [ ] I have read [FAQ](https://sms.capcom.me/faq/general/) and other relevant information.
+- [ ] I have read [FAQ](https://sms-gate.app/faq/general/) and other relevant information.

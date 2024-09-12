@@ -37,7 +37,7 @@
   <p align="center">
     Turns your smartphone into an SMS gateway for sending messages via API.
     <br />
-    <a href="https://sms.capcom.me"><strong>Explore the docs »</strong></a>
+    <a href="https://sms-gate.app"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <!-- <a href="https://github.com/capcom6/android-sms-gateway">View Demo</a> -->
@@ -147,9 +147,9 @@ To use the application, you need to grant the following permissions:
 <!-- GETTING STARTED -->
 ## Getting Started
 
-_For integration examples, please refer to the [API Documentation](https://sms.capcom.me/integration/api/)_
+_For integration examples, please refer to the [API Documentation](https://sms-gate.app/integration/api/)_
 
-The Android SMS Gateway can work in two modes: with a local server started on the device or with a cloud server at [sms.capcom.me](https://sms.capcom.me). The basic API is the same for both modes and is documented on the [Android SMS Gateway API Documentation](https://capcom6.github.io/android-sms-gateway/).
+The Android SMS Gateway can work in two modes: with a local server started on the device or with a cloud server at [api.sms-gate.app](https://api.sms-gate.app). The basic API is the same for both modes and is documented on the [Android SMS Gateway API Documentation](https://capcom6.github.io/android-sms-gateway/).
 
 ### Local server
 
@@ -196,10 +196,10 @@ Use the cloud server mode when dealing with dynamic or shared device IP addresse
     curl -X POST -u <username>:<password> \
       -H "Content-Type: application/json" \
       -d '{ "message": "Hello, world!", "phoneNumbers": ["+79990001234", "+79995556677"] }' \
-      https://sms.capcom.me/api/3rdparty/v1/message
+      https://api.sms-gate.app/3rdparty/v1/message
     ```
 
-For further privacy, you can deploy your own private server. See the [Private Server](https://sms.capcom.me/getting-started/private-server/) section for more details.
+For further privacy, you can deploy your own private server. See the [Private Server](https://sms-gate.app/getting-started/private-server/) section for more details.
 
 ### Webhooks
 
@@ -238,7 +238,7 @@ Follow these steps to set up webhooks:
       http://<device_local_ip>:8080/webhooks/unique-id
     ```
 
-For cloud mode the process is similar, simply change the URL to https://sms.capcom.me/api/3rdparty/v1/webhooks. Webhooks in Local and Cloud mode are independent.
+For cloud mode the process is similar, simply change the URL to https://api.sms-gate.app/3rdparty/v1/webhooks. Webhooks in Local and Cloud mode are independent.
 
 *Note*: Webhooks are transmitted directly from the device; therefore, the device must have an outgoing internet connection. As the requests originate from the device, incoming messages remain inaccessible to us.
 
@@ -297,12 +297,12 @@ Distributed under the Apache-2.0 license. See [LICENSE](LICENSE) for more inform
 If you have any questions or suggestions, feel free to reach out through the following channels:
 
 - **Issue Tracker:** [https://github.com/capcom6/android-sms-gateway/issues](https://github.com/capcom6/android-sms-gateway/issues)
-- **Email:** [sms@capcom.me](mailto:sms@capcom.me)
+- **Email:** [support@sms-gate.app](mailto:support@sms-gate.app)
 - **Discord:** [Join our Discord server](https://discord.gg/vv9raFK4gX)
 
 ### Links
 
-- **Website:** [https://sms.capcom.me](https://sms.capcom.me)
+- **Website:** [https://sms-gate.app](https://sms-gate.app)
 - **Project:** [https://github.com/android-sms-gateway](https://github.com/android-sms-gateway)
 - **Main Repository:** [https://github.com/capcom6/android-sms-gateway](https://github.com/capcom6/android-sms-gateway)
 - **Author GitHub:** [capcom6](https://github.com/capcom6)
