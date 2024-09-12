@@ -29,6 +29,6 @@ class GatewaySettings(
         private const val CLOUD_URL = "cloud_url"
         private const val PRIVATE_TOKEN = "private_token"
 
-        const val PUBLIC_URL = "https://sms.capcom.me/api/mobile/v1"
+        const val PUBLIC_URL = "https://api.sms-gate.app/mobile/v1"
     }
 }

@@ -5,8 +5,8 @@
     "title": "SMS Gateway for Android™ Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
-      "name": "Aleksandr Soloshenko",
-      "email": "i@capcom.me",
+      "name": "SMSGate Support",
+      "email": "support@sms-gate.app",
       "url": "https://github.com/capcom6"
     },
     "license": {
@@ -20,7 +20,7 @@
       "description": "Local Server"
     },
     {
-      "url": "https://sms.capcom.me/api/3rdparty/v1",
+      "url": "https://api.sms-gate.app/3rdparty/v1",
       "description": "Cloud Server"
     }
   ],
@@ -69,7 +69,7 @@
             "description": "Local Server"
           },
           {
-            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "url": "https://api.sms-gate.app/3rdparty/v1",
             "description": "Cloud Server"
           }
         ]
@@ -116,7 +116,7 @@
             "description": "Local Server"
           },
           {
-            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "url": "https://api.sms-gate.app/3rdparty/v1",
             "description": "Cloud Server"
           }
         ]
@@ -156,7 +156,7 @@
             "description": "Local Server"
           },
           {
-            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "url": "https://api.sms-gate.app/3rdparty/v1",
             "description": "Cloud Server"
           }
         ]
@@ -199,7 +199,7 @@
             "description": "Local Server"
           },
           {
-            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "url": "https://api.sms-gate.app/3rdparty/v1",
             "description": "Cloud Server"
           }
         ]
@@ -239,7 +239,7 @@
             "description": "Local Server"
           },
           {
-            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "url": "https://api.sms-gate.app/3rdparty/v1",
             "description": "Cloud Server"
           }
         ]
@@ -310,7 +310,7 @@
             "description": "Local Server"
           },
           {
-            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "url": "https://api.sms-gate.app/3rdparty/v1",
             "description": "Cloud Server"
           }
         ]
@@ -351,7 +351,7 @@
             "description": "Local Server"
           },
           {
-            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "url": "https://api.sms-gate.app/3rdparty/v1",
             "description": "Cloud Server"
           }
         ]
@@ -412,7 +412,7 @@
             "description": "Local Server"
           },
           {
-            "url": "https://sms.capcom.me/api/3rdparty/v1",
+            "url": "https://api.sms-gate.app/3rdparty/v1",
             "description": "Cloud Server"
           }
         ]
@@ -784,7 +784,7 @@
           },
           "isEncrypted": {
             "type": "boolean",
-            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms.capcom.me/privacy/encryption).",
+            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms-gate.app/privacy/encryption).",
             "default": false
           }
         },
@@ -823,7 +823,7 @@
           },
           "isEncrypted": {
             "type": "boolean",
-            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms.capcom.me/privacy/encryption).",
+            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms-gate.app/privacy/encryption).",
             "readOnly": true,
             "default": false
           },

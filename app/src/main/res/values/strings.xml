@@ -6,7 +6,7 @@
     <string name="tab_text_messages">MESSAGES</string>
     <string name="settings_local_server">Local server</string>
     <string name="cloud_server">Cloud server</string>
-    <string name="settings_address_is_sms_capcom_me">Address is sms.capcom.me</string>
+    <string name="settings_address_is_sms_capcom_me">Address is api.sms-gate.app</string>
     <string name="settings_start_on_boot">Start on boot</string>
     <string name="settings_offline">Offline</string>
     <string name="settings_online">Online</string>
@@ -20,7 +20,8 @@
     <string name="settings_local_address_not_found">Local address not available</string>
     <string name="settings_public_address_not_found">Public address not available</string>
     <string name="settings_encryption">Encryption</string>
-    <string name="settings_encryption_description">Please enter passphrase for end-to-end encryption.</string>
+    <string name="settings_encryption_description">Please enter passphrase for end-to-end
+        encryption.</string>
     <string name="settings_encryption_hint">passphrase</string>
     <string name="settings_setup_encryption">Setup encryption</string>
     <string name="button_ok">OK</string>
@@ -28,7 +29,8 @@
     <string name="tab_text_advanced">Advanced</string>
     <string name="messages_header">Messages</string>
     <string name="delay_between_messages_seconds">Delay between messages, seconds</string>
-    <string name="random_value_from_0_to_selected_value_will_be_used">random value from 0 to selected value will be used</string>
+    <string name="random_value_from_0_to_selected_value_will_be_used">random value from 0 to
+        selected value will be used</string>
     <string name="tab_text_home">Home</string>
     <string name="encryption">Encryption</string>
     <string name="use_empty_to_disable">Use empty to disable</string>
@@ -52,7 +54,8 @@
     <string name="ping_service_is_active">Ping service is active</string>
     <string name="delete_after_days">Delete after, days</string>
     <string name="interval_seconds">Interval (seconds)</string>
-    <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery life</string>
+    <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery
+        life</string>
     <string name="ping">Ping</string>
     <string name="logs">Logs</string>
     <string name="view">View</string>
