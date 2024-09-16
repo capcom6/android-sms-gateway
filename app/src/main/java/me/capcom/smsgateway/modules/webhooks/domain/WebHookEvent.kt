@@ -9,6 +9,12 @@ enum class WebHookEvent {
     @SerializedName("sms:sent")
     SmsSent,
 
+    @SerializedName("sms:delivered")
+    SmsDelivered,
+
+    @SerializedName("sms:failed")
+    SmsFailed,
+
     @SerializedName("system:ping")
     SystemPing,
 }

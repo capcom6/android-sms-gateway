@@ -9,7 +9,7 @@ import me.capcom.smsgateway.modules.events.EventsReceiver
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.modules.ping.events.PingEvent
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
-import me.capcom.smsgateway.modules.webhooks.payload.SmsSentPayload
+import me.capcom.smsgateway.modules.webhooks.payload.SmsEventPayload
 import org.koin.core.component.get
 import java.util.Date
 
@@ -30,16 +30,37 @@ class EventsReceiver : EventsReceiver() {
 
                     val webhookEventType = when (event.state) {
                         ProcessingState.Sent -> WebHookEvent.SmsSent
+                        ProcessingState.Delivered -> WebHookEvent.SmsDelivered
+                        ProcessingState.Failed -> WebHookEvent.SmsFailed
                         else -> return@collect
                     }
 
                     event.phoneNumbers.forEach { phoneNumber ->
-                        get<WebHooksService>().emit(
-                            webhookEventType, SmsSentPayload(
+                        val payload = when (webhookEventType) {
+                            WebHookEvent.SmsSent -> SmsEventPayload.SmsSent(
                                 messageId = event.id,
                                 phoneNumber = phoneNumber,
                                 sentAt = Date(),
                             )
+
+                            WebHookEvent.SmsDelivered -> SmsEventPayload.SmsDelivered(
+                                messageId = event.id,
+                                phoneNumber = phoneNumber,
+                                deliveredAt = Date(),
+                            )
+
+                            WebHookEvent.SmsFailed -> SmsEventPayload.SmsFailed(
+                                messageId = event.id,
+                                phoneNumber = phoneNumber,
+                                failedAt = Date(),
+                                reason = event.error ?: "Unknown",
+                            )
+
+                            else -> return@forEach
+                        }
+
+                        get<WebHooksService>().emit(
+                            webhookEventType, payload
                         )
                     }
                 }
