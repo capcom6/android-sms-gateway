@@ -252,7 +252,7 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 
 - [ ] Add functionality to modify user credentials.
 - [ ] Introduce option to adjust the local server port.
-- [ ] Send notifications to an external server when the status of a message changes.
+- [x] Send notifications to an external server when the status of a message changes.
 - [ ] Incorporate scheduling capabilities for dispatching messages at specific times.
 - [ ] Implement region-based restrictions to prevent international SMS.
 - [ ] Provide an API endpoint to retrieve the list of available SIM cards on the device.
