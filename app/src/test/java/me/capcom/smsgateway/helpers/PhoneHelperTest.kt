@@ -26,6 +26,7 @@ internal class PhoneHelperTest {
             "+81 3 1234 5678" to null, // Japan fixed line
             "+1 416-555-1234" to "+14165551234", // Canada
             "+91 98765 43210" to "+919876543210", // India
+            "+212724364434" to "+212724364434",
         )
 
         tests.forEach { (t, u) ->
