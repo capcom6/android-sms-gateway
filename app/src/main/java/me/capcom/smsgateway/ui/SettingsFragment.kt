@@ -1,6 +1,5 @@
 package me.capcom.smsgateway.ui
 
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.InputType
 import androidx.core.content.edit
@@ -12,26 +11,6 @@ import me.capcom.smsgateway.R
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 
 class SettingsFragment : PreferenceFragmentCompat() {
-
-    override fun onResume() {
-        super.onResume()
-
-        onPreferenceChanged.onSharedPreferenceChanged(
-            preferenceManager.sharedPreferences,
-            "messages.limit_period"
-        )
-        preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(
-            onPreferenceChanged
-        )
-    }
-
-    override fun onPause() {
-        preferenceManager.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(
-            onPreferenceChanged
-        )
-
-        super.onPause()
-    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey)
@@ -69,11 +48,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        if (preference.key == "messages.limit_value"
-            || preference.key == "messages.log_lifetime_days"
-            || preference.key == "messages.send_interval_min"
-            || preference.key == "messages.send_interval_max"
-            || preference.key == "ping.interval_seconds"
+        if (preference.key == "ping.interval_seconds"
             || preference.key == "logs.lifetime_days"
         ) {
             (preference as EditTextPreference).setOnBindEditTextListener {
@@ -85,14 +60,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         super.onDisplayPreferenceDialog(preference)
     }
-
-    private val onPreferenceChanged =
-        SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
-            if (key == "messages.limit_period") {
-                findPreference<EditTextPreference>("messages.limit_value")?.isEnabled =
-                    sharedPreferences?.getString(key, "Disabled") != "Disabled"
-            }
-        }
 
     companion object {
         fun newInstance() = SettingsFragment()

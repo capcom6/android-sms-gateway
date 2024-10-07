@@ -50,7 +50,7 @@
     <string name="set_maximum_value_to_activate">Set maximum value to activate</string>
     <string name="information">Information</string>
     <string name="app_version_build">App version (build)</string>
-    <string name="sending_webhook">Sending webhook...</string>
+    <string name="sending_webhook">Sending webhook…</string>
     <string name="ping_service_is_active">Ping service is active</string>
     <string name="delete_after_days">Delete after, days</string>
     <string name="interval_seconds">Interval (seconds)</string>
@@ -60,6 +60,7 @@
     <string name="logs">Logs</string>
     <string name="view">View</string>
     <string name="list_of_last_50_log_entries">List of last 50 log entries</string>
-    <string name="webhooks">WebHooks</string>
+    <string name="webhooks">Webhooks</string>
     <string name="the_webhook_request_will_wait_for_an_internet_connection">The webhook request will wait for an internet connection</string>
+    <string name="require_internet_connection">Require Internet connection</string>
 </resources>

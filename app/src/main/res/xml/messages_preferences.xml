@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="@string/messages_header">
+        <EditTextPreference
+            app:icon="@drawable/ic_log_lifetime"
+            app:key="messages.log_lifetime_days"
+            app:useSimpleSummaryProvider="true"
+            app:title="@string/delete_after_days" />
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:summary="@string/set_maximum_value_to_activate"
+        app:title="@string/delays_seconds">
+        <EditTextPreference
+            app:key="messages.send_interval_min"
+            app:title="@string/minimum"
+            app:icon="@drawable/ic_timer"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:icon="@drawable/ic_timer"
+            app:key="messages.send_interval_max"
+            app:title="@string/maximum"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/limits">
+        <DropDownPreference
+            android:defaultValue="Disabled"
+            android:entries="@array/limit_periods_titles"
+            android:entryValues="@array/limit_periods_values"
+            android:icon="@drawable/ic_period"
+            android:key="messages.limit_period"
+            app:title="@string/period"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            android:defaultValue="0"
+            android:icon="@drawable/ic_send"
+            android:key="messages.limit_value"
+            app:title="@string/messages_count"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+</PreferenceScreen>
