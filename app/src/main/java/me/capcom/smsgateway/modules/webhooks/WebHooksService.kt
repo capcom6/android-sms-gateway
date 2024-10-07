@@ -19,6 +19,7 @@ class WebHooksService(
     private val webHooksDao: WebHooksDao,
     private val localServerSettings: LocalServerSettings,
     private val gatewaySettings: GatewaySettings,
+    private val webhooksSettings: WebhooksSettings,
 ) : KoinComponent {
     private val eventsReceiver by lazy { EventsReceiver() }
 
@@ -102,7 +103,8 @@ class WebHooksService(
                     event = event,
                     deviceId = deviceId,
                     payload = payload,
-                )
+                ),
+                webhooksSettings.internetRequired
             )
         }
     }
