@@ -60,4 +60,6 @@
     <string name="logs">Logs</string>
     <string name="view">View</string>
     <string name="list_of_last_50_log_entries">List of last 50 log entries</string>
+    <string name="webhooks">WebHooks</string>
+    <string name="the_webhook_request_will_wait_for_an_internet_connection">The webhook request will wait for an internet connection</string>
 </resources>

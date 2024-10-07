@@ -63,6 +63,14 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/webhooks">
+        <SwitchPreference
+            android:key="webhooks.internet_required"
+            app:title="Require Internet connection"
+            app:summary="@string/the_webhook_request_will_wait_for_an_internet_connection"
+            android:defaultValue="true"/>
+    </PreferenceCategory>
+
     <PreferenceCategory
         android:summary="@string/online_status_at_the_cost_of_battery_life"
         app:title="@string/ping">

@@ -1,9 +1,10 @@
 package me.capcom.smsgateway.modules.webhooks
 
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val webhooksModule = module {
-    single { WebHooksService(get(), get(), get()) }
+    singleOf(::WebHooksService)
 }
 
 val NAME = "webhooks"

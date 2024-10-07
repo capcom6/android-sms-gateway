@@ -2,9 +2,11 @@ package me.capcom.smsgateway.modules.webhooks.workers
 
 import android.content.Context
 import androidx.work.BackoffPolicy
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.ListenableWorker
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
@@ -168,7 +170,8 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         fun start(
             context: Context,
             url: String,
-            data: WebHookEventDTO
+            data: WebHookEventDTO,
+            internetRequired: Boolean
         ) {
             val work = OneTimeWorkRequestBuilder<SendWebhookWorker>()
                 .setInputData(
@@ -183,11 +186,15 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
                     WorkRequest.MIN_BACKOFF_MILLIS,
                     TimeUnit.MILLISECONDS
                 )
-                .setConstraints(
-                    androidx.work.Constraints.Builder()
-                        .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
-                        .build()
-                )
+                .apply {
+                    if (internetRequired) {
+                        setConstraints(
+                            Constraints.Builder()
+                                .setRequiredNetworkType(NetworkType.CONNECTED)
+                                .build()
+                        )
+                    }
+                }
                 .build()
 
             WorkManager.getInstance(context)
