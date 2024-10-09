@@ -33,6 +33,7 @@ import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.webhooks.NAME
+import me.capcom.smsgateway.modules.webhooks.WebhooksSettings
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
 import org.json.JSONException
 import org.koin.core.component.KoinComponent
@@ -44,6 +45,8 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
 
     private val notificationsSvc: NotificationsService by inject()
     private val logsSvc: LogsService by inject()
+
+    private val settings: WebhooksSettings by inject()
 
     override suspend fun doWork(): ListenableWorker.Result {
         return when (val result = sendData()) {
@@ -91,7 +94,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
 
     private suspend fun sendData(): Result {
         try {
-            if (runAttemptCount > MAX_RETRIES) {
+            if (runAttemptCount >= settings.retryCount) {
                 return Result.Failure("Retry limit exceeded")
             }
 
@@ -202,8 +205,6 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         }
 
         private val gson = GsonBuilder().configure().create()
-
-        private const val MAX_RETRIES = 14
 
         private const val INPUT_URL = "url"
         private const val INPUT_DATA = "data"

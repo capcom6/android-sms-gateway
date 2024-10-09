@@ -63,4 +63,7 @@
     <string name="webhooks">Webhooks</string>
     <string name="the_webhook_request_will_wait_for_an_internet_connection">The webhook request will wait for an internet connection</string>
     <string name="require_internet_connection">Require Internet connection</string>
+    <string name="more_settings">More settings...</string>
+    <string name="delays_limits_etc">Delays, Limits, etc.</string>
+    <string name="retry_count">Retry count</string>
 </resources>
