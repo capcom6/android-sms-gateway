@@ -24,7 +24,8 @@
     <PreferenceCategory app:title="@string/messages_header">
         <Preference
             app:fragment="me.capcom.smsgateway.ui.settings.MessagesSettingsFragment"
-            app:title="More settings..." />
+            app:title="@string/more_settings"
+            app:summary="@string/delays_limits_etc"/>
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/webhooks">
@@ -33,6 +34,11 @@
             android:key="webhooks.internet_required"
             app:summary="@string/the_webhook_request_will_wait_for_an_internet_connection"
             app:title="@string/require_internet_connection" />
+        <EditTextPreference
+            android:key="webhooks.retry_count"
+            app:title="@string/retry_count"
+            app:defaultValue="15"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
     <PreferenceCategory
