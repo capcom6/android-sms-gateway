@@ -32,6 +32,15 @@ class GatewayService(
             settings.privateToken
         ).also { _api = it }
 
+    suspend fun getPublicIP(): String {
+        return GatewayApi(
+            settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
+            settings.privateToken
+        )
+            .getDevice(settings.registrationInfo?.token)
+            .externalIp
+    }
+
     fun start(context: Context) {
         if (!settings.enabled) return
         this._api = GatewayApi(

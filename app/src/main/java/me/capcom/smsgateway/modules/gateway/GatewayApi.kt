@@ -42,6 +42,12 @@ class GatewayApi(
         expectSuccess = true
     }
 
+    suspend fun getDevice(token: String?): DeviceGetResponse {
+        return client.get("$baseUrl/device") {
+            token?.let { auth(it) }
+        }.body()
+    }
+
     suspend fun deviceRegister(
         request: DeviceRegisterRequest
     ): DeviceRegisterResponse {
@@ -83,6 +89,10 @@ class GatewayApi(
     private fun HttpRequestBuilder.auth(token: String) {
         header(HttpHeaders.Authorization, "Bearer $token")
     }
+
+    data class DeviceGetResponse(
+        val externalIp: String,
+    )
 
     data class DeviceRegisterRequest(
         val name: String,
