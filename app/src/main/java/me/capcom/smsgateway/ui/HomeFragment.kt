@@ -66,16 +66,20 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.textAuthentication.movementMethod = LinkMovementMethod.getInstance()
-        binding.textAuthentication.text = makeCopyableLink(
-            Html
-                .fromHtml(
-                    getString(
-                        R.string.settings_basic_auth,
-                        "sms",
-                        settingsHelper.serverToken
-                    )
-                )
+        binding.textLocalIP.movementMethod = LinkMovementMethod.getInstance()
+        binding.textPublicIP.movementMethod = LinkMovementMethod.getInstance()
+        binding.textLocalUsername.movementMethod = LinkMovementMethod.getInstance()
+        binding.textLocalPassword.movementMethod = LinkMovementMethod.getInstance()
+
+        binding.textLocalUsername.text = makeCopyableLink(
+            Html.fromHtml(
+                "<a href>sms</a>"
+            )
+        )
+        binding.textLocalPassword.text = makeCopyableLink(
+            Html.fromHtml(
+                "<a href>${settingsHelper.serverToken}</a>"
+            )
         )
 
         binding.switchAutostart.isChecked = settingsHelper.autostart
@@ -103,15 +107,20 @@ class HomeFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             events.collect<DeviceRegisteredEvent> { event ->
                 binding.textRemoteAddress.text = getString(R.string.address_is, event.server)
-                binding.textRemoteAuth.movementMethod = LinkMovementMethod.getInstance()
-                binding.textRemoteAuth.text = makeCopyableLink(
+
+                binding.textRemoteUsername.movementMethod = LinkMovementMethod.getInstance()
+                binding.textRemotePassword.movementMethod = LinkMovementMethod.getInstance()
+
+                binding.textRemoteUsername.text = makeCopyableLink(
                     Html
                         .fromHtml(
-                            getString(
-                                R.string.settings_basic_auth,
-                                event.login,
-                                event.password
-                            )
+                            "<a href>${event.login}</a>"
+                        )
+                )
+                binding.textRemotePassword.text = makeCopyableLink(
+                    Html
+                        .fromHtml(
+                            "<a href>${event.password}</a>"
                         )
                 )
             }
@@ -120,18 +129,27 @@ class HomeFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             events.collect<IPReceivedEvent> { event ->
                 binding.textLocalIP.text = event.localIP?.let {
-                    getString(
-                        R.string.settings_local_address_is,
-                        event.localIP,
-                        settingsHelper.serverPort
+                    makeCopyableLink(
+                        Html.fromHtml(
+                            getString(
+                                R.string.settings_local_address_is,
+                                event.localIP,
+                                settingsHelper.serverPort
+                            )
+                        )
                     )
+
                 } ?: getString(R.string.settings_local_address_not_found)
 
                 binding.textPublicIP.text = event.publicIP?.let {
-                    getString(
-                        R.string.settings_public_address_is,
-                        event.publicIP,
-                        settingsHelper.serverPort
+                    makeCopyableLink(
+                        Html.fromHtml(
+                            getString(
+                                R.string.settings_public_address_is,
+                                event.publicIP,
+                                settingsHelper.serverPort
+                            )
+                        )
                     )
                 } ?: getString(R.string.settings_public_address_not_found)
             }
