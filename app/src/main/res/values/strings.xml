@@ -58,4 +58,5 @@
     <string name="username">Username:</string>
     <string name="password">Password:</string>
     <string name="server_address">Server address:</string>
+    <string name="to_apply_the_changes_restart_the_app_using_the_button_below">To apply the changes, restart the app using the button below.</string>
 </resources>

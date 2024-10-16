@@ -90,10 +90,14 @@ class HomeFragment : Fragment() {
         binding.switchUseRemoteServer.setOnCheckedChangeListener { _, isChecked ->
             gatewaySettings.enabled = isChecked
             binding.layoutRemoteServer.isVisible = isChecked
+
+            restartRequiredNotification()
         }
         binding.switchUseLocalServer.setOnCheckedChangeListener { _, isChecked ->
             localServerSettings.enabled = isChecked
             binding.layoutLocalServer.isVisible = isChecked
+
+            restartRequiredNotification()
         }
 
         binding.buttonStart.setOnClickListener {
@@ -237,6 +241,18 @@ class HomeFragment : Fragment() {
         permissionsRequest.launch(permissionsRequired.toTypedArray())
     }
 
+    private fun restartRequiredNotification() {
+        if (this.stateLiveData.value != true) {
+            return
+        }
+
+        Toast.makeText(
+            requireContext(),
+            getString(R.string.to_apply_the_changes_restart_the_app_using_the_button_below),
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
     private val permissionsRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
@@ -271,7 +287,6 @@ class HomeFragment : Fragment() {
             }
         }
     }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
