@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.modules.messages
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
@@ -9,7 +10,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.telephony.SmsManager
-import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -20,6 +20,7 @@ import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.helpers.PhoneHelper
+import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.encryption.EncryptionService
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.health.domain.CheckResult
@@ -324,6 +325,7 @@ class MessagesService(
         }
     }
 
+    @SuppressLint("NewApi")
     private fun getSmsManager(simNumber: Int?): SmsManager {
         return if (simNumber != null) {
             if (ActivityCompat.checkSelfPermission(
@@ -334,16 +336,8 @@ class MessagesService(
                 throw UnsupportedOperationException("SIM selection requires READ_PHONE_STATE permission")
             }
 
-            @Suppress("DEPRECATION")
-            val subscriptionManager: SubscriptionManager = when {
-                Build.VERSION.SDK_INT < 22 -> throw UnsupportedOperationException("SIM selection available from API 22")
-                Build.VERSION.SDK_INT < 31 -> SubscriptionManager.from(context)
-                else -> context.getSystemService(SubscriptionManager::class.java)
-            }
-
-            if (subscriptionManager.activeSubscriptionInfoCount <= simNumber) {
-                throw UnsupportedOperationException("SIM ${simNumber + 1} not found")
-            }
+            val subscriptionManager = SubscriptionsHelper.getSubscriptionsManager(context)
+                ?: throw UnsupportedOperationException("SIM selection available from API 22")
 
             subscriptionManager.activeSubscriptionInfoList.find {
                 it.simSlotIndex == simNumber
