@@ -7,6 +7,7 @@ class MessageReceivedEvent(
     val message: String,
     val phoneNumber: String,
     val receivedAt: Date,
+    val simNumber: Int?,
 ) : AppEvent(
     name = NAME
 ) {
