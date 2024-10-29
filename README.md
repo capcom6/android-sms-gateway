@@ -32,7 +32,7 @@
     <img src="assets/logo.png" alt="Logo" width="80" height="80">
   </a>
 
-<h3 align="center">Android SMS Gateway</h3>
+<h3 align="center">SMS Gateway for Android™</h3>
 
   <p align="center">
     Turns your smartphone into an SMS gateway for sending messages via API.
@@ -59,8 +59,8 @@
     - [Permissions](#permissions)
   - [Installation from APK](#installation-from-apk)
 - [Getting Started](#getting-started)
-  - [Local server](#local-server)
-  - [Cloud server](#cloud-server)
+  - [Local Server](#local-server)
+  - [Cloud Server](#cloud-server)
   - [Webhooks](#webhooks)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
@@ -74,7 +74,7 @@
 <p align="center"><img src="assets/screenshot.png" width="360"></p>
 
 
-Android SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweight application that allows you to send SMS messages programmatically via an API and receive webhooks on incoming SMS. This makes it ideal for integrating SMS functionality into your own applications or services.
+SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweight application that allows you to send SMS messages programmatically via an API or CLI tool and receive webhooks on incoming SMS. This makes it ideal for integrating SMS functionality into your own applications or services.
 
 ### Features
 
@@ -147,11 +147,11 @@ To use the application, you need to grant the following permissions:
 <!-- GETTING STARTED -->
 ## Getting Started
 
-_For integration examples, please refer to the [API Documentation](https://sms-gate.app/integration/api/)_
+_For integration examples, please refer to the [CLI Tool Documentation](https://sms-gate.app/integration/cli/) and [API Documentation](https://sms-gate.app/integration/api/)_
 
-The Android SMS Gateway can work in two modes: with a local server started on the device or with a cloud server at [api.sms-gate.app](https://api.sms-gate.app). The basic API is the same for both modes and is documented on the [Android SMS Gateway API Documentation](https://capcom6.github.io/android-sms-gateway/).
+The SMS Gateway for Android can work in two modes: with a Local Server started on the device or with a Cloud Server. The basic API is the same for both modes and is documented on the [SMS Gateway for Android API Documentation](https://capcom6.github.io/android-sms-gateway/) page.
 
-### Local server
+### Local Server
 
 <div align="center">
     <img src="/assets/local-server.png" alt="Local server example settings">
@@ -161,27 +161,34 @@ This mode is ideal for sending messages from a local network.
 
 1. Launch the app on your device.
 2. Toggle the `Local Server` switch to the "on" position.
-3. Tap the `Offline` button located at the bottom of the screen to activate the server.
-4. The `Local Server` section will display your device's local and public IP addresses, as well as the credentials for basic authentication. Please note that the public IP address is only accessible if you have a public (also known as "white") IP and your firewall is configured appropriately.
-    <div align="center">
-        <img src="/assets/local-server.png" alt="Example settings for Local Server mode">
-    </div>
-5. To send a message from within the local network, execute a `curl` command like the following. Be sure to replace `<username>`, `<password>`, and `<device_local_ip>` with the actual values provided in the previous step:
+3. Tap the `Offline` button at the bottom of the screen to activate the server.
+4. In the `Local Server` section, your device's local and public IP addresses will be displayed, along with the credentials for basic authentication. Note that the public IP address is only accessible if you have a public (or "white") IP and your firewall is configured correctly.
+   <div align="center">
+       <img src="/assets/local-server.png" alt="Example settings for Local Server mode">
+   </div>
+5. To send a message from within the local network, execute a `curl` command like the one below. Replace `<username>`, `<password>`, and `<device_local_ip>` with the actual values provided in the previous step:
 
     ```sh
     curl -X POST -u <username>:<password> \
       -H "Content-Type: application/json" \
-      -d '{ "message": "Hello, world!", "phoneNumbers": ["+79990001234", "+79995556677"] }' \
+      -d '{ "message": "Hello, doctors!", "phoneNumbers": ["+19162255887", "+19162255888"] }' \
       http://<device_local_ip>:8080/message
     ```
 
-### Cloud server
+    Alternatively, you can use the CLI Tool:
+
+    ```sh
+    smsgate -e 'http://<device_local_ip>:8080/message' -u <username> -p <password> \
+      send --phones '+19162255887,+19162255888' 'Hello, doctors!'
+    ```
+
+### Cloud Server
 
 <div align="center">
     <img src="/assets/cloud-server.png" alt="Cloud server example settings">
 </div>
 
-Use the cloud server mode when dealing with dynamic or shared device IP addresses. The best part? No registration, email, or phone number is required to start using it.
+Use the cloud server mode when dealing with dynamic or shared device IP addresses.
 
 1. Launch the app on your device.
 2. Toggle the `Cloud Server` switch to the "on" position.
@@ -195,8 +202,15 @@ Use the cloud server mode when dealing with dynamic or shared device IP addresse
     ```sh
     curl -X POST -u <username>:<password> \
       -H "Content-Type: application/json" \
-      -d '{ "message": "Hello, world!", "phoneNumbers": ["+79990001234", "+79995556677"] }' \
+      -d '{ "message": "Hello, doctors!", "phoneNumbers": ["+19162255887", "+19162255888"] }' \
       https://api.sms-gate.app/3rdparty/v1/message
+    ```
+
+  Or with CLI:
+
+    ```sh
+    smsgate -u <username> -p <password> \
+      send --phones '+19162255887,+19162255888' 'Hello, doctors!'
     ```
 
 For further privacy, you can deploy your own private server. See the [Private Server](https://sms-gate.app/getting-started/private-server/) section for more details.
@@ -225,7 +239,7 @@ Follow these steps to set up webhooks:
       "event": "sms:received",
       "payload": {
         "message": "Received SMS text",
-        "phoneNumber": "+79990001234",
+        "phoneNumber": "+19162255887",
         "receivedAt": "2024-06-07T11:41:31.000+07:00"
       }
     }
