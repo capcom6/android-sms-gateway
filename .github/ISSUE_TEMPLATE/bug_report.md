@@ -29,6 +29,7 @@ If applicable, add screenshots to help explain your problem.
 - App Version: [e.g., 1.16.0]
 - Mode: [Local, Cloud, Private]
 - Operation: [sending/receiving SMS]
+- Integration: [e.g., CLI, API, PHP client, etc.]
 - Network Type: [WiFi/Mobile Data]
 
 **Smartphone**
