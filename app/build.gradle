@@ -106,7 +106,7 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:31.1.1')
     implementation 'com.google.firebase:firebase-messaging-ktx'
 
-    implementation 'com.googlecode.libphonenumber:libphonenumber:8.13.46'
+    implementation 'com.googlecode.libphonenumber:libphonenumber:8.13.50'
 
     // Koin for Android
     implementation "io.insert-koin:koin-android:$koin_version"
