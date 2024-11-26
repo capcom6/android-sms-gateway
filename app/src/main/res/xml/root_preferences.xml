@@ -62,6 +62,16 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:key="system"
+        app:title="@string/system">
+        <Preference
+            android:icon="@drawable/ic_battery_optimizations"
+            app:key="system.disable_battery_optimizations"
+            app:summary="@string/can_affect_battery_life"
+            app:title="@string/disable_battery_optimizations" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/information">
         <Preference
             android:key="transient.app_version"
