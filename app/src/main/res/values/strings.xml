@@ -59,4 +59,11 @@
     <string name="password">Password:</string>
     <string name="server_address">Server address:</string>
     <string name="to_apply_the_changes_restart_the_app_using_the_button_below">To apply the changes, restart the app using the button below.</string>
+    <string name="system">System</string>
+    <string name="can_affect_battery_life">can affect battery life</string>
+    <string name="disable_battery_optimizations">Disable battery optimizations</string>
+    <string name="disabled">Disabled</string>
+    <string name="enabled">Enabled</string>
+    <string name="battery_optimizations_not_supported_on_this_device">Battery optimizations not supported on this device</string>
+    <string name="battery_optimizations_already_disabled">Battery optimizations already disabled</string>
 </resources>
