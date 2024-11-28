@@ -37,7 +37,6 @@ import me.capcom.smsgateway.R
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.extensions.configure
-import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.health.HealthService
 import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.localserver.domain.Device
@@ -55,7 +54,7 @@ import kotlin.concurrent.thread
 
 class WebService : Service() {
 
-    private val settingsHelper: SettingsHelper by inject()
+    private val settings: LocalServerSettings by inject()
     private val messagesService: MessagesService by inject()
     private val notificationsService: NotificationsService by inject()
     private val healthService: HealthService by inject()
@@ -75,17 +74,20 @@ class WebService : Service() {
     private val server by lazy {
         embeddedServer(
             Netty,
-            port = settingsHelper.serverPort,
+            port = port,
             watchPaths = emptyList(),
         ) {
             install(Authentication) {
                 basic("auth-basic") {
                     realm = "Access to SMS Gateway"
                     validate { credentials ->
-                        if (credentials.name == "sms" && credentials.password == settingsHelper.serverToken) {
-                            UserIdPrincipal(credentials.name)
-                        } else {
-                            null
+                        when {
+                            credentials.name == username
+                                    && credentials.password == password -> UserIdPrincipal(
+                                credentials.name
+                            )
+
+                            else -> null
                         }
                     }
                 }
@@ -271,6 +273,10 @@ class WebService : Service() {
         }
     }
 
+    private val port = settings.port
+    private val username = settings.username
+    private val password = settings.password
+
     override fun onCreate() {
         super.onCreate()
 
@@ -287,7 +293,7 @@ class WebService : Service() {
             NotificationsService.NOTIFICATION_ID_LOCAL_SERVICE,
             getString(
                 R.string.sms_gateway_is_running_on_port,
-                settingsHelper.serverPort
+                port
             )
         )
 

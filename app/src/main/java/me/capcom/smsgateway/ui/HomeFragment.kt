@@ -71,17 +71,6 @@ class HomeFragment : Fragment() {
         binding.textLocalUsername.movementMethod = LinkMovementMethod.getInstance()
         binding.textLocalPassword.movementMethod = LinkMovementMethod.getInstance()
 
-        binding.textLocalUsername.text = makeCopyableLink(
-            Html.fromHtml(
-                "<a href>sms</a>"
-            )
-        )
-        binding.textLocalPassword.text = makeCopyableLink(
-            Html.fromHtml(
-                "<a href>${settingsHelper.serverToken}</a>"
-            )
-        )
-
         binding.switchAutostart.isChecked = settingsHelper.autostart
 
         binding.switchAutostart.setOnCheckedChangeListener { _, isChecked ->
@@ -132,13 +121,24 @@ class HomeFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             events.collect<IPReceivedEvent> { event ->
+                binding.textLocalUsername.text = makeCopyableLink(
+                    Html.fromHtml(
+                        "<a href>${localServerSettings.username}</a>"
+                    )
+                )
+                binding.textLocalPassword.text = makeCopyableLink(
+                    Html.fromHtml(
+                        "<a href>${localServerSettings.password}</a>"
+                    )
+                )
+
                 binding.textLocalIP.text = event.localIP?.let {
                     makeCopyableLink(
                         Html.fromHtml(
                             getString(
                                 R.string.settings_local_address_is,
                                 event.localIP,
-                                settingsHelper.serverPort
+                                localServerSettings.port
                             )
                         )
                     )
@@ -151,7 +151,7 @@ class HomeFragment : Fragment() {
                             getString(
                                 R.string.settings_public_address_is,
                                 event.publicIP,
-                                settingsHelper.serverPort
+                                localServerSettings.port
                             )
                         )
                     )
