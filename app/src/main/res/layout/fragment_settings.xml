@@ -71,7 +71,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
                     android:layout_margin="4dp"
-                    android:text="@string/username" />
+                    android:text="@string/label_username" />
 
                 <TextView
                     android:id="@+id/textLocalUsername"
@@ -87,7 +87,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
                     android:layout_margin="4dp"
-                    android:text="@string/password" />
+                    android:text="@string/label_password" />
 
                 <TextView
                     android:id="@+id/textLocalPassword"
@@ -137,7 +137,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
                     android:layout_margin="4dp"
-                    android:text="@string/username" />
+                    android:text="@string/label_username" />
 
                 <TextView
                     android:id="@+id/textRemoteUsername"
@@ -152,7 +152,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
                     android:layout_margin="4dp"
-                    android:text="@string/password" />
+                    android:text="@string/label_password" />
 
                 <TextView
                     android:id="@+id/textRemotePassword"

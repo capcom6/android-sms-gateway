@@ -49,14 +49,16 @@
     <string name="webhooks">Webhooks</string>
     <string name="the_webhook_request_will_wait_for_an_internet_connection">The webhook request will wait for an internet connection</string>
     <string name="require_internet_connection">Require Internet connection</string>
-    <string name="more_settings">More settings...</string>
+    <string name="more_settings">More settings…</string>
     <string name="delays_limits_etc">Delays, Limits, etc.</string>
     <string name="retry_count">Retry count</string>
     <string name="local_address">Local address:</string>
     <string name="dots">...</string>
     <string name="public_address">Public address:</string>
-    <string name="username">Username:</string>
-    <string name="password">Password:</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="label_username">Username:</string>
+    <string name="label_password">Password:</string>
     <string name="server_address">Server address:</string>
     <string name="to_apply_the_changes_restart_the_app_using_the_button_below">To apply the changes, restart the app using the button below.</string>
     <string name="system">System</string>
@@ -66,4 +68,9 @@
     <string name="enabled">Enabled</string>
     <string name="battery_optimizations_not_supported_on_this_device">Battery optimizations not supported on this device</string>
     <string name="battery_optimizations_already_disabled">Battery optimizations already disabled</string>
+    <string name="server">Server</string>
+    <string name="port">Port</string>
+    <string name="password_must_be_at_least_8_characters">Password must be at least 8 characters</string>
+    <string name="username_must_be_at_least_3_characters">Username must be at least 3 characters</string>
+    <string name="is_not_a_valid_port_must_be_between_1024_and_65535">%1$s is not a valid port. Must be between 1024 and 65535</string>
 </resources>

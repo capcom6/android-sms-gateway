@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="@string/server">
+        <EditTextPreference
+            app:defaultValue="8080"
+            app:icon="@drawable/ic_server"
+            app:key="localserver.PORT"
+            app:title="@string/port"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+    <PreferenceCategory app:title="Credentials">
+        <EditTextPreference
+            app:enableCopying="true"
+            app:icon="@drawable/ic_username"
+            app:key="localserver.USERNAME"
+            app:title="@string/username"
+            app:defaultValue="sms"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:enableCopying="true"
+            app:icon="@drawable/ic_password"
+            app:key="localserver.PASSWORD"
+            app:title="@string/password"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+    <Preference app:summary="Restart required to apply changes" />
+</androidx.preference.PreferenceScreen>
