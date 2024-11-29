@@ -67,6 +67,7 @@
 - [License](#license)
 - [Contact](#contact)
   - [Links](#links)
+- [Acknowledgments](#acknowledgments)
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
@@ -266,11 +267,9 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 
 - [ ] Add functionality to modify user credentials.
 - [ ] Introduce option to adjust the local server port.
-- [x] Send notifications to an external server when the status of a message changes.
 - [ ] Incorporate scheduling capabilities for dispatching messages at specific times.
 - [ ] Implement region-based restrictions to prevent international SMS.
 - [ ] Provide an API endpoint to retrieve the list of available SIM cards on the device.
-- [x] Include detailed error messages in responses and logs.
 
 See the [open issues](https://github.com/capcom6/android-sms-gateway/issues) for a full list of proposed features (and known issues).
 
@@ -317,30 +316,22 @@ If you have any questions or suggestions, feel free to reach out through the fol
 ### Links
 
 - **Website:** [https://sms-gate.app](https://sms-gate.app)
+- **Documentation:** [https://docs.sms-gate.app](https://docs.sms-gate.app)
+- **Status Page:** [https://status.sms-gate.app](https://status.sms-gate.app)
 - **Project:** [https://github.com/android-sms-gateway](https://github.com/android-sms-gateway)
 - **Main Repository:** [https://github.com/capcom6/android-sms-gateway](https://github.com/capcom6/android-sms-gateway)
 - **Author GitHub:** [capcom6](https://github.com/capcom6)
-
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- ACKNOWLEDGMENTS -->
-<!-- ## Acknowledgments
+## Acknowledgments
 
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
+[![Codeium](https://exafunction.github.io/public/brand/codeium_logo_wordmark.svg)](https://codeium.com/)
 
-* [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
-* [React Icons](https://react-icons.github.io/react-icons/search)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p> -->
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
@@ -356,5 +347,3 @@ Use this space to list resources you find helpful and would like to give credit 
 [issues-url]: https://github.com/capcom6/android-sms-gateway/issues
 [license-shield]: https://img.shields.io/github/license/capcom6/android-sms-gateway.svg?style=for-the-badge
 [license-url]: https://github.com/capcom6/android-sms-gateway/blob/master/LICENSE
-
-
