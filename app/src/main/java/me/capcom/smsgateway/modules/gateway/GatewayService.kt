@@ -63,6 +63,27 @@ class GatewayService(
         this._api = null
     }
 
+    suspend fun changePassword(current: String, new: String) {
+        val info = settings.registrationInfo
+            ?: throw IllegalStateException("The device is not registered on the server")
+
+        this.api.changePassword(
+            info.token,
+            GatewayApi.PasswordChangeRequest(current, new)
+        )
+
+        settings.registrationInfo = info.copy(password = new)
+
+        events.emit(
+            DeviceRegisteredEvent(
+                api.hostname,
+                info.login,
+                new,
+            )
+        )
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     internal suspend fun getWebHooks(): List<GatewayApi.WebHook> {
         val settings = settings.registrationInfo
         return if (settings != null) {

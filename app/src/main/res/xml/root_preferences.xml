@@ -2,21 +2,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Preference
         app:fragment="me.capcom.smsgateway.ui.settings.LocalServerSettingsFragment"
-        app:summary="Port, credentials, etc."
-        app:title="Local Server..." />
-
-    <PreferenceCategory app:title="@string/cloud_server">
-        <EditTextPreference
-            app:enableCopying="true"
-            app:icon="@drawable/ic_server"
-            app:key="gateway.cloud_url"
-            app:title="@string/api_url" />
-        <EditTextPreference
-            app:icon="@drawable/ic_token"
-            app:key="gateway.private_token"
-            app:summary="@string/ignored_for_public_server"
-            app:title="@string/private_token" />
-    </PreferenceCategory>
+        app:summary="@string/port_credentials_etc"
+        app:title="@string/local_server_dotdotdot" />
+    <Preference
+        app:fragment="me.capcom.smsgateway.ui.settings.CloudServerSettingsFragment"
+        app:summary="@string/api_url_private_token_credentials_etc"
+        app:title="@string/cloud_server_dotdotdot" />
 
     <PreferenceCategory app:title="@string/encryption">
         <EditTextPreference

@@ -86,6 +86,14 @@ class GatewayApi(
         }.body()
     }
 
+    suspend fun changePassword(token: String, request: PasswordChangeRequest) {
+        client.patch("$baseUrl/user/password") {
+            auth(token)
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+    }
+
     private fun HttpRequestBuilder.auth(token: String) {
         header(HttpHeaders.Authorization, "Bearer $token")
     }
@@ -116,6 +124,11 @@ class GatewayApi(
         val state: ProcessingState,
         val recipients: List<RecipientState>,
         val states: Map<ProcessingState, Date>
+    )
+
+    data class PasswordChangeRequest(
+        val currentPassword: String,
+        val newPassword: String
     )
 
     data class Message(
