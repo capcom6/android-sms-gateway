@@ -17,6 +17,11 @@ class GatewaySettings(
         get() = storage.get(REGISTRATION_INFO)
         set(value) = storage.set(REGISTRATION_INFO, value)
 
+    val username: String?
+        get() = registrationInfo?.login
+    val password: String?
+        get() = registrationInfo?.password
+
     val privateUrl: String?
         get() = storage.get<String?>(CLOUD_URL)
     val privateToken: String?

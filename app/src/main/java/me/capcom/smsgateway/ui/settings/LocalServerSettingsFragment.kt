@@ -2,28 +2,11 @@ package me.capcom.smsgateway.ui.settings
 
 import android.os.Bundle
 import android.text.InputType
-import android.util.TypedValue
-import android.view.View
-import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
 import me.capcom.smsgateway.R
 
-class LocalServerSettingsFragment : PreferenceFragmentCompat() {
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        val backgroundValue = TypedValue()
-        requireContext().theme.resolveAttribute(
-            android.R.attr.colorBackground,
-            backgroundValue,
-            true
-        )
-
-        view.setBackgroundColor(backgroundValue.data)
-    }
+class LocalServerSettingsFragment : BasePreferenceFragment() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.local_server_preferences, rootKey)
@@ -85,9 +68,5 @@ class LocalServerSettingsFragment : PreferenceFragmentCompat() {
         }
 
         super.onDisplayPreferenceDialog(preference)
-    }
-
-    private fun showToast(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 }

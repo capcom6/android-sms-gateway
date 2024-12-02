@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="@string/server">
+        <EditTextPreference
+            app:enableCopying="true"
+            app:icon="@drawable/ic_server"
+            app:key="gateway.cloud_url"
+            app:title="@string/api_url" />
+        <EditTextPreference
+            app:icon="@drawable/ic_token"
+            app:key="gateway.private_token"
+            app:summary="@string/ignored_for_public_server"
+            app:title="@string/private_token" />
+    </PreferenceCategory>
+    <PreferenceCategory app:title="Credentials">
+        <EditTextPreference
+            app:enableCopying="true"
+            app:icon="@drawable/ic_username"
+            app:key="gateway.username"
+            app:persistent="false"
+            app:selectable="false"
+            app:title="@string/username" />
+        <EditTextPreference
+            app:enableCopying="true"
+            app:icon="@drawable/ic_password"
+            app:key="gateway.password"
+            app:persistent="false"
+            app:title="@string/password" />
+    </PreferenceCategory>
+    <Preference app:summary="Restart required to apply changes" />
+</PreferenceScreen>

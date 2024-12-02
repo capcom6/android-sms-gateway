@@ -3,27 +3,11 @@ package me.capcom.smsgateway.ui.settings
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.InputType
-import android.util.TypedValue
-import android.view.View
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
 import me.capcom.smsgateway.R
 
-class MessagesSettingsFragment : PreferenceFragmentCompat() {
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        val backgroundValue = TypedValue()
-        requireContext().theme.resolveAttribute(
-            android.R.attr.colorBackground,
-            backgroundValue,
-            true
-        )
-
-        view.setBackgroundColor(backgroundValue.data)
-    }
+class MessagesSettingsFragment : BasePreferenceFragment() {
 
     override fun onResume() {
         super.onResume()
