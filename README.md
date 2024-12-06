@@ -264,8 +264,8 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Add functionality to modify user credentials.
-- [ ] Introduce option to adjust the local server port.
+- [x] Add functionality to modify user credentials.
+- [x] Introduce option to adjust the local server port.
 - [x] Send notifications to an external server when the status of a message changes.
 - [ ] Incorporate scheduling capabilities for dispatching messages at specific times.
 - [ ] Implement region-based restrictions to prevent international SMS.
