@@ -25,11 +25,11 @@ interface MessagesDao {
     fun selectLast(): LiveData<List<Message>>
 
     @Transaction
-    @Query("SELECT * FROM message WHERE state = 'Pending' ORDER BY createdAt DESC LIMIT 100")
+    @Query("SELECT *, `rowid` FROM message WHERE state = 'Pending' ORDER BY createdAt DESC LIMIT 100")
     fun selectPending(): List<MessageWithRecipients>
 
     @Transaction
-    @Query("SELECT * FROM message WHERE id = :id")
+    @Query("SELECT *, `rowid` FROM message WHERE id = :id")
     fun get(id: String): MessageWithRecipients?
 
     @Insert

@@ -10,7 +10,7 @@
     <string name="cloud_server">Cloud server</string>
     <string name="cloud_server_dotdotdot">Cloud server…</string>
     <string name="copied_to_clipboard">Copied</string>
-    <string name="delays_limits_etc">Delays, Limits, etc.</string>
+    <string name="delays_limits_etc">Delays, limits, etc.</string>
     <string name="delays_seconds">Delays, seconds</string>
     <string name="delete_after_days">Delete after, days</string>
     <string name="disable_battery_optimizations">Disable battery optimizations</string>
@@ -81,4 +81,6 @@
     <string name="password_must_be_at_least_14_characters">Password must be at least 14 characters</string>
     <string name="password_changed_successfully">Password changed successfully</string>
     <string name="failed_to_change_password">Failed to change password: %1$s</string>
+    <string name="messages">Messages…</string>
+    <string name="if_sim_number_is_not_specified_use">If SIM number is not specified, use</string>
 </resources>
