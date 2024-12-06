@@ -241,11 +241,28 @@ class MessagesService(
         )
     }
 
+    private fun selectSimNumber(request: MessageWithRecipients): Int? {
+        if (request.message.simNumber != null) {
+            return request.message.simNumber - 1
+        }
+
+        val simSlots = SubscriptionsHelper.selectAvailableSimSlots(context)?.sorted() ?: return null
+        if (simSlots.isEmpty()) {
+            throw RuntimeException("No SIMs found")
+        }
+
+        return when (settings.simSelectionMode) {
+            MessagesSettings.SimSelectionMode.OSDefault -> null
+            MessagesSettings.SimSelectionMode.RoundRobin -> simSlots[(request.rowId % simSlots.size).toInt()]
+            MessagesSettings.SimSelectionMode.Random -> simSlots.random()
+        }
+    }
+
     private suspend fun sendSMS(request: MessageWithRecipients) {
         val message = request.message
         val id = message.id
 
-        val smsManager: SmsManager = getSmsManager(message.simNumber?.let { it - 1 })
+        val smsManager: SmsManager = getSmsManager(selectSimNumber(request))
 
         @Suppress("NAME_SHADOWING")
         val messageText = when (message.isEncrypted) {

@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.data.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Relation
 
@@ -14,7 +15,9 @@ data class MessageWithRecipients(
         parentColumn = "id",
         entityColumn = "messageId",
     )
-    val states: List<MessageState> = emptyList()
+    val states: List<MessageState> = emptyList(),
+    @ColumnInfo(name = "rowid")
+    val rowId: Long = 0,
 ) {
     val state: me.capcom.smsgateway.domain.ProcessingState
         get() = when {
