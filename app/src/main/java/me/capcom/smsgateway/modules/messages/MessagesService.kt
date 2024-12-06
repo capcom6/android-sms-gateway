@@ -31,6 +31,7 @@ import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.receivers.EventsReceiver
 import java.util.Date
+import kotlin.random.Random
 
 class MessagesService(
     private val context: Context,
@@ -241,11 +242,28 @@ class MessagesService(
         )
     }
 
+    private fun selectSIMNumber(request: MessageWithRecipients): Int? {
+        if (request.message.simNumber != null) {
+            return request.message.simNumber - 1
+        }
+
+        val simsCount = SubscriptionsHelper.getSimsCount(context) ?: return null
+        if (simsCount == 0) {
+            throw RuntimeException("No SIMs found")
+        }
+
+        return when (settings.simSelectionMode) {
+            MessagesSettings.SimSelectionMode.OSDefault -> null
+            MessagesSettings.SimSelectionMode.RoundRobin -> request.message.id.hashCode() % simsCount
+            MessagesSettings.SimSelectionMode.Random -> Random.nextInt(simsCount)
+        }
+    }
+
     private suspend fun sendSMS(request: MessageWithRecipients) {
         val message = request.message
         val id = message.id
 
-        val smsManager: SmsManager = getSmsManager(message.simNumber?.let { it - 1 })
+        val smsManager: SmsManager = getSmsManager(selectSIMNumber(request))
 
         @Suppress("NAME_SHADOWING")
         val messageText = when (message.isEncrypted) {

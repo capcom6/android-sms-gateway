@@ -15,6 +15,22 @@ object SubscriptionsHelper {
         else -> context.getSystemService(SubscriptionManager::class.java)
     }
 
+    fun getSimsCount(context: Context): Int? {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.READ_PHONE_STATE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return null
+        }
+
+        val subscriptionManager = getSubscriptionsManager(context) ?: return 0
+        return when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 -> subscriptionManager.activeSubscriptionInfoCount
+            else -> null
+        }
+    }
+
     fun getSimSlotIndex(context: Context, subscriptionId: Int): Int? {
         if (ActivityCompat.checkSelfPermission(
                 context,

@@ -11,4 +11,14 @@
         <item>PerHour</item>
         <item>PerDay</item>
     </string-array>
+    <string-array name="sim_selection_modes_titles">
+        <item>OS default</item>
+        <item>Round robin</item>
+        <item>Random</item>
+    </string-array>
+    <string-array name="sim_selection_modes_values">
+        <item>OSDefault</item>
+        <item>RoundRobin</item>
+        <item>Random</item>
+    </string-array>
 </resources>
