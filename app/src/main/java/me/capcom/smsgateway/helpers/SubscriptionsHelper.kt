@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.helpers
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -15,12 +16,9 @@ object SubscriptionsHelper {
         else -> context.getSystemService(SubscriptionManager::class.java)
     }
 
+    @SuppressLint("MissingPermission")
     fun selectAvailableSimSlots(context: Context): List<Int>? {
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_PHONE_STATE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (!hasPhoneStatePermission(context)) {
             return null
         }
 
@@ -32,12 +30,9 @@ object SubscriptionsHelper {
         }
     }
 
+    @SuppressLint("MissingPermission")
     fun getSimSlotIndex(context: Context, subscriptionId: Int): Int? {
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_PHONE_STATE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (!hasPhoneStatePermission(context)) {
             return null
         }
 
@@ -49,5 +44,12 @@ object SubscriptionsHelper {
         } else {
             null
         }
+    }
+
+    fun hasPhoneStatePermission(context: Context): Boolean {
+        return ActivityCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_PHONE_STATE
+        ) == PackageManager.PERMISSION_GRANTED
     }
 }
