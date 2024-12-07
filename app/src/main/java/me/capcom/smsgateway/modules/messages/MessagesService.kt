@@ -254,7 +254,7 @@ class MessagesService(
 
         return when (settings.simSelectionMode) {
             MessagesSettings.SimSelectionMode.OSDefault -> null
-            MessagesSettings.SimSelectionMode.RoundRobin -> request.message.id.hashCode() % simsCount
+            MessagesSettings.SimSelectionMode.RoundRobin -> (request.rowId % simsCount).toInt()
             MessagesSettings.SimSelectionMode.Random -> Random.nextInt(simsCount)
         }
     }
