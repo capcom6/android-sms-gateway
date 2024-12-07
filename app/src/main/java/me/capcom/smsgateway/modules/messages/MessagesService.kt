@@ -31,7 +31,6 @@ import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.receivers.EventsReceiver
 import java.util.Date
-import kotlin.random.Random
 
 class MessagesService(
     private val context: Context,
@@ -247,15 +246,15 @@ class MessagesService(
             return request.message.simNumber - 1
         }
 
-        val simsCount = SubscriptionsHelper.getSimsCount(context) ?: return null
-        if (simsCount == 0) {
+        val simSlots = SubscriptionsHelper.selectAvailableSimSlots(context) ?: return null
+        if (simSlots.isEmpty()) {
             throw RuntimeException("No SIMs found")
         }
 
         return when (settings.simSelectionMode) {
             MessagesSettings.SimSelectionMode.OSDefault -> null
-            MessagesSettings.SimSelectionMode.RoundRobin -> (request.rowId % simsCount).toInt()
-            MessagesSettings.SimSelectionMode.Random -> Random.nextInt(simsCount)
+            MessagesSettings.SimSelectionMode.RoundRobin -> simSlots[(request.rowId % simSlots.size).toInt()]
+            MessagesSettings.SimSelectionMode.Random -> simSlots.random()
         }
     }
 
