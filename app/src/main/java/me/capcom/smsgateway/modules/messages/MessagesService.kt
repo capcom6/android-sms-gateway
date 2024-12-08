@@ -241,7 +241,7 @@ class MessagesService(
         )
     }
 
-    private fun selectSIMNumber(request: MessageWithRecipients): Int? {
+    private fun selectSimNumber(request: MessageWithRecipients): Int? {
         if (request.message.simNumber != null) {
             return request.message.simNumber - 1
         }
@@ -262,7 +262,7 @@ class MessagesService(
         val message = request.message
         val id = message.id
 
-        val smsManager: SmsManager = getSmsManager(selectSIMNumber(request))
+        val smsManager: SmsManager = getSmsManager(selectSimNumber(request))
 
         @Suppress("NAME_SHADOWING")
         val messageText = when (message.isEncrypted) {
