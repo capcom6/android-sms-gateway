@@ -17,7 +17,7 @@ object SubscriptionsHelper {
     }
 
     @SuppressLint("MissingPermission")
-    fun selectAvailableSimSlots(context: Context): List<Int>? {
+    fun selectAvailableSimSlots(context: Context): Set<Int>? {
         if (!hasPhoneStatePermission(context)) {
             return null
         }
@@ -25,7 +25,7 @@ object SubscriptionsHelper {
         val subscriptionManager = getSubscriptionsManager(context) ?: return null
         return when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 -> subscriptionManager.activeSubscriptionInfoList.map { it.simSlotIndex }
-                .sorted()
+                .toSet()
             else -> null
         }
     }

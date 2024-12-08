@@ -246,7 +246,7 @@ class MessagesService(
             return request.message.simNumber - 1
         }
 
-        val simSlots = SubscriptionsHelper.selectAvailableSimSlots(context) ?: return null
+        val simSlots = SubscriptionsHelper.selectAvailableSimSlots(context)?.sorted() ?: return null
         if (simSlots.isEmpty()) {
             throw RuntimeException("No SIMs found")
         }
