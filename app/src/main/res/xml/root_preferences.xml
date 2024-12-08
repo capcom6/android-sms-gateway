@@ -1,13 +1,21 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Preference
+        android:icon="@drawable/ic_local_server"
         app:fragment="me.capcom.smsgateway.ui.settings.LocalServerSettingsFragment"
         app:summary="@string/port_credentials_etc"
         app:title="@string/local_server_dotdotdot" />
     <Preference
+        android:icon="@drawable/ic_cloud_server"
         app:fragment="me.capcom.smsgateway.ui.settings.CloudServerSettingsFragment"
         app:summary="@string/api_url_private_token_credentials_etc"
         app:title="@string/cloud_server_dotdotdot" />
+
+    <Preference
+        android:icon="@drawable/ic_messages"
+        app:fragment="me.capcom.smsgateway.ui.settings.MessagesSettingsFragment"
+        app:title="@string/messages"
+        app:summary="@string/delays_limits_etc"/>
 
     <PreferenceCategory app:title="@string/encryption">
         <EditTextPreference
@@ -15,13 +23,6 @@
             app:key="encryption.passphrase"
             app:summary="@string/use_empty_to_disable"
             app:title="@string/passphrase" />
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/messages_header">
-        <Preference
-            app:fragment="me.capcom.smsgateway.ui.settings.MessagesSettingsFragment"
-            app:title="@string/more_settings"
-            app:summary="@string/delays_limits_etc"/>
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/webhooks">

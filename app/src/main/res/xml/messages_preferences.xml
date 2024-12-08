@@ -2,13 +2,19 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory app:title="@string/messages_header">
+        <DropDownPreference
+            android:icon="@drawable/ic_sim_selection"
+            android:defaultValue="OSDefault"
+            android:entries="@array/sim_selection_modes_titles"
+            android:entryValues="@array/sim_selection_modes_values"
+            android:key="messages.limit_period"
+            app:title="@string/if_sim_number_is_not_specified_use"
+            app:useSimpleSummaryProvider="true" />
         <EditTextPreference
             app:icon="@drawable/ic_log_lifetime"
             app:key="messages.log_lifetime_days"
             app:useSimpleSummaryProvider="true"
             app:title="@string/delete_after_days" />
-
-
     </PreferenceCategory>
 
     <PreferenceCategory

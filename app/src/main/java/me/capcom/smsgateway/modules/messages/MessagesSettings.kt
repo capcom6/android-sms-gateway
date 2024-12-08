@@ -13,6 +13,12 @@ class MessagesSettings(
         PerDay(86400000L),
     }
 
+    enum class SimSelectionMode {
+        OSDefault,
+        RoundRobin,
+        Random
+    }
+
     private var version: Int
         get() = storage.get<Int>(VERSION) ?: 0
         set(value) = storage.set(VERSION, value)
@@ -38,6 +44,9 @@ class MessagesSettings(
         get() = storage.get<Period>(LIMIT_PERIOD) ?: Period.Disabled
     val limitValue: Int
         get() = storage.get(LIMIT_VALUE) ?: 0
+
+    val simSelectionMode: SimSelectionMode
+        get() = storage.get<SimSelectionMode>(SIM_SELECTION_MODE) ?: SimSelectionMode.OSDefault
 
     val logLifetimeDays: Int?
         get() = storage.get<Int?>(LOG_LIFETIME_DAYS)?.takeIf { it > 0 }
@@ -69,6 +78,8 @@ class MessagesSettings(
 
         private const val LIMIT_PERIOD = "limit_period"
         private const val LIMIT_VALUE = "limit_value"
+
+        private const val SIM_SELECTION_MODE = "sim_selection_mode"
 
         private const val LOG_LIFETIME_DAYS = "log_lifetime_days"
     }
