@@ -312,6 +312,8 @@ If you have any questions or suggestions, feel free to reach out through the fol
 ### Links
 
 - **Website:** [https://sms-gate.app](https://sms-gate.app)
+- **Documentation:** [https://docs.sms-gate.app](https://docs.sms-gate.app)
+- **Status Page:** [https://status.sms-gate.app](https://status.sms-gate.app)
 - **Project:** [https://github.com/android-sms-gateway](https://github.com/android-sms-gateway)
 - **Main Repository:** [https://github.com/capcom6/android-sms-gateway](https://github.com/capcom6/android-sms-gateway)
 - **Author GitHub:** [capcom6](https://github.com/capcom6)
