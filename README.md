@@ -83,14 +83,15 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - **Support for Android 5.0 and above:** The application is compatible with Android 5.0 and later versions.
 - **Message status tracking:** Monitor the status of sent messages in real-time.
 - **Automatic startup:** The application starts running as soon as your device boots up.
-- **Support for multiple SIM cards:** The application supports devices with multiple SIM cards.
+- **Support for multiple SIM cards:** The application supports devices with [multiple SIM cards](https://docs.sms-gate.app/features/multi-sim/).
 - **Multipart messages:** The application supports sending long messages with auto-partitioning.
 - **End-to-end encryption:** The application provides end-to-end encryption by encrypting message content and recipients' phone numbers before sending them to the API and decrypting them on the device.
 - **Message expiration:** The application allows setting an expiration time for messages. Messages will not be sent if they have expired.
 - **Random delay between messages:** Introduces a random delay between sending messages to avoid mobile operator restrictions.
 - **Private server support:** The application allows for the use of a backend server in the user's infrastructure for enhanced security.
 - **App status reporting:** Ability to report current app status by sending requests to specified URL at any user-defined intervals.
-- **Webhooks on incoming SMS:** The application allows setting up webhooks to be sent to a specified URL whenever an SMS is received.
+- **Webhooks:** The application allows setting up webhooks to be sent on specified events.
+- **SIM Rotation:** The application supports [SIM card rotation](https://docs.sms-gate.app/features/multi-sim/#sim-card-rotation) to distribute the load across different SIM cards.
 
 ### Ideal For
 
@@ -163,9 +164,6 @@ This mode is ideal for sending messages from a local network.
 2. Toggle the `Local Server` switch to the "on" position.
 3. Tap the `Offline` button at the bottom of the screen to activate the server.
 4. In the `Local Server` section, your device's local and public IP addresses will be displayed, along with the credentials for basic authentication. Note that the public IP address is only accessible if you have a public (or "white") IP and your firewall is configured correctly.
-   <div align="center">
-       <img src="/assets/local-server.png" alt="Example settings for Local Server mode">
-   </div>
 5. To send a message from within the local network, execute a `curl` command like the one below. Replace `<username>`, `<password>`, and `<device_local_ip>` with the actual values provided in the previous step:
 
     ```sh
@@ -194,9 +192,6 @@ Use the cloud server mode when dealing with dynamic or shared device IP addresse
 2. Toggle the `Cloud Server` switch to the "on" position.
 3. Tap the `Online` button located at the bottom of the screen to connect to the cloud server.
 4. In the `Cloud Server` section, the credentials for basic authentication will be displayed.
-   <div align="center">
-      <img src="/assets/cloud-server.png" alt="Example settings for Cloud Server mode">
-   </div>
 5. To send a message via the cloud server, perform a `curl` request with a command similar to the following, substituting `<username>` and `<password>` with the actual values obtained in step 4:
 
     ```sh
@@ -206,7 +201,7 @@ Use the cloud server mode when dealing with dynamic or shared device IP addresse
       https://api.sms-gate.app/3rdparty/v1/message
     ```
 
-  Or with CLI:
+    Or with CLI:
 
     ```sh
     smsgate -u <username> -p <password> \
