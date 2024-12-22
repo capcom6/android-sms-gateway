@@ -40,18 +40,21 @@ class EventsReceiver : EventsReceiver() {
                             WebHookEvent.SmsSent -> SmsEventPayload.SmsSent(
                                 messageId = event.id,
                                 phoneNumber = phoneNumber,
+                                event.simNumber,
                                 sentAt = Date(),
                             )
 
                             WebHookEvent.SmsDelivered -> SmsEventPayload.SmsDelivered(
                                 messageId = event.id,
                                 phoneNumber = phoneNumber,
+                                event.simNumber,
                                 deliveredAt = Date(),
                             )
 
                             WebHookEvent.SmsFailed -> SmsEventPayload.SmsFailed(
                                 messageId = event.id,
                                 phoneNumber = phoneNumber,
+                                event.simNumber,
                                 failedAt = Date(),
                                 reason = event.error ?: "Unknown",
                             )

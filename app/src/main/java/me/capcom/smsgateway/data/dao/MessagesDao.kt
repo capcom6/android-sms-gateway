@@ -144,6 +144,12 @@ interface MessagesDao {
         _insertRecipientStatesByMessage(id, state)
     }
 
+    @Query("UPDATE message SET simNumber = :simNumber WHERE id = :id")
+    fun updateSimNumber(
+        id: String,
+        simNumber: Int
+    )
+
     @Query("DELETE FROM message WHERE createdAt < :until AND state <> 'Pending'")
     suspend fun truncateLog(until: Long)
 }
