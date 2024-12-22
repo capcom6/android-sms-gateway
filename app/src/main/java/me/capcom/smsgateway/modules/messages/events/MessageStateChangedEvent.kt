@@ -9,6 +9,7 @@ class MessageStateChangedEvent(
     val source: EntitySource,
     val phoneNumbers: Set<String>,
     val state: ProcessingState,
+    val simNumber: Int?,
     val error: String?
 ): AppEvent(NAME) {
 

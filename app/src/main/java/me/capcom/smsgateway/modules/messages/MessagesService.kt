@@ -236,6 +236,7 @@ class MessagesService(
                 msg.message.source,
                 phone?.let { setOf(it) } ?: msg.recipients.map { it.phoneNumber }.toSet(),
                 state,
+                msg.message.simNumber,
                 error
             )
         )
@@ -262,7 +263,12 @@ class MessagesService(
         val message = request.message
         val id = message.id
 
-        val smsManager: SmsManager = getSmsManager(selectSimNumber(request))
+        val simNumber = selectSimNumber(request)
+        val smsManager: SmsManager = getSmsManager(simNumber)
+
+        if (request.message.simNumber == null && simNumber != null) {
+            dao.updateSimNumber(id, simNumber + 1)
+        }
 
         @Suppress("NAME_SHADOWING")
         val messageText = when (message.isEncrypted) {
