@@ -656,6 +656,12 @@
             "type": "string",
             "description": "The phone number from which the SMS message was sent."
           },
+          "simNumber": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The SIM card number that received the SMS. May be null on some Android devices.",
+            "minimum": 1
+          },
           "receivedAt": {
             "type": "string",
             "description": "The timestamp when the SMS message was received.",
@@ -675,6 +681,11 @@
           "phoneNumber": {
             "type": "string",
             "description": "The phone number to which the SMS message was sent."
+          },
+          "simNumber": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The SIM card number that sent the SMS. May be `null` if default SIM is used."
           },
           "sentAt": {
             "type": "string",
