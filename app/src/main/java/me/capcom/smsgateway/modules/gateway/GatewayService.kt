@@ -117,7 +117,7 @@ class GatewayService(
         )
     }
 
-    internal suspend fun registerFcmToken(pushToken: String) {
+    internal suspend fun registerFcmToken(pushToken: String?) {
         if (!settings.enabled) return
 
         val settings = settings.registrationInfo
@@ -126,13 +126,15 @@ class GatewayService(
         if (accessToken != null) {
             // if there's an access token, try to update push token
             try {
-                api.devicePatch(
-                    accessToken,
-                    GatewayApi.DevicePatchRequest(
-                        settings.id,
-                        pushToken
+                pushToken?.let {
+                    api.devicePatch(
+                        accessToken,
+                        GatewayApi.DevicePatchRequest(
+                            settings.id,
+                            it
+                        )
                     )
-                )
+                }
                 events.emit(
                     DeviceRegisteredEvent(
                         api.hostname,

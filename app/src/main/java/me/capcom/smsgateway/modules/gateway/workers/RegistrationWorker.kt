@@ -26,7 +26,7 @@ class RegistrationWorker(
 
     override suspend fun doWork(): Result {
         try {
-            val token = inputData.getString(DATA_TOKEN) ?: return Result.failure()
+            val token = inputData.getString(DATA_TOKEN)
 
             App.instance.gatewayService.registerFcmToken(token)
 
