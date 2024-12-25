@@ -71,7 +71,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
     companion object {
         fun register(context: Context): Unit {
             FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
-                if (!task.isSuccessful) {
+                if (!task.isSuccessful || task.isCanceled) {
                     Toast.makeText(
                         context,
                         "Fetching FCM registration token failed: ${task.exception}",
@@ -82,7 +82,6 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                         "Fetching FCM registration token failed",
                         task.exception
                     )
-                    return@OnCompleteListener
                 }
 
                 // Get new FCM registration token
