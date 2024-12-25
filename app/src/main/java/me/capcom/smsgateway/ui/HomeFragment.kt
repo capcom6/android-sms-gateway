@@ -222,9 +222,10 @@ class HomeFragment : Fragment() {
     private fun requestPermissionsAndStart() {
         val permissionsRequired =
             listOf(
-                Manifest.permission.SEND_SMS,
                 Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.READ_SMS,
                 Manifest.permission.RECEIVE_SMS,
+                Manifest.permission.SEND_SMS,
             )
                 .filter {
                     ContextCompat.checkSelfPermission(
@@ -261,7 +262,11 @@ class HomeFragment : Fragment() {
             // app.
             Log.d(javaClass.name, "Permissions granted")
         } else {
-            Toast.makeText(requireContext(), "Not all permissions granted", Toast.LENGTH_SHORT)
+            Toast.makeText(
+                requireContext(),
+                "Not all permissions granted, some features may not work",
+                Toast.LENGTH_SHORT
+            )
                 .show()
         }
 
