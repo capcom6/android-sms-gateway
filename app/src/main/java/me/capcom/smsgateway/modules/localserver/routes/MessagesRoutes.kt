@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.modules.localserver.routes
 
+import android.content.Context
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
@@ -8,22 +9,30 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.route
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
+import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.Message
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
+import me.capcom.smsgateway.modules.receiver.ReceiverService
 import java.util.Date
 
 class MessagesRoutes(
-    private val messagesService: MessagesService
+    private val context: Context,
+    private val messagesService: MessagesService,
+    private val receiverService: ReceiverService,
 ) {
     fun register(routing: Route) {
         routing.apply {
             messagesRoutes()
+            route("/inbox") {
+                inboxRoutes(context)
+            }
         }
     }
 
@@ -119,6 +128,21 @@ class MessagesRoutes(
                     }
                 )
             )
+        }
+    }
+
+    private fun Route.inboxRoutes(context: Context) {
+        post("export") {
+            val request = call.receive<PostMessagesInboxExportRequest>().validate()
+            try {
+                receiverService.export(context, request.period)
+                call.respond(HttpStatusCode.Accepted)
+            } catch (e: Exception) {
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    mapOf("message" to "Failed to export inbox: ${e.message}")
+                )
+            }
         }
     }
 }

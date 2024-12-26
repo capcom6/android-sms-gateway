@@ -38,7 +38,6 @@ import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.routes.LogsRoutes
 import me.capcom.smsgateway.modules.localserver.routes.MessagesRoutes
 import me.capcom.smsgateway.modules.localserver.routes.WebhooksRoutes
-import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
@@ -48,7 +47,6 @@ import kotlin.concurrent.thread
 class WebService : Service() {
 
     private val settings: LocalServerSettings by inject()
-    private val messagesService: MessagesService by inject()
     private val notificationsService: NotificationsService by inject()
     private val healthService: HealthService by inject()
 
@@ -155,7 +153,7 @@ class WebService : Service() {
                             call.respond(listOf(device))
                         }
                     }
-                    MessagesRoutes(get()).let {
+                    MessagesRoutes(applicationContext, get(), get()).let {
                         route("/message") {
                             it.register(this)
                         }
