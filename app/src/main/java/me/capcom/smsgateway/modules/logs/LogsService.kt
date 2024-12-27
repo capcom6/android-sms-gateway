@@ -31,20 +31,24 @@ class LogsService(
         return dao.selectByPeriod(from, to)
     }
 
-    suspend fun insert(
+    fun insert(
         priority: LogEntry.Priority,
         module: String,
         message: String,
         context: Any? = null
     ) {
-        dao.insert(
-            LogEntry(
-                priority,
-                module,
-                message,
-                context = context?.let { gson.toJsonTree(it) }
+        try {
+            dao.insert(
+                LogEntry(
+                    priority,
+                    module,
+                    message,
+                    context = context?.let { gson.toJsonTree(it) }
+                )
             )
-        )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     suspend fun truncate() {

@@ -14,7 +14,7 @@ interface LogEntriesDao {
     fun selectLast(): LiveData<List<LogEntry>>
 
     @Insert
-    suspend fun insert(entry: LogEntry)
+    fun insert(entry: LogEntry)
 
     @Query("DELETE FROM logs_entries WHERE createdAt < :until")
     suspend fun truncate(until: Long)
