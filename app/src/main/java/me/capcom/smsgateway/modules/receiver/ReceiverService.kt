@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Build
 import android.provider.Telephony
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.modules.receiver.events.MessageReceivedEvent
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
@@ -14,15 +16,37 @@ import java.util.Date
 
 class ReceiverService : KoinComponent {
     private val webHooksService: WebHooksService by inject()
+    private val logsService: LogsService by inject()
 
     fun export(context: Context, period: Pair<Date, Date>) {
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "ReceiverService::export - start",
+            mapOf("period" to period)
+        )
+
         select(context, period)
             .forEach {
                 process(context, it)
             }
+
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "ReceiverService::export - end",
+            mapOf("period" to period)
+        )
     }
 
     fun process(context: Context, message: InboxMessage) {
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "ReceiverService::process - message received",
+            mapOf("message" to message)
+        )
+
         val event = MessageReceivedEvent(
             message = message.body,
             phoneNumber = message.address,
@@ -36,9 +60,23 @@ class ReceiverService : KoinComponent {
         )
 
         webHooksService.emit(WebHookEvent.SmsReceived, event)
+
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "ReceiverService::process - message processed",
+            mapOf("event" to event)
+        )
     }
 
     fun select(context: Context, period: Pair<Date, Date>): List<InboxMessage> {
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "ReceiverService::select - start",
+            mapOf("period" to period)
+        )
+
         val projection = mutableListOf(
             Telephony.Sms._ID,
             Telephony.Sms.ADDRESS,
@@ -83,6 +121,13 @@ class ReceiverService : KoinComponent {
                 )
             }
         }
+
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "ReceiverService::select - end",
+            mapOf("messages" to messages.size)
+        )
 
         return messages
     }
