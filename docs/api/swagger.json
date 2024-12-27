@@ -25,7 +25,7 @@
     }
   ],
   "paths": {
-    "/message": {
+    "/messages": {
       "post": {
         "tags": [
           "Messages"
@@ -75,7 +75,7 @@
         ]
       }
     },
-    "/message/{id}": {
+    "/messages/{id}": {
       "get": {
         "tags": [
           "Messages"
@@ -417,6 +417,74 @@
           }
         ]
       }
+    },
+    "/messages/inbox/export": {
+      "post": {
+        "summary": "Request inbox messages export",
+        "description": "Initiates process of inbox messages export via webhooks. For each message the `sms:received` webhook will be triggered. The webhooks will be triggered without specific order.",
+        "operationId": "post-messages-inbox-export",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "since": {
+                    "type": "string",
+                    "description": "The start of the time range to export.",
+                    "format": "date-time",
+                    "writeOnly": true
+                  },
+                  "until": {
+                    "type": "string",
+                    "description": "The end of the time range to export",
+                    "format": "date-time",
+                    "writeOnly": true
+                  },
+                  "deviceId": {
+                    "type": "string",
+                    "description": "The ID of the device to export messages for. Not required for Local mode."
+                  }
+                },
+                "required": [
+                  "since",
+                  "until",
+                  "deviceId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        },
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://device-ip:8080",
+            "description": "Local Server"
+          },
+          {
+            "url": "https://api.sms-gate.app/3rdparty/v1",
+            "description": "Cloud Server"
+          }
+        ]
+      }
     }
   },
   "tags": [
@@ -581,9 +649,11 @@
             "enum": [
               "sms:received",
               "sms:sent",
-              "system:ping"
+              "system:ping",
+              "sms:delivered",
+              "sms:failed"
             ],
-            "description": "The type of event being reported. For example, 'sms:received'.",
+            "description": "The type of event being reported",
             "example": "sms:received"
           },
           "id": {
@@ -623,7 +693,9 @@
             "enum": [
               "sms:received",
               "sms:sent",
-              "system:ping"
+              "system:ping",
+              "sms:delivered",
+              "sms:failed"
             ],
             "description": "The type of event that triggered the webhook."
           },
@@ -637,6 +709,12 @@
                 "$ref": "#/components/schemas/SmsSentPayload"
               },
               {
+                "$ref": "#/components/schemas/SmsDeliveredPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SmsFailedPayload"
+              },
+              {
                 "$ref": "#/components/schemas/SystemPingPayload"
               }
             ]
@@ -644,55 +722,108 @@
         }
       },
       "SmsReceivedPayload": {
-        "type": "object",
         "title": "SmsReceivedPayload",
         "description": "Payload of `sms:received` event",
-        "properties": {
-          "message": {
-            "type": "string",
-            "description": "The content of the SMS message received."
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
           },
-          "phoneNumber": {
-            "type": "string",
-            "description": "The phone number from which the SMS message was sent."
-          },
-          "simNumber": {
-            "type": "integer",
-            "nullable": true,
-            "description": "The SIM card number that received the SMS. May be null on some Android devices.",
-            "minimum": 1
-          },
-          "receivedAt": {
-            "type": "string",
-            "description": "The timestamp when the SMS message was received.",
-            "format": "date-time"
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "The content of the SMS message received."
+              },
+              "receivedAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message was received.",
+                "format": "date-time"
+              }
+            }
           }
-        }
+        ]
       },
-      "SmsSentPayload": {
+      "SmsEventPayload": {
         "type": "object",
-        "title": "SmsSentPayload",
-        "description": "Payload of `sms:sent` event",
+        "title": "SmsEventPayload",
+        "description": "Base payload of SMS-related events",
         "properties": {
-          "id": {
+          "messageId": {
             "type": "string",
             "description": "The unique identifier of the SMS message."
           },
           "phoneNumber": {
             "type": "string",
-            "description": "The phone number to which the SMS message was sent."
+            "description": "The phone number of the sender (for incoming messages) or recipient (for outgoing messages)."
           },
           "simNumber": {
             "type": "integer",
             "nullable": true,
-            "description": "The SIM card number that sent the SMS. May be `null` if default SIM is used."
-          },
-          "sentAt": {
-            "type": "string",
-            "description": "The timestamp when the SMS message was sent.",
-            "format": "date-time"
+            "description": "The SIM card number that sent the SMS. May be `null` if the SIM can't be determined or the default was used."
           }
         }
+      },
+      "SmsSentPayload": {
+        "title": "SmsSentPayload",
+        "description": "Payload of `sms:sent` event",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "sentAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message was sent.",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "SmsDeliveredPayload": {
+        "title": "SmsDeliveredPayload",
+        "description": "Payload of `sms:delivered` event",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "deliveredAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message was delivered.",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "SmsFailedPayload": {
+        "title": "SmsFailedPayload",
+        "description": "Payload of `sms:failed` event",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "failedAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message was failed.",
+                "format": "date-time"
+              },
+              "reason": {
+                "type": "string",
+                "description": "The reason description"
+              }
+            }
+          }
+        ]
       },
       "SystemPingPayload": {
         "type": "object",
