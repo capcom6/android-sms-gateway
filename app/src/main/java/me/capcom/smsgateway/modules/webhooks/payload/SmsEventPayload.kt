@@ -28,4 +28,12 @@ sealed class SmsEventPayload(
         val failedAt: Date,
         val reason: String,
     ) : SmsEventPayload(messageId, phoneNumber, simNumber)
+
+    class SmsReceived(
+        messageId: String,
+        phoneNumber: String,
+        simNumber: Int?,
+        val message: String,
+        val receivedAt: Date,
+    ) : SmsEventPayload(messageId, phoneNumber, simNumber)
 }

@@ -25,7 +25,6 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
         receiverSvc.process(
             context,
             InboxMessage(
-                id = null,
                 address = firstMessage.displayOriginatingAddress,
                 body = text,
                 date = Date(firstMessage.timestampMillis),
