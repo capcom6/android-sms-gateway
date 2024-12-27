@@ -7,9 +7,9 @@ import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
-import me.capcom.smsgateway.modules.receiver.events.MessageReceivedEvent
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
+import me.capcom.smsgateway.modules.webhooks.payload.SmsEventPayload
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.Date
@@ -47,7 +47,8 @@ class ReceiverService : KoinComponent {
             mapOf("message" to message)
         )
 
-        val event = MessageReceivedEvent(
+        val event = SmsEventPayload.SmsReceived(
+            messageId = message.hashCode().toUInt().toString(16),
             message = message.body,
             phoneNumber = message.address,
             simNumber = message.subscriptionId?.let {
@@ -109,7 +110,6 @@ class ReceiverService : KoinComponent {
             while (cursor.moveToNext()) {
                 messages.add(
                     InboxMessage(
-                        id = cursor.getLong(0),
                         address = cursor.getString(1),
                         date = Date(cursor.getLong(2)),
                         body = cursor.getString(3),
