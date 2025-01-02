@@ -8,4 +8,7 @@ enum class Event {
 
     @SerializedName("WebhooksUpdated")
     WebhooksUpdated,
+
+    @SerializedName("MessagesExportRequested")
+    MessagesExportRequested,
 }
