@@ -16,6 +16,8 @@ import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.workers.RegistrationWorker
 import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.push.Event
 import me.capcom.smsgateway.modules.push.events.PushMessageEnqueuedEvent
 import me.capcom.smsgateway.modules.push.payloads.MessagesExportRequestedPayload
@@ -68,8 +70,15 @@ class PushService : FirebaseMessagingService(), KoinComponent {
         super.onDestroy()
     }
 
-    companion object {
+    companion object : KoinComponent {
         fun register(context: Context): Unit {
+            val logger = get<LogsService>()
+
+            logger.insert(
+                priority = LogEntry.Priority.INFO,
+                module = PushService::class.java.simpleName,
+                message = "FCM registration started"
+            )
             FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
                 if (!task.isSuccessful) {
                     Toast.makeText(
@@ -77,16 +86,23 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                         "Fetching FCM registration token failed: ${task.exception}",
                         Toast.LENGTH_LONG
                     ).show()
-                    Log.w(
-                        this::class.java.name,
-                        "Fetching FCM registration token failed",
-                        task.exception
+                    logger.insert(
+                        priority = LogEntry.Priority.ERROR,
+                        module = PushService::class.java.simpleName,
+                        message = "Fetching FCM registration token failed: ${task.exception}"
                     )
                     return@OnCompleteListener
                 }
 
                 // Get new FCM registration token
                 val token = task.result
+
+                logger.insert(
+                    priority = LogEntry.Priority.INFO,
+                    module = PushService::class.java.simpleName,
+                    message = "FCM registration successful",
+                    mapOf("token" to token)
+                )
 
                 // Log and toast
                 RegistrationWorker.start(context, token)
