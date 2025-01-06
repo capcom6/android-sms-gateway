@@ -130,6 +130,7 @@ To use the application, you need to grant the following permissions:
 
 - **SEND_SMS**: This permission is required to send SMS messages.
 - **READ_PHONE_STATE**: This permission is optional. If you want to select the SIM card, you can grant this permission.
+- **READ_SMS**: This permission is optional. If you want to read previous SMS messages, you need to grant this permission.
 - **RECEIVE_SMS**: This permission is optional. If you want to receive webhooks on incoming SMS, you need to grant this permission.
 
 ### Installation from APK
