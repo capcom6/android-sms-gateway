@@ -18,9 +18,14 @@
     <string name="dots">…</string>
     <string name="enabled">Enabled</string>
     <string name="encryption">Encryption</string>
+    <string name="failed_to_change_password">Failed to change password: %1$s</string>
+    <string name="if_sim_number_is_not_specified_use">If SIM number is not specified, use</string>
     <string name="ignored_for_public_server">Ignored for public server</string>
     <string name="information">Information</string>
+    <string name="internet_connection_available">Internet connection: available</string>
+    <string name="internet_connection_unavailable">Internet connection: unavailable</string>
     <string name="interval_seconds">Interval (seconds)</string>
+    <string name="invalid_url">Invalid URL</string>
     <string name="is_not_a_valid_port_must_be_between_1024_and_65535">%1$s is not a valid port. Must be between 1024 and 65535</string>
     <string name="label_password">Password:</string>
     <string name="label_username">Username:</string>
@@ -31,14 +36,18 @@
     <string name="local_sms_gateway_notifications">Local SMS Gateway notifications</string>
     <string name="logs">Logs</string>
     <string name="maximum">Maximum</string>
+    <string name="messages">Messages…</string>
     <string name="messages_count">Messages count</string>
     <string name="messages_header">Messages</string>
     <string name="minimum">Minimum</string>
     <string name="more_settings">More settings…</string>
+    <string name="not_set">Not set</string>
     <string name="notification_title">SMS Gateway</string>
     <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery life</string>
     <string name="passphrase">Passphrase</string>
     <string name="password">Password</string>
+    <string name="password_changed_successfully">Password changed successfully</string>
+    <string name="password_must_be_at_least_14_characters">Password must be at least 14 characters</string>
     <string name="password_must_be_at_least_8_characters">Password must be at least 8 characters</string>
     <string name="period">Period</string>
     <string name="ping">Ping</string>
@@ -76,11 +85,4 @@
     <string name="username_must_be_at_least_3_characters">Username must be at least 3 characters</string>
     <string name="view">View</string>
     <string name="webhooks">Webhooks</string>
-    <string name="invalid_url">Invalid URL</string>
-    <string name="not_set">Not set</string>
-    <string name="password_must_be_at_least_14_characters">Password must be at least 14 characters</string>
-    <string name="password_changed_successfully">Password changed successfully</string>
-    <string name="failed_to_change_password">Failed to change password: %1$s</string>
-    <string name="messages">Messages…</string>
-    <string name="if_sim_number_is_not_specified_use">If SIM number is not specified, use</string>
 </resources>

@@ -6,6 +6,20 @@
     android:orientation="vertical"
     tools:context=".ui.HomeFragment">
 
+    <TextView
+        android:id="@+id/textConnectionStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/rounded_background"
+        android:backgroundTint="@color/connection_status_background"
+        android:enabled="true"
+        android:gravity="center"
+        android:padding="8dp"
+        android:textColor="@android:color/white"
+        android:visibility="gone"
+        tools:text="@string/internet_connection_available" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
