@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.databinding.FragmentSettingsBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.connection.ConnectionService
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
@@ -47,6 +48,7 @@ class HomeFragment : Fragment() {
     private val settingsHelper: SettingsHelper by inject()
     private val localServerSettings: LocalServerSettings by inject()
     private val gatewaySettings: GatewaySettings by inject()
+    private val connectionService: ConnectionService by inject()
 
     private val events: EventBus by inject()
 
@@ -79,6 +81,7 @@ class HomeFragment : Fragment() {
         binding.switchUseRemoteServer.setOnCheckedChangeListener { _, isChecked ->
             gatewaySettings.enabled = isChecked
             binding.layoutRemoteServer.isVisible = isChecked
+            binding.textConnectionStatus.isVisible = isChecked
 
             restartRequiredNotification()
         }
@@ -161,6 +164,16 @@ class HomeFragment : Fragment() {
 
         stateLiveData.observe(viewLifecycleOwner) {
             binding.buttonStart.isChecked = it
+        }
+
+        connectionService.status.observe(viewLifecycleOwner) {
+            binding.textConnectionStatus.apply {
+                isEnabled = it
+                text = when (it) {
+                    true -> context.getString(R.string.internet_connection_available)
+                    false -> context.getString(R.string.internet_connection_unavailable)
+                }
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import android.app.Application
 import healthModule
 import me.capcom.smsgateway.data.dbModule
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.connection.connectionModule
 import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.events.eventBusModule
 import me.capcom.smsgateway.modules.gateway.GatewayService
@@ -45,6 +46,7 @@ class App: Application() {
                 webhooksModule,
                 localserverModule,
                 pingModule,
+                connectionModule,
                 orchestratorModule,
             )
         }
