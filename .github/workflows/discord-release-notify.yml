@@ -10,7 +10,7 @@ jobs:
     if: github.event.release.prerelease == false
     steps:
       - name: Send Discord Notification
-        uses: tsickert/discord-webhook@v6.0.0
+        uses: capcom6/discord-webhook@3a447f4ed76c79ed32fb073d705bda1cd45119e6
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           content: |
