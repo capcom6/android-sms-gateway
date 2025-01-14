@@ -27,7 +27,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             findPreference<Preference>("system")?.isEnabled = false
             findPreference<Preference>("system.disable_battery_optimizations")?.summary =
-                getString(R.string.battery_optimizations_not_supported_on_this_device)
+                getString(R.string.battery_optimization_is_not_supported_on_this_device)
         } else {
             findPreference<Preference>("system.disable_battery_optimizations")?.summary =
                 if (isIgnoringBatteryOptimizations()) getString(R.string.disabled) else getString(R.string.enabled)
@@ -70,7 +70,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             Toast.makeText(
                 requireContext(),
-                getString(R.string.battery_optimizations_not_supported_on_this_device),
+                getString(R.string.battery_optimization_is_not_supported_on_this_device),
                 Toast.LENGTH_SHORT
             ).show()
             return
@@ -79,7 +79,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (isIgnoringBatteryOptimizations()) {
             Toast.makeText(
                 requireContext(),
-                getString(R.string.battery_optimizations_already_disabled),
+                getString(R.string.battery_optimization_already_disabled),
                 Toast.LENGTH_SHORT
             ).show()
             return
