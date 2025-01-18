@@ -29,8 +29,8 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.util.date.GMTDate
-import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.domain.HealthResponse
 import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.modules.health.HealthService
 import me.capcom.smsgateway.modules.health.domain.Status
@@ -119,12 +119,7 @@ class WebService : Service() {
                             Status.WARN -> HttpStatusCode.OK
                             Status.PASS -> HttpStatusCode.OK
                         },
-                        mapOf(
-                            "status" to healthResult.status,
-                            "version" to BuildConfig.VERSION_NAME,
-                            "releaseId" to BuildConfig.VERSION_CODE,
-                            "checks" to healthResult.checks
-                        )
+                        HealthResponse(healthResult)
                     )
                 }
                 authenticate("auth-basic") {

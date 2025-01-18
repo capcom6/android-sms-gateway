@@ -1,18 +1,26 @@
 package me.capcom.smsgateway.modules.connection
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Build
+import android.telephony.TelephonyManager
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import me.capcom.smsgateway.modules.health.domain.CheckResult
+import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-class ConnectionService(context: Context) : KoinComponent {
+class ConnectionService(
+    private val context: Context
+) : KoinComponent {
     private val _status = MutableLiveData(false)
     val status: LiveData<Boolean> = _status
 
@@ -52,6 +60,87 @@ class ConnectionService(context: Context) : KoinComponent {
             super.onCapabilitiesChanged(network, networkCapabilities)
         }
     }
+
+    fun healthCheck(): Map<String, CheckResult> {
+        val status = when (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            true -> when (_status.value) {
+                true -> Status.PASS
+                else -> Status.FAIL
+            }
+
+            false -> Status.PASS
+        }
+        val value = when (status) {
+            Status.PASS -> 1L
+            else -> 0L
+        }
+
+        return mapOf(
+            "status" to CheckResult(
+                status,
+                value,
+                "Yes/No",
+                "Internet connection status"
+            ),
+            "type" to CheckResult(
+                when (networkType) {
+                    NetworkType.None -> Status.FAIL
+                    else -> Status.PASS
+                },
+                networkType.ordinal.toLong(),
+                "type index",
+                "Network type"
+            )
+        )
+    }
+
+    val networkType: NetworkType
+        get() {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return NetworkType.Unknown
+
+            val nw = connectivityManager.activeNetwork ?: return NetworkType.None
+            val actNw = connectivityManager.getNetworkCapabilities(nw) ?: return NetworkType.None
+            when {
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> return NetworkType.WiFi
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> return NetworkType.Ethernet
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+                    val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+                    if (ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.READ_PHONE_STATE
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        return NetworkType.MobileUnknown
+                    }
+                    when (tm.dataNetworkType) {
+                        TelephonyManager.NETWORK_TYPE_GPRS,
+                        TelephonyManager.NETWORK_TYPE_EDGE,
+                        TelephonyManager.NETWORK_TYPE_CDMA,
+                        TelephonyManager.NETWORK_TYPE_1xRTT,
+                        TelephonyManager.NETWORK_TYPE_IDEN,
+                        TelephonyManager.NETWORK_TYPE_GSM -> return NetworkType.Mobile2G
+
+                        TelephonyManager.NETWORK_TYPE_UMTS,
+                        TelephonyManager.NETWORK_TYPE_EVDO_0,
+                        TelephonyManager.NETWORK_TYPE_EVDO_A,
+                        TelephonyManager.NETWORK_TYPE_HSDPA,
+                        TelephonyManager.NETWORK_TYPE_HSUPA,
+                        TelephonyManager.NETWORK_TYPE_HSPA,
+                        TelephonyManager.NETWORK_TYPE_EVDO_B,
+                        TelephonyManager.NETWORK_TYPE_EHRPD,
+                        TelephonyManager.NETWORK_TYPE_HSPAP,
+                        TelephonyManager.NETWORK_TYPE_TD_SCDMA -> return NetworkType.Mobile3G
+
+                        TelephonyManager.NETWORK_TYPE_LTE,
+                        TelephonyManager.NETWORK_TYPE_IWLAN, 19 -> return NetworkType.Mobile4G
+
+                        TelephonyManager.NETWORK_TYPE_NR -> return NetworkType.Mobile5G
+                    }
+                }
+            }
+
+            return NetworkType.Unknown
+        }
 
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
