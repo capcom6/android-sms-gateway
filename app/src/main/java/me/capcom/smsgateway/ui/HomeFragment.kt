@@ -168,6 +168,7 @@ class HomeFragment : Fragment() {
 
         connectionService.status.observe(viewLifecycleOwner) {
             binding.textConnectionStatus.apply {
+                isVisible = binding.switchUseRemoteServer.isChecked
                 isEnabled = it
                 text = when (it) {
                     true -> context.getString(R.string.internet_connection_available)

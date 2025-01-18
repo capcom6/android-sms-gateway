@@ -54,6 +54,8 @@ class ConnectionService(context: Context) : KoinComponent {
     }
 
     init {
-        connectivityManager.registerDefaultNetworkCallback(networkCallback)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            connectivityManager.registerDefaultNetworkCallback(networkCallback)
+        }
     }
 }
