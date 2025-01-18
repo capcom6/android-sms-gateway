@@ -14,7 +14,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.domain.HealthResponse
 import me.capcom.smsgateway.modules.events.EventBus
+import me.capcom.smsgateway.modules.health.HealthService
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.ping.PingSettings
 import me.capcom.smsgateway.modules.ping.events.PingEvent
@@ -30,6 +32,7 @@ class PingForegroundService : Service() {
     private val eventBus = get<EventBus>()
 
     private val notificationsSvc: NotificationsService by inject()
+    private val healthService: HealthService by inject()
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -51,7 +54,9 @@ class PingForegroundService : Service() {
         while (!stopRequested) {
             try {
                 Log.d(this.javaClass.name, "Sending ping")
-                scope.launch { eventBus.emit(PingEvent()) }
+                scope.launch {
+                    eventBus.emit(PingEvent(HealthResponse(healthService.healthCheck())))
+                }
 
                 Thread.sleep(interval * 1000L)
             } catch (_: Throwable) {

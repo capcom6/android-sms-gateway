@@ -20,7 +20,10 @@ class EventsReceiver : EventsReceiver() {
                 eventBus.collect<PingEvent> {
                     Log.d("EventsReceiver", "Event: $it")
 
-                    get<WebHooksService>().emit(WebHookEvent.SystemPing, object {})
+                    get<WebHooksService>().emit(
+                        WebHookEvent.SystemPing,
+                        mapOf("health" to it.health)
+                    )
                 }
             }
 
