@@ -80,7 +80,7 @@ class ConnectionService(
                     Status.PASS -> 1L
                     else -> 0L
                 },
-                "Yes/No",
+                "boolean",
                 "Internet connection status"
             ),
             "transport" to CheckResult(
