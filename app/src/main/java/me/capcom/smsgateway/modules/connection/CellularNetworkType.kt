@@ -1,13 +1,10 @@
 package me.capcom.smsgateway.modules.connection
 
-enum class NetworkType {
+enum class CellularNetworkType {
     None,
     Unknown,
-    WiFi,
-    Ethernet,
-    MobileUnknown,
     Mobile2G,
     Mobile3G,
     Mobile4G,
-    Mobile5G
+    Mobile5G,
 }

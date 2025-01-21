@@ -49,8 +49,8 @@ class BatteryMonitor(
             "charging" to CheckResult(
                 Status.PASS,
                 when {
-                    acCharge -> 3L
-                    usbCharge -> 5L
+                    acCharge -> 2L
+                    usbCharge -> 4L
                     isCharging -> 1L
                     else -> 0L
                 },

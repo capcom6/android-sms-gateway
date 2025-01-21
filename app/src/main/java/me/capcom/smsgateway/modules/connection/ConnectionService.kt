@@ -70,76 +70,106 @@ class ConnectionService(
 
             false -> Status.PASS
         }
-        val value = when (status) {
-            Status.PASS -> 1L
-            else -> 0L
-        }
+        val transport = transportType
+        val cellularType = cellularNetworkType
 
         return mapOf(
             "status" to CheckResult(
                 status,
-                value,
+                when (status) {
+                    Status.PASS -> 1L
+                    else -> 0L
+                },
                 "Yes/No",
                 "Internet connection status"
             ),
-            "type" to CheckResult(
-                when (networkType) {
-                    NetworkType.None -> Status.FAIL
-                    else -> Status.PASS
+            "transport" to CheckResult(
+                when (transport.isEmpty()) {
+                    true -> Status.FAIL
+                    false -> Status.PASS
                 },
-                networkType.ordinal.toLong(),
-                "type index",
-                "Network type"
+                transport.sumOf { it.value }.toLong(),
+                "flags",
+                "Network transport type"
+            ),
+            "cellular" to CheckResult(
+                Status.PASS,
+                cellularType.ordinal.toLong(),
+                "index",
+                "Cellular network type"
             )
         )
     }
 
-    val networkType: NetworkType
+    val transportType: Set<TransportType>
         get() {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return NetworkType.Unknown
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return setOf(TransportType.Unknown)
 
-            val nw = connectivityManager.activeNetwork ?: return NetworkType.None
-            val actNw = connectivityManager.getNetworkCapabilities(nw) ?: return NetworkType.None
-            when {
-                actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> return NetworkType.WiFi
-                actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> return NetworkType.Ethernet
-                actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
-                    val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-                    if (ActivityCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.READ_PHONE_STATE
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        return NetworkType.MobileUnknown
-                    }
-                    when (tm.dataNetworkType) {
-                        TelephonyManager.NETWORK_TYPE_GPRS,
-                        TelephonyManager.NETWORK_TYPE_EDGE,
-                        TelephonyManager.NETWORK_TYPE_CDMA,
-                        TelephonyManager.NETWORK_TYPE_1xRTT,
-                        TelephonyManager.NETWORK_TYPE_IDEN,
-                        TelephonyManager.NETWORK_TYPE_GSM -> return NetworkType.Mobile2G
+            val result = mutableSetOf<TransportType>()
 
-                        TelephonyManager.NETWORK_TYPE_UMTS,
-                        TelephonyManager.NETWORK_TYPE_EVDO_0,
-                        TelephonyManager.NETWORK_TYPE_EVDO_A,
-                        TelephonyManager.NETWORK_TYPE_HSDPA,
-                        TelephonyManager.NETWORK_TYPE_HSUPA,
-                        TelephonyManager.NETWORK_TYPE_HSPA,
-                        TelephonyManager.NETWORK_TYPE_EVDO_B,
-                        TelephonyManager.NETWORK_TYPE_EHRPD,
-                        TelephonyManager.NETWORK_TYPE_HSPAP,
-                        TelephonyManager.NETWORK_TYPE_TD_SCDMA -> return NetworkType.Mobile3G
+            val nw = connectivityManager.activeNetwork ?: return result
+            val actNw = connectivityManager.getNetworkCapabilities(nw) ?: return result
 
-                        TelephonyManager.NETWORK_TYPE_LTE,
-                        TelephonyManager.NETWORK_TYPE_IWLAN, 19 -> return NetworkType.Mobile4G
-
-                        TelephonyManager.NETWORK_TYPE_NR -> return NetworkType.Mobile5G
-                    }
-                }
+            if (actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                result.add(TransportType.WiFi)
+            }
+            if (actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                result.add(TransportType.Ethernet)
+            }
+            if (actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                result.add(TransportType.Cellular)
             }
 
-            return NetworkType.Unknown
+            return result;
+        }
+
+    val cellularNetworkType: CellularNetworkType
+        get() {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return CellularNetworkType.Unknown
+
+            val transport = transportType
+
+            if (transport.contains(TransportType.Unknown)) {
+                return CellularNetworkType.Unknown
+            }
+            if (!transport.contains(TransportType.Cellular)) {
+                return CellularNetworkType.None
+            }
+
+            val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_PHONE_STATE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return CellularNetworkType.Unknown
+            }
+            when (tm.dataNetworkType) {
+                TelephonyManager.NETWORK_TYPE_GPRS,
+                TelephonyManager.NETWORK_TYPE_EDGE,
+                TelephonyManager.NETWORK_TYPE_CDMA,
+                TelephonyManager.NETWORK_TYPE_1xRTT,
+                TelephonyManager.NETWORK_TYPE_IDEN,
+                TelephonyManager.NETWORK_TYPE_GSM -> return CellularNetworkType.Mobile2G
+
+                TelephonyManager.NETWORK_TYPE_UMTS,
+                TelephonyManager.NETWORK_TYPE_EVDO_0,
+                TelephonyManager.NETWORK_TYPE_EVDO_A,
+                TelephonyManager.NETWORK_TYPE_HSDPA,
+                TelephonyManager.NETWORK_TYPE_HSUPA,
+                TelephonyManager.NETWORK_TYPE_HSPA,
+                TelephonyManager.NETWORK_TYPE_EVDO_B,
+                TelephonyManager.NETWORK_TYPE_EHRPD,
+                TelephonyManager.NETWORK_TYPE_HSPAP,
+                TelephonyManager.NETWORK_TYPE_TD_SCDMA -> return CellularNetworkType.Mobile3G
+
+                TelephonyManager.NETWORK_TYPE_LTE,
+                TelephonyManager.NETWORK_TYPE_IWLAN, 19 -> return CellularNetworkType.Mobile4G
+
+                TelephonyManager.NETWORK_TYPE_NR -> return CellularNetworkType.Mobile5G
+            }
+
+            return CellularNetworkType.Unknown
         }
 
     init {
