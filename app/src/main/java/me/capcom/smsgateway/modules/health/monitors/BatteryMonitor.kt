@@ -18,7 +18,6 @@ class BatteryMonitor(
 
         val status: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
         val isCharging: Boolean = status == BatteryManager.BATTERY_STATUS_CHARGING
-                || status == BatteryManager.BATTERY_STATUS_FULL
 
         // How are we charging?
         val chargePlug: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1
@@ -51,8 +50,10 @@ class BatteryMonitor(
                 when {
                     acCharge -> 2L
                     usbCharge -> 4L
-                    isCharging -> 1L
                     else -> 0L
+                } + when (isCharging) {
+                    true -> 1L
+                    false -> 0L
                 },
                 "flags",
                 "Is the phone charging?"
