@@ -80,7 +80,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 
 - **No registration required:** No registration or email is required to create an account. In local mode, you don't need an account at all!
 - **Send SMS via API:** Use our API to send messages directly from your applications or services.
-- **Support for Android 5.0 and above:** The application is compatible with Android 5.0 and later versions.
+- **Support for Android 5.0 and above:** The application is compatible with Android 5.0 and later versions. [See Android 15 Note](https://docs.sms-gate.app/faq/general/#does-the-app-support-android-15).
 - **Message status tracking:** Monitor the status of sent messages in real-time.
 - **Automatic startup:** The application starts running as soon as your device boots up.
 - **Support for multiple SIM cards:** The application supports devices with [multiple SIM cards](https://docs.sms-gate.app/features/multi-sim/).
