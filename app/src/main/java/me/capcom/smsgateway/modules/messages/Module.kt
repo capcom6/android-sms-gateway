@@ -13,3 +13,5 @@ val messagesModule = module {
     viewModel { MessagesListViewModel(get()) }
     viewModel { MessageDetailsViewModel(get()) }
 }
+
+val MODULE_NAME = "messages"
