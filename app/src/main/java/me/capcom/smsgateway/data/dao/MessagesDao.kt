@@ -77,7 +77,7 @@ interface MessagesDao {
         })
     }
 
-    @Query("UPDATE message SET state = :state WHERE id = :id")
+    @Query("UPDATE message SET state = :state WHERE id = :id AND state <> 'Failed'")
     fun _updateMessageState(id: String, state: me.capcom.smsgateway.domain.ProcessingState)
 
     fun updateMessageState(id: String, state: me.capcom.smsgateway.domain.ProcessingState) {
@@ -104,7 +104,7 @@ interface MessagesDao {
         )
     }
 
-    @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND phoneNumber = :phoneNumber")
+    @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND phoneNumber = :phoneNumber AND state <> 'Failed'")
     fun _updateRecipientState(
         id: String,
         phoneNumber: String,
@@ -127,7 +127,7 @@ interface MessagesDao {
         )
     }
 
-    @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id")
+    @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND state <> 'Failed'")
     fun _updateRecipientsState(
         id: String,
         state: me.capcom.smsgateway.domain.ProcessingState,
