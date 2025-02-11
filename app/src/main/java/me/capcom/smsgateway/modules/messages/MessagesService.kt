@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.telephony.SmsManager
+import android.telephony.SmsMessage
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -126,18 +127,43 @@ class MessagesService(
     }
 
     suspend fun processStateIntent(intent: Intent, resultCode: Int) {
-        val state = when (intent.action) {
-            EventsReceiver.ACTION_SENT -> when (resultCode) {
-                Activity.RESULT_OK -> ProcessingState.Sent
-                else -> ProcessingState.Failed
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "Status intent received with action ${intent.action} and result code $resultCode",
+            mapOf(
+                "data" to intent.dataString,
+                "uri" to intent.extras?.getString("uri"),
+                "pdu" to intent.extras?.getByteArray("pdu")?.joinToString("") { "%02x".format(it) },
+            )
+        )
+        val (state, error) = when (intent.action) {
+            EventsReceiver.ACTION_SENT -> when {
+                resultCode != Activity.RESULT_OK -> ProcessingState.Failed to "Send result: " + this.resultToErrorMessage(
+                    resultCode
+                )
+
+                intent.hasExtra("uri") -> ProcessingState.Sent to null
+                else -> return
             }
 
-            EventsReceiver.ACTION_DELIVERED -> ProcessingState.Delivered
+            EventsReceiver.ACTION_DELIVERED -> when (resultCode) {
+                Activity.RESULT_OK -> {
+                    val message = SmsMessage.createFromPdu(
+                        intent.extras?.getByteArray("pdu")
+                    )
+                    when {
+                        message.status.toUInt() < 0b0100000u -> ProcessingState.Delivered to message.status.takeIf { it > 0 }
+                            ?.let { "Delivery result from SC ${message.serviceCenterAddress}: ${message.status}" }
+
+                        message.status.toUInt() < 0b1000000u -> return // SC will make more attempts
+                        else -> ProcessingState.Failed to "Delivery result from SC ${message.serviceCenterAddress}: ${message.status}"
+                    }
+                }
+
+                else -> ProcessingState.Failed to "Delivery result: $resultCode"
+            }
             else -> return
-        }
-        val error = when (resultCode) {
-            Activity.RESULT_OK -> null
-            else -> "Send result: " + this.resultToErrorMessage(resultCode)
         }
 
         val (id, phone) = intent.dataString?.split("|", limit = 2) ?: return
@@ -292,7 +318,7 @@ class MessagesService(
                         context,
                         EventsReceiver::class.java
                     ),
-                    PendingIntent.FLAG_IMMUTABLE
+                    PendingIntent.FLAG_MUTABLE
                 )
                 val deliveredIntent = when (message.withDeliveryReport) {
                     false -> null
@@ -305,7 +331,7 @@ class MessagesService(
                             context,
                             EventsReceiver::class.java
                         ),
-                        PendingIntent.FLAG_IMMUTABLE
+                        PendingIntent.FLAG_MUTABLE
                     )
                 }
 
