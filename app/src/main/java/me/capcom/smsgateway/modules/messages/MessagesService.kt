@@ -25,6 +25,8 @@ import me.capcom.smsgateway.modules.encryption.EncryptionService
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.health.domain.CheckResult
 import me.capcom.smsgateway.modules.health.domain.Status
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
@@ -38,6 +40,7 @@ class MessagesService(
     private val dao: MessagesDao,    // todo: use MessagesRepository
     private val encryptionService: EncryptionService,
     private val events: EventBus,
+    private val logsService: LogsService,
 ) {
 
     private val countryCode: String? =
@@ -337,12 +340,20 @@ class MessagesService(
 
                     updateState(id, sourcePhoneNumber, ProcessingState.Processed)
                 } catch (th: Throwable) {
-                    th.printStackTrace()
+                    logsService.insert(
+                        LogEntry.Priority.ERROR,
+                        MODULE_NAME,
+                        "Can't send message: " + th.message,
+                        mapOf(
+                            "stacktrace" to th.stackTraceToString(),
+                        )
+                    )
+
                     updateState(
                         id,
                         sourcePhoneNumber,
                         ProcessingState.Failed,
-                        "Sending: " + th.message
+                        "sendSMS: " + th.message
                     )
                 }
         }
