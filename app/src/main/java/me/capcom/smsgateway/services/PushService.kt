@@ -2,7 +2,6 @@ package me.capcom.smsgateway.services
 
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -81,11 +80,6 @@ class PushService : FirebaseMessagingService(), KoinComponent {
             )
             FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
                 if (!task.isSuccessful || task.isCanceled) {
-                    Toast.makeText(
-                        context,
-                        "Fetching FCM registration token failed: ${task.exception}",
-                        Toast.LENGTH_LONG
-                    ).show()
                     logger.insert(
                         priority = LogEntry.Priority.ERROR,
                         module = PushService::class.java.simpleName,
@@ -94,12 +88,16 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                 }
 
                 // Get new FCM registration token
-                val token = task.result
+                val token = try {
+                    task.result
+                } catch (e: Throwable) {
+                    null
+                }
 
                 logger.insert(
                     priority = LogEntry.Priority.INFO,
                     module = PushService::class.java.simpleName,
-                    message = "FCM registration successful",
+                    message = "FCM registration finished",
                     mapOf("token" to token)
                 )
 
