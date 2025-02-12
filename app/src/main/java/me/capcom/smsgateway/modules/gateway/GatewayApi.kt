@@ -17,6 +17,7 @@ import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.hostWithPort
 import io.ktor.serialization.gson.gson
+import io.ktor.util.encodeBase64
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.extensions.configure
@@ -44,15 +45,19 @@ class GatewayApi(
 
     suspend fun getDevice(token: String?): DeviceGetResponse {
         return client.get("$baseUrl/device") {
-            token?.let { auth(it) }
+            token?.let { bearerAuth(it) }
         }.body()
     }
 
     suspend fun deviceRegister(
-        request: DeviceRegisterRequest
+        request: DeviceRegisterRequest,
+        credentials: Pair<String, String>?
     ): DeviceRegisterResponse {
         return client.post("$baseUrl/device") {
-            privateToken?.let { auth(it) }
+            when {
+                credentials != null -> basicAuth(credentials.first, credentials.second)
+                privateToken != null -> bearerAuth(privateToken)
+            }
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
@@ -60,7 +65,7 @@ class GatewayApi(
 
     suspend fun devicePatch(token: String, request: DevicePatchRequest) {
         client.patch("$baseUrl/device") {
-            auth(token)
+            bearerAuth(token)
             contentType(ContentType.Application.Json)
             setBody(request)
         }
@@ -68,13 +73,13 @@ class GatewayApi(
 
     suspend fun getMessages(token: String): List<Message> {
         return client.get("$baseUrl/message") {
-            auth(token)
+            bearerAuth(token)
         }.body()
     }
 
     suspend fun patchMessages(token: String, request: List<MessagePatchRequest>) {
         client.patch("$baseUrl/message") {
-            auth(token)
+            bearerAuth(token)
             contentType(ContentType.Application.Json)
             setBody(request)
         }
@@ -82,20 +87,24 @@ class GatewayApi(
 
     suspend fun getWebHooks(token: String): List<WebHook> {
         return client.get("$baseUrl/webhooks") {
-            auth(token)
+            bearerAuth(token)
         }.body()
     }
 
     suspend fun changePassword(token: String, request: PasswordChangeRequest) {
         client.patch("$baseUrl/user/password") {
-            auth(token)
+            bearerAuth(token)
             contentType(ContentType.Application.Json)
             setBody(request)
         }
     }
 
-    private fun HttpRequestBuilder.auth(token: String) {
+    private fun HttpRequestBuilder.bearerAuth(token: String) {
         header(HttpHeaders.Authorization, "Bearer $token")
+    }
+
+    private fun HttpRequestBuilder.basicAuth(username: String, password: String) {
+        header(HttpHeaders.Authorization, "Basic ${"$username:$password".encodeBase64()}")
     }
 
     data class DeviceGetResponse(

@@ -113,7 +113,10 @@ class GatewayService(
         )
     }
 
-    internal suspend fun registerFcmToken(pushToken: String?) {
+    internal suspend fun registerDevice(
+        pushToken: String?,
+        credentials: Pair<String, String>? = null,
+    ) {
         if (!settings.enabled) return
 
         val settings = settings.registrationInfo
@@ -152,7 +155,8 @@ class GatewayService(
                 GatewayApi.DeviceRegisterRequest(
                     "${Build.MANUFACTURER}/${Build.PRODUCT}",
                     pushToken
-                )
+                ),
+                credentials
             )
             this.settings.registrationInfo = response
 

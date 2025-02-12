@@ -28,7 +28,7 @@ class RegistrationWorker(
         try {
             val token = inputData.getString(DATA_TOKEN)
 
-            App.instance.gatewayService.registerFcmToken(token)
+            App.instance.gatewayService.registerDevice(token)
 
             return Result.success()
         } catch (e: Exception) {

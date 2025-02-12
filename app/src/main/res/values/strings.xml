@@ -87,4 +87,6 @@
     <string name="webhooks">Webhooks</string>
     <string name="n_a">n/a</string>
     <string name="failed_to_register_device">Failed to register device: %1$s</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
