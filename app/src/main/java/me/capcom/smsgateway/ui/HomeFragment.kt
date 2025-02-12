@@ -38,6 +38,7 @@ import me.capcom.smsgateway.modules.localserver.LocalServerService
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
 import me.capcom.smsgateway.modules.orchestrator.OrchestratorService
+import me.capcom.smsgateway.ui.dialogs.SignInDialogFragment
 import org.koin.android.ext.android.inject
 
 class HomeFragment : Fragment() {
@@ -233,10 +234,21 @@ class HomeFragment : Fragment() {
 
     private fun actionStart(start: Boolean) {
         if (start) {
+            if (gatewaySettings.enabled
+                && gatewaySettings.registrationInfo == null
+            ) {
+                cloudFirstStart()
+                return
+            }
+
             requestPermissionsAndStart()
         } else {
             stop()
         }
+    }
+
+    private fun cloudFirstStart() {
+        SignInDialogFragment.newInstance().show(parentFragmentManager, "signin")
     }
 
     private fun stop() {
