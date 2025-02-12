@@ -85,4 +85,6 @@
     <string name="username_must_be_at_least_3_characters">Username must be at least 3 characters</string>
     <string name="view">View</string>
     <string name="webhooks">Webhooks</string>
+    <string name="n_a">n/a</string>
+    <string name="failed_to_register_device">Failed to register device: %1$s</string>
 </resources>

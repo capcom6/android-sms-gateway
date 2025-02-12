@@ -101,7 +101,7 @@ class HomeFragment : Fragment() {
 //        }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            events.collect<DeviceRegisteredEvent> { event ->
+            events.collect<DeviceRegisteredEvent.Success> { event ->
                 binding.textRemoteAddress.text = getString(R.string.address_is, event.server)
 
                 binding.textRemoteUsername.movementMethod = LinkMovementMethod.getInstance()
@@ -119,6 +119,20 @@ class HomeFragment : Fragment() {
                             "<a href>${event.password}</a>"
                         )
                 )
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            events.collect<DeviceRegisteredEvent.Failure> { event ->
+                binding.textRemoteAddress.text = getString(R.string.address_is, event.server)
+
+                binding.textRemoteUsername.text = getString(R.string.n_a)
+                binding.textRemotePassword.text = getString(R.string.n_a)
+
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.failed_to_register_device, event.reason),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
 

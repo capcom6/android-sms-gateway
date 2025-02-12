@@ -2,11 +2,20 @@ package me.capcom.smsgateway.modules.gateway.events
 
 import me.capcom.smsgateway.modules.events.AppEvent
 
-class DeviceRegisteredEvent(
+sealed class DeviceRegisteredEvent(
     val server: String,
-    val login: String,
-    val password: String,
-): AppEvent(NAME) {
+) : AppEvent(NAME) {
+    class Success(
+        server: String,
+        val login: String,
+        val password: String,
+    ) : DeviceRegisteredEvent(server)
+
+    class Failure(
+        server: String,
+        val reason: String,
+    ) : DeviceRegisteredEvent(server)
+
     companion object {
         const val NAME = "DeviceRegisteredEvent"
     }

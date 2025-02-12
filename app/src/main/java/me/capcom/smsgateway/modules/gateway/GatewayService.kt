@@ -71,7 +71,7 @@ class GatewayService(
         settings.registrationInfo = info.copy(password = new)
 
         events.emit(
-            DeviceRegisteredEvent(
+            DeviceRegisteredEvent.Success(
                 api.hostname,
                 info.login,
                 new,
@@ -132,7 +132,7 @@ class GatewayService(
                     )
                 }
                 events.emit(
-                    DeviceRegisteredEvent(
+                    DeviceRegisteredEvent.Success(
                         api.hostname,
                         settings.login,
                         settings.password,
@@ -147,21 +147,32 @@ class GatewayService(
             }
         }
 
-        val response = api.deviceRegister(
-            GatewayApi.DeviceRegisterRequest(
-                "${Build.MANUFACTURER}/${Build.PRODUCT}",
-                pushToken
+        try {
+            val response = api.deviceRegister(
+                GatewayApi.DeviceRegisterRequest(
+                    "${Build.MANUFACTURER}/${Build.PRODUCT}",
+                    pushToken
+                )
             )
-        )
-        this.settings.registrationInfo = response
+            this.settings.registrationInfo = response
 
-        events.emit(
-            DeviceRegisteredEvent(
-                api.hostname,
-                response.login,
-                response.password,
+            events.emit(
+                DeviceRegisteredEvent.Success(
+                    api.hostname,
+                    response.login,
+                    response.password,
+                )
             )
-        )
+        } catch (th: Throwable) {
+            events.emit(
+                DeviceRegisteredEvent.Failure(
+                    api.hostname,
+                    th.localizedMessage ?: th.message ?: th.toString()
+                )
+            )
+
+            throw th
+        }
     }
 
     internal suspend fun getNewMessages(context: Context) {
