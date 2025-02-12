@@ -28,13 +28,13 @@ class GatewayService(
 
     private val api
         get() = _api ?: GatewayApi(
-            settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
+            settings.serverUrl,
             settings.privateToken
         ).also { _api = it }
 
     suspend fun getPublicIP(): String {
         return GatewayApi(
-            settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
+            settings.serverUrl,
             settings.privateToken
         )
             .getDevice(settings.registrationInfo?.token)
@@ -43,10 +43,6 @@ class GatewayService(
 
     fun start(context: Context) {
         if (!settings.enabled) return
-        this._api = GatewayApi(
-            settings.privateUrl ?: GatewaySettings.PUBLIC_URL,
-            settings.privateToken
-        )
 
         PushService.register(context)
         PullMessagesWorker.start(context)
