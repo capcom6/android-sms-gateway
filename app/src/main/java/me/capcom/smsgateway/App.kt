@@ -3,7 +3,6 @@ package me.capcom.smsgateway
 import android.app.Application
 import healthModule
 import me.capcom.smsgateway.data.dbModule
-import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.connection.connectionModule
 import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.events.eventBusModule
@@ -55,9 +54,7 @@ class App: Application() {
 
         EventsReceiver.register(this)
 
-        if (SettingsHelper(this).autostart) {
-            get<OrchestratorService>().start(this)
-        }
+        get<OrchestratorService>().start(this, true)
     }
 
     val gatewayService: GatewayService by inject()
