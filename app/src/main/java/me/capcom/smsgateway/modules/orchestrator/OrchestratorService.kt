@@ -3,6 +3,7 @@ package me.capcom.smsgateway.modules.orchestrator
 import android.app.ForegroundServiceStartNotAllowedException
 import android.content.Context
 import android.os.Build
+import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.localserver.LocalServerService
 import me.capcom.smsgateway.modules.logs.LogsService
@@ -18,8 +19,13 @@ class OrchestratorService(
     private val webHooksSvc: WebHooksService,
     private val pingSvc: PingService,
     private val logsSvc: LogsService,
+    private val settings: SettingsHelper,
 ) {
-    fun start(context: Context) {
+    fun start(context: Context, autostart: Boolean) {
+        if (autostart && !settings.autostart) {
+            return
+        }
+
         logsSvc.start(context)
         messagesSvc.start(context)
         gatewaySvc.start(context)
