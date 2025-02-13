@@ -157,12 +157,16 @@ class HomeFragment : Fragment() {
                             "<a href>${event.login}</a>"
                         )
                 )
-                binding.textRemotePassword.text = makeCopyableLink(
-                    Html
-                        .fromHtml(
-                            "<a href>${event.password}</a>"
-                        )
-                )
+
+                binding.textRemotePassword.text = when (event.password) {
+                    null -> getString(R.string.n_a)
+                    else -> makeCopyableLink(
+                        Html
+                            .fromHtml(
+                                "<a href>${event.password}</a>"
+                            )
+                    )
+                }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {

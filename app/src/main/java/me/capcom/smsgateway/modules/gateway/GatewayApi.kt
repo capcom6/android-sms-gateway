@@ -120,7 +120,7 @@ class GatewayApi(
         val id: String,
         val token: String,
         val login: String,
-        val password: String,
+        val password: String?,
     )
 
     data class DevicePatchRequest(
