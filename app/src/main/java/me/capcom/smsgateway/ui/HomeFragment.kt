@@ -23,6 +23,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.text.toSpanned
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -57,6 +58,48 @@ class HomeFragment : Fragment() {
     private val gatewaySvc: GatewayService by inject()
 
     private val orchestratorSvc: OrchestratorService by inject()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setFragmentResultListener(SignInDialogFragment.REQUEST_KEY) { _, data ->
+            val result = SignInDialogFragment.getResult(data)
+            when (result) {
+                SignInDialogFragment.Result.Canceled -> {
+                    Toast.makeText(
+                        requireContext(),
+                        "Operation cancelled",
+                        Toast.LENGTH_SHORT
+                    )
+                        .show()
+                    binding.buttonStart.isChecked = false
+                    return@setFragmentResultListener
+                }
+
+                SignInDialogFragment.Result.SignIn -> {
+                    val username = SignInDialogFragment.getUsername(data)
+                    val password = SignInDialogFragment.getPassword(data)
+                    lifecycleScope.launch {
+                        try {
+                            gatewaySvc.registerDevice(
+                                null,
+                                username to password
+                            )
+                            requestPermissionsAndStart()
+                        } catch (th: Throwable) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to register device: ${th.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
+
+                SignInDialogFragment.Result.Register -> requestPermissionsAndStart()
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -248,7 +291,8 @@ class HomeFragment : Fragment() {
     }
 
     private fun cloudFirstStart() {
-        SignInDialogFragment.newInstance().show(parentFragmentManager, "signin")
+        SignInDialogFragment.newInstance()
+            .show(parentFragmentManager, "signin")
     }
 
     private fun stop() {
@@ -256,7 +300,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun start() {
-        orchestratorSvc.start(requireContext())
+        orchestratorSvc.start(requireContext(), false)
     }
 
     private fun requestPermissionsAndStart() {
