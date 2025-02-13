@@ -8,7 +8,7 @@ sealed class DeviceRegisteredEvent(
     class Success(
         server: String,
         val login: String,
-        val password: String,
+        val password: String?,
     ) : DeviceRegisteredEvent(server)
 
     class Failure(
