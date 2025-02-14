@@ -57,8 +57,14 @@ class CloudServerSettingsFragment : BasePreferenceFragment() {
             settings.username ?: getString(R.string.not_set)
         }
         findPreference<EditTextPreference>("gateway.password")?.apply {
+            isEnabled = settings.username != null && settings.password != null
+
             setSummaryProvider {
-                settings.password ?: getString(R.string.not_set)
+                when {
+                    settings.username == null -> getString(R.string.not_registered)
+                    settings.username != null && settings.password == null -> "Can't be changed"
+                    else -> settings.password
+                }
             }
 
             setOnPreferenceChangeListener { _, newValue ->
