@@ -39,7 +39,7 @@ import me.capcom.smsgateway.modules.localserver.LocalServerService
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.localserver.events.IPReceivedEvent
 import me.capcom.smsgateway.modules.orchestrator.OrchestratorService
-import me.capcom.smsgateway.ui.dialogs.SignInDialogFragment
+import me.capcom.smsgateway.ui.dialogs.FirstStartDialogFragment
 import org.koin.android.ext.android.inject
 
 class HomeFragment : Fragment() {
@@ -62,10 +62,10 @@ class HomeFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setFragmentResultListener(SignInDialogFragment.REQUEST_KEY) { _, data ->
-            val result = SignInDialogFragment.getResult(data)
+        setFragmentResultListener(FirstStartDialogFragment.REQUEST_KEY) { _, data ->
+            val result = FirstStartDialogFragment.getResult(data)
             when (result) {
-                SignInDialogFragment.Result.Canceled -> {
+                FirstStartDialogFragment.Result.Canceled -> {
                     Toast.makeText(
                         requireContext(),
                         "Operation cancelled",
@@ -76,9 +76,9 @@ class HomeFragment : Fragment() {
                     return@setFragmentResultListener
                 }
 
-                SignInDialogFragment.Result.SignIn -> {
-                    val username = SignInDialogFragment.getUsername(data)
-                    val password = SignInDialogFragment.getPassword(data)
+                FirstStartDialogFragment.Result.SignIn -> {
+                    val username = FirstStartDialogFragment.getUsername(data)
+                    val password = FirstStartDialogFragment.getPassword(data)
                     lifecycleScope.launch {
                         try {
                             gatewaySvc.registerDevice(
@@ -96,7 +96,7 @@ class HomeFragment : Fragment() {
                     }
                 }
 
-                SignInDialogFragment.Result.Register -> requestPermissionsAndStart()
+                FirstStartDialogFragment.Result.SignUp -> requestPermissionsAndStart()
             }
         }
     }
@@ -173,7 +173,7 @@ class HomeFragment : Fragment() {
             events.collect<DeviceRegisteredEvent.Failure> { event ->
                 binding.textRemoteAddress.text = getString(R.string.address_is, event.server)
 
-                binding.textRemoteUsername.text = getString(R.string.n_a)
+                binding.textRemoteUsername.text = getString(R.string.not_registered)
                 binding.textRemotePassword.text = getString(R.string.n_a)
 
                 Toast.makeText(
@@ -295,7 +295,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun cloudFirstStart() {
-        SignInDialogFragment.newInstance()
+        FirstStartDialogFragment.newInstance()
             .show(parentFragmentManager, "signin")
     }
 
