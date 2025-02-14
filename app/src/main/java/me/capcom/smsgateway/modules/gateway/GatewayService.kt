@@ -113,6 +113,29 @@ class GatewayService(
         )
     }
 
+    internal suspend fun updateDevice(pushToken: String) {
+        if (!settings.enabled) return
+
+        val settings = settings.registrationInfo ?: return
+        val accessToken = settings.token
+
+        api.devicePatch(
+            accessToken,
+            GatewayApi.DevicePatchRequest(
+                settings.id,
+                pushToken
+            )
+        )
+
+        events.emit(
+            DeviceRegisteredEvent.Success(
+                api.hostname,
+                settings.login,
+                settings.password,
+            )
+        )
+    }
+
     internal suspend fun registerDevice(
         pushToken: String?,
         credentials: Pair<String, String>? = null,
@@ -126,21 +149,8 @@ class GatewayService(
             // if there's an access token, try to update push token
             try {
                 pushToken?.let {
-                    api.devicePatch(
-                        accessToken,
-                        GatewayApi.DevicePatchRequest(
-                            settings.id,
-                            it
-                        )
-                    )
+                    updateDevice(it)
                 }
-                events.emit(
-                    DeviceRegisteredEvent.Success(
-                        api.hostname,
-                        settings.login,
-                        settings.password,
-                    )
-                )
                 return
             } catch (e: ClientRequestException) {
                 // if token is invalid, try to register new one
