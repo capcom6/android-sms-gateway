@@ -27,8 +27,12 @@ class RegistrationWorker(
     override suspend fun doWork(): Result {
         try {
             val token = inputData.getString(DATA_TOKEN)
+            val isUpdate = inputData.getBoolean(DATA_IS_UPDATE, false)
 
-            App.instance.gatewayService.registerDevice(token)
+            when (isUpdate) {
+                true -> App.instance.gatewayService.updateDevice(token ?: return Result.success())
+                false -> App.instance.gatewayService.registerDevice(token)
+            }
 
             return Result.success()
         } catch (e: Exception) {
@@ -47,9 +51,11 @@ class RegistrationWorker(
 
     companion object {
         private const val NAME = "RegistrationWorker"
-        private const val DATA_TOKEN = "token"
 
-        fun start(context: Context, token: String?) {
+        private const val DATA_TOKEN = "token"
+        private const val DATA_IS_UPDATE = "isUpdate"
+
+        fun start(context: Context, token: String?, isUpdate: Boolean) {
             val work = OneTimeWorkRequestBuilder<RegistrationWorker>()
                 .setConstraints(
                     Constraints.Builder()
@@ -63,7 +69,8 @@ class RegistrationWorker(
                 )
                 .setInputData(
                     workDataOf(
-                        DATA_TOKEN to token
+                        DATA_TOKEN to token,
+                        DATA_IS_UPDATE to isUpdate,
                     )
                 )
                 .build()

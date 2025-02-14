@@ -34,7 +34,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
     override fun onNewToken(token: String) {
         settingsHelper.fcmToken = token
 
-        RegistrationWorker.start(this@PushService, token)
+        RegistrationWorker.start(this@PushService, token, true)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -102,7 +102,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                 )
 
                 // Log and toast
-                RegistrationWorker.start(context, token)
+                RegistrationWorker.start(context, token, false)
             })
         }
     }
