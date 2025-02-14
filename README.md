@@ -35,7 +35,7 @@
 <h3 align="center">SMS Gateway for Android™</h3>
 
   <p align="center">
-    Turns your smartphone into an SMS gateway for sending messages via API.
+    Turns your smartphone into an SMS gateway for sending and receiving messages via API.
     <br />
     <a href="https://sms-gate.app"><strong>Explore the docs »</strong></a>
     <br />
@@ -78,28 +78,40 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 
 ### Features
 
-- **No registration required:** No registration or email is required to create an account. In local mode, you don't need an account at all!
-- **Send SMS via API:** Use our API to send messages directly from your applications or services.
-- **Support for Android 5.0 and above:** The application is compatible with Android 5.0 and later versions. [See Android 15 Note](https://docs.sms-gate.app/faq/general/#does-the-app-support-android-15).
-- **Message status tracking:** Monitor the status of sent messages in real-time.
-- **Automatic startup:** The application starts running as soon as your device boots up.
-- **Support for multiple SIM cards:** The application supports devices with [multiple SIM cards](https://docs.sms-gate.app/features/multi-sim/).
-- **Multipart messages:** The application supports sending long messages with auto-partitioning.
-- **End-to-end encryption:** The application provides end-to-end encryption by encrypting message content and recipients' phone numbers before sending them to the API and decrypting them on the device.
-- **Message expiration:** The application allows setting an expiration time for messages. Messages will not be sent if they have expired.
-- **Random delay between messages:** Introduces a random delay between sending messages to avoid mobile operator restrictions.
-- **Private server support:** The application allows for the use of a backend server in the user's infrastructure for enhanced security.
-- **App status reporting:** Ability to report current app status by sending requests to specified URL at any user-defined intervals.
-- **Webhooks:** The application allows setting up webhooks to be sent on specified events.
-- **SIM Rotation:** The application supports [SIM card rotation](https://docs.sms-gate.app/features/multi-sim/#sim-card-rotation) to distribute the load across different SIM cards.
+📱 Core Functionality:
+
+- 🆓 **No registration required:** No registration or email is required to create an account. In local mode, you don't need an account at all!
+- 📨 **Send and Receive SMS via API:** Use [our API](https://docs.sms-gate.app/integration/api/) to send messages directly from your applications or services.
+- 🤖 **Support for Android 5.0 and above:** Compatible with Android 5.0 and later versions. [See Android 15 Note](https://docs.sms-gate.app/faq/general/#does-the-app-support-android-15)
+
+💬 Message Handling:
+
+- 📜 **Multipart messages:** Send long messages with auto-partitioning.
+- 📊 **Message status tracking:** Monitor the status of sent messages in real-time.
+- 🔔 **Real-time incoming message notifications:** Receive instant notifications for incoming messages via webhook.
+- 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) using the same webhook system used for real-time notifications.
+
+🔒 Security and Privacy:
+
+- 🔐 **End-to-end encryption:** Encrypts message content and recipients' phone numbers before sending them to the API and decrypts them on the device.
+- 🏢 **Private server support:** Use a backend server in your own infrastructure for enhanced security.
+
+🔧 Advanced Features:
+
+- 💳 **Multiple SIM card support:** Supports devices with [multiple SIM cards](https://docs.sms-gate.app/features/multi-sim/).
+- 📱📱 **Multiple device support:** Connect [multiple devices](https://docs.sms-gate.app/features/multi-device/) to the same account with Cloud or Private server. Messages sent via the server are distributed across all connected devices.
+
+🔌 Integration:
+
+- 🪝 **Webhooks:** Set up [webhooks](https://docs.sms-gate.app/features/webhooks/) to be triggered on specified events.
 
 ### Ideal For
 
-- **Authentication & Verification:** Secure user accounts and transactions with SMS-based two-factor authentication, minimizing the risk of unauthorized access.
-- **Transactional Messages:** Send confirmation messages for user actions, enhancing the reliability and perception of your brand.
-- **SMS Reminders:** Prompt users about upcoming events or appointments to ensure engagement and reduce missed opportunities.
-- **SMS Notifications:** Deliver immediate notifications to users for important updates, offers, and service enhancements.
-- **User Feedback:** Solicit and collect user feedback through SMS, providing valuable insights for improving your services.
+- 🔐 **Authentication & Verification:** Secure user accounts and transactions with SMS-based two-factor authentication, minimizing the risk of unauthorized access.
+- 📩 **Transactional Messages:** Send confirmation messages for user actions, enhancing the reliability and perception of your brand.
+- ⏰ **SMS Reminders:** Prompt users about upcoming events or appointments to ensure engagement and reduce missed opportunities.
+- 🔔 **SMS Notifications:** Deliver immediate notifications to users for important updates, offers, and service enhancements.
+- 📊 **User Feedback:** Solicit and collect user feedback through SMS, providing valuable insights for improving your services.
 
 *Note*: It is not recommended to use this for batch sending due to potential mobile operator restrictions.
 
