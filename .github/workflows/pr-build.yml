@@ -1,7 +1,7 @@
 name: Release
 
 on:
-  pull_request: { types: [ opened, synchronize ] }
+  pull_request: { types: [opened, synchronize] }
 
 jobs:
   build:
@@ -19,17 +19,44 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
           name: release-artifacts
-      - name: Pull request artifacts
-        uses: gavv/pull-request-artifacts@v2
+
+      - name: Upload to S3
+        uses: capcom6/upload-s3-action@master
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         with:
-          # Commit hash that triggered PR
-          commit: ${{ github.event.pull_request.head.sha }}
-          # Token for current repo (used to post PR comment)
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          artifacts-branch: artifacts
-          artifacts: |
+          aws_key_id: ${{ secrets.AWS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_bucket: ${{ secrets.AWS_BUCKET }}
+          endpoint: ${{ secrets.AWS_ENDPOINT }}
+          source_files: |
             ./apk/release/app-release.apk
             ./bundle/release/app-release.aab
+          destination_dir: apk/${{ github.event.pull_request.head.sha }}
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v3
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: Pull request artifacts
+
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## 🤖 Pull request artifacts
+
+            | file | commit |
+            | ---- | ------ |
+            | [`app-release.apk`](https://s3.sms-gate.app/apk/${{ github.event.pull_request.head.sha }}/app-release.apk) | ${{ github.event.pull_request.head.sha }} |
+            | [`app-release.aab`](https://s3.sms-gate.app/apk/${{ github.event.pull_request.head.sha }}/app-release.aab) | ${{ github.event.pull_request.head.sha }} |
+
+          edit-mode: replace
