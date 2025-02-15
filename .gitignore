@@ -1,7 +1,6 @@
 # File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
-
-# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,android,androidstudio,intellij,linux,windows
-# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,macos,android,androidstudio,intellij,linux,windows
+# Created by https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,macos,linux,intellij,androidstudio,android,dotenv
+# Edit at https://www.toptal.com/developers/gitignore?templates=windows,visualstudiocode,macos,linux,intellij,androidstudio,android,dotenv
 
 ### Android ###
 # Gradle files
@@ -43,6 +42,9 @@ gen-external-apklibs
 
 # Replacement of .externalNativeBuild directories introduced
 # with Android Studio 3.5.
+
+### dotenv ###
+.env
 
 ### Intellij ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
@@ -224,12 +226,6 @@ Temporary Items
 .history
 .ionide
 
-# Support for Project snippet scope
-.vscode/*.code-snippets
-
-# Ignore code-workspaces
-*.code-workspace
-
 ### Windows ###
 # Windows thumbnail cache files
 Thumbs.db
@@ -369,7 +365,7 @@ hs_err_pid*
 
 !/gradle/wrapper/gradle-wrapper.jar
 
-# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,android,androidstudio,intellij,linux,windows
+# End of https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,macos,linux,intellij,androidstudio,android,dotenv
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
 
