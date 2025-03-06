@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="@string/webhooks">
+        <SwitchPreference
+            android:icon="@drawable/ic_no_internet"
+            android:defaultValue="true"
+            android:key="webhooks.internet_required"
+            app:summary="@string/the_webhook_request_will_wait_for_an_internet_connection"
+            app:title="@string/require_internet_connection" />
+        <EditTextPreference
+            android:icon="@drawable/ic_retry"
+            android:key="webhooks.retry_count"
+            app:title="@string/retry_count"
+            app:defaultValue="15"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            android:icon="@drawable/ic_signing_key"
+            app:enableCopying="true"
+            app:key="webhooks.signing_key"
+            app:title="@string/signing_key"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+</androidx.preference.PreferenceScreen>

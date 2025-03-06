@@ -17,25 +17,18 @@
         app:title="@string/messages"
         app:summary="@string/delays_limits_etc"/>
 
+    <Preference
+        android:icon="@drawable/ic_webhook"
+        app:fragment="me.capcom.smsgateway.ui.settings.WebhooksSettingsFragment"
+        app:summary="@string/retries_signing_etc"
+        app:title="@string/webhooks_dotdotdot" />
+
     <PreferenceCategory app:title="@string/encryption">
         <EditTextPreference
             app:icon="@drawable/ic_encryption"
             app:key="encryption.passphrase"
             app:summary="@string/use_empty_to_disable"
             app:title="@string/passphrase" />
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/webhooks">
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="webhooks.internet_required"
-            app:summary="@string/the_webhook_request_will_wait_for_an_internet_connection"
-            app:title="@string/require_internet_connection" />
-        <EditTextPreference
-            android:key="webhooks.retry_count"
-            app:title="@string/retry_count"
-            app:defaultValue="15"
-            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
     <PreferenceCategory
