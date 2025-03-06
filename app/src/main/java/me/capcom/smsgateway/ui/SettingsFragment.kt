@@ -45,7 +45,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         if (preference.key == "ping.interval_seconds"
             || preference.key == "logs.lifetime_days"
-            || preference.key == "webhooks.retry_count"
         ) {
             (preference as EditTextPreference).setOnBindEditTextListener {
                 it.inputType = InputType.TYPE_CLASS_NUMBER

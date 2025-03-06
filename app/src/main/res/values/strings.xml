@@ -94,4 +94,7 @@
     <string name="username_must_be_at_least_3_characters">Username must be at least 3 characters</string>
     <string name="view">View</string>
     <string name="webhooks">Webhooks</string>
+    <string name="signing_key">Signing Key</string>
+    <string name="webhooks_dotdotdot">Webhooks...</string>
+    <string name="retries_signing_etc">Retries, signing, etc.</string>
 </resources>

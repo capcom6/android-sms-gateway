@@ -56,7 +56,7 @@ android {
 }
 
 dependencies {
-    def ktor_version = "2.0.2"
+    def ktor_version = "2.2.4"
     def room_version = "2.4.3"
     def coroutines_version = "1.6.1"
     def work_version = "2.7.1"
@@ -66,19 +66,17 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version")
 
+    implementation("io.ktor:ktor-serialization-gson:$ktor_version")
+
     implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-server-netty:$ktor_version")
-//    implementation("io.ktor:ktor-server-cors:$ktor_version")
     implementation("io.ktor:ktor-server-compression:$ktor_version")
     implementation("io.ktor:ktor-server-status-pages:$ktor_version")
-//    implementation("io.ktor:ktor-server-default-headers:$ktor_version")
-
-
     implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
-    implementation("io.ktor:ktor-serialization-gson:$ktor_version")
     implementation("io.ktor:ktor-server-call-logging:$ktor_version")
     implementation("io.ktor:ktor-server-auth:$ktor_version")
 
+    implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-client-okhttp:$ktor_version")
 

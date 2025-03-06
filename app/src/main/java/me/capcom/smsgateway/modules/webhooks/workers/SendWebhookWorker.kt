@@ -35,6 +35,7 @@ import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.webhooks.NAME
 import me.capcom.smsgateway.modules.webhooks.WebhooksSettings
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
+import me.capcom.smsgateway.modules.webhooks.plugins.PayloadSingingPlugin
 import org.json.JSONException
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -160,6 +161,9 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         }
         install(DefaultRequest) {
             userAgent("${BuildConfig.APPLICATION_ID}/${BuildConfig.VERSION_NAME}")
+        }
+        install(PayloadSingingPlugin) {
+            secretKeyProvider = { settings.signingKey }
         }
     }
 
