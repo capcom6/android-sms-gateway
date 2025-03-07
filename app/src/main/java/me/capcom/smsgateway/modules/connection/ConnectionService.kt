@@ -30,11 +30,14 @@ class ConnectionService(
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onLost(network: Network) {
+            if (_status.value == false) return
+
             logsService.insert(
                 LogEntry.Priority.WARN,
                 MODULE_NAME,
                 "Internet connection lost"
             )
+
             _status.postValue(false)
 
             super.onLost(network)
@@ -49,6 +52,9 @@ class ConnectionService(
                         && (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || networkCapabilities.hasCapability(
                     NetworkCapabilities.NET_CAPABILITY_VALIDATED
                 ))
+
+            if (_status.value == hasInternet) return
+
             logsService.insert(
                 LogEntry.Priority.INFO,
                 MODULE_NAME,
