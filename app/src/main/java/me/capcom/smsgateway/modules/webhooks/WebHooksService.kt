@@ -14,6 +14,7 @@ import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
 import me.capcom.smsgateway.modules.webhooks.workers.SendWebhookWorker
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
+import java.net.URL
 
 class WebHooksService(
     private val webHooksDao: WebHooksDao,
@@ -53,8 +54,10 @@ class WebHooksService(
     }
 
     fun replace(source: EntitySource, webHook: WebHookDTO): WebHookDTO {
-        if (!URLUtil.isHttpsUrl(webHook.url)) {
-            throw IllegalArgumentException("Invalid URL")
+        if (!URLUtil.isHttpsUrl(webHook.url)
+            && !(URLUtil.isHttpUrl(webHook.url) && URL(webHook.url).host == "127.0.0.1")
+        ) {
+            throw IllegalArgumentException("url must start with https:// or http://127.0.0.1")
         }
         if (webHook.event !in WebHookEvent.values()) {
             throw IllegalArgumentException(

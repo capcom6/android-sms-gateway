@@ -2,9 +2,12 @@
 <network-security-config>
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
-            <certificates src="user"/>
-            <certificates src="system"/>
+            <certificates src="user" />
+            <certificates src="system" />
             <certificates src="@raw/ca" />
         </trust-anchors>
     </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
 </network-security-config>
