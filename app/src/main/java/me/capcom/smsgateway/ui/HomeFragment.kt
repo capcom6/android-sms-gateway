@@ -123,17 +123,21 @@ class HomeFragment : Fragment() {
             settingsHelper.autostart = isChecked
         }
         binding.switchUseRemoteServer.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked != gatewaySettings.enabled) {
+                restartRequiredNotification()
+            }
+
             gatewaySettings.enabled = isChecked
             binding.layoutRemoteServer.isVisible = isChecked
             binding.textConnectionStatus.isVisible = isChecked
-
-            restartRequiredNotification()
         }
         binding.switchUseLocalServer.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked != localServerSettings.enabled) {
+                restartRequiredNotification()
+            }
+
             localServerSettings.enabled = isChecked
             binding.layoutLocalServer.isVisible = isChecked
-
-            restartRequiredNotification()
         }
 
         binding.buttonStart.setOnClickListener {
