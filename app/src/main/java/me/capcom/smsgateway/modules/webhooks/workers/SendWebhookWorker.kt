@@ -33,11 +33,13 @@ import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.webhooks.NAME
+import me.capcom.smsgateway.modules.webhooks.TemporaryStorage
 import me.capcom.smsgateway.modules.webhooks.WebhooksSettings
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
 import me.capcom.smsgateway.modules.webhooks.plugins.PayloadSingingPlugin
 import org.json.JSONException
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
 
@@ -48,9 +50,28 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
     private val logsSvc: LogsService by inject()
 
     private val settings: WebhooksSettings by inject()
+    private val storage: TemporaryStorage by inject()
 
     override suspend fun doWork(): ListenableWorker.Result {
-        return when (val result = sendData()) {
+        val storageKey = inputData.getString(INPUT_STORAGE_KEY)
+        val payload = storageKey?.let {
+            storage.get(it)
+        } ?: inputData.getString("data")
+
+        if (payload == null) {
+            logsSvc.insert(
+                priority = LogEntry.Priority.ERROR,
+                module = NAME,
+                message = "Empty payload",
+                context = mapOf(
+                    "url" to inputData.getString(INPUT_URL),
+                    "storageKey" to inputData.getString(INPUT_STORAGE_KEY),
+                )
+            )
+            return ListenableWorker.Result.failure()
+        }
+
+        return when (val result = sendData(payload)) {
             Result.Success -> {
                 logsSvc.insert(
                     priority = LogEntry.Priority.INFO,
@@ -58,10 +79,13 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
                     message = "Webhook sent successfully",
                     context = mapOf(
                         "url" to inputData.getString(INPUT_URL),
-                        "data" to inputData.getString(INPUT_DATA),
+                        "data" to payload,
                     )
                 )
 
+                storageKey?.let {
+                    storage.remove(it)
+                }
                 ListenableWorker.Result.success()
             }
 
@@ -72,9 +96,13 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
                     message = "Webhook failed: ${result.error}",
                     context = mapOf(
                         "url" to inputData.getString(INPUT_URL),
-                        "data" to inputData.getString(INPUT_DATA),
+                        "data" to payload,
                     )
                 )
+
+                storageKey?.let {
+                    storage.remove(it)
+                }
                 ListenableWorker.Result.failure()
             }
 
@@ -85,7 +113,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
                     message = "Webhook failed with retry: ${result.reason}",
                     context = mapOf(
                         "url" to inputData.getString(INPUT_URL),
-                        "data" to inputData.getString(INPUT_DATA),
+                        "data" to payload,
                     )
                 )
                 ListenableWorker.Result.retry()
@@ -93,7 +121,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         }
     }
 
-    private suspend fun sendData(): Result {
+    private suspend fun sendData(payload: String): Result {
         try {
             if (runAttemptCount >= settings.retryCount) {
                 return Result.Failure("Retry limit exceeded")
@@ -101,8 +129,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
 
             val url = inputData.getString(INPUT_URL)
                 ?: return Result.Failure("Empty url")
-            val data = inputData.getString(INPUT_DATA)
-                ?.let { gson.fromJson(it, JsonObject::class.java) }
+            val data = gson.fromJson(payload, JsonObject::class.java)
                 ?: return Result.Failure("Empty data")
 
             val response = client.post(url) {
@@ -173,18 +200,21 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         class Retry(val reason: String) : Result()
     }
 
-    companion object {
+    companion object : KoinComponent {
         fun start(
             context: Context,
             url: String,
             data: WebHookEventDTO,
             internetRequired: Boolean
         ) {
+            get<TemporaryStorage>().put(data.id, gson.toJson(data))
+
             val work = OneTimeWorkRequestBuilder<SendWebhookWorker>()
                 .setInputData(
                     workDataOf(
                         INPUT_URL to url,
-                        INPUT_DATA to gson.toJson(data),
+                        INPUT_STORAGE_KEY to data.id,
+//                        INPUT_DATA to gson.toJson(data),
                     )
                 )
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
@@ -211,6 +241,7 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
         private val gson = GsonBuilder().configure().create()
 
         private const val INPUT_URL = "url"
-        private const val INPUT_DATA = "data"
+        private const val INPUT_STORAGE_KEY = "storageKey"
+//        private const val INPUT_DATA = "data"
     }
 }
