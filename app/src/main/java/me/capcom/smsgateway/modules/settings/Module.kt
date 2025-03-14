@@ -8,6 +8,7 @@ import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.logs.LogsSettings
 import me.capcom.smsgateway.modules.messages.MessagesSettings
 import me.capcom.smsgateway.modules.ping.PingSettings
+import me.capcom.smsgateway.modules.webhooks.TemporaryStorage
 import me.capcom.smsgateway.modules.webhooks.WebhooksSettings
 import org.koin.dsl.module
 
@@ -46,6 +47,11 @@ val settingsModule = module {
     }
     factory {
         WebhooksSettings(
+            PreferencesStorage(get(), "webhooks")
+        )
+    }
+    factory {
+        TemporaryStorage(
             PreferencesStorage(get(), "webhooks")
         )
     }
