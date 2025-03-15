@@ -1,11 +1,12 @@
 name: Release
 
 on:
-  pull_request: { types: [opened, synchronize] }
+  pull_request: { types: [opened, synchronize, ready_for_review] }
 
 jobs:
   build:
     name: Build
+    if: github.event.pull_request.draft == false
     uses: ./.github/workflows/build-apk.yml
     with:
       version-name: ${{ github.sha }}
@@ -17,6 +18,7 @@ jobs:
       signing-store-password: ${{ secrets.SIGNING_STORE_PASSWORD }}
   release:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     needs: build
     steps:
       - name: Download artifacts
