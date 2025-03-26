@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory app:title="@string/server">
         <EditTextPreference
             app:enableCopying="true"
@@ -12,7 +13,7 @@
             app:summary="@string/ignored_for_public_server"
             app:title="@string/private_token" />
     </PreferenceCategory>
-    <PreferenceCategory app:title="Credentials">
+    <PreferenceCategory app:title="@string/credentials">
         <EditTextPreference
             app:enableCopying="true"
             app:icon="@drawable/ic_username"
@@ -26,6 +27,13 @@
             app:key="gateway.password"
             app:persistent="false"
             app:title="@string/password" />
+        <Preference
+            android:icon="@drawable/ic_code"
+            android:key="gateway.login_code"
+            android:persistent="false"
+            android:summary="@string/use_this_code_to_sign_in_on_another_device"
+            android:title="@string/login_code"
+            app:enableCopying="true" />
     </PreferenceCategory>
-    <Preference app:summary="Restart required to apply changes" />
+    <Preference app:summary="@string/restart_required_to_apply_changes" />
 </PreferenceScreen>

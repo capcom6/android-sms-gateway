@@ -23,10 +23,17 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/sign_in" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/by_code" />
     </com.google.android.material.tabs.TabLayout>
 
     <TextView
         android:id="@+id/layoutSignUp"
+        tools:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="4dp"
@@ -41,7 +48,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:visibility="gone"
-        tools:visibility="visible">
+        tools:visibility="gone">
 
         <TextView
             android:layout_width="match_parent"
@@ -81,6 +88,39 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text|textPassword" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutSignInByCode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:gravity="center"
+            android:text="@string/please_enter_one_time_code_displayed_on_already_registered_device"
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/editCodeLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:hint="@string/login_code"
+            app:errorEnabled="true">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number|numberPassword" />
 
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>

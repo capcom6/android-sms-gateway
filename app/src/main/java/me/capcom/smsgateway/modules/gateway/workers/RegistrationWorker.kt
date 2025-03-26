@@ -12,6 +12,7 @@ import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import me.capcom.smsgateway.App
+import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import org.koin.core.component.KoinComponent
@@ -31,7 +32,10 @@ class RegistrationWorker(
 
             when (isUpdate) {
                 true -> App.instance.gatewayService.updateDevice(token ?: return Result.success())
-                false -> App.instance.gatewayService.registerDevice(token)
+                false -> App.instance.gatewayService.registerDevice(
+                    token,
+                    GatewayService.RegistrationMode.Anonymous
+                )
             }
 
             return Result.success()

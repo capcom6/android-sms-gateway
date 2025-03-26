@@ -76,6 +76,8 @@ class HomeFragment : Fragment() {
                     return@setFragmentResultListener
                 }
 
+                FirstStartDialogFragment.Result.SignUp -> requestPermissionsAndStart()
+
                 FirstStartDialogFragment.Result.SignIn -> {
                     val username = FirstStartDialogFragment.getUsername(data)
                     val password = FirstStartDialogFragment.getPassword(data)
@@ -83,7 +85,7 @@ class HomeFragment : Fragment() {
                         try {
                             gatewaySvc.registerDevice(
                                 null,
-                                username to password
+                                GatewayService.RegistrationMode.WithCredentials(username, password)
                             )
                             requestPermissionsAndStart()
                         } catch (th: Throwable) {
@@ -96,7 +98,24 @@ class HomeFragment : Fragment() {
                     }
                 }
 
-                FirstStartDialogFragment.Result.SignUp -> requestPermissionsAndStart()
+                FirstStartDialogFragment.Result.SignInByCode -> {
+                    val code = FirstStartDialogFragment.getCode(data)
+                    lifecycleScope.launch {
+                        try {
+                            gatewaySvc.registerDevice(
+                                null,
+                                GatewayService.RegistrationMode.WithCode(code)
+                            )
+                            requestPermissionsAndStart()
+                        } catch (th: Throwable) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to register device: ${th.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
             }
         }
     }
