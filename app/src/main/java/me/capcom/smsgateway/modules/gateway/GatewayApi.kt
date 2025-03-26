@@ -63,6 +63,17 @@ class GatewayApi(
         }.body()
     }
 
+    suspend fun deviceRegister(
+        request: DeviceRegisterRequest,
+        code: String
+    ): DeviceRegisterResponse {
+        return client.post("$baseUrl/device") {
+            header("Authorization", "Code $code")
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+    }
+
     suspend fun devicePatch(token: String, request: DevicePatchRequest) {
         client.patch("$baseUrl/device") {
             bearerAuth(token)
@@ -91,7 +102,13 @@ class GatewayApi(
         }.body()
     }
 
-    suspend fun changePassword(token: String, request: PasswordChangeRequest) {
+    suspend fun getUserCode(credentials: Pair<String, String>): GetUserCodeResponse {
+        return client.get("$baseUrl/user/code") {
+            basicAuth(credentials.first, credentials.second)
+        }.body()
+    }
+
+    suspend fun changeUserPassword(token: String, request: PasswordChangeRequest) {
         client.patch("$baseUrl/user/password") {
             bearerAuth(token)
             contentType(ContentType.Application.Json)
@@ -140,6 +157,12 @@ class GatewayApi(
         val newPassword: String
     )
 
+    data class GetUserCodeResponse(
+        val code: String,
+        val validUntil: Date
+    )
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     data class Message(
         val id: String,
         val message: String,

@@ -15,6 +15,7 @@ import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import org.koin.android.ext.android.inject
 import java.net.URL
+import java.text.DateFormat
 
 class CloudServerSettingsFragment : BasePreferenceFragment() {
 
@@ -82,6 +83,34 @@ class CloudServerSettingsFragment : BasePreferenceFragment() {
                         showToast(getString(R.string.password_changed_successfully))
                     } catch (e: Exception) {
                         showToast(getString(R.string.failed_to_change_password, e.message))
+                    } finally {
+                        requireActivity().findViewById<View>(R.id.progressBar).isVisible = false
+                    }
+                }
+
+                true
+            }
+        }
+
+        findPreference<Preference>("gateway.login_code")?.apply {
+            isVisible = settings.username != null && settings.password != null
+
+            onPreferenceClickListener = Preference.OnPreferenceClickListener {
+                this@CloudServerSettingsFragment.lifecycleScope.launch {
+                    try {
+                        requireActivity().findViewById<View>(R.id.progressBar).isVisible = true
+
+                        val loginCode = service.getLoginCode()
+                        title = getString(
+                            R.string.login_code_expires,
+                            DateFormat.getDateTimeInstance().format(loginCode.validUntil)
+                        )
+                        summary = loginCode.code
+
+                        listView.adapter?.notifyDataSetChanged()
+                        showToast(getString(R.string.success_long_press_to_copy))
+                    } catch (e: Exception) {
+                        showToast(getString(R.string.failed_to_get_login_code, e.message))
                     } finally {
                         requireActivity().findViewById<View>(R.id.progressBar).isVisible = false
                     }

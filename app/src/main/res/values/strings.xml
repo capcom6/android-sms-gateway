@@ -9,11 +9,13 @@
     <string name="battery_optimization_is_not_supported_on_this_device">Battery optimization is not supported on this device</string>
     <string name="btn_cancel">Cancel</string>
     <string name="btn_continue">Continue</string>
+    <string name="by_code">By Code</string>
     <string name="can_affect_battery_life">can affect battery life</string>
     <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Click Continue to create an account. No personal information is required.\nBy continuing, you agree to our Privacy Policy at https://docs.sms-gate.app/privacy/policy/</string>
     <string name="cloud_server">Cloud server</string>
     <string name="cloud_server_dotdotdot">Cloud server…</string>
     <string name="copied_to_clipboard">Copied</string>
+    <string name="credentials">Credentials</string>
     <string name="delays_limits_etc">Delays, limits, etc.</string>
     <string name="delays_seconds">Delays, seconds</string>
     <string name="delete_after_days">Delete after, days</string>
@@ -22,6 +24,7 @@
     <string name="enabled">Enabled</string>
     <string name="encryption">Encryption</string>
     <string name="failed_to_change_password">Failed to change password: %1$s</string>
+    <string name="failed_to_get_login_code">Failed to get login code: %1$s</string>
     <string name="failed_to_register_device">Failed to register device: %1$s</string>
     <string name="if_sim_number_is_not_specified_use">If SIM number is not specified, use</string>
     <string name="ignored_for_public_server">Ignored for public server</string>
@@ -38,6 +41,8 @@
     <string name="local_address">Local address:</string>
     <string name="local_server_dotdotdot">Local Server…</string>
     <string name="local_sms_gateway_notifications">Local SMS Gateway notifications</string>
+    <string name="login_code">Login Code</string>
+    <string name="login_code_expires">Login Code, expires %1$s</string>
     <string name="logs">Logs</string>
     <string name="maximum">Maximum</string>
     <string name="messages">Messages…</string>
@@ -58,11 +63,14 @@
     <string name="period">Period</string>
     <string name="ping">Ping</string>
     <string name="ping_service_is_active">Ping service is active</string>
+    <string name="please_enter_one_time_code_displayed_on_already_registered_device">Please enter one-time code displayed on already registered device</string>
     <string name="port">Port</string>
     <string name="port_credentials_etc">Port, credentials, etc.</string>
     <string name="private_token">Private Token</string>
     <string name="public_address">Public address:</string>
     <string name="require_internet_connection">Require Internet connection</string>
+    <string name="restart_required_to_apply_changes">Restart required to apply changes</string>
+    <string name="retries_signing_etc">Retries, signing, etc.</string>
     <string name="retry_count">Retry count</string>
     <string name="send_messages_notification">Sending messages…</string>
     <string name="sending_webhook">Sending webhook…</string>
@@ -80,8 +88,10 @@
     <string name="settings_start_on_boot">Start on boot</string>
     <string name="sign_in">Sign In</string>
     <string name="sign_up">Sign Up</string>
+    <string name="signing_key">Signing Key</string>
     <string name="sms_gateway">SMS Gateway</string>
     <string name="sms_gateway_is_running_on_port">SMS gateway is running on port %1$d</string>
+    <string name="success_long_press_to_copy">Success, long press to copy</string>
     <string name="system">System</string>
     <string name="tab_text_home">Home</string>
     <string name="tab_text_messages">MESSAGES</string>
@@ -90,11 +100,10 @@
     <string name="to_add_a_device_to_an_existing_account_please_fill_in_the_credentials_below">To add a device to an existing account, please fill in the credentials below.</string>
     <string name="to_apply_the_changes_restart_the_app_using_the_button_below">To apply the changes, restart the app using the button below.</string>
     <string name="use_empty_to_disable">Use empty to disable</string>
+    <string name="use_this_code_to_sign_in_on_another_device">Use this code to sign in on another device</string>
     <string name="username">Username</string>
     <string name="username_must_be_at_least_3_characters">Username must be at least 3 characters</string>
     <string name="view">View</string>
     <string name="webhooks">Webhooks</string>
-    <string name="signing_key">Signing Key</string>
     <string name="webhooks_dotdotdot">Webhooks...</string>
-    <string name="retries_signing_etc">Retries, signing, etc.</string>
 </resources>

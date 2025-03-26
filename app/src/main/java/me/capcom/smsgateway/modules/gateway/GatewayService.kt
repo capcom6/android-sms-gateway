@@ -59,11 +59,20 @@ class GatewayService(
         this._api = null
     }
 
+    suspend fun getLoginCode(): GatewayApi.GetUserCodeResponse {
+        val username = settings.username
+            ?: throw IllegalStateException("Username is not set")
+        val password = settings.password
+            ?: throw IllegalStateException("Password is not set")
+
+        return api.getUserCode(username to password)
+    }
+
     suspend fun changePassword(current: String, new: String) {
         val info = settings.registrationInfo
             ?: throw IllegalStateException("The device is not registered on the server")
 
-        this.api.changePassword(
+        this.api.changeUserPassword(
             info.token,
             GatewayApi.PasswordChangeRequest(current, new)
         )
@@ -138,7 +147,7 @@ class GatewayService(
 
     internal suspend fun registerDevice(
         pushToken: String?,
-        credentials: Pair<String, String>? = null,
+        registerMode: RegistrationMode
     ) {
         if (!settings.enabled) return
 
@@ -161,13 +170,19 @@ class GatewayService(
         }
 
         try {
-            val response = api.deviceRegister(
-                GatewayApi.DeviceRegisterRequest(
-                    "${Build.MANUFACTURER}/${Build.PRODUCT}",
-                    pushToken
-                ),
-                credentials
+            val deviceName = "${Build.MANUFACTURER}/${Build.PRODUCT}"
+            val request = GatewayApi.DeviceRegisterRequest(
+                deviceName,
+                pushToken
             )
+            val response = when (registerMode) {
+                RegistrationMode.Anonymous -> api.deviceRegister(request, null)
+                is RegistrationMode.WithCode -> api.deviceRegister(request, registerMode.code)
+                is RegistrationMode.WithCredentials -> api.deviceRegister(
+                    request,
+                    registerMode.login to registerMode.password
+                )
+            }
             this.settings.registrationInfo = response
 
             events.emit(
@@ -225,5 +240,11 @@ class GatewayService(
             )
         )
         messagesService.enqueueMessage(request)
+    }
+
+    sealed class RegistrationMode {
+        object Anonymous : RegistrationMode()
+        class WithCredentials(val login: String, val password: String) : RegistrationMode()
+        class WithCode(val code: String) : RegistrationMode()
     }
 }

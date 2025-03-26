@@ -25,13 +25,21 @@ class FirstStartDialogFragment : DialogFragment() {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 when (tab.position) {
                     POSITION_SIGNUP -> {
-                        binding.layoutSignIn.isVisible = false
                         binding.layoutSignUp.isVisible = true
+                        binding.layoutSignIn.isVisible = false
+                        binding.layoutSignInByCode.isVisible = false
                     }
 
                     POSITION_SIGNIN -> {
-                        binding.layoutSignIn.isVisible = true
                         binding.layoutSignUp.isVisible = false
+                        binding.layoutSignIn.isVisible = true
+                        binding.layoutSignInByCode.isVisible = false
+                    }
+
+                    POSITION_SIGNIN_BY_CODE -> {
+                        binding.layoutSignUp.isVisible = false
+                        binding.layoutSignIn.isVisible = false
+                        binding.layoutSignInByCode.isVisible = true
                     }
                 }
             }
@@ -47,6 +55,7 @@ class FirstStartDialogFragment : DialogFragment() {
             when (binding.tabLayout.selectedTabPosition) {
                 POSITION_SIGNUP -> actionSignUp()
                 POSITION_SIGNIN -> actionSignIn()
+                POSITION_SIGNIN_BY_CODE -> actionSignInByCode()
             }
         }
 
@@ -65,6 +74,16 @@ class FirstStartDialogFragment : DialogFragment() {
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
+    }
+
+    private fun actionSignUp() {
+        setFragmentResult(
+            REQUEST_KEY,
+            Bundle().apply {
+                putString(KEY_RESULT_CODE, Result.SignUp.name)
+            }
+        )
+        dismiss()
     }
 
     private fun actionSignIn() {
@@ -95,11 +114,21 @@ class FirstStartDialogFragment : DialogFragment() {
         dismiss()
     }
 
-    private fun actionSignUp() {
+    private fun actionSignInByCode() {
+        val code = binding.editCode.text.toString()
+
+        binding.editCodeLayout.error = null
+
+        if (code.isEmpty()) {
+            binding.editCodeLayout.error = "Required"
+            return
+        }
+
         setFragmentResult(
             REQUEST_KEY,
             Bundle().apply {
-                putString(KEY_RESULT_CODE, Result.SignUp.name)
+                putString(KEY_RESULT_CODE, Result.SignInByCode.name)
+                putString(KEY_CODE, code)
             }
         )
         dismiss()
@@ -117,8 +146,9 @@ class FirstStartDialogFragment : DialogFragment() {
 
     enum class Result {
         Canceled,
-        SignIn,
         SignUp,
+        SignIn,
+        SignInByCode,
     }
 
     companion object {
@@ -126,10 +156,12 @@ class FirstStartDialogFragment : DialogFragment() {
 
         private const val POSITION_SIGNUP = 0
         private const val POSITION_SIGNIN = 1
+        private const val POSITION_SIGNIN_BY_CODE = 2
 
         private const val KEY_RESULT_CODE = "result_code"
         private const val KEY_USERNAME = "username"
         private const val KEY_PASSWORD = "password"
+        private const val KEY_CODE = "code"
 
         fun newInstance(): FirstStartDialogFragment = FirstStartDialogFragment()
 
@@ -138,5 +170,7 @@ class FirstStartDialogFragment : DialogFragment() {
 
         fun getUsername(data: Bundle): String = requireNotNull(data.getString(KEY_USERNAME))
         fun getPassword(data: Bundle): String = requireNotNull(data.getString(KEY_PASSWORD))
+
+        fun getCode(data: Bundle): String = requireNotNull(data.getString(KEY_CODE))
     }
 }
