@@ -11,6 +11,8 @@ import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import org.koin.core.component.KoinComponent
@@ -20,18 +22,42 @@ import java.util.concurrent.TimeUnit
 class SendMessagesWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params), KoinComponent {
 
+    private val logsService: LogsService by inject()
     private val messagesSvc: MessagesService by inject()
     private val notificationsSvc: NotificationsService by inject()
 
     override suspend fun doWork(): Result {
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            NAME,
+            "SendMessagesWorker started"
+        )
+
         return try {
             while (messagesSvc.sendPendingMessages()) {
                 // why not to `Result.retry()`?
+                logsService.insert(
+                    LogEntry.Priority.DEBUG,
+                    NAME,
+                    "SendMessagesWorker started next iteration"
+                )
             }
+
+            logsService.insert(
+                LogEntry.Priority.DEBUG,
+                NAME,
+                "SendMessagesWorker finished successfully"
+            )
 
             Result.success()
         } catch (e: Exception) {
             e.printStackTrace()
+
+            logsService.insert(
+                LogEntry.Priority.ERROR,
+                NAME,
+                "SendMessagesWorker finished with error: ${e.message ?: e.toString()}"
+            )
 
             Result.retry()
         }
