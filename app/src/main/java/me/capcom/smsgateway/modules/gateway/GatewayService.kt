@@ -236,7 +236,8 @@ class GatewayService(
                 message.withDeliveryReport ?: true,
                 skipPhoneValidation = true,
                 simNumber = message.simNumber,
-                validUntil = message.validUntil
+                validUntil = message.validUntil,
+                priority = message.priority,
             )
         )
         messagesService.enqueueMessage(request)

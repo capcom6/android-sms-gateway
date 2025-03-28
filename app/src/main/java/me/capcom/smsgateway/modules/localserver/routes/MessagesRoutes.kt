@@ -74,6 +74,7 @@ class MessagesRoutes(
                     skipPhoneValidation = skipPhoneValidation,
                     simNumber = request.simNumber,
                     validUntil = request.validUntil,
+                    priority = request.priority,
                 )
             )
             messagesService.enqueueMessage(sendRequest)

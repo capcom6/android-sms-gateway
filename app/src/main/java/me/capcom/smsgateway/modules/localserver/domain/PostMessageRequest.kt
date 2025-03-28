@@ -10,6 +10,7 @@ data class PostMessageRequest(
     val simNumber: Int?,
     val withDeliveryReport: Boolean?,
     val isEncrypted: Boolean?,
+    val priority: Byte = 0,
 
     @SerializedName("ttl")
     private val _ttl: Long?,
