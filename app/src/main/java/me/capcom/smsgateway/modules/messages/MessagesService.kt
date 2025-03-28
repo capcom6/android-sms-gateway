@@ -14,7 +14,9 @@ import android.telephony.SmsMessage
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
@@ -66,7 +68,7 @@ class MessagesService(
     }
 
     fun start(context: Context) {
-        SendMessagesWorker.start(context)
+        SendMessagesWorker.start(context, false)
         LogTruncateWorker.start(context)
     }
 
@@ -90,7 +92,10 @@ class MessagesService(
                 request.params.validUntil,
                 request.message.isEncrypted,
                 request.params.skipPhoneValidation,
+                request.params.priority ?: Message.PRIORITY_DEFAULT,
                 request.source,
+
+                createdAt = request.message.createdAt.time,
             ),
             request.message.phoneNumbers.map {
                 MessageRecipient(
@@ -103,7 +108,7 @@ class MessagesService(
 
         dao.insert(message)
 
-        SendMessagesWorker.start(context)
+        SendMessagesWorker.start(context, message.message.priority >= Message.PRIORITY_EXPEDITED)
     }
 
     fun getMessage(id: String): MessageWithRecipients? {
@@ -177,17 +182,23 @@ class MessagesService(
         dao.truncateLog(System.currentTimeMillis() - lifetime * 86400000L)
     }
 
-    internal suspend fun sendPendingMessages(): Boolean {
-        val messages = dao.selectPending()
-        if (messages.isEmpty()) {
-            return false
-        }
+    internal suspend fun sendPendingMessages() {
+        while (true) {
+            val message = dao.getPending() ?: return
+            delay(1L)
 
-        for (message in messages) {
-            applyLimit()
+            // don't apply limits for expedited messages
+            if (message.message.priority < Message.PRIORITY_EXPEDITED) {
+                applyLimit()
+            }
 
-            if (!sendMessage(message)) {
+            if (!withContext(NonCancellable) { sendMessage(message) }) {
                 // if message was not sent - don't need any delay before next message
+                continue
+            }
+
+            // don't apply delay for expedited messages
+            if (message.message.priority >= Message.PRIORITY_EXPEDITED) {
                 continue
             }
 
@@ -195,8 +206,6 @@ class MessagesService(
                 delay(it.random() * 1000L)
             }
         }
-
-        return true
     }
 
     private suspend fun applyLimit() {

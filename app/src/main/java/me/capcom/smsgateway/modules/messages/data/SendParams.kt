@@ -10,4 +10,5 @@ class SendParams(
      */
     val simNumber: Int?,
     val validUntil: Date?,
+    val priority: Byte?,
 )
