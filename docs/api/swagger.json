@@ -928,6 +928,13 @@
             "type": "boolean",
             "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms-gate.app/privacy/encryption).",
             "default": false
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Message priority, use >= 100 to ignore limits and delays",
+            "minimum": -128,
+            "maximum": 127,
+            "default": 0
           }
         },
         "required": [

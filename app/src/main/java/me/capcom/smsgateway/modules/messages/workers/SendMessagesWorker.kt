@@ -25,9 +25,7 @@ class SendMessagesWorker(appContext: Context, params: WorkerParameters) :
 
     override suspend fun doWork(): Result {
         return try {
-            while (messagesSvc.sendPendingMessages()) {
-                // why not to `Result.retry()`?
-            }
+            messagesSvc.sendPendingMessages()
 
             Result.success()
         } catch (e: Exception) {
@@ -57,7 +55,7 @@ class SendMessagesWorker(appContext: Context, params: WorkerParameters) :
     companion object {
         private const val NAME = "SendMessagesWorker"
 
-        fun start(context: Context) {
+        fun start(context: Context, force: Boolean) {
             val work = OneTimeWorkRequestBuilder<SendMessagesWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setBackoffCriteria(
@@ -70,7 +68,10 @@ class SendMessagesWorker(appContext: Context, params: WorkerParameters) :
             WorkManager.getInstance(context)
                 .enqueueUniqueWork(
                     NAME,
-                    ExistingWorkPolicy.KEEP,
+                    when (force) {
+                        true -> ExistingWorkPolicy.REPLACE
+                        false -> ExistingWorkPolicy.KEEP
+                    },
                     work
                 )
         }

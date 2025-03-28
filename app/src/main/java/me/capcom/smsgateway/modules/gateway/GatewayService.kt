@@ -230,13 +230,15 @@ class GatewayService(
                 message.id,
                 message.message,
                 message.phoneNumbers,
-                message.isEncrypted ?: false
+                message.isEncrypted ?: false,
+                message.createdAt ?: Date(),
             ),
             SendParams(
                 message.withDeliveryReport ?: true,
                 skipPhoneValidation = true,
                 simNumber = message.simNumber,
-                validUntil = message.validUntil
+                validUntil = message.validUntil,
+                priority = message.priority,
             )
         )
         messagesService.enqueueMessage(request)
