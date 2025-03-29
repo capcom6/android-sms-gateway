@@ -67,13 +67,15 @@ class MessagesRoutes(
                     request.id ?: NanoIdUtils.randomNanoId(),
                     request.message,
                     request.phoneNumbers,
-                    request.isEncrypted ?: false
+                    request.isEncrypted ?: false,
+                    Date(),
                 ),
                 SendParams(
                     request.withDeliveryReport ?: true,
                     skipPhoneValidation = skipPhoneValidation,
                     simNumber = request.simNumber,
                     validUntil = request.validUntil,
+                    priority = request.priority,
                 )
             )
             messagesService.enqueueMessage(sendRequest)
