@@ -94,6 +94,8 @@ class MessagesService(
                 request.params.skipPhoneValidation,
                 request.params.priority ?: Message.PRIORITY_DEFAULT,
                 request.source,
+
+                createdAt = request.message.createdAt.time,
             ),
             request.message.phoneNumbers.map {
                 MessageRecipient(

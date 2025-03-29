@@ -172,6 +172,7 @@ class GatewayApi(
         val isEncrypted: Boolean?,
         val validUntil: Date?,
         val priority: Byte?,
+        val createdAt: Date?,
     )
 
     data class RecipientState(

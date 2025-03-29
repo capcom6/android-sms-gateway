@@ -230,7 +230,8 @@ class GatewayService(
                 message.id,
                 message.message,
                 message.phoneNumbers,
-                message.isEncrypted ?: false
+                message.isEncrypted ?: false,
+                message.createdAt ?: Date(),
             ),
             SendParams(
                 message.withDeliveryReport ?: true,

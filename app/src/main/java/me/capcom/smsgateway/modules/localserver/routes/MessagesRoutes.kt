@@ -67,7 +67,8 @@ class MessagesRoutes(
                     request.id ?: NanoIdUtils.randomNanoId(),
                     request.message,
                     request.phoneNumbers,
-                    request.isEncrypted ?: false
+                    request.isEncrypted ?: false,
+                    Date(),
                 ),
                 SendParams(
                     request.withDeliveryReport ?: true,
