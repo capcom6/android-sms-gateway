@@ -21,6 +21,8 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.basic
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.header
@@ -96,9 +98,11 @@ class WebService : Service() {
                     call.respond(
                         when (cause) {
                             is IllegalArgumentException -> HttpStatusCode.BadRequest
+                            is BadRequestException -> HttpStatusCode.BadRequest
+                            is NotFoundException -> HttpStatusCode.NotFound
                             else -> HttpStatusCode.InternalServerError
                         },
-                        mapOf("message" to cause.message)
+                        mapOf("message" to cause.description)
                     )
                 }
             }
@@ -237,3 +241,9 @@ class WebService : Service() {
         }
     }
 }
+
+private val Throwable.description: String
+    get() {
+        return (localizedMessage ?: message ?: toString()) +
+                (cause?.let { ": " + it.description } ?: "")
+    }
