@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.34.0",
+    "version": "1.35.0",
     "title": "SMS Gateway for Android™ Integration API",
     "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
     "contact": {
@@ -928,6 +928,13 @@
             "type": "boolean",
             "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms-gate.app/privacy/encryption).",
             "default": false
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Message priority, use >= 100 to ignore limits and delays",
+            "minimum": -128,
+            "maximum": 127,
+            "default": 0
           }
         },
         "required": [
