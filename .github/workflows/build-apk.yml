@@ -20,7 +20,7 @@ on:
 
 jobs:
   build-apk:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: write
 
