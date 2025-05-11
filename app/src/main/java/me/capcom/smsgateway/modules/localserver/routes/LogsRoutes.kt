@@ -5,10 +5,9 @@ import io.ktor.server.application.call
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
-import me.capcom.smsgateway.helpers.DateHelper
+import me.capcom.smsgateway.helpers.DateTimeParser
 import me.capcom.smsgateway.modules.localserver.domain.GetLogsResponse
 import me.capcom.smsgateway.modules.logs.LogsService
-import java.time.Instant
 
 class LogsRoutes(
     private val logsService: LogsService,
@@ -24,11 +23,11 @@ class LogsRoutes(
         get {
             try {
                 val from = call.request.queryParameters["from"]?.let {
-                    DateHelper.ISO_DATE_TIME.parse(it)
-                }?.let { Instant.from(it).toEpochMilli() }
+                    DateTimeParser.parseIsoDateTime(it)?.time
+                }
                 val to = call.request.queryParameters["to"]?.let {
-                    DateHelper.ISO_DATE_TIME.parse(it)
-                }?.let { Instant.from(it).toEpochMilli() }
+                    DateTimeParser.parseIsoDateTime(it)?.time
+                }
 
                 call.respond(logsService.select(from, to).map { GetLogsResponse.from(it) })
             } catch (e: Exception) {
