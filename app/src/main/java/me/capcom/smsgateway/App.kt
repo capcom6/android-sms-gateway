@@ -50,6 +50,13 @@ class App: Application() {
             )
         }
 
+        Thread.setDefaultUncaughtExceptionHandler(
+            GlobalExceptionHandler(
+                Thread.getDefaultUncaughtExceptionHandler()!!,
+                get()
+            )
+        )
+
         instance = this
 
         EventsReceiver.register(this)
