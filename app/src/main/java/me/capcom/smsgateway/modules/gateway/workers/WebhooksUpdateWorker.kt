@@ -40,6 +40,7 @@ class WebhooksUpdateWorker(appContext: Context, params: WorkerParameters) :
             id = id,
             url = url,
             event = event,
+            source = EntitySource.Cloud,
         )
     }
 
