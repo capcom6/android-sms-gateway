@@ -2,19 +2,19 @@ package me.capcom.smsgateway.modules.webhooks.domain
 
 import com.google.gson.annotations.SerializedName
 
-enum class WebHookEvent {
+enum class WebHookEvent(val value: String) {
     @SerializedName("sms:received")
-    SmsReceived,
+    SmsReceived("sms:received"),
 
     @SerializedName("sms:sent")
-    SmsSent,
+    SmsSent("sms:sent"),
 
     @SerializedName("sms:delivered")
-    SmsDelivered,
+    SmsDelivered("sms:delivered"),
 
     @SerializedName("sms:failed")
-    SmsFailed,
+    SmsFailed("sms:failed"),
 
     @SerializedName("system:ping")
-    SystemPing,
+    SystemPing("system:ping"),
 }
