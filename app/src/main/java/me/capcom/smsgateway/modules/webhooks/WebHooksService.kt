@@ -32,12 +32,16 @@ class WebHooksService(
         eventsReceiver.stop()
     }
 
-    fun select(source: EntitySource): List<WebHookDTO> {
-        return webHooksDao.selectBySource(source).map {
+    fun select(source: EntitySource?): List<WebHookDTO> {
+        return when (source) {
+            null -> webHooksDao.select()
+            else -> webHooksDao.selectBySource(source)
+        }.map {
             WebHookDTO(
                 id = it.id,
                 url = it.url,
                 event = it.event,
+                source = it.source,
             )
         }
     }
@@ -77,6 +81,7 @@ class WebHooksService(
             id = webHookEntity.id,
             url = webHookEntity.url,
             event = webHookEntity.event,
+            source = webHookEntity.source,
         )
     }
 
