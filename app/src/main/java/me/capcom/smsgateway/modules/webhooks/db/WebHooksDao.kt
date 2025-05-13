@@ -12,6 +12,9 @@ import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 @Dao
 interface WebHooksDao {
 
+    @Query("SELECT * FROM webHook")
+    fun select(): List<WebHook>
+
     @Query("SELECT * FROM webHook WHERE event = :event")
     fun selectByEvent(event: WebHookEvent): List<WebHook>
 
