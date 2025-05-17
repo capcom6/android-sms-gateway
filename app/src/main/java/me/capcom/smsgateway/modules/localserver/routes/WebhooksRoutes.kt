@@ -9,11 +9,13 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import me.capcom.smsgateway.domain.EntitySource
+import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookDTO
 
 class WebhooksRoutes(
     private val webHooksService: WebHooksService,
+    private val localServerSettings: LocalServerSettings,
 ) {
     fun register(routing: Route) {
         routing.apply {
@@ -27,6 +29,12 @@ class WebhooksRoutes(
         }
         post {
             val webhook = call.receive<WebHookDTO>()
+            if (webhook.deviceId != null && webhook.deviceId != localServerSettings.deviceId) {
+                throw IllegalArgumentException(
+                    "Device ID mismatch"
+                )
+            }
+
             val updated = webHooksService.replace(EntitySource.Local, webhook)
 
             call.respond(HttpStatusCode.Created, updated)

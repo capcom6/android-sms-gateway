@@ -39,6 +39,7 @@ class WebHooksService(
         }.map {
             WebHookDTO(
                 id = it.id,
+                deviceId = null,
                 url = it.url,
                 event = it.event,
                 source = it.source,
@@ -79,6 +80,7 @@ class WebHooksService(
 
         return WebHookDTO(
             id = webHookEntity.id,
+            deviceId = null,
             url = webHookEntity.url,
             event = webHookEntity.event,
             source = webHookEntity.source,

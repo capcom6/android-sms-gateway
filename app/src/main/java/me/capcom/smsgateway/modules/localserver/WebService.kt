@@ -160,7 +160,7 @@ class WebService : Service() {
                             it.register(this)
                         }
                     }
-                    WebhooksRoutes(get()).let {
+                    WebhooksRoutes(get(), get()).let {
                         route("/webhook") {
                             it.register(this)
                         }
