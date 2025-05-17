@@ -644,6 +644,17 @@
         "type": "object",
         "title": "WebHook",
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the webhook.",
+            "example": "vWPwfPE-13ajPGniCZgdK"
+          },
+          "deviceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The unique identifier of the device the webhook is associated with.",
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
+          },
           "event": {
             "type": "string",
             "enum": [
@@ -655,11 +666,6 @@
             ],
             "description": "The type of event being reported",
             "example": "sms:received"
-          },
-          "id": {
-            "type": "string",
-            "description": "A unique identifier for the webhook.",
-            "example": "vWPwfPE-13ajPGniCZgdK"
           },
           "url": {
             "type": "string",

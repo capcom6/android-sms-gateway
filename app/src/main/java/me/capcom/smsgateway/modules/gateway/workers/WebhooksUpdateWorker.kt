@@ -38,6 +38,7 @@ class WebhooksUpdateWorker(appContext: Context, params: WorkerParameters) :
     private fun GatewayApi.WebHook.toDTO(): WebHookDTO {
         return WebHookDTO(
             id = id,
+            deviceId = null,
             url = url,
             event = event,
             source = EntitySource.Cloud,
