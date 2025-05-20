@@ -40,7 +40,14 @@ class WebhooksSettings(
         data.forEach { (key, value) ->
             when (key) {
                 INTERNET_REQUIRED -> storage.set(key, value?.toString()?.toBoolean())
-                RETRY_COUNT -> storage.set(key, value?.toString()?.toFloat()?.toInt()?.toString())
+                RETRY_COUNT -> {
+                    val retryCount = value?.toString()?.toInt()
+                    if (retryCount != null && retryCount < 1) {
+                        throw IllegalArgumentException("Retry count must be >= 1")
+                    }
+                    storage.set(key, retryCount?.toString())
+                }
+
                 SIGNING_KEY -> storage.set(key, value?.toString())
             }
         }

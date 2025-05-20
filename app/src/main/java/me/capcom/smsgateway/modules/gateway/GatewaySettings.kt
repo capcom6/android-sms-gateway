@@ -48,7 +48,14 @@ class GatewaySettings(
     override fun import(data: Map<String, *>) {
         data.forEach { (key, value) ->
             when (key) {
-                CLOUD_URL -> storage.set(key, value?.toString())
+                CLOUD_URL -> {
+                    val url = value?.toString()
+                    if (url != null && !url.startsWith("https://")) {
+                        throw IllegalArgumentException("url must start with https://")
+                    }
+                    storage.set(key, url)
+                }
+
                 PRIVATE_TOKEN -> storage.set(key, value?.toString())
             }
         }
