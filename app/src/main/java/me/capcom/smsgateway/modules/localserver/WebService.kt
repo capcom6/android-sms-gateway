@@ -172,6 +172,10 @@ class WebService : Service() {
                     route("/logs") {
                         LogsRoutes(get()).register(this)
                     }
+                    route("/settings") {
+                        me.capcom.smsgateway.modules.localserver.routes.SettingsRoutes(get())
+                            .register(this)
+                    }
                 }
             }
         }

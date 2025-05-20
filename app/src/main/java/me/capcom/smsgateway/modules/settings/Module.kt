@@ -10,11 +10,15 @@ import me.capcom.smsgateway.modules.messages.MessagesSettings
 import me.capcom.smsgateway.modules.ping.PingSettings
 import me.capcom.smsgateway.modules.webhooks.TemporaryStorage
 import me.capcom.smsgateway.modules.webhooks.WebhooksSettings
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
+
 val settingsModule = module {
+    singleOf(::SettingsService)
     factory { PreferenceManager.getDefaultSharedPreferences(get()) }
     factory { SettingsHelper(get()) }
+
     factory {
         EncryptionSettings(
             PreferencesStorage(get(), "encryption")
