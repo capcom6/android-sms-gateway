@@ -1,9 +1,9 @@
 package me.capcom.smsgateway.modules.settings
 
 import android.content.Context
+import me.capcom.smsgateway.R
 import me.capcom.smsgateway.modules.encryption.EncryptionSettings
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
-import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.logs.LogsSettings
 import me.capcom.smsgateway.modules.messages.MessagesSettings
 import me.capcom.smsgateway.modules.notifications.NotificationsService
@@ -16,7 +16,6 @@ class SettingsService(
     encryptionSettings: EncryptionSettings,
     gatewaySettings: GatewaySettings,
     messagesSettings: MessagesSettings,
-    localServerSettings: LocalServerSettings,
     pingSettings: PingSettings,
     logsSettings: LogsSettings,
     webhooksSettings: WebhooksSettings
@@ -25,7 +24,6 @@ class SettingsService(
         "encryption" to encryptionSettings,
         "gateway" to gatewaySettings,
         "messages" to messagesSettings,
-        "localserver" to localServerSettings,
         "ping" to pingSettings,
         "logs" to logsSettings,
         "webhooks" to webhooksSettings
@@ -37,15 +35,19 @@ class SettingsService(
 
     fun apply(data: Map<String, *>) {
         data.forEach { (key, value) ->
-            settings[key]?.let {
-                (it as? Importer)?.import(value as Map<String, *>)
+            try {
+                settings[key]?.let {
+                    (it as? Importer)?.import(value as Map<String, *>)
+                }
+            } catch (e: IllegalArgumentException) {
+                throw IllegalArgumentException("Failed to import $key: ${e.message}", e)
             }
         }
 
         notificationsService.notify(
             context,
             NotificationsService.NOTIFICATION_ID_SETTINGS_CHANGED,
-            "Settings changed via API. Restart the app to apply changes."
+            context.getString(R.string.settings_changed_via_api_restart_the_app_to_apply_changes)
         )
     }
 }
