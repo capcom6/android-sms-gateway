@@ -24,6 +24,7 @@ class SettingsRoutes(
                 val settings = settingsService.getAll()
                 call.respond(settings)
             } catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(
                     HttpStatusCode.InternalServerError,
                     mapOf("message" to "Failed to get settings: ${e.message}")

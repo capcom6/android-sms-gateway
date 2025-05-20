@@ -111,15 +111,25 @@ class MessagesSettings(
                 )
 
                 LIMIT_PERIOD -> storage.set(key, value?.let { Period.valueOf(it.toString()) })
-                LIMIT_VALUE -> storage.set(key, value?.toString()?.toFloat()?.toInt()?.toString())
+                LIMIT_VALUE -> {
+                    val limitValue = value?.toString()?.toInt()
+                    if (limitValue != null && limitValue < 1) {
+                        throw IllegalArgumentException("Limit value must be >= 1")
+                    }
+                    storage.set(key, limitValue?.toString())
+                }
+
                 SIM_SELECTION_MODE -> storage.set(
                     key,
                     value?.let { SimSelectionMode.valueOf(it.toString()) })
 
-                LOG_LIFETIME_DAYS -> storage.set(
-                    key,
-                    value?.toString()?.toFloat()?.toInt()?.toString()
-                )
+                LOG_LIFETIME_DAYS -> {
+                    val logLifetimeDays = value?.toString()?.toInt()
+                    if (logLifetimeDays != null && logLifetimeDays < 1) {
+                        throw IllegalArgumentException("Log lifetime days must be >= 1")
+                    }
+                    storage.set(key, logLifetimeDays?.toString())
+                }
             }
         }
     }

@@ -37,8 +37,12 @@ class SettingsService(
 
     fun apply(data: Map<String, *>) {
         data.forEach { (key, value) ->
-            settings[key]?.let {
-                (it as? Importer)?.import(value as Map<String, *>)
+            try {
+                settings[key]?.let {
+                    (it as? Importer)?.import(value as Map<String, *>)
+                }
+            } catch (e: IllegalArgumentException) {
+                throw IllegalArgumentException("Failed to import $key: ${e.message}", e)
             }
         }
 
