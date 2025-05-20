@@ -1,11 +1,13 @@
 package me.capcom.smsgateway.modules.messages
 
+import me.capcom.smsgateway.modules.settings.Exporter
+import me.capcom.smsgateway.modules.settings.Importer
 import me.capcom.smsgateway.modules.settings.KeyValueStorage
 import me.capcom.smsgateway.modules.settings.get
 
 class MessagesSettings(
     private val storage: KeyValueStorage,
-) {
+) : Exporter, Importer {
     enum class Period(val duration: Long) {
         Disabled(0L),
         PerMinute(60000L),
@@ -82,5 +84,43 @@ class MessagesSettings(
         private const val SIM_SELECTION_MODE = "sim_selection_mode"
 
         private const val LOG_LIFETIME_DAYS = "log_lifetime_days"
+    }
+
+    override fun export(): Map<String, *> {
+        return mapOf(
+            SEND_INTERVAL_MIN to sendIntervalMin,
+            SEND_INTERVAL_MAX to sendIntervalMax,
+            LIMIT_PERIOD to limitPeriod,
+            LIMIT_VALUE to limitValue,
+            SIM_SELECTION_MODE to simSelectionMode,
+            LOG_LIFETIME_DAYS to logLifetimeDays,
+        )
+    }
+
+    override fun import(data: Map<String, *>) {
+        data.forEach { (key, value) ->
+            when (key) {
+                SEND_INTERVAL_MIN -> storage.set(
+                    key,
+                    value?.toString()?.toFloat()?.toInt()?.toString()
+                )
+
+                SEND_INTERVAL_MAX -> storage.set(
+                    key,
+                    value?.toString()?.toFloat()?.toInt()?.toString()
+                )
+
+                LIMIT_PERIOD -> storage.set(key, value?.let { Period.valueOf(it.toString()) })
+                LIMIT_VALUE -> storage.set(key, value?.toString()?.toFloat()?.toInt()?.toString())
+                SIM_SELECTION_MODE -> storage.set(
+                    key,
+                    value?.let { SimSelectionMode.valueOf(it.toString()) })
+
+                LOG_LIFETIME_DAYS -> storage.set(
+                    key,
+                    value?.toString()?.toFloat()?.toInt()?.toString()
+                )
+            }
+        }
     }
 }

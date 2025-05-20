@@ -1,12 +1,14 @@
 package me.capcom.smsgateway.modules.localserver
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
+import me.capcom.smsgateway.modules.settings.Exporter
+import me.capcom.smsgateway.modules.settings.Importer
 import me.capcom.smsgateway.modules.settings.KeyValueStorage
 import me.capcom.smsgateway.modules.settings.get
 
 class LocalServerSettings(
     private val storage: KeyValueStorage,
-) {
+) : Exporter, Importer {
     var enabled: Boolean
         get() = storage.get<Boolean>(ENABLED) ?: false
         set(value) = storage.set(ENABLED, value)
@@ -36,5 +38,19 @@ class LocalServerSettings(
         private const val PORT = "PORT"
         private const val USERNAME = "USERNAME"
         private const val PASSWORD = "PASSWORD"
+    }
+
+    override fun export(): Map<String, *> {
+        return mapOf(
+            PORT to port,
+        )
+    }
+
+    override fun import(data: Map<String, *>) {
+        data.forEach { (key, value) ->
+            when (key) {
+                PORT -> storage.set(key, value?.toString()?.toFloat()?.toInt()?.toString())
+            }
+        }
     }
 }

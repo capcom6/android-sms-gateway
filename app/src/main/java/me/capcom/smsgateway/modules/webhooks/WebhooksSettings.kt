@@ -1,12 +1,14 @@
 package me.capcom.smsgateway.modules.webhooks
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
+import me.capcom.smsgateway.modules.settings.Exporter
+import me.capcom.smsgateway.modules.settings.Importer
 import me.capcom.smsgateway.modules.settings.KeyValueStorage
 import me.capcom.smsgateway.modules.settings.get
 
 class WebhooksSettings(
     private val storage: KeyValueStorage,
-) {
+) : Exporter, Importer {
     val internetRequired: Boolean
         get() = storage.get<Boolean>(INTERNET_REQUIRED) ?: true
 
@@ -25,5 +27,22 @@ class WebhooksSettings(
         const val INTERNET_REQUIRED = "internet_required"
         const val RETRY_COUNT = "retry_count"
         const val SIGNING_KEY = "signing_key"
+    }
+
+    override fun export(): Map<String, *> {
+        return mapOf(
+            INTERNET_REQUIRED to internetRequired,
+            RETRY_COUNT to retryCount,
+        )
+    }
+
+    override fun import(data: Map<String, *>) {
+        data.forEach { (key, value) ->
+            when (key) {
+                INTERNET_REQUIRED -> storage.set(key, value?.toString()?.toBoolean())
+                RETRY_COUNT -> storage.set(key, value?.toString()?.toFloat()?.toInt()?.toString())
+                SIGNING_KEY -> storage.set(key, value?.toString())
+            }
+        }
     }
 }

@@ -1,11 +1,13 @@
 package me.capcom.smsgateway.modules.gateway
 
+import me.capcom.smsgateway.modules.settings.Exporter
+import me.capcom.smsgateway.modules.settings.Importer
 import me.capcom.smsgateway.modules.settings.KeyValueStorage
 import me.capcom.smsgateway.modules.settings.get
 
 class GatewaySettings(
     private val storage: KeyValueStorage,
-) {
+) : Exporter, Importer {
     var enabled: Boolean
         get() = storage.get<Boolean>(ENABLED) ?: false
         set(value) = storage.set(ENABLED, value)
@@ -35,5 +37,20 @@ class GatewaySettings(
         private const val PRIVATE_TOKEN = "private_token"
 
         const val PUBLIC_URL = "https://api.sms-gate.app/mobile/v1"
+    }
+
+    override fun export(): Map<String, *> {
+        return mapOf(
+            CLOUD_URL to serverUrl,
+        )
+    }
+
+    override fun import(data: Map<String, *>) {
+        data.forEach { (key, value) ->
+            when (key) {
+                CLOUD_URL -> storage.set(key, value?.toString())
+                PRIVATE_TOKEN -> storage.set(key, value?.toString())
+            }
+        }
     }
 }
