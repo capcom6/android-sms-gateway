@@ -35,7 +35,7 @@ class SettingsRoutes(
             try {
                 val settings = call.receive<Map<String, *>>()
 
-                settingsService.apply(settings)
+                settingsService.update(settings)
 
                 call.respond(
                     HttpStatusCode.OK,

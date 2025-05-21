@@ -116,6 +116,13 @@ class GatewayApi(
         }
     }
 
+    suspend fun getSettings(token: String): Map<String, *> {
+        return client.get("$baseUrl/settings") {
+            bearerAuth(token)
+        }.body()
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     private fun HttpRequestBuilder.bearerAuth(token: String) {
         header(HttpHeaders.Authorization, "Bearer $token")
     }
@@ -124,6 +131,7 @@ class GatewayApi(
         header(HttpHeaders.Authorization, "Basic ${"$username:$password".encodeBase64()}")
     }
 
+    ///////////////////////////////////////////////////////////////////////////
     data class DeviceGetResponse(
         val externalIp: String,
     )

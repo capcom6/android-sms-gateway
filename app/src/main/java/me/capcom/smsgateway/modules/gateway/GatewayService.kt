@@ -10,6 +10,7 @@ import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
+import me.capcom.smsgateway.modules.gateway.workers.SettingsUpdateWorker
 import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.SendParams
@@ -32,33 +33,32 @@ class GatewayService(
             settings.privateToken
         ).also { _api = it }
 
-    suspend fun getPublicIP(): String {
-        return GatewayApi(
-            settings.serverUrl,
-            settings.privateToken
-        )
-            .getDevice(settings.registrationInfo?.token)
-            .externalIp
-    }
-
+    //region Start, stop, etc...
     fun start(context: Context) {
         if (!settings.enabled) return
 
         PushService.register(context)
         PullMessagesWorker.start(context)
         WebhooksUpdateWorker.start(context)
+        SettingsUpdateWorker.start(context)
+
         eventsReceiver.start()
     }
 
-    fun isActiveLiveData(context: Context) = PullMessagesWorker.getStateLiveData(context)
-
     fun stop(context: Context) {
         eventsReceiver.stop()
+
+        SettingsUpdateWorker.stop(context)
         WebhooksUpdateWorker.stop(context)
         PullMessagesWorker.stop(context)
+
         this._api = null
     }
 
+    fun isActiveLiveData(context: Context) = PullMessagesWorker.getStateLiveData(context)
+    //endregion
+
+    //region Account
     suspend fun getLoginCode(): GatewayApi.GetUserCodeResponse {
         val username = settings.username
             ?: throw IllegalStateException("Username is not set")
@@ -87,64 +87,9 @@ class GatewayService(
             )
         )
     }
+    //endregion
 
-    ///////////////////////////////////////////////////////////////////////////
-    internal suspend fun getWebHooks(): List<GatewayApi.WebHook> {
-        val settings = settings.registrationInfo
-        return if (settings != null) {
-            api.getWebHooks(settings.token)
-        } else {
-            emptyList()
-        }
-    }
-
-    internal suspend fun sendState(
-        message: MessageWithRecipients
-    ) {
-        val settings = settings.registrationInfo ?: return
-
-        api.patchMessages(
-            settings.token,
-            listOf(
-                GatewayApi.MessagePatchRequest(
-                    message.message.id,
-                    message.message.state,
-                    message.recipients.map {
-                        GatewayApi.RecipientState(
-                            it.phoneNumber,
-                            it.state,
-                            it.error
-                        )
-                    },
-                    message.states.associate { it.state to Date(it.updatedAt) }
-                )
-            )
-        )
-    }
-
-    internal suspend fun updateDevice(pushToken: String) {
-        if (!settings.enabled) return
-
-        val settings = settings.registrationInfo ?: return
-        val accessToken = settings.token
-
-        api.devicePatch(
-            accessToken,
-            GatewayApi.DevicePatchRequest(
-                settings.id,
-                pushToken
-            )
-        )
-
-        events.emit(
-            DeviceRegisteredEvent.Success(
-                api.hostname,
-                settings.login,
-                settings.password,
-            )
-        )
-    }
-
+    //region Device
     internal suspend fun registerDevice(
         pushToken: String?,
         registerMode: RegistrationMode
@@ -204,6 +149,37 @@ class GatewayService(
         }
     }
 
+    internal suspend fun updateDevice(pushToken: String) {
+        if (!settings.enabled) return
+
+        val settings = settings.registrationInfo ?: return
+        val accessToken = settings.token
+
+        api.devicePatch(
+            accessToken,
+            GatewayApi.DevicePatchRequest(
+                settings.id,
+                pushToken
+            )
+        )
+
+        events.emit(
+            DeviceRegisteredEvent.Success(
+                api.hostname,
+                settings.login,
+                settings.password,
+            )
+        )
+    }
+
+    sealed class RegistrationMode {
+        object Anonymous : RegistrationMode()
+        class WithCredentials(val login: String, val password: String) : RegistrationMode()
+        class WithCode(val code: String) : RegistrationMode()
+    }
+    //endregion
+
+    //region Messages
     internal suspend fun getNewMessages(context: Context) {
         if (!settings.enabled) return
         val settings = settings.registrationInfo ?: return
@@ -244,9 +220,58 @@ class GatewayService(
         messagesService.enqueueMessage(request)
     }
 
-    sealed class RegistrationMode {
-        object Anonymous : RegistrationMode()
-        class WithCredentials(val login: String, val password: String) : RegistrationMode()
-        class WithCode(val code: String) : RegistrationMode()
+    internal suspend fun sendState(
+        message: MessageWithRecipients
+    ) {
+        val settings = settings.registrationInfo ?: return
+
+        api.patchMessages(
+            settings.token,
+            listOf(
+                GatewayApi.MessagePatchRequest(
+                    message.message.id,
+                    message.message.state,
+                    message.recipients.map {
+                        GatewayApi.RecipientState(
+                            it.phoneNumber,
+                            it.state,
+                            it.error
+                        )
+                    },
+                    message.states.associate { it.state to Date(it.updatedAt) }
+                )
+            )
+        )
     }
+    //endregion
+
+    //region Webhooks
+    internal suspend fun getWebHooks(): List<GatewayApi.WebHook> {
+        val settings = settings.registrationInfo
+        return if (settings != null) {
+            api.getWebHooks(settings.token)
+        } else {
+            emptyList()
+        }
+    }
+    //endregion
+
+    //region Settings
+    internal suspend fun getSettings(): Map<String, *>? {
+        val settings = settings.registrationInfo ?: return null
+
+        return api.getSettings(settings.token)
+    }
+    //endregion
+
+    //region Utility
+    suspend fun getPublicIP(): String {
+        return GatewayApi(
+            settings.serverUrl,
+            settings.privateToken
+        )
+            .getDevice(settings.registrationInfo?.token)
+            .externalIp
+    }
+    //endregion
 }
