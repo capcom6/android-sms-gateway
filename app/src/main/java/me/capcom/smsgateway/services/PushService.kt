@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.workers.RegistrationWorker
+import me.capcom.smsgateway.modules.gateway.workers.SettingsUpdateWorker
 import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
@@ -58,6 +59,8 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                             payload.since to payload.until
                         )
                     }
+
+                Event.SettingsUpdated -> SettingsUpdateWorker.start(this)
             }
         } catch (e: Throwable) {
             e.printStackTrace()

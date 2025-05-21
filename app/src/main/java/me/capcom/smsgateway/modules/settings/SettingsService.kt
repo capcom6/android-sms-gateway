@@ -33,7 +33,7 @@ class SettingsService(
         return settings.mapValues { (it.value as? Exporter)?.export() }
     }
 
-    fun apply(data: Map<String, *>) {
+    fun update(data: Map<String, *>) {
         data.forEach { (key, value) ->
             try {
                 settings[key]?.let {
