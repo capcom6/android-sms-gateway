@@ -11,4 +11,7 @@ enum class Event {
 
     @SerializedName("MessagesExportRequested")
     MessagesExportRequested,
+
+    @SerializedName("SettingsUpdated")
+    SettingsUpdated,
 }
