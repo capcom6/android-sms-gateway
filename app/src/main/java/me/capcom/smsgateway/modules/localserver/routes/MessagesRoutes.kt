@@ -69,6 +69,7 @@ class MessagesRoutes(
                     request.phoneNumbers,
                     request.isEncrypted ?: false,
                     Date(),
+                    request.virtualPhoneId // Added this line
                 ),
                 SendParams(
                     request.withDeliveryReport ?: true,

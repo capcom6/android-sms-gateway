@@ -1,0 +1,27 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <EditTextPreference
+        app:key="pref_key_server_url"
+        app:title="@string/pref_title_server_url"
+        app:summary="@string/pref_summary_server_url"
+        app:icon="@drawable/ic_cloud_server" />
+
+    <Preference
+        app:key="pref_key_agent_id_display"
+        app:title="@string/pref_title_agent_id"
+        app:summary="@string/pref_summary_not_registered"
+        app:icon="@drawable/ic_perm_identity"
+        app:selectable="false"/>
+
+    <Preference
+        app:key="pref_key_api_key_display"
+        app:title="@string/pref_title_api_key"
+        app:summary="@string/pref_summary_not_registered"
+        app:icon="@drawable/ic_key"
+        app:selectable="false"/>
+
+    <Preference
+        app:key="pref_key_save_register"
+        app:title="@string/pref_title_save_register"
+        app:summary="@string/pref_summary_save_register"
+        app:icon="@drawable/ic_save"/>
+</PreferenceScreen>

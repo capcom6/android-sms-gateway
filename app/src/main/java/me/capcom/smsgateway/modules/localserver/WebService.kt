@@ -32,6 +32,9 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.util.date.GMTDate
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.R
+import me.capcom.smsgateway.data.dao.AgentPhoneDao
+import me.capcom.smsgateway.data.dao.SmppServerConfigDao
 import me.capcom.smsgateway.domain.HealthResponse
 import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.modules.health.HealthService
@@ -40,7 +43,11 @@ import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.routes.LogsRoutes
 import me.capcom.smsgateway.modules.localserver.routes.MessagesRoutes
 import me.capcom.smsgateway.modules.localserver.routes.WebhooksRoutes
+import me.capcom.smsgateway.modules.localserver.routes.agentApiRoutes // Added
+import me.capcom.smsgateway.modules.localserver.routes.agentPhoneRoutes
+import me.capcom.smsgateway.modules.localserver.routes.smppServerRoutes
 import me.capcom.smsgateway.modules.notifications.NotificationsService
+import me.capcom.smsgateway.modules.smpp.SmppService
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import java.util.Date
@@ -51,6 +58,9 @@ class WebService : Service() {
     private val settings: LocalServerSettings by inject()
     private val notificationsService: NotificationsService by inject()
     private val healthService: HealthService by inject()
+    private val smppService: SmppService by inject()
+    private val smppServerConfigDao: SmppServerConfigDao by inject()
+    private val agentPhoneDao: AgentPhoneDao by inject() // Changed from virtualPhoneConfigDao
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -172,7 +182,11 @@ class WebService : Service() {
                     route("/logs") {
                         LogsRoutes(get()).register(this)
                     }
+
+                    smppServerRoutes(get(), get()) // get() for SmppServerConfigDao, get() for SmppService
+                    agentPhoneRoutes(get())      // get() for AgentPhoneDao
                 }
+                agentApiRoutes(get()) // Added for AgentPhoneDao
             }
         }
     }

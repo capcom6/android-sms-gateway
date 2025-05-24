@@ -26,10 +26,14 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.data.dao.ServerSettingsDao // Added
+import me.capcom.smsgateway.data.entities.ServerSettings // Added
 import me.capcom.smsgateway.databinding.FragmentSettingsBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.services.AgentService // Added for service status
 import me.capcom.smsgateway.modules.connection.ConnectionService
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.GatewayService
@@ -48,16 +52,18 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val settingsHelper: SettingsHelper by inject()
-    private val localServerSettings: LocalServerSettings by inject()
-    private val gatewaySettings: GatewaySettings by inject()
-    private val connectionService: ConnectionService by inject()
+    private val localServerSettings: LocalServerSettings by inject() // Old setting, may remove later
+    private val gatewaySettings: GatewaySettings by inject() // Old setting, may remove later
+    private val connectionService: ConnectionService by inject() // Still useful for general connectivity
 
     private val events: EventBus by inject()
 
+    // Old services, will be replaced by AgentService logic display
     private val localServerSvc: LocalServerService by inject()
     private val gatewaySvc: GatewayService by inject()
-
     private val orchestratorSvc: OrchestratorService by inject()
+
+    private val serverSettingsDao: ServerSettingsDao by inject() // Added for Agent Status
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -253,7 +259,7 @@ class HomeFragment : Fragment() {
 
         connectionService.status.observe(viewLifecycleOwner) {
             binding.textConnectionStatus.apply {
-                isVisible = binding.switchUseRemoteServer.isChecked
+                isVisible = binding.switchUseRemoteServer.isChecked // This switch might be repurposed or removed
                 isEnabled = it
                 text = when (it) {
                     true -> context.getString(R.string.internet_connection_available)
@@ -261,6 +267,54 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+
+        // Observe Agent Server Settings for status display
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            serverSettingsDao.getSettings().collectLatest { settings ->
+                updateAgentStatusDisplay(settings)
+            }
+        }
+        // Observe AgentService status (basic running/stopped, more detailed status is complex for MVP)
+        // This requires AgentService to expose a LiveData or StateFlow for its status.
+        // For MVP, we'll infer from settings for now, or use a simple static boolean if AgentService has one.
+        // For a more reactive UI, AgentService would need to provide its operational status.
+        // Let's assume AgentService.isRunning can be observed or has a static accessor for MVP.
+        // This part is conceptual for MVP bonus. AgentService.isRunning is not implemented yet.
+        // For now, the textAgentStatus will primarily reflect registration status.
+        // We can add a line about service running state based on the `orchestratorSvc` for now.
+        // This can be refined when OrchestratorService is replaced/integrated with AgentService.
+    }
+
+    private fun updateAgentStatusDisplay(settings: ServerSettings?) {
+        val statusText: String
+        var statusColorRes: Int = R.color.agent_status_default_background // Default color
+
+        if (settings == null || settings.serverUrl.isBlank()) {
+            statusText = getString(R.string.status_server_not_configured)
+            statusColorRes = R.color.agent_status_error_background
+        } else if (settings.agentId.isNullOrBlank() || settings.apiKey.isNullOrBlank()) {
+            statusText = getString(R.string.status_agent_not_registered, settings.serverUrl)
+            statusColorRes = R.color.agent_status_warning_background
+        } else {
+            // AgentService.isRunning is not directly available here.
+            // For now, we'll just show registration status.
+            // Later, AgentService could provide a LiveData for its operational status.
+            val agentServiceRunning = orchestratorSvc.isServiceRunning(requireContext(), AgentService::class.java) // Example check
+            val serviceStatusString = if (agentServiceRunning) getString(R.string.status_service_running) else getString(R.string.status_service_stopped)
+
+            statusText = getString(R.string.status_agent_registered, settings.serverUrl, settings.agentId) + "\n" + serviceStatusString
+            statusColorRes = R.color.agent_status_ok_background
+            
+            // TODO: Check settings.isEnabled from AgentConfigResponse once AgentService updates it in ServerSettings
+            // if (settings.isEnabled == false) { // Assuming ServerSettings might get an isEnabled field later
+            //    statusText += "\n" + getString(R.string.status_agent_disabled_by_server)
+            //    statusColorRes = R.color.agent_status_warning_background
+            // }
+        }
+
+        binding.textAgentStatus.text = statusText
+        binding.textAgentStatus.setBackgroundColor(ContextCompat.getColor(requireContext(), statusColorRes))
+        binding.textAgentStatus.isVisible = true
     }
 
     private fun makeCopyableLink(source: Spanned): Spanned {
@@ -390,16 +444,20 @@ class HomeFragment : Fragment() {
             private var localServerStatus = false
 
             init {
+            // This LiveData needs to be re-evaluated in context of AgentService.
+            // For now, it reflects the old services.
+            // A new LiveData, perhaps observing AgentService status, would be better.
+            // For MVP, we can keep it as is, or simplify/remove if it's too confusing.
+            // Let's assume for now that this existing LiveData for buttonStart state is sufficient.
                 addSource(gatewaySvc.isActiveLiveData(requireContext())) {
                     gatewayStatus = it
-
-                    value = gatewayStatus || localServerStatus
+                value = gatewayStatus || localServerStatus // This logic might change
                 }
                 addSource(localServerSvc.isActiveLiveData(requireContext())) {
                     localServerStatus = it
-
-                    value = gatewayStatus || localServerStatus
+                value = gatewayStatus || localServerStatus // This logic might change
                 }
+            // TODO: Add source for AgentService status if it provides a LiveData for running state.
             }
         }
     }

@@ -20,6 +20,20 @@
         android:visibility="gone"
         tools:text="@string/internet_connection_available" />
 
+    <TextView
+        android:id="@+id/textAgentStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/rounded_background"
+        android:backgroundTint="@color/agent_status_background"
+        android:gravity="center"
+        android:padding="8dp"
+        android:textColor="@android:color/white"
+        android:visibility="gone"
+        tools:text="Agent Status: Registered"
+        tools:visibility="visible" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"

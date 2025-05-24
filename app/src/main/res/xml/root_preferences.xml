@@ -1,5 +1,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        app:key="pref_key_agent_server_settings_navigation"
+        app:title="@string/agent_server_settings_title"
+        app:summary="@string/pref_summary_configure_agent_server"
+        app:icon="@drawable/ic_cloud_server"
+        app:fragment="me.capcom.smsgateway.ui.settings.AgentServerSettingsFragment" />
+
     <Preference
         android:icon="@drawable/ic_local_server"
         app:fragment="me.capcom.smsgateway.ui.settings.LocalServerSettingsFragment"

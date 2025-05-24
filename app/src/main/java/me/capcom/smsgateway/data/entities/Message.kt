@@ -35,6 +35,7 @@ data class Message(
     @ColumnInfo(defaultValue = "0")
     val createdAt: Long = System.currentTimeMillis(),
     val processedAt: Long? = null,
+    var virtualPhoneId: String? = null,
 ) {
     companion object {
         const val PRIORITY_DEFAULT: Byte = 0

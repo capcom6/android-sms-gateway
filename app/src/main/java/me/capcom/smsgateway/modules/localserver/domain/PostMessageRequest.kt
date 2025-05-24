@@ -15,7 +15,8 @@ data class PostMessageRequest(
     @SerializedName("ttl")
     private val _ttl: Long?,
     @SerializedName("validUntil")
-    private val _validUntil: Date?
+    private val _validUntil: Date?,
+    val virtualPhoneId: String? = null
 ) {
     val validUntil: Date?
         get() {

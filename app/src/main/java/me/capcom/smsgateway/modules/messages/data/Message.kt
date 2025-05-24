@@ -10,4 +10,5 @@ data class Message(
     val isEncrypted: Boolean,
 
     val createdAt: Date,
+    val virtualPhoneId: String? = null,
 )

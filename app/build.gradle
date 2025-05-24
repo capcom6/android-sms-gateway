@@ -62,6 +62,7 @@ dependencies {
     def work_version = "2.7.1"
     def koin_version = "3.4.0"
     def lifecycle_version = "2.6.2"
+    def jsmpp_version = "3.0.1"
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version")
@@ -108,6 +109,8 @@ dependencies {
 
     // Koin for Android
     implementation "io.insert-koin:koin-android:$koin_version"
+
+    implementation("org.jsmpp:jsmpp:$jsmpp_version")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
