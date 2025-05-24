@@ -3,7 +3,7 @@
   "info": {
     "version": "{{VERSION}}",
     "title": "SMS Gateway for Android™ Integration API",
-    "description": "Provides the ability to send SMS by sending requests directly to the device or through a cloud server.",
+    "description": "Provides the ability to send SMS messages by sending requests directly to a device or through a cloud server.",
     "contact": {
       "name": "SMSGate Support",
       "email": "support@sms-gate.app",
@@ -37,7 +37,7 @@
           {
             "name": "skipPhoneValidation",
             "in": "query",
-            "description": "If `true`, phone numbers will be used as is.",
+            "description": "If `true`, phone numbers will be used without validation.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -128,7 +128,7 @@
           "Devices"
         ],
         "summary": "Get devices",
-        "description": "Returns a list of registered devices in the account.",
+        "description": "Returns a list of registered devices for the account.",
         "operationId": "get-devices",
         "responses": {
           "200": {
@@ -211,7 +211,7 @@
           "Webhooks"
         ],
         "summary": "List webhooks",
-        "description": "List all registered webhooks. Please note that webhooks registered in Local mode are distinct from those registered in Cloud mode.",
+        "description": "List all registered webhooks. Note that webhooks registered in Local mode are distinct from those registered in Cloud mode.",
         "operationId": "get-webhooks",
         "responses": {
           "200": {
@@ -249,7 +249,7 @@
           "Webhooks"
         ],
         "summary": "Register a webhook",
-        "description": "Register a new webhook. If the `id` field is provided and a webhook with such an `id` already exists, it will be updated.",
+        "description": "Register a new webhook. If the `id` field is provided and a webhook with that ID already exists, it will be updated.",
         "operationId": "post-webhooks",
         "requestBody": {
           "content": {
@@ -421,7 +421,7 @@
     "/messages/inbox/export": {
       "post": {
         "summary": "Request inbox messages export",
-        "description": "Initiates process of inbox messages export via webhooks. For each message the `sms:received` webhook will be triggered. The webhooks will be triggered without specific order.",
+        "description": "Initiates the process of exporting inbox messages via webhooks. For each message, the `sms:received` webhook will be triggered. Webhooks will be triggered in no specific order.",
         "operationId": "post-messages-inbox-export",
         "requestBody": {
           "content": {
@@ -437,7 +437,7 @@
                   },
                   "until": {
                     "type": "string",
-                    "description": "The end of the time range to export",
+                    "description": "The end of the time range to export.",
                     "format": "date-time",
                     "writeOnly": true
                   },
@@ -485,6 +485,73 @@
           }
         ]
       }
+    },
+    "/settings": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Get settings",
+        "description": "Returns current settings.",
+        "operationId": "get-settings",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SettingsResponse"
+          }
+        },
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://device-ip:8080",
+            "description": "Local Server"
+          },
+          {
+            "url": "https://api.sms-gate.app/3rdparty/v1",
+            "description": "Cloud Server"
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Update settings",
+        "description": "Updates settings. In Local mode, settings are applied to the current device; in Cloud/Private mode, they are applied to all devices in the account.\nIf a setting is omitted, it will not be updated.\nIf a value is set to `null`, it will be reset to its default value.",
+        "operationId": "patch-settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Settings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SettingsResponse"
+          }
+        },
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://device-ip:8080",
+            "description": "Local Server"
+          },
+          {
+            "url": "https://api.sms-gate.app/3rdparty/v1",
+            "description": "Cloud Server"
+          }
+        ]
+      }
     }
   },
   "tags": [
@@ -496,6 +563,9 @@
     },
     {
       "name": "Messages"
+    },
+    {
+      "name": "Settings"
     },
     {
       "name": "System"
@@ -520,13 +590,13 @@
     "securitySchemes": {
       "BasicAuth": {
         "type": "http",
-        "description": "Login-password auth",
+        "description": "Basic authentication using login and password.",
         "scheme": "basic"
       }
     },
     "responses": {
       "ErrorResponse": {
-        "description": "A generic error response containing the error message.",
+        "description": "A generic error response containing an error message.",
         "content": {
           "application/json": {
             "schema": {
@@ -553,6 +623,16 @@
             }
           }
         }
+      },
+      "SettingsResponse": {
+        "description": "Current settings response.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Settings"
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -570,17 +650,17 @@
           },
           "createdAt": {
             "type": "string",
-            "description": "Created at",
+            "description": "The timestamp when the device was created.",
             "format": "date-time"
           },
           "updatedAt": {
             "type": "string",
-            "description": "Updated at",
+            "description": "The timestamp when the device was last updated.",
             "format": "date-time"
           },
           "lastSeen": {
             "type": "string",
-            "description": "Last seen at",
+            "description": "The timestamp when the device was last seen.",
             "format": "date-time"
           }
         }
@@ -664,7 +744,7 @@
               "sms:delivered",
               "sms:failed"
             ],
-            "description": "The type of event being reported",
+            "description": "The type of event being reported.",
             "example": "sms:received"
           },
           "url": {
@@ -729,7 +809,7 @@
       },
       "SmsReceivedPayload": {
         "title": "SmsReceivedPayload",
-        "description": "Payload of `sms:received` event",
+        "description": "Payload of `sms:received` event.",
         "allOf": [
           {
             "$ref": "#/components/schemas/SmsEventPayload"
@@ -753,7 +833,7 @@
       "SmsEventPayload": {
         "type": "object",
         "title": "SmsEventPayload",
-        "description": "Base payload of SMS-related events",
+        "description": "Base payload for SMS-related events.",
         "properties": {
           "messageId": {
             "type": "string",
@@ -766,13 +846,13 @@
           "simNumber": {
             "type": "integer",
             "nullable": true,
-            "description": "The SIM card number that sent the SMS. May be `null` if the SIM can't be determined or the default was used."
+            "description": "The SIM card number that sent the SMS. May be `null` if the SIM cannot be determined or the default was used."
           }
         }
       },
       "SmsSentPayload": {
         "title": "SmsSentPayload",
-        "description": "Payload of `sms:sent` event",
+        "description": "Payload of `sms:sent` event.",
         "allOf": [
           {
             "$ref": "#/components/schemas/SmsEventPayload"
@@ -791,7 +871,7 @@
       },
       "SmsDeliveredPayload": {
         "title": "SmsDeliveredPayload",
-        "description": "Payload of `sms:delivered` event",
+        "description": "Payload of `sms:delivered` event.",
         "allOf": [
           {
             "$ref": "#/components/schemas/SmsEventPayload"
@@ -810,7 +890,7 @@
       },
       "SmsFailedPayload": {
         "title": "SmsFailedPayload",
-        "description": "Payload of `sms:failed` event",
+        "description": "Payload of `sms:failed` event.",
         "allOf": [
           {
             "$ref": "#/components/schemas/SmsEventPayload"
@@ -820,12 +900,12 @@
             "properties": {
               "failedAt": {
                 "type": "string",
-                "description": "The timestamp when the SMS message was failed.",
+                "description": "The timestamp when the SMS message failed.",
                 "format": "date-time"
               },
               "reason": {
                 "type": "string",
-                "description": "The reason description"
+                "description": "The reason for the failure."
               }
             }
           }
@@ -834,7 +914,7 @@
       "SystemPingPayload": {
         "type": "object",
         "title": "SystemPingPayload",
-        "description": "Payload of `system:ping` event"
+        "description": "Payload of `system:ping` event."
       },
       "LogEntry": {
         "type": "object",
@@ -879,6 +959,119 @@
             "description": "The timestamp when this log entry was created.",
             "format": "date-time",
             "readOnly": true
+          }
+        }
+      },
+      "Settings": {
+        "type": "object",
+        "title": "Settings",
+        "properties": {
+          "encryption": {
+            "type": "object",
+            "properties": {
+              "passphrase": {
+                "type": "string",
+                "nullable": true,
+                "writeOnly": true
+              }
+            }
+          },
+          "gateway": {
+            "type": "object",
+            "properties": {
+              "cloud_url": {
+                "type": "string",
+                "nullable": true
+              },
+              "private_token": {
+                "type": "string",
+                "nullable": true,
+                "writeOnly": true
+              }
+            }
+          },
+          "messages": {
+            "type": "object",
+            "properties": {
+              "send_interval_min": {
+                "type": "integer",
+                "nullable": true
+              },
+              "send_interval_max": {
+                "type": "integer",
+                "nullable": true
+              },
+              "limit_period": {
+                "type": "string",
+                "enum": [
+                  "Disabled",
+                  "PerMinute",
+                  "PerHour",
+                  "PerDay"
+                ]
+              },
+              "limit_value": {
+                "type": "integer",
+                "nullable": true
+              },
+              "sim_selection_mode": {
+                "type": "string",
+                "enum": [
+                  "OSDefault",
+                  "RoundRobin",
+                  "Random"
+                ]
+              },
+              "log_lifetime_days": {
+                "type": "integer",
+                "nullable": true
+              }
+            }
+          },
+          "localserver": {
+            "type": "object",
+            "properties": {
+              "PORT": {
+                "type": "integer",
+                "nullable": true
+              }
+            }
+          },
+          "ping": {
+            "type": "object",
+            "properties": {
+              "interval_seconds": {
+                "type": "integer",
+                "nullable": true
+              }
+            }
+          },
+          "logs": {
+            "type": "object",
+            "properties": {
+              "lifetime_days": {
+                "type": "integer",
+                "nullable": true
+              }
+            }
+          },
+          "webhooks": {
+            "type": "object",
+            "properties": {
+              "internet_required": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "retry_count": {
+                "type": "integer",
+                "nullable": true
+              },
+              "signing_key": {
+                "type": "string",
+                "nullable": true,
+                "writeOnly": true
+              }
+            }
           }
         }
       },
@@ -937,7 +1130,7 @@
           },
           "priority": {
             "type": "integer",
-            "description": "Message priority, use >= 100 to ignore limits and delays",
+            "description": "Message priority; use values >= 100 to ignore limits and delays.",
             "minimum": -128,
             "maximum": 127,
             "default": 0
@@ -950,7 +1143,7 @@
       },
       "MessageStatus": {
         "type": "object",
-        "title": "Message state",
+        "title": "Message State",
         "properties": {
           "id": {
             "type": "string",
@@ -972,7 +1165,7 @@
           },
           "isHashed": {
             "type": "boolean",
-            "description": "*(cloud-only)* Whether the `phoneNumber` is the first 16 characters of the SHA256 hash of the E164 formatted phone number",
+            "description": "*(Cloud-only)* Whether the `phoneNumber` is the first 16 characters of the SHA256 hash of the E164 formatted phone number.",
             "readOnly": true,
             "default": false
           },
@@ -991,7 +1184,7 @@
           },
           "states": {
             "type": "object",
-            "description": "The history of states of the message.",
+            "description": "The history of states for the message.",
             "additionalProperties": {
               "type": "string",
               "format": "date-time",
@@ -1002,7 +1195,7 @@
       },
       "MessageRecipient": {
         "type": "object",
-        "title": "Message recipient state",
+        "title": "Message Recipient State",
         "properties": {
           "phoneNumber": {
             "type": "string",
