@@ -13,6 +13,7 @@ import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookDTO
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
+import me.capcom.smsgateway.modules.webhooks.workers.ReviewWebhooksWorker
 import me.capcom.smsgateway.modules.webhooks.workers.SendWebhookWorker
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
@@ -29,9 +30,11 @@ class WebHooksService(
 
     fun start(context: Context) {
         eventsReceiver.start()
+        ReviewWebhooksWorker.start(context)
     }
 
     fun stop(context: Context) {
+        ReviewWebhooksWorker.stop(context)
         eventsReceiver.stop()
     }
 
