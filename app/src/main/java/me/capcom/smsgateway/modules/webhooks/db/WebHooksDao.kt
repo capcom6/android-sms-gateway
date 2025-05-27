@@ -21,6 +21,9 @@ interface WebHooksDao {
     @Query("SELECT * FROM webHook WHERE source = :source")
     fun selectBySource(source: EntitySource): List<WebHook>
 
+    @Query("SELECT EXISTS (SELECT 1 FROM webHook WHERE id = :id AND source = :source)")
+    fun exists(source: EntitySource, id: String): Boolean
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun upsert(webHook: WebHook)
 
