@@ -1,5 +1,7 @@
 package me.capcom.smsgateway
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -40,6 +42,19 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }.attach()
+
+        processIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        processIntent(intent)
+    }
+
+    private fun processIntent(intent: Intent) {
+        val tabIndex = intent.getIntExtra(EXTRA_TAB_INDEX, TAB_INDEX_HOME)
+
+        binding.viewPager.currentItem = tabIndex
     }
 
     class FragmentsAdapter(activity: AppCompatActivity) :
@@ -55,5 +70,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    }
+
+    companion object {
+        const val TAB_INDEX_HOME = 0
+        const val TAB_INDEX_MESSAGES = 1
+        const val TAB_INDEX_SETTINGS = 2
+
+        private const val EXTRA_TAB_INDEX = "tabIndex"
+
+        fun starter(context: Context, tabIndex: Int): Intent {
+            return Intent(context, MainActivity::class.java).apply {
+                putExtra(EXTRA_TAB_INDEX, tabIndex)
+            }
+        }
     }
 }

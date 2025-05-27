@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import me.capcom.smsgateway.MainActivity
 import me.capcom.smsgateway.R
 
 class NotificationsService(
@@ -22,12 +23,22 @@ class NotificationsService(
         NOTIFICATION_ID_WEBHOOK_WORKER to R.drawable.notif_webhook,
         NOTIFICATION_ID_PING_SERVICE to R.drawable.notif_ping,
         NOTIFICATION_ID_SETTINGS_CHANGED to R.drawable.notif_settings,
+        NOTIFICATION_ID_SMS_RECEIVED_WEBHOOK to R.drawable.notif_webhook_registered,
     )
 
     private val builders = mapOf<Int, (NotificationCompat.Builder) -> NotificationCompat.Builder>(
         NOTIFICATION_ID_SETTINGS_CHANGED to {
             it.setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true)
         },
+        NOTIFICATION_ID_SMS_RECEIVED_WEBHOOK to {
+            it.setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true)
+        },
+    )
+
+    private val contentIntentFactories = mapOf(
+        NOTIFICATION_ID_SMS_RECEIVED_WEBHOOK to { context: Context ->
+            MainActivity.starter(context, MainActivity.TAB_INDEX_SETTINGS)
+        }
     )
 
     init {
@@ -47,18 +58,25 @@ class NotificationsService(
         notificationManager.notify(id, makeNotification(context, id, contentText))
     }
 
-    fun makeNotification(context: Context, id: Int, contentText: String): Notification {
+    fun makeNotification(
+        context: Context,
+        id: Int,
+        contentText: String,
+        contentIntent: PendingIntent? = null
+    ): Notification {
         return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(context.getText(R.string.notification_title))
             .setContentText(contentText)
             .setSmallIcon(icons[id] ?: R.drawable.ic_sms)
             .setContentIntent(
-                PendingIntent.getActivity(
-                    context,
-                    0,
-                    context.packageManager.getLaunchIntentForPackage(context.packageName),
-                    PendingIntent.FLAG_IMMUTABLE
-                )
+                contentIntent
+                    ?: PendingIntent.getActivity(
+                        context,
+                        0,
+                        contentIntentFactories[id]?.invoke(context)
+                            ?: context.packageManager.getLaunchIntentForPackage(context.packageName),
+                        PendingIntent.FLAG_IMMUTABLE
+                    )
             )
             .apply { builders[id]?.invoke(this) }
             .build()
@@ -72,5 +90,6 @@ class NotificationsService(
         const val NOTIFICATION_ID_WEBHOOK_WORKER = 3
         const val NOTIFICATION_ID_PING_SERVICE = 4
         const val NOTIFICATION_ID_SETTINGS_CHANGED = 5
+        const val NOTIFICATION_ID_SMS_RECEIVED_WEBHOOK = 6
     }
 }
