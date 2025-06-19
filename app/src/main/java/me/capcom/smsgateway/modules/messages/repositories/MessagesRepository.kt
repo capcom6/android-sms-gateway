@@ -15,7 +15,7 @@ import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
 import java.util.Date
 
 class MessagesRepository(private val dao: MessagesDao) {
-    private val gson = GsonBuilder().create()
+    private val gson = GsonBuilder().serializeNulls().create()
 
     val lastMessages = dao.selectLast().distinctUntilChanged()
 

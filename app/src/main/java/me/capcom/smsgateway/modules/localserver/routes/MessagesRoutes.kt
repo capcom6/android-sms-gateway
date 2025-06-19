@@ -41,32 +41,24 @@ class MessagesRoutes(
         post {
             val request = call.receive<PostMessageRequest>()
 
-            // Validate mutual exclusivity
-            if (listOfNotNull(
-                    request.textMessage,
-                    request.dataMessage,
-                    request.message
-                ).size > 1
-            ) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    mapOf("message" to "Cannot specify both textMessage and dataMessage")
-                )
-                return@post
-            }
+            val messageTypes =
+                listOfNotNull(request.textMessage, request.dataMessage, request.message)
+            when {
+                messageTypes.isEmpty() -> {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "Must specify exactly one of: textMessage, dataMessage, or message")
+                    )
+                    return@post
+                }
 
-            // Validate at least one message type is present
-            if (listOfNotNull(
-                    request.textMessage,
-                    request.dataMessage,
-                    request.message
-                ).isEmpty()
-            ) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    mapOf("message" to "Must specify either textMessage or dataMessage")
-                )
-                return@post
+                messageTypes.size > 1 -> {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "Cannot specify multiple message types simultaneously")
+                    )
+                    return@post
+                }
             }
 
             // Validate message parameters

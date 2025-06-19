@@ -358,7 +358,14 @@ class MessagesService(
                                 true -> encryptionService.decrypt(content.data)
                                 false -> content.data
                             }
-                            val decodedData = Base64.decode(data, Base64.DEFAULT)
+                            val decodedData = try {
+                                Base64.decode(data, Base64.DEFAULT)
+                            } catch (e: IllegalArgumentException) {
+                                throw IllegalArgumentException(
+                                    "Invalid Base64 data for message ${message.id}",
+                                    e
+                                )
+                            }
                             smsManager.sendDataMessage(
                                 normalizedPhoneNumber,
                                 null,  // scAddress
