@@ -1070,67 +1070,142 @@
       "Message": {
         "type": "object",
         "title": "Message",
+        "description": "For sending messages, only one of `message`, `textMessage` or `dataMessage` should be set. The `message` field is deprecated in favor of the new message types.",
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The unique identifier of the message."
+              },
+              "phoneNumbers": {
+                "type": "array",
+                "description": "The recipients' phone numbers in international notation.",
+                "items": {
+                  "type": "string",
+                  "pattern": "^\\+?\\d+$",
+                  "maxLength": 16,
+                  "example": "+79990001234"
+                }
+              },
+              "simNumber": {
+                "type": "integer",
+                "nullable": true,
+                "description": "The SIM card number; if `null`, the default is used.",
+                "minimum": 1,
+                "maximum": 3
+              },
+              "ttl": {
+                "type": "integer",
+                "nullable": true,
+                "description": "The expiration timeout in seconds; conflicts with `validUntil`.",
+                "minimum": 5,
+                "example": 86400
+              },
+              "validUntil": {
+                "type": "string",
+                "nullable": true,
+                "description": "The expiration date; conflicts with `ttl`.",
+                "format": "date-time"
+              },
+              "withDeliveryReport": {
+                "type": "boolean",
+                "description": "Whether to request a delivery report.",
+                "default": true
+              },
+              "isEncrypted": {
+                "type": "boolean",
+                "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms-gate.app/privacy/encryption).",
+                "default": false
+              },
+              "priority": {
+                "type": "integer",
+                "description": "Message priority; use values >= 100 to ignore limits and delays.",
+                "minimum": -128,
+                "maximum": 127,
+                "default": 0
+              }
+            },
+            "required": [
+              "phoneNumbers"
+            ]
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "The message text. This field is deprecated, use `textMessage` instead.",
+                    "maxLength": 65535
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "textMessage": {
+                    "$ref": "#/components/schemas/TextMessage"
+                  }
+                },
+                "required": [
+                  "textMessage"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "dataMessage": {
+                    "$ref": "#/components/schemas/DataMessage"
+                  }
+                },
+                "required": [
+                  "dataMessage"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "TextMessage": {
+        "type": "object",
+        "title": "TextMessage",
+        "additionalProperties": false,
         "properties": {
-          "id": {
+          "text": {
             "type": "string",
-            "description": "The unique identifier of the message."
-          },
-          "message": {
-            "type": "string",
-            "description": "The message text.",
-            "maxLength": 65535
-          },
-          "phoneNumbers": {
-            "type": "array",
-            "description": "The recipients' phone numbers in international notation.",
-            "items": {
-              "type": "string",
-              "pattern": "^\\+?\\d+$",
-              "maxLength": 16,
-              "example": "+79990001234"
-            }
-          },
-          "simNumber": {
-            "type": "integer",
-            "nullable": true,
-            "description": "The SIM card number; if `null`, the default is used.",
-            "minimum": 1,
-            "maximum": 3
-          },
-          "ttl": {
-            "type": "integer",
-            "nullable": true,
-            "description": "The expiration timeout in seconds; conflicts with `validUntil`.",
-            "minimum": 5,
-            "example": 86400
-          },
-          "validUntil": {
-            "type": "string",
-            "nullable": true,
-            "description": "The expiration date; conflicts with `ttl`.",
-            "format": "date-time"
-          },
-          "withDeliveryReport": {
-            "type": "boolean",
-            "description": "Whether to request a delivery report.",
-            "default": true
-          },
-          "isEncrypted": {
-            "type": "boolean",
-            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms-gate.app/privacy/encryption).",
-            "default": false
-          },
-          "priority": {
-            "type": "integer",
-            "description": "Message priority; use values >= 100 to ignore limits and delays.",
-            "minimum": -128,
-            "maximum": 127,
-            "default": 0
+            "description": "Message text"
           }
         },
         "required": [
-          "message",
-          "phoneNumbers"
+          "text"
+        ]
+      },
+      "DataMessage": {
+        "type": "object",
+        "title": "DataMessage",
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "type": "string",
+            "description": "Base64-encoded payload",
+            "format": "byte"
+          },
+          "port": {
+            "type": "integer",
+            "description": "Destination port",
+            "minimum": 0,
+            "maximum": 65535
+          }
+        },
+        "required": [
+          "data",
+          "port"
         ]
       },
       "MessageStatus": {

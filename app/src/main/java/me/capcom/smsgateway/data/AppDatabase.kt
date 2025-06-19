@@ -24,7 +24,7 @@ import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
         WebHook::class,
         LogEntry::class,
     ],
-    version = 13,
+    version = 14,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -53,7 +53,10 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 "gateway"
             )
-                .addMigrations(MIGRATION_7_8)
+                .addMigrations(
+                    MIGRATION_7_8,
+                    MIGRATION_13_14,
+                )
                 .allowMainThreadQueries()
                 .build()
         }

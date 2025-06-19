@@ -6,6 +6,7 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.domain.EntitySource
+import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
@@ -204,7 +205,7 @@ class GatewayService(
             EntitySource.Cloud,
             me.capcom.smsgateway.modules.messages.data.Message(
                 message.id,
-                message.message,
+                MessageContent.Text(message.message),
                 message.phoneNumbers,
                 message.isEncrypted ?: false,
                 message.createdAt ?: Date(),

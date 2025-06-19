@@ -40,7 +40,7 @@ class MessageDetailsFragment : Fragment() {
 
         viewModel.message.observe(viewLifecycleOwner) {
             binding.textMessageId.text = it.message.id
-            binding.textMessage.text = it.message.text
+            binding.textMessage.text = it.message.content.toString()
             binding.textMessageState.text = it.state.name
             recipientsAdapter.submitList(it.recipients)
         }

@@ -11,6 +11,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import me.capcom.smsgateway.domain.EntitySource
+import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
@@ -39,36 +40,122 @@ class MessagesRoutes(
     private fun Route.messagesRoutes() {
         post {
             val request = call.receive<PostMessageRequest>()
-            if (request.message.isEmpty()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    mapOf("message" to "message is empty")
-                )
+
+            val messageTypes =
+                listOfNotNull(request.textMessage, request.dataMessage, request.message)
+            when {
+                messageTypes.isEmpty() -> {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "Must specify exactly one of: textMessage, dataMessage, or message")
+                    )
+                    return@post
+                }
+
+                messageTypes.size > 1 -> {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "Cannot specify multiple message types simultaneously")
+                    )
+                    return@post
+                }
             }
+
+            // Validate message parameters
+            request.message?.let { msg ->
+                // Text validation
+                if (msg.isEmpty()) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "Text message is empty")
+                    )
+                    return@post
+                }
+            }
+
+            // Validate data message parameters
+            request.dataMessage?.let { dataMsg ->
+                // Port validation
+                if (dataMsg.port < 0 || dataMsg.port > 65535) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "Port must be between 0 and 65535")
+                    )
+                    return@post
+                }
+
+                // Data validation (only for non-empty check)
+                if (dataMsg.data.isEmpty()) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "Data message cannot be empty")
+                    )
+                    return@post
+                }
+            }
+
+            // Validate text message parameters
+            request.textMessage?.let { textMsg ->
+                // Text validation
+                if (textMsg.text.isEmpty()) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "Text message is empty")
+                    )
+                    return@post
+                }
+            }
+
+            // Existing validation
             if (request.phoneNumbers.isEmpty()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     mapOf("message" to "phoneNumbers is empty")
                 )
+                return@post
             }
             if (request.simNumber != null && request.simNumber < 1) {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     mapOf("message" to "simNumber must be >= 1")
                 )
+                return@post
             }
             val skipPhoneValidation =
                 call.request.queryParameters["skipPhoneValidation"]
                     ?.toBooleanStrict() ?: false
 
+            // Create message content based on type
+            val messageContent = when {
+                request.message != null -> {
+                    MessageContent.Text(request.message)
+                }
+
+                request.textMessage != null -> {
+                    MessageContent.Text(request.textMessage.text)
+                }
+
+                request.dataMessage != null -> {
+                    MessageContent.Data(
+                        request.dataMessage.data,
+                        request.dataMessage.port.toShort()
+                    )
+                }
+
+                else -> {
+                    // This case should be caught by validation, but just in case
+                    throw IllegalStateException("Unknown message type")
+                }
+            }
+
             val sendRequest = SendRequest(
                 EntitySource.Local,
                 Message(
                     request.id ?: NanoIdUtils.randomNanoId(),
-                    request.message,
-                    request.phoneNumbers,
-                    request.isEncrypted ?: false,
-                    Date(),
+                    content = messageContent,
+                    phoneNumbers = request.phoneNumbers,
+                    isEncrypted = request.isEncrypted ?: false,
+                    createdAt = Date(),
                 ),
                 SendParams(
                     request.withDeliveryReport ?: true,
