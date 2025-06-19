@@ -1070,6 +1070,7 @@
       "Message": {
         "type": "object",
         "title": "Message",
+        "description": "For sending messages, only one of `message`, `textMessage` or `dataMessage` should be set. The `message` field is deprecated in favor of the new message types.",
         "properties": {
           "id": {
             "type": "string",
@@ -1077,7 +1078,7 @@
           },
           "message": {
             "type": "string",
-            "description": "The message text.",
+            "description": "The message text. This field is deprecated, use `textMessage` instead.",
             "maxLength": 65535
           },
           "phoneNumbers": {
@@ -1126,11 +1127,51 @@
             "minimum": -128,
             "maximum": 127,
             "default": 0
+          },
+          "textMessage": {
+            "$ref": "#/components/schemas/TextMessage",
+            "description": "Text message content. Mutually exclusive with `message` and `dataMessage`."
+          },
+          "dataMessage": {
+            "$ref": "#/components/schemas/DataMessage",
+            "description": "Data message content. Mutually exclusive with `message` and `textMessage`."
           }
         },
         "required": [
-          "message",
           "phoneNumbers"
+        ]
+      },
+      "TextMessage": {
+        "type": "object",
+        "title": "TextMessage",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Message text"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "DataMessage": {
+        "type": "object",
+        "title": "DataMessage",
+        "properties": {
+          "data": {
+            "type": "string",
+            "description": "Base64-encoded payload"
+          },
+          "port": {
+            "type": "integer",
+            "description": "Destination port",
+            "minimum": 0,
+            "maximum": 65535
+          }
+        },
+        "required": [
+          "data",
+          "port"
         ]
       },
       "MessageStatus": {
