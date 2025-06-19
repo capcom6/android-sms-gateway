@@ -12,6 +12,7 @@ import android.os.Build
 import android.telephony.SmsManager
 import android.telephony.SmsMessage
 import android.telephony.TelephonyManager
+import android.util.Base64
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.NonCancellable
@@ -19,8 +20,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
-import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
+import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.helpers.PhoneHelper
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
@@ -30,8 +31,11 @@ import me.capcom.smsgateway.modules.health.domain.CheckResult
 import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
+import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
+import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
+import me.capcom.smsgateway.modules.messages.repositories.MessagesRepository
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.receivers.EventsReceiver
@@ -41,6 +45,7 @@ class MessagesService(
     private val context: Context,
     private val settings: MessagesSettings,
     private val dao: MessagesDao,    // todo: use MessagesRepository
+    private val messages: MessagesRepository,
     private val encryptionService: EncryptionService,
     private val events: EventBus,
     private val logsService: LogsService,
@@ -83,32 +88,11 @@ class MessagesService(
             return
         }
 
-        val message = MessageWithRecipients(
-            Message(
-                request.message.id,
-                request.message.text,
-                request.params.withDeliveryReport,
-                request.params.simNumber,
-                request.params.validUntil,
-                request.message.isEncrypted,
-                request.params.skipPhoneValidation,
-                request.params.priority ?: Message.PRIORITY_DEFAULT,
-                request.source,
+        messages.enqueue(request)
 
-                createdAt = request.message.createdAt.time,
-            ),
-            request.message.phoneNumbers.map {
-                MessageRecipient(
-                    request.message.id,
-                    it,
-                    ProcessingState.Pending
-                )
-            },
-        )
+        val priority = request.params.priority ?: Message.PRIORITY_DEFAULT
 
-        dao.insert(message)
-
-        SendMessagesWorker.start(context, message.message.priority >= Message.PRIORITY_EXPEDITED)
+        SendMessagesWorker.start(context, priority >= Message.PRIORITY_EXPEDITED)
     }
 
     fun getMessage(id: String): MessageWithRecipients? {
@@ -184,11 +168,13 @@ class MessagesService(
 
     internal suspend fun sendPendingMessages() {
         while (true) {
-            val message = dao.getPending() ?: return
+            val message = messages.getPending() ?: return
             delay(1L)
 
+            val priority = message.params.priority ?: Message.PRIORITY_DEFAULT
+
             // don't apply limits for expedited messages
-            if (message.message.priority < Message.PRIORITY_EXPEDITED) {
+            if (priority < Message.PRIORITY_EXPEDITED) {
                 applyLimit()
             }
 
@@ -198,7 +184,7 @@ class MessagesService(
             }
 
             // don't apply delay for expedited messages
-            if (message.message.priority >= Message.PRIORITY_EXPEDITED) {
+            if (priority >= Message.PRIORITY_EXPEDITED) {
                 continue
             }
 
@@ -225,16 +211,9 @@ class MessagesService(
     /**
      * @return `true` if message was sent
      */
-    private suspend fun sendMessage(request: MessageWithRecipients): Boolean {
-        if (request.message.validUntil?.before(Date()) == true) {
+    private suspend fun sendMessage(request: StoredSendRequest): Boolean {
+        if (request.params.validUntil?.before(Date()) == true) {
             updateState(request.message.id, null, ProcessingState.Failed, "TTL expired")
-            return false
-        }
-
-        if (request.state != ProcessingState.Pending) {
-            // не ясно когда такая ситуация может возникнуть
-            Log.w(this.javaClass.simpleName, "Unexpected state for message: $request")
-            updateState(request.message.id, null, request.state)
             return false
         }
 
@@ -280,9 +259,9 @@ class MessagesService(
         )
     }
 
-    private fun selectSimNumber(request: MessageWithRecipients): Int? {
-        if (request.message.simNumber != null) {
-            return request.message.simNumber - 1
+    private fun selectSimNumber(id: Long, params: SendParams): Int? {
+        if (params.simNumber != null) {
+            return params.simNumber - 1
         }
 
         val simSlots = SubscriptionsHelper.selectAvailableSimSlots(context)?.sorted() ?: return null
@@ -292,32 +271,24 @@ class MessagesService(
 
         return when (settings.simSelectionMode) {
             MessagesSettings.SimSelectionMode.OSDefault -> null
-            MessagesSettings.SimSelectionMode.RoundRobin -> simSlots[(request.rowId % simSlots.size).toInt()]
+            MessagesSettings.SimSelectionMode.RoundRobin -> simSlots[(id % simSlots.size).toInt()]
             MessagesSettings.SimSelectionMode.Random -> simSlots.random()
         }
     }
 
-    private suspend fun sendSMS(request: MessageWithRecipients) {
+    private suspend fun sendSMS(request: StoredSendRequest) {
         val message = request.message
         val id = message.id
 
-        val simNumber = selectSimNumber(request)
+        val simNumber = selectSimNumber(request.id, request.params)
         val smsManager: SmsManager = getSmsManager(simNumber)
 
-        if (request.message.simNumber == null && simNumber != null) {
+        if (request.params.simNumber == null && simNumber != null) {
             dao.updateSimNumber(id, simNumber + 1)
         }
 
-        @Suppress("NAME_SHADOWING")
-        val messageText = when (message.isEncrypted) {
-            true -> encryptionService.decrypt(message.text)
-            false -> message.text
-        }
-
-        request.recipients
-            .filter { it.state == ProcessingState.Pending }
-            .forEach { rcp ->
-                val sourcePhoneNumber = rcp.phoneNumber
+        request.message.phoneNumbers
+            .forEach { sourcePhoneNumber ->
                 val sentIntent = PendingIntent.getBroadcast(
                     context,
                     0,
@@ -329,7 +300,7 @@ class MessagesService(
                     ),
                     PendingIntent.FLAG_MUTABLE
                 )
-                val deliveredIntent = when (message.withDeliveryReport) {
+                val deliveredIntent = when (request.params.withDeliveryReport) {
                     false -> null
                     true -> PendingIntent.getBroadcast(
                         context,
@@ -345,32 +316,65 @@ class MessagesService(
                 }
 
                 try {
-                    val parts = smsManager.divideMessage(messageText)
                     val phoneNumber = when (message.isEncrypted) {
                         true -> encryptionService.decrypt(sourcePhoneNumber)
                         false -> sourcePhoneNumber
                     }
-                    val normalizedPhoneNumber = when (message.skipPhoneValidation) {
+                    val normalizedPhoneNumber = when (request.params.skipPhoneValidation) {
                         true -> phoneNumber.filter { it.isDigit() || it == '+' }
                         false -> PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
                     }
 
-                    if (parts.size > 1) {
-                        smsManager.sendMultipartTextMessage(
-                            normalizedPhoneNumber,
-                            null,
-                            parts,
-                            ArrayList(parts.map { sentIntent }),
-                            deliveredIntent?.let { ArrayList(parts.map { deliveredIntent }) }
-                        )
-                    } else {
-                        smsManager.sendTextMessage(
-                            normalizedPhoneNumber,
-                            null,
-                            messageText,
-                            sentIntent,
-                            deliveredIntent
-                        )
+                    when (val content = message.content) {
+                        is MessageContent.Text -> {
+                            // Handle text messages
+                            val text = when (message.isEncrypted) {
+                                true -> encryptionService.decrypt(content.text)
+                                false -> content.text
+                            }
+
+                            val parts = smsManager.divideMessage(text)
+                            if (parts.size > 1) {
+                                smsManager.sendMultipartTextMessage(
+                                    normalizedPhoneNumber,
+                                    null,
+                                    parts,
+                                    ArrayList(parts.map { sentIntent }),
+                                    deliveredIntent?.let { ArrayList(parts.map { deliveredIntent }) }
+                                )
+                            } else {
+                                smsManager.sendTextMessage(
+                                    normalizedPhoneNumber,
+                                    null,
+                                    text,
+                                    sentIntent,
+                                    deliveredIntent
+                                )
+                            }
+                        }
+
+                        is MessageContent.Data -> {
+                            val data = when (message.isEncrypted) {
+                                true -> encryptionService.decrypt(content.data)
+                                false -> content.data
+                            }
+                            val decodedData = try {
+                                Base64.decode(data, Base64.DEFAULT)
+                            } catch (e: IllegalArgumentException) {
+                                throw IllegalArgumentException(
+                                    "Invalid Base64 data for message ${message.id}",
+                                    e
+                                )
+                            }
+                            smsManager.sendDataMessage(
+                                normalizedPhoneNumber,
+                                null,  // scAddress
+                                content.port,
+                                decodedData,
+                                sentIntent,
+                                deliveredIntent
+                            )
+                        }
                     }
 
                     updateState(id, sourcePhoneNumber, ProcessingState.Processed)
@@ -391,7 +395,7 @@ class MessagesService(
                         "sendSMS: " + th.message
                     )
                 }
-        }
+            }
     }
 
     @SuppressLint("NewApi")
