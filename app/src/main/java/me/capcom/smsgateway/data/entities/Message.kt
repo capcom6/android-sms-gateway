@@ -7,6 +7,11 @@ import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.ProcessingState
 import java.util.Date
 
+enum class MessageType {
+    Text,
+    Data,
+}
+
 @Entity(
     indices = [
         androidx.room.Index(value = ["state"]),
@@ -16,7 +21,7 @@ import java.util.Date
 )
 data class Message(
     @PrimaryKey val id: String,
-    val text: String,
+
     @ColumnInfo(defaultValue = "1")
     val withDeliveryReport: Boolean,
     val simNumber: Int?,
@@ -30,6 +35,11 @@ data class Message(
 
     @ColumnInfo(defaultValue = "Local")
     val source: EntitySource,
+
+    @ColumnInfo(defaultValue = "Text")
+    val type: MessageType = MessageType.Text,
+
+    val content: String,
 
     val state: ProcessingState = ProcessingState.Pending,
     @ColumnInfo(defaultValue = "0")
