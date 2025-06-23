@@ -3,6 +3,7 @@ package me.capcom.smsgateway.modules.receiver
 import android.content.Context
 import android.os.Build
 import android.provider.Telephony
+import android.util.Base64
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
@@ -47,26 +48,41 @@ class ReceiverService : KoinComponent {
             mapOf("message" to message)
         )
 
-        val event = SmsEventPayload.SmsReceived(
-            messageId = message.hashCode().toUInt().toString(16),
-            message = message.body,
-            phoneNumber = message.address,
-            simNumber = message.subscriptionId?.let {
-                SubscriptionsHelper.getSimSlotIndex(
-                    context,
-                    it
-                )
-            }?.let { it + 1 },
-            receivedAt = message.date,
-        )
+        val (type, payload) = when (message) {
+            is InboxMessage.Text -> WebHookEvent.SmsReceived to SmsEventPayload.SmsReceived(
+                messageId = message.hashCode().toUInt().toString(16),
+                message = message.text,
+                phoneNumber = message.address,
+                simNumber = message.subscriptionId?.let {
+                    SubscriptionsHelper.getSimSlotIndex(
+                        context,
+                        it
+                    )
+                }?.let { it + 1 },
+                receivedAt = message.date,
+            )
 
-        webHooksService.emit(WebHookEvent.SmsReceived, event)
+            is InboxMessage.Data -> WebHookEvent.SmsDataReceived to SmsEventPayload.SmsDataReceived(
+                messageId = message.hashCode().toUInt().toString(16),
+                data = Base64.encodeToString(message.data, Base64.NO_WRAP),
+                phoneNumber = message.address,
+                simNumber = message.subscriptionId?.let {
+                    SubscriptionsHelper.getSimSlotIndex(
+                        context,
+                        it
+                    )
+                }?.let { it + 1 },
+                receivedAt = message.date,
+            )
+        }
+
+        webHooksService.emit(type, payload)
 
         logsService.insert(
             LogEntry.Priority.DEBUG,
             MODULE_NAME,
             "ReceiverService::process - message processed",
-            mapOf("event" to event)
+            mapOf("type" to type, "payload" to payload)
         )
     }
 
@@ -109,10 +125,10 @@ class ReceiverService : KoinComponent {
         cursor?.use { cursor ->
             while (cursor.moveToNext()) {
                 messages.add(
-                    InboxMessage(
+                    InboxMessage.Text(
                         address = cursor.getString(1),
                         date = Date(cursor.getLong(2)),
-                        body = cursor.getString(3),
+                        text = cursor.getString(3),
                         subscriptionId = when {
                             projection.size > 4 -> cursor.getInt(4).takeIf { it >= 0 }
                             else -> null

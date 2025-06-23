@@ -17,4 +17,7 @@ enum class WebHookEvent(val value: String) {
 
     @SerializedName("system:ping")
     SystemPing("system:ping"),
+
+    @SerializedName("sms:data-received")
+    SmsDataReceived("sms:data-received"),
 }

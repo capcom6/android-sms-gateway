@@ -14,22 +14,36 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
     private val receiverSvc: ReceiverService by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intents.SMS_RECEIVED_ACTION) {
+        if (intent.action != Intents.SMS_RECEIVED_ACTION
+            && intent.action != Intents.DATA_SMS_RECEIVED_ACTION
+        ) {
             return
         }
 
         val messages = Intents.getMessagesFromIntent(intent) ?: return
+        val isDataMessage = intent.action == Intents.DATA_SMS_RECEIVED_ACTION
         val firstMessage = messages.first()
-        val text = messages.joinToString(separator = "") { it.displayMessageBody }
+//        val text = messages.joinToString(separator = "") { it.displayMessageBody }
+
+        val inboxMessage = when (isDataMessage) {
+            false -> InboxMessage.Text(
+                messages.joinToString(separator = "") { it.displayMessageBody },
+                firstMessage.displayOriginatingAddress,
+                Date(firstMessage.timestampMillis),
+                extractSubscriptionId(context, intent)
+            )
+
+            true -> InboxMessage.Data(
+                firstMessage.userData,
+                firstMessage.displayOriginatingAddress,
+                Date(firstMessage.timestampMillis),
+                extractSubscriptionId(context, intent)
+            )
+        }
 
         receiverSvc.process(
             context,
-            InboxMessage(
-                address = firstMessage.displayOriginatingAddress,
-                body = text,
-                date = Date(firstMessage.timestampMillis),
-                subscriptionId = extractSubscriptionId(context, intent),
-            )
+            inboxMessage
         )
     }
 
