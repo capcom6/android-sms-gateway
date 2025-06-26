@@ -742,7 +742,8 @@
               "sms:sent",
               "system:ping",
               "sms:delivered",
-              "sms:failed"
+              "sms:failed",
+              "sms:data-received"
             ],
             "description": "The type of event being reported.",
             "example": "sms:received"
@@ -802,6 +803,9 @@
               },
               {
                 "$ref": "#/components/schemas/SystemPingPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SmsDataReceivedPayload"
               }
             ]
           }
@@ -915,6 +919,29 @@
         "type": "object",
         "title": "SystemPingPayload",
         "description": "Payload of `system:ping` event."
+      },
+      "SmsDataReceivedPayload": {
+        "title": "SmsDataReceivedPayload",
+        "description": "Payload of `sms:data-received` event.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "string",
+                "description": "Base64-encoded content of the SMS message received."
+              },
+              "receivedAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message was received.",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
       },
       "LogEntry": {
         "type": "object",
