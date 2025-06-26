@@ -34,6 +34,10 @@ class SettingsService(
     }
 
     fun update(data: Map<String, *>) {
+        if (data.isEmpty()) {
+            return
+        }
+
         data.forEach { (key, value) ->
             try {
                 settings[key]?.let {
