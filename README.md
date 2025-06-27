@@ -100,6 +100,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 
 - 💳 **Multiple SIM card support:** Supports devices with [multiple SIM cards](https://docs.sms-gate.app/features/multi-sim/).
 - 📱📱 **Multiple device support:** Connect [multiple devices](https://docs.sms-gate.app/features/multi-device/) to the same account with Cloud or Private server. Messages sent via the server are distributed across all connected devices.
+- 📲 **Data SMS support:** Send and receive data SMS messages for app to app communication.
 
 🔌 Integration:
 
@@ -182,7 +183,7 @@ This mode is ideal for sending messages from a local network.
     ```sh
     curl -X POST -u <username>:<password> \
       -H "Content-Type: application/json" \
-      -d '{ "message": "Hello, doctors!", "phoneNumbers": ["+19162255887", "+19162255888"] }' \
+      -d '{ "textMessage": { "text": "Hello, doctors!" }, "phoneNumbers": ["+19162255887", "+19162255888"] }' \
       http://<device_local_ip>:8080/message
     ```
 
@@ -210,7 +211,7 @@ Use the cloud server mode when dealing with dynamic or shared device IP addresse
     ```sh
     curl -X POST -u <username>:<password> \
       -H "Content-Type: application/json" \
-      -d '{ "message": "Hello, doctors!", "phoneNumbers": ["+19162255887", "+19162255888"] }' \
+      -d '{ "textMessage": { "text": "Hello, doctors!" }, "phoneNumbers": ["+19162255887", "+19162255888"] }' \
       https://api.sms-gate.app/3rdparty/v1/message
     ```
 
