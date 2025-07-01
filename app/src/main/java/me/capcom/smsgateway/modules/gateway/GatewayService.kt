@@ -13,6 +13,8 @@ import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
 import me.capcom.smsgateway.modules.gateway.workers.SettingsUpdateWorker
 import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
@@ -23,6 +25,7 @@ class GatewayService(
     private val messagesService: MessagesService,
     private val settings: GatewaySettings,
     private val events: EventBus,
+    private val logsService: LogsService,
 ) {
     private val eventsReceiver by lazy { EventsReceiver() }
 
@@ -189,6 +192,15 @@ class GatewayService(
             try {
                 processMessage(context, message)
             } catch (th: Throwable) {
+                logsService.insert(
+                    LogEntry.Priority.ERROR,
+                    MODULE_NAME,
+                    "Failed to process message",
+                    mapOf(
+                        "message" to message,
+                        "exception" to th.stackTraceToString(),
+                    )
+                )
                 th.printStackTrace()
             }
         }
@@ -205,7 +217,13 @@ class GatewayService(
             EntitySource.Cloud,
             me.capcom.smsgateway.modules.messages.data.Message(
                 message.id,
-                MessageContent.Text(message.message),
+                when (val content = message.content) {
+                    is GatewayApi.MessageContent.Text -> MessageContent.Text(content.text)
+                    is GatewayApi.MessageContent.Data -> MessageContent.Data(
+                        content.data,
+                        content.port
+                    )
+                },
                 message.phoneNumbers,
                 message.isEncrypted ?: false,
                 message.createdAt ?: Date(),

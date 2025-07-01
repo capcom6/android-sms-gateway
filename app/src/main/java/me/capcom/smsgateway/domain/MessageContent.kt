@@ -7,7 +7,7 @@ sealed class MessageContent {
         }
     }
 
-    data class Data(val data: String, val port: Short) : MessageContent() {
+    data class Data(val data: String, val port: UShort) : MessageContent() {
         override fun toString(): String {
             return "$data:$port"
         }
