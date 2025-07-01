@@ -369,7 +369,7 @@ class MessagesService(
                             smsManager.sendDataMessage(
                                 normalizedPhoneNumber,
                                 null,  // scAddress
-                                content.port,
+                                content.port.toShort(),
                                 decodedData,
                                 sentIntent,
                                 deliveredIntent
