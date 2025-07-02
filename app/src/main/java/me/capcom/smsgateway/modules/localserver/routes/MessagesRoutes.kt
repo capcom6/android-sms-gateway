@@ -138,7 +138,7 @@ class MessagesRoutes(
                 request.dataMessage != null -> {
                     MessageContent.Data(
                         request.dataMessage.data,
-                        request.dataMessage.port.toShort()
+                        request.dataMessage.port.toUShort()
                     )
                 }
 

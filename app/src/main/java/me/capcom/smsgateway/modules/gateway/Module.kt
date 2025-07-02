@@ -7,4 +7,4 @@ val gatewayModule = module {
     singleOf(::GatewayService)
 }
 
-val NAME = "gateway"
+val MODULE_NAME = "gateway"

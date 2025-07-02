@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.modules.gateway
 
+import com.google.gson.annotations.SerializedName
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
@@ -171,9 +172,23 @@ class GatewayApi(
     )
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    sealed class MessageContent {
+        class Text(
+            val text: String,
+        ) : MessageContent()
+
+        class Data(
+            val data: String,
+            val port: UShort,
+        ) : MessageContent()
+    }
+
     data class Message(
         val id: String,
-        val message: String,
+        @SerializedName("textMessage")
+        val _textMessage: MessageContent.Text?,
+        @SerializedName("dataMessage")
+        val _dataMessage: MessageContent.Data?,
         val phoneNumbers: List<String>,
         val simNumber: Int?,
         val withDeliveryReport: Boolean?,
@@ -181,7 +196,16 @@ class GatewayApi(
         val validUntil: Date?,
         val priority: Byte?,
         val createdAt: Date?,
-    )
+
+        @SerializedName("message")
+        val _message: String?,
+    ) {
+        val content: MessageContent
+            get() = this._dataMessage
+                ?: this._textMessage
+                ?: _message?.let { MessageContent.Text(it) }
+                ?: throw RuntimeException("Invalid message content")
+    }
 
     data class RecipientState(
         val phoneNumber: String,
