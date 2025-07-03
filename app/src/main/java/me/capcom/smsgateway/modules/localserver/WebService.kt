@@ -137,12 +137,8 @@ class WebService : Service() {
                                 0
                             ).firstInstallTime
                             val deviceName = "${Build.MANUFACTURER}/${Build.PRODUCT}"
-                            val deviceId =
-                                deviceName.hashCode().toULong()
-                                    .toString(16).padStart(16, '0') + firstInstallTime.toULong()
-                                    .toString(16).padStart(16, '0')
                             val device = Device(
-                                deviceId,
+                                requireNotNull(settings.deviceId),
                                 deviceName,
                                 Date(firstInstallTime),
                                 Date(),
@@ -152,7 +148,7 @@ class WebService : Service() {
                             call.respond(listOf(device))
                         }
                     }
-                    MessagesRoutes(applicationContext, get(), get()).let {
+                    MessagesRoutes(applicationContext, get(), get(), get()).let {
                         route("/message") {
                             it.register(this)
                         }

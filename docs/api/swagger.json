@@ -42,6 +42,14 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "deviceActiveWithin",
+            "in": "query",
+            "description": "Filter devices active within the specified number of hours",
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "requestBody": {
@@ -1152,6 +1160,13 @@
                 "minimum": -128,
                 "maximum": 127,
                 "default": 0
+              },
+              "deviceId": {
+                "type": "string",
+                "nullable": true,
+                "description": "Optional device ID for explicit selection",
+                "maxLength": 21,
+                "example": "PyDmBQZZXYmyxMwED8Fzy"
               }
             },
             "required": [
@@ -1284,8 +1299,22 @@
               "format": "date-time",
               "readOnly": true
             }
+          },
+          "deviceId": {
+            "type": "string",
+            "description": "Device ID",
+            "maxLength": 21,
+            "readOnly": true,
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
           }
-        }
+        },
+        "required": [
+          "id",
+          "state",
+          "isHashed",
+          "isEncrypted",
+          "deviceId"
+        ]
       },
       "MessageRecipient": {
         "type": "object",
