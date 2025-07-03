@@ -5,6 +5,7 @@ import java.util.Date
 
 data class PostMessageResponse(
     val id: String,
+    val deviceId: String,
     val state: ProcessingState,
     val recipients: List<Recipient>,
     val isEncrypted: Boolean,

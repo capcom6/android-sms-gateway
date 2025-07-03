@@ -25,6 +25,8 @@ data class PostMessageRequest(
     val textMessage: TextMessage? = null,
     val dataMessage: DataMessage? = null,
 
+    val deviceId: String? = null,
+
     @SerializedName("ttl")
     private val _ttl: Long?,
     @SerializedName("validUntil")
