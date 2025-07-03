@@ -13,6 +13,7 @@ import io.ktor.server.routing.route
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
+import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
 import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
@@ -27,6 +28,7 @@ class MessagesRoutes(
     private val context: Context,
     private val messagesService: MessagesService,
     private val receiverService: ReceiverService,
+    private val settings: LocalServerSettings,
 ) {
     fun register(routing: Route) {
         routing.apply {
@@ -40,6 +42,14 @@ class MessagesRoutes(
     private fun Route.messagesRoutes() {
         post {
             val request = call.receive<PostMessageRequest>()
+
+            if (request.deviceId?.let { it == settings.deviceId } == false) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to "Invalid device ID")
+                )
+                return@post
+            }
 
             val messageTypes =
                 listOfNotNull(request.textMessage, request.dataMessage, request.message)
@@ -173,6 +183,7 @@ class MessagesRoutes(
                 HttpStatusCode.Accepted,
                 PostMessageResponse(
                     id = messageId,
+                    deviceId = requireNotNull(settings.deviceId),
                     state = ProcessingState.Pending,
                     recipients = request.phoneNumbers.map {
                         PostMessageResponse.Recipient(
@@ -182,7 +193,7 @@ class MessagesRoutes(
                         )
                     },
                     isEncrypted = request.isEncrypted ?: false,
-                    mapOf(ProcessingState.Pending to Date())
+                    states = mapOf(ProcessingState.Pending to Date())
                 )
             )
         }
@@ -203,6 +214,7 @@ class MessagesRoutes(
             call.respond(
                 PostMessageResponse(
                     message.message.id,
+                    requireNotNull(settings.deviceId),
                     message.message.state,
                     message.recipients.map {
                         PostMessageResponse.Recipient(
