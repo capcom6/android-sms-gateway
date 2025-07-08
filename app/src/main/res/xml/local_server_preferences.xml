@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory app:title="@string/server">
         <EditTextPreference
             app:defaultValue="8080"
@@ -8,13 +9,13 @@
             app:title="@string/port"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
-    <PreferenceCategory app:title="Credentials">
+    <PreferenceCategory app:title="@string/credentials">
         <EditTextPreference
             app:enableCopying="true"
             app:icon="@drawable/ic_username"
             app:key="localserver.USERNAME"
             app:title="@string/username"
-            app:defaultValue="sms"
+            app:defaultValue="@string/sms"
             app:useSimpleSummaryProvider="true" />
         <EditTextPreference
             app:enableCopying="true"
@@ -23,5 +24,13 @@
             app:title="@string/password"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
-    <Preference app:summary="Restart required to apply changes" />
-</androidx.preference.PreferenceScreen>
+    <PreferenceCategory app:title="@string/device">
+        <Preference
+            android:icon="@drawable/ic_device_id"
+            android:key="transient.device_id"
+            android:title="@string/device_id"
+            app:enableCopying="true"
+            android:persistent="false" />
+    </PreferenceCategory>
+    <Preference app:summary="@string/restart_required_to_apply_changes" />
+</PreferenceScreen>
