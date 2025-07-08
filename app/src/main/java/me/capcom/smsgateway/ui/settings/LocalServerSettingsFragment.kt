@@ -5,11 +5,17 @@ import android.text.InputType
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.modules.localserver.LocalServerSettings
+import org.koin.android.ext.android.inject
 
 class LocalServerSettingsFragment : BasePreferenceFragment() {
+    private val settings by inject<LocalServerSettings>()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.local_server_preferences, rootKey)
+
+        findPreference<Preference>("transient.device_id")?.summary =
+            settings.deviceId ?: getString(R.string.n_a)
 
         findPreference<EditTextPreference>("localserver.PORT")?.setOnPreferenceChangeListener { _, newValue ->
             val value = newValue as? String

@@ -35,5 +35,13 @@
             android:title="@string/login_code"
             app:enableCopying="true" />
     </PreferenceCategory>
+    <PreferenceCategory app:title="@string/device">
+        <Preference
+            android:icon="@drawable/ic_device_id"
+            android:key="transient.device_id"
+            android:title="@string/device_id"
+            app:enableCopying="true"
+            app:persistent="false" />
+    </PreferenceCategory>
     <Preference app:summary="@string/restart_required_to_apply_changes" />
 </PreferenceScreen>

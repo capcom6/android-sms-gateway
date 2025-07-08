@@ -26,6 +26,9 @@ class CloudServerSettingsFragment : BasePreferenceFragment() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.cloud_server_preferences, rootKey)
 
+        findPreference<Preference>("transient.device_id")?.summary =
+            settings.deviceId ?: getString(R.string.n_a)
+
         findPreference<EditTextPreference>("gateway.cloud_url")?.setSummaryProvider {
             val hostname = preferenceManager.sharedPreferences?.getString(it.key, null)
             if (hostname.isNullOrEmpty()) {
