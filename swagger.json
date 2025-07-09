@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.39.1",
+    "version": "1.40.0",
     "title": "SMS Gateway for Android™ Integration API",
     "description": "Provides the ability to send SMS messages by sending requests directly to a device or through a cloud server.",
     "contact": {
@@ -41,6 +41,14 @@
             "schema": {
               "type": "boolean",
               "default": false
+            }
+          },
+          {
+            "name": "deviceActiveWithin",
+            "in": "query",
+            "description": "Filter devices active within the specified number of hours",
+            "schema": {
+              "type": "integer"
             }
           }
         ],
@@ -1152,6 +1160,13 @@
                 "minimum": -128,
                 "maximum": 127,
                 "default": 0
+              },
+              "deviceId": {
+                "type": "string",
+                "nullable": true,
+                "description": "Optional device ID for explicit selection",
+                "maxLength": 21,
+                "example": "PyDmBQZZXYmyxMwED8Fzy"
               }
             },
             "required": [
@@ -1284,8 +1299,22 @@
               "format": "date-time",
               "readOnly": true
             }
+          },
+          "deviceId": {
+            "type": "string",
+            "description": "Device ID",
+            "maxLength": 21,
+            "readOnly": true,
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
           }
-        }
+        },
+        "required": [
+          "id",
+          "state",
+          "isHashed",
+          "isEncrypted",
+          "deviceId"
+        ]
       },
       "MessageRecipient": {
         "type": "object",
