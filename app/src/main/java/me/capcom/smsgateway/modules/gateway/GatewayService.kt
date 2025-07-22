@@ -9,6 +9,7 @@ import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
+import me.capcom.smsgateway.modules.gateway.services.SSEForegroundService
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
 import me.capcom.smsgateway.modules.gateway.workers.SettingsUpdateWorker
@@ -45,6 +46,7 @@ class GatewayService(
         PullMessagesWorker.start(context)
         WebhooksUpdateWorker.start(context)
         SettingsUpdateWorker.start(context)
+        SSEForegroundService.start(context)
 
         eventsReceiver.start()
     }
@@ -52,6 +54,7 @@ class GatewayService(
     fun stop(context: Context) {
         eventsReceiver.stop()
 
+        SSEForegroundService.stop(context)
         SettingsUpdateWorker.stop(context)
         WebhooksUpdateWorker.stop(context)
         PullMessagesWorker.stop(context)

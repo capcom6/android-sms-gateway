@@ -57,6 +57,7 @@ android {
 
 dependencies {
     def ktor_version = "2.2.4"
+    def okhttp_version = "4.10.0"
     def room_version = "2.4.3"
     def coroutines_version = "1.6.1"
     def work_version = "2.7.1"
@@ -79,6 +80,9 @@ dependencies {
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-client-okhttp:$ktor_version")
+
+    implementation("com.squareup.okhttp3:okhttp:$okhttp_version")
+    implementation("com.squareup.okhttp3:okhttp-sse:$okhttp_version")
 
     // Kotlin + coroutines
     implementation "androidx.work:work-runtime-ktx:$work_version"
