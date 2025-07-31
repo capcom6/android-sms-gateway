@@ -9,17 +9,22 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import me.capcom.smsgateway.helpers.SSEManager
-import me.capcom.smsgateway.modules.events.EventBus
+import me.capcom.smsgateway.modules.events.ExternalEvent
+import me.capcom.smsgateway.modules.events.ExternalEventType
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.notifications.NotificationsService
-import org.koin.android.ext.android.get
+import me.capcom.smsgateway.modules.orchestrator.EventsRouter
 import org.koin.android.ext.android.inject
 
 class SSEForegroundService : Service() {
     private val settings: GatewaySettings by inject()
-    private val eventBus = get<EventBus>()
+
+    private val eventsRouter by inject<EventsRouter>()
 
     private val notificationsSvc: NotificationsService by inject()
+    private val logsService: LogsService by inject()
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -43,6 +48,19 @@ class SSEForegroundService : Service() {
             .apply {
                 onEvent = { event, data ->
                     Log.d("SSEForegroundService", "$event: $data")
+
+                    try {
+                        processEvent(event, data)
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+
+                        logsService.insert(
+                            LogEntry.Priority.ERROR,
+                            "SSEForegroundService",
+                            "Failed to process event",
+                            mapOf("event" to event, "data" to data)
+                        )
+                    }
                 }
             }
     }
@@ -74,6 +92,22 @@ class SSEForegroundService : Service() {
 
     override fun onBind(intent: Intent): IBinder? {
         return null
+    }
+
+    private fun processEvent(event: String?, data: String) {
+        val type = try {
+            event?.let { ExternalEventType.valueOf(it) }
+                ?: ExternalEventType.MessageEnqueued
+        } catch (e: Throwable) {
+            throw RuntimeException("Unknown event type: $event", e)
+        }
+
+        eventsRouter.route(
+            ExternalEvent(
+                type = type,
+                data = data
+            )
+        )
     }
 
     override fun onDestroy() {
