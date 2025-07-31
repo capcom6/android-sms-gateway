@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
+import me.capcom.smsgateway.R
 import me.capcom.smsgateway.helpers.SSEManager
 import me.capcom.smsgateway.modules.events.ExternalEvent
 import me.capcom.smsgateway.modules.events.ExternalEventType
@@ -79,11 +80,11 @@ class SSEForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = notificationsSvc.makeNotification(
             this,
-            NotificationsService.NOTIFICATION_ID_PING_SERVICE,
-            "Listening to the server events..."
+            NotificationsService.NOTIFICATION_ID_REALTIME_EVENTS,
+            getString(R.string.listening_to_the_server_events)
         )
 
-        startForeground(NotificationsService.NOTIFICATION_ID_PING_SERVICE, notification)
+        startForeground(NotificationsService.NOTIFICATION_ID_REALTIME_EVENTS, notification)
 
         sseManager.connect()
 
