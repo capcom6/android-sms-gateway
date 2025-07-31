@@ -37,6 +37,8 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                 ?: ExternalEventType.MessageEnqueued
             val data = message.data["data"]
 
+            Log.d(this.javaClass.name, "Routing event: $event with data: $data")
+
             eventsRouter.route(
                 ExternalEvent(
                     type = event,
