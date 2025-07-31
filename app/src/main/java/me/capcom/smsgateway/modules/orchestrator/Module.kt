@@ -5,6 +5,7 @@ import org.koin.dsl.module
 
 val orchestratorModule = module {
     singleOf(::OrchestratorService)
+    singleOf(::EventsRouter)
 }
 
 val MODULE_NAME = "orchestrator"

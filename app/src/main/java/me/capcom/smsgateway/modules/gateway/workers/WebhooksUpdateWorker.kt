@@ -46,7 +46,7 @@ class WebhooksUpdateWorker(appContext: Context, params: WorkerParameters) :
     }
 
     companion object {
-        private const val NAME = "CloudUpdateWorker"
+        private const val NAME = "WebhooksUpdateWorker"
 
         fun start(context: Context) {
             val work = PeriodicWorkRequestBuilder<WebhooksUpdateWorker>(

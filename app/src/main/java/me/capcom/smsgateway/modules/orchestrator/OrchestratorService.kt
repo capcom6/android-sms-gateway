@@ -10,6 +10,7 @@ import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.ping.PingService
+import me.capcom.smsgateway.modules.receiver.ReceiverService
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 
 class OrchestratorService(
@@ -17,6 +18,7 @@ class OrchestratorService(
     private val gatewaySvc: GatewayService,
     private val localServerSvc: LocalServerService,
     private val webHooksSvc: WebHooksService,
+    private val receiverService: ReceiverService,
     private val pingSvc: PingService,
     private val logsSvc: LogsService,
     private val settings: SettingsHelper,
@@ -28,12 +30,13 @@ class OrchestratorService(
 
         logsSvc.start(context)
         messagesSvc.start(context)
-        gatewaySvc.start(context)
         webHooksSvc.start(context)
+        gatewaySvc.start(context)
 
         try {
             localServerSvc.start(context)
             pingSvc.start(context)
+            receiverService.start(context)
         } catch (e: Throwable) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
                 && e is ForegroundServiceStartNotAllowedException
@@ -46,15 +49,17 @@ class OrchestratorService(
                 return
             }
 
-            throw e;
+            throw e
         }
     }
 
     fun stop(context: Context) {
+        receiverService.stop(context)
         pingSvc.stop(context)
-        webHooksSvc.stop(context)
         localServerSvc.stop(context)
+
         gatewaySvc.stop(context)
+        webHooksSvc.stop(context)
         messagesSvc.stop(context)
         logsSvc.stop(context)
     }

@@ -1,8 +1,8 @@
-package me.capcom.smsgateway.modules.push
+package me.capcom.smsgateway.modules.events
 
 import com.google.gson.annotations.SerializedName
 
-enum class Event {
+enum class ExternalEventType {
     @SerializedName("MessageEnqueued")
     MessageEnqueued,
 

@@ -19,6 +19,16 @@ class ReceiverService : KoinComponent {
     private val webHooksService: WebHooksService by inject()
     private val logsService: LogsService by inject()
 
+    private val eventsReceiver by lazy { EventsReceiver() }
+
+    fun start(context: Context) {
+        eventsReceiver.start()
+    }
+
+    fun stop(context: Context) {
+        eventsReceiver.stop()
+    }
+
     fun export(context: Context, period: Pair<Date, Date>) {
         logsService.insert(
             LogEntry.Priority.DEBUG,

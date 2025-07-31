@@ -29,7 +29,7 @@ class SSEManager(
     private val isDisconnecting = AtomicBoolean(false)
 
     // Event callbacks
-    var onEvent: ((type: String, data: String) -> Unit)? = null
+    var onEvent: ((type: String?, data: String) -> Unit)? = null
     var onConnected: (() -> Unit)? = null
     var onError: ((Throwable?) -> Unit)? = null
     var onClosed: (() -> Unit)? = null
@@ -60,7 +60,7 @@ class SSEManager(
                             data: String
                         ) {
                             Log.d(TAG, "Event received: $type - $data")
-                            onEvent?.invoke(type ?: "message", data)
+                            onEvent?.invoke(type, data)
                         }
 
                         override fun onClosed(eventSource: EventSource) {
