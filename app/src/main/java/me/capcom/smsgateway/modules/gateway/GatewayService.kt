@@ -46,7 +46,6 @@ class GatewayService(
         PullMessagesWorker.start(context)
         WebhooksUpdateWorker.start(context)
         SettingsUpdateWorker.start(context)
-        SSEForegroundService.start(context)
 
         eventsReceiver.start()
     }
@@ -109,9 +108,7 @@ class GatewayService(
         if (accessToken != null) {
             // if there's an access token, try to update push token
             try {
-                pushToken?.let {
-                    updateDevice(it)
-                }
+                updateDevice(pushToken)
                 return
             } catch (e: ClientRequestException) {
                 // if token is invalid, try to register new one
@@ -135,6 +132,8 @@ class GatewayService(
                     registerMode.login to registerMode.password
                 )
             }
+
+            this.settings.fcmToken = pushToken
             this.settings.registrationInfo = response
 
             events.emit(
@@ -156,19 +155,23 @@ class GatewayService(
         }
     }
 
-    internal suspend fun updateDevice(pushToken: String) {
+    internal suspend fun updateDevice(pushToken: String?) {
         if (!settings.enabled) return
 
         val settings = settings.registrationInfo ?: return
         val accessToken = settings.token
 
-        api.devicePatch(
-            accessToken,
-            GatewayApi.DevicePatchRequest(
-                settings.id,
-                pushToken
+        pushToken?.let {
+            api.devicePatch(
+                accessToken,
+                GatewayApi.DevicePatchRequest(
+                    settings.id,
+                    it
+                )
             )
-        )
+        }
+
+        this.settings.fcmToken = pushToken
 
         events.emit(
             DeviceRegisteredEvent.Success(

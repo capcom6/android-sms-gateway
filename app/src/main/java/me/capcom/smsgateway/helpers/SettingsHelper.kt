@@ -27,10 +27,6 @@ class SettingsHelper(private val context: Context) {
             settings.edit { putBoolean(PREF_KEY_AUTOSTART, value) }
         }
 
-    var fcmToken: String?
-        get() = settings.getString(PREF_KEY_FCM_TOKEN, null)
-        set(value) = settings.edit { putString(PREF_KEY_FCM_TOKEN, value) }
-
     private fun migrate() {
         // remove after 2025-11-28
         val PREF_KEY_SERVER_TOKEN = "server_token"
