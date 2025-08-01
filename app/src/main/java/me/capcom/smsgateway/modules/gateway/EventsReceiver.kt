@@ -6,9 +6,11 @@ import kotlinx.coroutines.launch
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.events.EventsReceiver
+import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.gateway.events.MessageEnqueuedEvent
 import me.capcom.smsgateway.modules.gateway.events.SettingsUpdatedEvent
 import me.capcom.smsgateway.modules.gateway.events.WebhooksUpdatedEvent
+import me.capcom.smsgateway.modules.gateway.services.SSEForegroundService
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
 import me.capcom.smsgateway.modules.gateway.workers.SettingsUpdateWorker
@@ -77,6 +79,18 @@ class EventsReceiver : EventsReceiver() {
                     if (!settings.enabled) return@collect
 
                     SettingsUpdateWorker.start(get())
+                }
+            }
+
+            launch {
+                Log.d("EventsReceiver", "launched DeviceRegisteredEvent")
+                eventBus.collect<DeviceRegisteredEvent> {
+                    Log.d("EventsReceiver", "Event: $it")
+
+                    if (!settings.enabled) return@collect
+                    if (settings.fcmToken != null) return@collect
+
+                    SSEForegroundService.start(get())
                 }
             }
         }

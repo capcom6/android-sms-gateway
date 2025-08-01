@@ -19,6 +19,10 @@ class GatewaySettings(
         get() = storage.get(REGISTRATION_INFO)
         set(value) = storage.set(REGISTRATION_INFO, value)
 
+    var fcmToken: String?
+        get() = storage.get(FCM_TOKEN)
+        set(value) = storage.set(FCM_TOKEN, value)
+
     val username: String?
         get() = registrationInfo?.login
     val password: String?
@@ -32,6 +36,7 @@ class GatewaySettings(
     companion object {
         private const val REGISTRATION_INFO = "REGISTRATION_INFO"
         private const val ENABLED = "ENABLED"
+        private const val FCM_TOKEN = "fcm_token"
 
         private const val CLOUD_URL = "cloud_url"
         private const val PRIVATE_TOKEN = "private_token"

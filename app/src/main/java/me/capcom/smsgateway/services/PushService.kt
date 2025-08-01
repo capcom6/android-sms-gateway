@@ -2,11 +2,9 @@ package me.capcom.smsgateway.services
 
 import android.content.Context
 import android.util.Log
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.events.ExternalEvent
 import me.capcom.smsgateway.modules.events.ExternalEventType
 import me.capcom.smsgateway.modules.gateway.workers.RegistrationWorker
@@ -18,14 +16,10 @@ import org.koin.core.component.get
 import org.koin.core.component.inject
 
 class PushService : FirebaseMessagingService(), KoinComponent {
-    private val settingsHelper by inject<SettingsHelper>()
-
     private val logsService by inject<LogsService>()
     private val eventsRouter by inject<EventsRouter>()
 
     override fun onNewToken(token: String) {
-        settingsHelper.fcmToken = token
-
         RegistrationWorker.start(this@PushService, token, true)
     }
 
@@ -47,7 +41,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
             )
         } catch (e: Throwable) {
             Log.e(this.javaClass.name, "Error processing push message", e)
-            get<LogsService>().insert(
+            logsService.insert(
                 priority = LogEntry.Priority.ERROR,
                 module = this.javaClass.simpleName,
                 message = "Failed to process push message: ${e.message}",
@@ -65,7 +59,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                 module = PushService::class.java.simpleName,
                 message = "FCM registration started"
             )
-            FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                 if (!task.isSuccessful || task.isCanceled) {
                     logger.insert(
                         priority = LogEntry.Priority.ERROR,
@@ -90,7 +84,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
 
                 // Log and toast
                 RegistrationWorker.start(context, token, false)
-            })
+            }
         }
     }
 }

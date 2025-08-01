@@ -119,7 +119,13 @@ class SSEForegroundService : Service() {
         if (wakeLock.isHeld) {
             wakeLock.release()
         }
-        stopForeground(true)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
 
         super.onDestroy()
     }
