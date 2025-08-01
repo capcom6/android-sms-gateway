@@ -20,6 +20,8 @@
     <string name="delays_limits_etc">Delays, limits, etc.</string>
     <string name="delays_seconds">Delays, seconds</string>
     <string name="delete_after_days">Delete after, days</string>
+    <string name="device">Device</string>
+    <string name="device_id">Device ID</string>
     <string name="disabled">Disabled</string>
     <string name="dots">…</string>
     <string name="enabled">Enabled</string>
@@ -95,6 +97,7 @@
     <string name="sign_in">Sign In</string>
     <string name="sign_up">Sign Up</string>
     <string name="signing_key">Signing Key</string>
+    <string name="sms" translatable="false">sms</string>
     <string name="sms_gateway">SMS Gateway</string>
     <string name="sms_gateway_is_running_on_port">SMS gateway is running on port %1$d</string>
     <string name="success_long_press_to_copy">Success, long press to copy</string>
@@ -116,7 +119,4 @@
     <string name="webhooks">Webhooks</string>
     <string name="webhooks_dotdotdot">Webhooks…</string>
     <string name="you_have_sms_received_webhooks_registered_please_review_them_to_avoid_any_security_risks">You have %1$d SMS received webhooks registered. Please review them to avoid any security risks.</string>
-    <string name="device">Device</string>
-    <string name="device_id">Device ID</string>
-    <string name="sms">sms</string>
 </resources>
