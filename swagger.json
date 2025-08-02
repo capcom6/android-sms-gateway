@@ -1,13 +1,13 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.40.1",
+    "version": "1.41.0",
     "title": "SMS Gateway for Android™ Integration API",
     "description": "Provides the ability to send SMS messages by sending requests directly to a device or through a cloud server.",
     "contact": {
       "name": "SMSGate Support",
       "email": "support@sms-gate.app",
-      "url": "https://github.com/capcom6"
+      "url": "https://docs.sms-gate.app/"
     },
     "license": {
       "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
@@ -16,7 +16,7 @@
   },
   "servers": [
     {
-      "url": "http://device-ip:8080",
+      "url": "/",
       "description": "Local Server"
     },
     {
@@ -73,7 +73,7 @@
         ],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
@@ -120,7 +120,7 @@
         ],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
@@ -160,7 +160,7 @@
         ],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
@@ -203,7 +203,7 @@
         "security": [],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
@@ -243,7 +243,7 @@
         ],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
@@ -314,7 +314,7 @@
         ],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
@@ -355,7 +355,7 @@
         ],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
@@ -416,7 +416,7 @@
         ],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
@@ -484,7 +484,7 @@
         ],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
@@ -514,7 +514,7 @@
         ],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
@@ -551,7 +551,7 @@
         ],
         "servers": [
           {
-            "url": "http://device-ip:8080",
+            "url": "/",
             "description": "Local Server"
           },
           {
