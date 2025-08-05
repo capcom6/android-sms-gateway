@@ -12,13 +12,16 @@ import me.capcom.smsgateway.data.entities.MessageState
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.data.entities.MessagesStats
 import me.capcom.smsgateway.data.entities.RecipientState
+import me.capcom.smsgateway.domain.EntitySource
+import me.capcom.smsgateway.domain.ProcessingState
 
 @Dao
 interface MessagesDao {
+    //#region Read
     @Query("SELECT COUNT(*) as count, MAX(processedAt) as lastTimestamp FROM message WHERE state <> 'Pending' AND state <> 'Failed' AND processedAt >= :timestamp")
     fun countProcessedFrom(timestamp: Long): MessagesStats
 
-    @Query("SELECT COUNT(*) as count, MAX(createdAt) as lastTimestamp FROM message WHERE state = 'Failed' AND createdAt >= :timestamp")
+    @Query("SELECT COUNT(*) as count, MAX(processedAt) as lastTimestamp FROM message WHERE state = 'Failed' AND processedAt >= :timestamp")
     fun countFailedFrom(timestamp: Long): MessagesStats
 
     @Query("SELECT * FROM message ORDER BY createdAt DESC LIMIT 50")
@@ -32,12 +35,32 @@ interface MessagesDao {
     @Query("SELECT *, `rowid` FROM message WHERE id = :id")
     fun get(id: String): MessageWithRecipients?
 
+    /**
+     * Count messages based on state and date range
+     */
+    @Query("SELECT COUNT(*) as count FROM message WHERE source = :source AND (:state IS NULL OR state = :state) AND createdAt BETWEEN :start AND :end")
+    fun count(source: EntitySource, state: ProcessingState?, start: Long, end: Long): Int
+
+    /**
+     * Get messages with pagination and filtering
+     */
+    @Transaction
+    @Query("SELECT *, `rowid` FROM message WHERE source = :source AND (:state IS NULL OR state = :state) AND createdAt BETWEEN :start AND :end ORDER BY createdAt DESC LIMIT :limit OFFSET :offset")
+    fun select(
+        source: EntitySource,
+        state: ProcessingState?,
+        start: Long,
+        end: Long,
+        limit: Int,
+        offset: Int
+    ): List<MessageWithRecipients>
+    //#endregion
+
     @Insert
     fun _insert(message: Message)
 
     @Insert
     fun _insertRecipients(recipient: List<MessageRecipient>)
-
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun _insertMessageState(state: MessageState)

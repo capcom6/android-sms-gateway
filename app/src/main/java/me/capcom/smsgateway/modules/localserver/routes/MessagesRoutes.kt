@@ -10,10 +10,13 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
+import me.capcom.smsgateway.helpers.DateTimeParser
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
+import me.capcom.smsgateway.modules.localserver.domain.GetMessageResponse
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
 import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
@@ -40,6 +43,68 @@ class MessagesRoutes(
     }
 
     private fun Route.messagesRoutes() {
+        get {
+            // Parse and validate parameters
+            val state = call.request.queryParameters["state"]?.takeIf { it.isNotEmpty() }
+                ?.let { ProcessingState.valueOf(it) }
+            val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
+            val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+
+            // Parse date range parameters
+            val from = call.request.queryParameters["from"]?.let {
+                DateTimeParser.parseIsoDateTime(it)?.time
+            } ?: 0
+            val to = call.request.queryParameters["to"]?.let {
+                DateTimeParser.parseIsoDateTime(it)?.time
+            } ?: Date().time
+
+            val deviceId = call.request.queryParameters["deviceId"]
+            if (deviceId != null && deviceId != settings.deviceId) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to "Invalid device ID")
+                )
+                return@get
+            }
+
+            // Ensure start date is before end date
+            if (from > to) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to "Start date cannot be after end date")
+                )
+                return@get
+            }
+
+            // Get total count for pagination
+            val total = try {
+                messagesService.countMessages(EntitySource.Local, state, from, to)
+            } catch (e: Throwable) {
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    mapOf("message" to "Failed to count messages: ${e.message}")
+                )
+                return@get
+            }
+
+            // Get messages with pagination
+            val messages = try {
+                messagesService.selectMessages(EntitySource.Local, state, from, to, limit, offset)
+            } catch (e: Throwable) {
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    mapOf("message" to "Failed to retrieve messages: ${e.message}")
+                )
+                return@get
+            }
+
+            call.response.headers.append("X-Total-Count", total.toString())
+
+            call.respond(
+                messages.map { it.toDomain(requireNotNull(settings.deviceId)) } as GetMessageResponse
+            )
+        }
+
         post {
             val request = call.receive<PostMessageRequest>()
 
@@ -185,14 +250,15 @@ class MessagesRoutes(
                     id = messageId,
                     deviceId = requireNotNull(settings.deviceId),
                     state = ProcessingState.Pending,
+                    isHashed = false,
+                    isEncrypted = request.isEncrypted ?: false,
                     recipients = request.phoneNumbers.map {
-                        PostMessageResponse.Recipient(
+                        me.capcom.smsgateway.modules.localserver.domain.Message.Recipient(
                             it,
                             ProcessingState.Pending,
                             null
                         )
                     },
-                    isEncrypted = request.isEncrypted ?: false,
                     states = mapOf(ProcessingState.Pending to Date())
                 )
             )
@@ -212,22 +278,7 @@ class MessagesRoutes(
             }
 
             call.respond(
-                PostMessageResponse(
-                    message.message.id,
-                    requireNotNull(settings.deviceId),
-                    message.message.state,
-                    message.recipients.map {
-                        PostMessageResponse.Recipient(
-                            it.phoneNumber,
-                            it.state,
-                            it.error
-                        )
-                    },
-                    message.message.isEncrypted,
-                    message.states.associate {
-                        it.state to Date(it.updatedAt)
-                    }
-                )
+                message.toDomain(requireNotNull(settings.deviceId)) as PostMessageResponse
             )
         }
     }
@@ -246,4 +297,23 @@ class MessagesRoutes(
             }
         }
     }
+
+    private fun MessageWithRecipients.toDomain(deviceId: String) =
+        me.capcom.smsgateway.modules.localserver.domain.Message(
+            id = message.id,
+            deviceId = deviceId,
+            state = message.state,
+            isHashed = false,
+            isEncrypted = message.isEncrypted,
+            recipients = recipients.map {
+                me.capcom.smsgateway.modules.localserver.domain.Message.Recipient(
+                    it.phoneNumber,
+                    it.state,
+                    it.error
+                )
+            },
+            states = states.associate {
+                it.state to Date(it.updatedAt)
+            }
+        )
 }

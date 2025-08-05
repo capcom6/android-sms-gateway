@@ -14,9 +14,9 @@ enum class MessageType {
 
 @Entity(
     indices = [
-        androidx.room.Index(value = ["state"]),
         androidx.room.Index(value = ["createdAt"]),
-        androidx.room.Index(value = ["processedAt"]),
+        androidx.room.Index(value = ["state", "processedAt"]),
+        androidx.room.Index(value = ["state", "createdAt"]),
     ]
 )
 data class Message(
