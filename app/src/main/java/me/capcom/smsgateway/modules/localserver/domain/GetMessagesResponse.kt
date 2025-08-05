@@ -1,3 +1,3 @@
 package me.capcom.smsgateway.modules.localserver.domain
 
-typealias PostMessageResponse = Message
+typealias GetMessageResponse = List<Message>

@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
+import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.helpers.PhoneHelper
@@ -54,6 +55,7 @@ class MessagesService(
     private val countryCode: String? =
         (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
 
+    //#region Health
     fun healthCheck(): Map<String, CheckResult> {
         val timestamp = System.currentTimeMillis() - 3600 * 1000L
         val failedStats = dao.countFailedFrom(timestamp)
@@ -71,7 +73,9 @@ class MessagesService(
             )
         )
     }
+    //#endregion
 
+    //#region Lifecycle
     fun start(context: Context) {
         SendMessagesWorker.start(context, false)
         LogTruncateWorker.start(context)
@@ -81,7 +85,9 @@ class MessagesService(
         LogTruncateWorker.stop(context)
         SendMessagesWorker.stop(context)
     }
+    //#endregion
 
+    //#region Send
     fun enqueueMessage(request: SendRequest) {
         if (getMessage(request.message.id) != null) {
             Log.d(this.javaClass.name, "Message already exists: ${request.message.id}")
@@ -94,7 +100,9 @@ class MessagesService(
 
         SendMessagesWorker.start(context, priority >= Message.PRIORITY_EXPEDITED)
     }
+    //#endregion
 
+    //#region Read
     fun getMessage(id: String): MessageWithRecipients? {
         val message = dao.get(id)
             ?: return null
@@ -114,6 +122,25 @@ class MessagesService(
 
         return dao.get(id)
     }
+
+    /**
+     * Count messages based on state and date range
+     */
+    fun countMessages(source: EntitySource, state: ProcessingState?, start: Long, end: Long) =
+        dao.count(source, state, start, end)
+
+    /**
+     * Get messages with pagination and filtering
+     */
+    fun selectMessages(
+        source: EntitySource,
+        state: ProcessingState?,
+        start: Long,
+        end: Long,
+        limit: Int,
+        offset: Int
+    ) = dao.select(source, state, start, end, limit, offset)
+    //#endregion
 
     suspend fun processStateIntent(intent: Intent, resultCode: Int) {
         logsService.insert(
