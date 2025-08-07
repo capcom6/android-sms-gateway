@@ -5,6 +5,7 @@ import android.webkit.URLUtil
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.domain.EntitySource
+import me.capcom.smsgateway.helpers.BuildHelper
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.notifications.NotificationsService
@@ -70,11 +71,18 @@ class WebHooksService(
     }
 
     fun replace(source: EntitySource, webHook: WebHookDTO): WebHookDTO {
-        if (!URLUtil.isHttpsUrl(webHook.url)
-            && !(URLUtil.isHttpUrl(webHook.url) && URL(webHook.url).host == "127.0.0.1")
-        ) {
+        val isHttps = URLUtil.isHttpsUrl(webHook.url)
+        val isHttp = URLUtil.isHttpUrl(webHook.url)
+        val isLocalhost = isHttp && URL(webHook.url).host == "127.0.0.1"
+
+        val isValidUrl = isHttps ||
+                (BuildHelper.isInsecureVersion && isHttp) ||
+                isLocalhost
+
+        if (!isValidUrl) {
             throw IllegalArgumentException("url must start with https:// or http://127.0.0.1")
         }
+        
         if (webHook.event !in WebHookEvent.values()) {
             throw IllegalArgumentException(
                 "Unsupported event"
