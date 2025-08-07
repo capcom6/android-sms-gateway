@@ -2,27 +2,35 @@ name: Release
 
 on:
   release:
-    types: [ published ]
+    types: [published]
 
 jobs:
   build:
-    name: Build
+    strategy:
+      matrix:
+        build-type: [release, insecure]
+    name: Build ${{ matrix.build-type }}
     uses: ./.github/workflows/build-apk.yml
     with:
       version-name: ${{ github.ref_name }}
+      build-type: ${{ matrix.build-type }}
     secrets:
       google-services-json: ${{ secrets.GOOGLE_SERVICES_JSON }}
       signing-key-store-base64: ${{ secrets.SIGNING_KEY_STORE_BASE64 }}
       signing-key-alias: ${{ secrets.SIGNING_KEY_ALIAS }}
       signing-key-password: ${{ secrets.SIGNING_KEY_PASSWORD }}
       signing-store-password: ${{ secrets.SIGNING_STORE_PASSWORD }}
+
   release:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build]
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: release-artifacts
+      - uses: actions/download-artifact@v4
+        with:
+          name: insecure-artifacts
       - name: Create Github Release
         uses: softprops/action-gh-release@v1
         with:
@@ -31,3 +39,5 @@ jobs:
           files: |
             ./apk/release/app-release.apk
             ./bundle/release/app-release.aab
+            ./apk/insecure/app-insecure.apk
+            ./bundle/insecure/app-insecure.aab
