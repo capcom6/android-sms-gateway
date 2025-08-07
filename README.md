@@ -55,6 +55,7 @@
   - [Ideal For](#ideal-for)
   - [Built With](#built-with)
 - [Installation](#installation)
+  - [Build Variants](#build-variants)
   - [Prerequisites](#prerequisites)
     - [Permissions](#permissions)
   - [Installation from APK](#installation-from-apk)
@@ -131,7 +132,14 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 
 ## Installation
 
-You can install app to your device from prebuilt APK or by building from sources.
+You can install app to your device from [prebuilt APK](https://github.com/capcom6/android-sms-gateway/releases).
+
+### Build Variants
+
+The project provides two pre-built variants:
+
+- **Secure (release) build**: Production-ready with strict security configurations. This is the recommended build for production deployments.
+- **Insecure build**: For development and testing with cleartext traffic allowed. **This build should never be used in public environments.**
 
 ### Prerequisites
 
