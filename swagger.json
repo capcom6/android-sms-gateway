@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.43.0",
+    "version": "1.44.0",
     "title": "SMS Gateway for Android™ Integration API",
     "description": "Provides the ability to send SMS messages by sending requests directly to a device or through a cloud server.",
     "contact": {
@@ -63,6 +63,115 @@
             "$ref": "#/components/responses/ErrorResponse"
           },
           "401": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        },
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "/",
+            "description": "Local Server"
+          },
+          {
+            "url": "https://api.sms-gate.app/3rdparty/v1",
+            "description": "Cloud Server"
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "Messages"
+        ],
+        "summary": "Get messages",
+        "description": "Retrieves a list of messages with filtering and pagination",
+        "operationId": "get-messages",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Filter messages by processing state",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Pending",
+                "Processed",
+                "Sent",
+                "Delivered",
+                "Failed"
+              ]
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Pagination offset",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Pagination limit",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Start date in RFC3339 format",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "End date in RFC3339 format",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "deviceId",
+            "in": "query",
+            "description": "Filter by device ID",
+            "schema": {
+              "type": "string",
+              "minLength": 21,
+              "maxLength": 21
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageStatus"
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "5XX": {
             "$ref": "#/components/responses/ErrorResponse"
           }
         },
@@ -644,6 +753,107 @@
       }
     },
     "schemas": {
+      "MessageStatus": {
+        "type": "object",
+        "title": "Message State",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the message.",
+            "readOnly": true
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "Pending",
+              "Processed",
+              "Sent",
+              "Delivered",
+              "Failed"
+            ],
+            "description": "The message state.",
+            "readOnly": true,
+            "default": "Pending"
+          },
+          "isHashed": {
+            "type": "boolean",
+            "description": "*(Cloud-only)* Whether the `phoneNumber` is the first 16 characters of the SHA256 hash of the E164 formatted phone number.",
+            "readOnly": true,
+            "default": false
+          },
+          "isEncrypted": {
+            "type": "boolean",
+            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms-gate.app/privacy/encryption).",
+            "readOnly": true,
+            "default": false
+          },
+          "recipients": {
+            "type": "array",
+            "description": "The list of recipients and their states.",
+            "items": {
+              "$ref": "#/components/schemas/MessageRecipient"
+            }
+          },
+          "states": {
+            "type": "object",
+            "description": "The history of states for the message.",
+            "additionalProperties": {
+              "type": "string",
+              "format": "date-time",
+              "readOnly": true
+            }
+          },
+          "deviceId": {
+            "type": "string",
+            "description": "Device ID",
+            "maxLength": 21,
+            "readOnly": true,
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "isHashed",
+          "isEncrypted",
+          "deviceId"
+        ]
+      },
+      "MessageRecipient": {
+        "type": "object",
+        "title": "Message Recipient State",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "description": "The recipient's phone number in international notation.",
+            "maxLength": 16,
+            "readOnly": true,
+            "example": "+79990001234"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "Pending",
+              "Processed",
+              "Sent",
+              "Delivered",
+              "Failed"
+            ],
+            "description": "The state of the recipient.",
+            "readOnly": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "The error message if the state is `Failed`.",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "phoneNumber",
+          "state"
+        ]
+      },
       "Device": {
         "type": "object",
         "title": "Device",
@@ -1249,103 +1459,6 @@
           "data",
           "port"
         ]
-      },
-      "MessageStatus": {
-        "type": "object",
-        "title": "Message State",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The unique identifier of the message.",
-            "readOnly": true
-          },
-          "state": {
-            "type": "string",
-            "enum": [
-              "Pending",
-              "Processed",
-              "Sent",
-              "Delivered",
-              "Failed"
-            ],
-            "description": "The message state.",
-            "readOnly": true,
-            "default": "Pending"
-          },
-          "isHashed": {
-            "type": "boolean",
-            "description": "*(Cloud-only)* Whether the `phoneNumber` is the first 16 characters of the SHA256 hash of the E164 formatted phone number.",
-            "readOnly": true,
-            "default": false
-          },
-          "isEncrypted": {
-            "type": "boolean",
-            "description": "Whether the message text and phone numbers are encrypted. See [Encryption Details](https://sms-gate.app/privacy/encryption).",
-            "readOnly": true,
-            "default": false
-          },
-          "recipients": {
-            "type": "array",
-            "description": "The list of recipients and their states.",
-            "items": {
-              "$ref": "#/components/schemas/MessageRecipient"
-            }
-          },
-          "states": {
-            "type": "object",
-            "description": "The history of states for the message.",
-            "additionalProperties": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
-            }
-          },
-          "deviceId": {
-            "type": "string",
-            "description": "Device ID",
-            "maxLength": 21,
-            "readOnly": true,
-            "example": "PyDmBQZZXYmyxMwED8Fzy"
-          }
-        },
-        "required": [
-          "id",
-          "state",
-          "isHashed",
-          "isEncrypted",
-          "deviceId"
-        ]
-      },
-      "MessageRecipient": {
-        "type": "object",
-        "title": "Message Recipient State",
-        "properties": {
-          "phoneNumber": {
-            "type": "string",
-            "description": "The recipient's phone number in international notation.",
-            "maxLength": 16,
-            "readOnly": true,
-            "example": "+79990001234"
-          },
-          "state": {
-            "type": "string",
-            "enum": [
-              "Pending",
-              "Processed",
-              "Sent",
-              "Delivered",
-              "Failed"
-            ],
-            "description": "The state of the recipient.",
-            "readOnly": true
-          },
-          "error": {
-            "type": "string",
-            "nullable": true,
-            "description": "The error message if the state is `Failed`.",
-            "readOnly": true
-          }
-        }
       }
     }
   },
