@@ -35,10 +35,26 @@ android {
         }
     }
     buildTypes {
+        debug {
+            debuggable true
+            manifestPlaceholders = [networkSecurityConfig: "@xml/network_security_config"]
+        }
+        debugInsecure {
+            debuggable true
+            manifestPlaceholders = [networkSecurityConfig: "@xml/network_security_config_insecure"]
+            signingConfig signingConfigs.debug
+        }
+        insecure {
+            initWith debug
+            debuggable true
+            signingConfig signingConfigs.release
+            manifestPlaceholders = [networkSecurityConfig: "@xml/network_security_config_insecure"]
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+            manifestPlaceholders = [networkSecurityConfig: "@xml/network_security_config"]
         }
     }
     compileOptions {

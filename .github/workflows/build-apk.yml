@@ -6,6 +6,9 @@ on:
       version-name:
         required: true
         type: string
+      build-type:
+        required: true
+        type: string
     secrets:
       google-services-json:
         required: true
@@ -64,27 +67,28 @@ jobs:
           base64 -d keystore-b64.txt > $SIGNING_KEY_STORE_PATH
 
       #2
-      - name: Build Release apk
+      - name: Build ${{ inputs.build-type }} apk
         env:
           SIGNING_KEY_STORE_PATH: app/keystore.jks
           SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias }}
           SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password }}
           SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password }}
-        run: ./gradlew assembleRelease
+          TARGET: ${{ inputs.build-type }}
+        run: ./gradlew assemble${TARGET^}
 
-      - name: Build Release bundle
+      - name: Build ${{ inputs.build-type }} bundle
         env:
           SIGNING_KEY_STORE_PATH: app/keystore.jks
           SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias }}
           SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password }}
           SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password }}
-        run: ./gradlew bundleRelease
+          TARGET: ${{ inputs.build-type }}
+        run: ./gradlew bundle${TARGET^}
       #3
-      - name: Upload Release Build to Artifacts
+      - name: Upload ${{ inputs.build-type }} Build to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-artifacts
+          name: ${{ inputs.build-type }}-artifacts
           path: |
-            app/build/outputs/apk/release/
-            app/build/outputs/bundle/release/
-
+            app/build/outputs/apk/${{ inputs.build-type }}/
+            app/build/outputs/bundle/${{ inputs.build-type }}/
