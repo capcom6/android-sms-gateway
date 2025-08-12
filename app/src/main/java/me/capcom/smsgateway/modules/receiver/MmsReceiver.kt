@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Telephony
 import android.util.Log
+import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import org.koin.core.component.KoinComponent
@@ -46,7 +47,7 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
             }
 
             // Extract MMS metadata from the intent
-            val pdu = bundle.getByteArray("data")
+            val pdu = bundle.getByteArray("data") ?: bundle.getByteArray("pdu")
 
             if (pdu == null) {
                 Log.w(TAG, "No PDU data found in MMS intent")
@@ -55,13 +56,13 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
             // Extract transaction ID from the PDU header
 //            val transactionId = extractTransactionId(pdu)
-            
+
             // Extract sender address from the intent
 //            val sender = extractSenderAddress(context, intent)
-            
+
             // Extract timestamp
 //            val timestamp = extractTimestamp(intent)
-            
+
             // Extract subscription ID
             val subscriptionId = extractSubscriptionId(context, intent)
 
@@ -73,7 +74,7 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
                     "data" to intent.dataString,
                     "extras" to bundle.keySet().joinToString(", ") { it },
                     "uri" to intent.extras?.getString("uri"),
-                    "pdu" to intent.extras?.getByteArray("pdu")?.joinToString("") { "%02x".format(it) },
+                    "pdu" to pdu.joinToString("") { "%02x".format(it) },
                 )
             )
 
@@ -163,15 +164,15 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
     private fun extractSubscriptionId(context: Context, intent: Intent): Int? {
         return when {
-            intent.extras?.containsKey("android.telephony.extra.SUBSCRIPTION_INDEX") == true -> 
-                intent.extras?.getInt("android.telephony.extra.SUBSCRIPTION_INDEX")
-            
-            intent.extras?.containsKey("subscription") == true -> 
-                intent.extras?.getInt("subscription")
-            
-            intent.extras?.containsKey("android.telephony.extra.SLOT_INDEX") == true -> 
-                intent.extras?.getInt("android.telephony.extra.SLOT_INDEX")
-            
+            intent.extras?.containsKey("android.telephony.extra.SUBSCRIPTION_INDEX") == true -> intent.extras?.getInt(
+                "android.telephony.extra.SUBSCRIPTION_INDEX"
+            )
+
+            intent.extras?.containsKey("subscription") == true -> intent.extras?.getInt("subscription")
+            intent.extras?.containsKey("android.telephony.extra.SLOT_INDEX") == true -> intent.extras?.getInt(
+                "android.telephony.extra.SLOT_INDEX"
+            )?.let { SubscriptionsHelper.getSubscriptionId(context, it) }
+
             else -> null
         }
     }

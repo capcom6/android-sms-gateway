@@ -40,11 +40,11 @@ sealed class InboxMessage(
         subscriptionId: Int?
     ) : InboxMessage(address, date, subscriptionId) {
         override fun equals(other: Any?): Boolean {
-            return super.equals(other) && (other as? Mms)?.transactionId == this.transactionId
+            return other is Mms && other.transactionId == this.transactionId
         }
 
         override fun hashCode(): Int {
-            return 31 * super.hashCode() + transactionId.hashCode()
+            return transactionId.hashCode()
         }
     }
 
