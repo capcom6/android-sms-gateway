@@ -3,10 +3,10 @@ package me.capcom.smsgateway.modules.webhooks.payload
 import java.util.Date
 
 sealed class SmsEventPayload(
-    val messageId: String,
-    val phoneNumber: String,
-    val simNumber: Int?,
-) {
+    messageId: String,
+    phoneNumber: String,
+    simNumber: Int?,
+) : MessageEventPayload(messageId, phoneNumber, simNumber) {
     class SmsSent(
         messageId: String,
         phoneNumber: String,

@@ -20,4 +20,7 @@ enum class WebHookEvent(val value: String) {
 
     @SerializedName("sms:data-received")
     SmsDataReceived("sms:data-received"),
+
+    @SerializedName("mms:received")
+    MmsReceived("mms:received"),
 }

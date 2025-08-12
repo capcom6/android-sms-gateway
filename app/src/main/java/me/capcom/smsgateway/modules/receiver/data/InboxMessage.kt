@@ -26,7 +26,26 @@ sealed class InboxMessage(
         }
 
         override fun hashCode(): Int {
-            return 31 * super.hashCode() + data.hashCode()
+            return 31 * super.hashCode() + (data?.contentHashCode() ?: 0)
+        }
+    }
+
+    class Mms(
+        val messageId: String?,
+        val transactionId: String,
+        val subject: String?,
+        val size: Long,
+        val contentClass: String?,
+        address: String,
+        date: Date,
+        subscriptionId: Int?
+    ) : InboxMessage(address, date, subscriptionId) {
+        override fun equals(other: Any?): Boolean {
+            return other is Mms && other.transactionId == this.transactionId
+        }
+
+        override fun hashCode(): Int {
+            return transactionId.hashCode()
         }
     }
 
