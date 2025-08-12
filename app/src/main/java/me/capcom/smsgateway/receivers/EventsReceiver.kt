@@ -7,6 +7,10 @@ import android.content.IntentFilter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.LogsUtils.toLogContext
+import me.capcom.smsgateway.modules.logs.db.LogEntry
+import me.capcom.smsgateway.modules.messages.MODULE_NAME
 import me.capcom.smsgateway.modules.messages.MessagesService
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -14,13 +18,22 @@ import org.koin.core.component.inject
 class EventsReceiver : BroadcastReceiver(), KoinComponent {
 
     private val messagesService: MessagesService by inject()
+    private val logsService: LogsService by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
-        // This method is called when the BroadcastReceiver is receiving an Intent broadcast.
-
         scope.launch {
-            messagesService
-                .processStateIntent(intent, resultCode)
+            try {
+                messagesService
+                    .processStateIntent(intent, resultCode)
+            } catch (e: Throwable) {
+                logsService.insert(
+                    LogEntry.Priority.ERROR,
+                    MODULE_NAME,
+                    "Can't process message state intent",
+                    intent.toLogContext() + e.toLogContext()
+                )
+            }
+
         }
     }
 
