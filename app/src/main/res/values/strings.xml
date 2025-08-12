@@ -131,7 +131,8 @@
     <string name="webhook_list_title">Registered Webhooks</string>
     <string name="webhooks_dotdotdot">Webhooks…</string>
     <string name="webhooks">Webhooks</string>
-    <string
-        name="you_have_sms_received_webhooks_registered_please_review_them_to_avoid_any_security_risks">You
+    <string name="you_have_sms_received_webhooks_registered_please_review_them_to_avoid_any_security_risks">You
         have %1$d SMS received webhooks registered. Please review them to avoid any security risks.</string>
+    <string name="processing">Processing</string>
+    <string name="processing_order_title">Processing order</string>
 </resources>

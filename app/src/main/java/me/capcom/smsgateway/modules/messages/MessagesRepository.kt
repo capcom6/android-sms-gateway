@@ -1,4 +1,4 @@
-package me.capcom.smsgateway.modules.messages.repositories
+package me.capcom.smsgateway.modules.messages
 
 import androidx.lifecycle.distinctUntilChanged
 import com.google.gson.GsonBuilder
@@ -55,16 +55,21 @@ class MessagesRepository(private val dao: MessagesDao) {
         dao.insert(message)
     }
 
-    fun getPending(): StoredSendRequest? {
-        val message = dao.getPending() ?: return null
+    fun getPending(order: MessagesSettings.ProcessingOrder): StoredSendRequest? {
+        while (true) {
+            val message = when (order) {
+                MessagesSettings.ProcessingOrder.LIFO -> dao.getPendingLifo()
+                MessagesSettings.ProcessingOrder.FIFO -> dao.getPendingFifo()
+            } ?: return null
 
-        if (message.state != ProcessingState.Pending) {
-            // if for some reason stored state is not in sync with recipients state
-            dao.updateMessageState(message.message.id, message.state)
-            return getPending()
+            if (message.state != ProcessingState.Pending) {
+                // if for some reason stored state is not in sync with recipients state
+                dao.updateMessageState(message.message.id, message.state)
+                continue
+            }
+
+            return message.toRequest()
         }
-
-        return message.toRequest()
     }
 
     private fun MessageWithRecipients.toRequest(): StoredSendRequest {

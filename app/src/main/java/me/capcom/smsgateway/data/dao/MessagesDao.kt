@@ -27,9 +27,19 @@ interface MessagesDao {
     @Query("SELECT * FROM message ORDER BY createdAt DESC LIMIT 50")
     fun selectLast(): LiveData<List<Message>>
 
+    /**
+     * FIFO: oldest pending first (priority DESC, createdAt ASC)
+     */
+    @Transaction
+    @Query("SELECT *, `rowid` FROM message WHERE state = 'Pending' ORDER BY priority DESC, createdAt ASC LIMIT 1")
+    fun getPendingFifo(): MessageWithRecipients?
+
+    /**
+     * LIFO: newest pending first (priority DESC, createdAt DESC)
+     */
     @Transaction
     @Query("SELECT *, `rowid` FROM message WHERE state = 'Pending' ORDER BY priority DESC, createdAt DESC LIMIT 1")
-    fun getPending(): MessageWithRecipients?
+    fun getPendingLifo(): MessageWithRecipients?
 
     @Transaction
     @Query("SELECT *, `rowid` FROM message WHERE id = :id")
