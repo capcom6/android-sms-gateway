@@ -10,6 +10,7 @@ import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
+import me.capcom.smsgateway.modules.webhooks.payload.MmsReceivedPayload
 import me.capcom.smsgateway.modules.webhooks.payload.SmsEventPayload
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -58,17 +59,19 @@ class ReceiverService : KoinComponent {
             mapOf("message" to message)
         )
 
+        val simNumber = message.subscriptionId?.let {
+            SubscriptionsHelper.getSimSlotIndex(
+                context,
+                it
+            )
+        }?.let { it + 1 }
+
         val (type, payload) = when (message) {
             is InboxMessage.Text -> WebHookEvent.SmsReceived to SmsEventPayload.SmsReceived(
                 messageId = message.hashCode().toUInt().toString(16),
                 message = message.text,
                 phoneNumber = message.address,
-                simNumber = message.subscriptionId?.let {
-                    SubscriptionsHelper.getSimSlotIndex(
-                        context,
-                        it
-                    )
-                }?.let { it + 1 },
+                simNumber = simNumber,
                 receivedAt = message.date,
             )
 
@@ -76,13 +79,19 @@ class ReceiverService : KoinComponent {
                 messageId = message.hashCode().toUInt().toString(16),
                 data = Base64.encodeToString(message.data, Base64.NO_WRAP),
                 phoneNumber = message.address,
-                simNumber = message.subscriptionId?.let {
-                    SubscriptionsHelper.getSimSlotIndex(
-                        context,
-                        it
-                    )
-                }?.let { it + 1 },
+                simNumber = simNumber,
                 receivedAt = message.date,
+            )
+
+            is InboxMessage.Mms -> WebHookEvent.MmsReceived to MmsReceivedPayload(
+                messageId = message.messageId ?: message.transactionId,
+                phoneNumber = message.address,
+                simNumber = simNumber,
+                transactionId = message.transactionId,
+                subject = message.subject,
+                size = message.size,
+                contentClass = message.contentClass,
+                receivedAt = message.date
             )
         }
 

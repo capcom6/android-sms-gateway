@@ -3,6 +3,7 @@ package me.capcom.smsgateway.helpers
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.telephony.SubscriptionManager
@@ -67,5 +68,21 @@ object SubscriptionsHelper {
             context,
             Manifest.permission.READ_PHONE_STATE
         ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    @SuppressLint("InlinedApi")
+    fun extractSubscriptionId(context: Context, intent: Intent): Int? {
+        return when {
+            intent.extras?.containsKey(SubscriptionManager.EXTRA_SUBSCRIPTION_INDEX) == true -> intent.extras?.getInt(
+                SubscriptionManager.EXTRA_SUBSCRIPTION_INDEX
+            )
+
+            intent.extras?.containsKey("subscription") == true -> intent.extras?.getInt("subscription")
+            intent.extras?.containsKey(SubscriptionManager.EXTRA_SLOT_INDEX) == true -> intent.extras?.getInt(
+                SubscriptionManager.EXTRA_SLOT_INDEX
+            )?.let { getSubscriptionId(context, it) }
+
+            else -> null
+        }
     }
 }

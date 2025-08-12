@@ -30,14 +30,14 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
                 messages.joinToString(separator = "") { it.displayMessageBody },
                 firstMessage.displayOriginatingAddress,
                 Date(firstMessage.timestampMillis),
-                extractSubscriptionId(context, intent)
+                SubscriptionsHelper.extractSubscriptionId(context, intent)
             )
 
             true -> InboxMessage.Data(
                 firstMessage.userData,
                 firstMessage.displayOriginatingAddress,
                 Date(firstMessage.timestampMillis),
-                extractSubscriptionId(context, intent)
+                SubscriptionsHelper.extractSubscriptionId(context, intent)
             )
         }
 
@@ -45,20 +45,5 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
             context,
             inboxMessage
         )
-    }
-
-    private fun extractSubscriptionId(context: Context, intent: Intent): Int? {
-        return when {
-            intent.extras?.containsKey("android.telephony.extra.SUBSCRIPTION_INDEX") == true -> intent.extras?.getInt(
-                "android.telephony.extra.SUBSCRIPTION_INDEX"
-            )
-
-            intent.extras?.containsKey("subscription") == true -> intent.extras?.getInt("subscription")
-            intent.extras?.containsKey("android.telephony.extra.SLOT_INDEX") == true -> intent.extras?.getInt(
-                "android.telephony.extra.SLOT_INDEX"
-            )?.let { SubscriptionsHelper.getSubscriptionId(context, it) }
-
-            else -> null
-        }
     }
 }
