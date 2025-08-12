@@ -36,7 +36,6 @@ import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
-import me.capcom.smsgateway.modules.messages.repositories.MessagesRepository
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.receivers.EventsReceiver
@@ -195,7 +194,7 @@ class MessagesService(
 
     internal suspend fun sendPendingMessages() {
         while (true) {
-            val message = messages.getPending() ?: return
+            val message = messages.getPending(settings.processingOrder) ?: return
             delay(1L)
 
             val priority = message.params.priority ?: Message.PRIORITY_DEFAULT

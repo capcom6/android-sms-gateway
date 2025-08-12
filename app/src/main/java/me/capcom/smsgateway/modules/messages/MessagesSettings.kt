@@ -21,6 +21,10 @@ class MessagesSettings(
         Random
     }
 
+    enum class ProcessingOrder {
+        LIFO, FIFO
+    }
+
     private var version: Int
         get() = storage.get<Int>(VERSION) ?: 0
         set(value) = storage.set(VERSION, value)
@@ -53,6 +57,9 @@ class MessagesSettings(
     val logLifetimeDays: Int?
         get() = storage.get<Int?>(LOG_LIFETIME_DAYS)?.takeIf { it > 0 }
 
+    val processingOrder: ProcessingOrder
+        get() = storage.get<ProcessingOrder>(PROCESSING_ORDER) ?: ProcessingOrder.LIFO
+
     init {
         migrate()
     }
@@ -84,6 +91,8 @@ class MessagesSettings(
         private const val SIM_SELECTION_MODE = "sim_selection_mode"
 
         private const val LOG_LIFETIME_DAYS = "log_lifetime_days"
+
+        private const val PROCESSING_ORDER = "processing_order"
     }
 
     override fun export(): Map<String, *> {
@@ -94,6 +103,7 @@ class MessagesSettings(
             LIMIT_VALUE to limitValue,
             SIM_SELECTION_MODE to simSelectionMode,
             LOG_LIFETIME_DAYS to logLifetimeDays,
+            PROCESSING_ORDER to processingOrder,
         )
     }
 
@@ -122,6 +132,10 @@ class MessagesSettings(
                 SIM_SELECTION_MODE -> storage.set(
                     key,
                     value?.let { SimSelectionMode.valueOf(it.toString()) })
+
+                PROCESSING_ORDER -> storage.set(
+                    key,
+                    value?.let { ProcessingOrder.valueOf(it.toString()) })
 
                 LOG_LIFETIME_DAYS -> {
                     val logLifetimeDays = value?.toString()?.toInt()

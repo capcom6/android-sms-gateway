@@ -17,6 +17,17 @@
             app:title="@string/delete_after_days" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/processing">
+        <DropDownPreference
+            android:defaultValue="LIFO"
+            android:entries="@array/processing_order_titles"
+            android:entryValues="@array/processing_order_values"
+            android:key="messages.processing_order"
+            app:icon="@drawable/ic_processing_order"
+            app:title="@string/processing_order_title"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
     <PreferenceCategory
         app:summary="@string/set_maximum_value_to_activate"
         app:title="@string/delays_seconds">
