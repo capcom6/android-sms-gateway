@@ -34,15 +34,16 @@ class MessagesSettingsFragment : BasePreferenceFragment() {
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
-        if (preference.key == "messages.limit_value"
-            || preference.key == "messages.log_lifetime_days"
-            || preference.key == "messages.send_interval_min"
-            || preference.key == "messages.send_interval_max"
-        ) {
-            (preference as EditTextPreference).setOnBindEditTextListener {
-                it.inputType = InputType.TYPE_CLASS_NUMBER
-                it.setSelectAllOnFocus(true)
-                it.selectAll()
+        when (preference.key) {
+            "messages.limit_value",
+            "messages.log_lifetime_days",
+            "messages.send_interval_min",
+            "messages.send_interval_max" -> {
+                (preference as EditTextPreference).setOnBindEditTextListener {
+                    it.inputType = InputType.TYPE_CLASS_NUMBER
+                    it.setSelectAllOnFocus(true)
+                    it.selectAll()
+                }
             }
         }
 

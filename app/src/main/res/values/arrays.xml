@@ -21,4 +21,12 @@
         <item>RoundRobin</item>
         <item>Random</item>
     </string-array>
+    <string-array name="processing_order_titles">
+        <item>LIFO (newer messages first)</item>
+        <item>FIFO (older messages first)</item>
+    </string-array>
+    <string-array name="processing_order_values" translatable="false">
+        <item>LIFO</item>
+        <item>FIFO</item>
+    </string-array>
 </resources>

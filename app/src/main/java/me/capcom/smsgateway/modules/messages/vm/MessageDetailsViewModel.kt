@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import me.capcom.smsgateway.modules.messages.MessagesRepository
 import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
-import me.capcom.smsgateway.modules.messages.repositories.MessagesRepository
 
 class MessageDetailsViewModel(
     private val messagesRepo: MessagesRepository
