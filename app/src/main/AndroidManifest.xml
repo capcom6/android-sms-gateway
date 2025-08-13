@@ -57,6 +57,7 @@
 
         <receiver
             android:name=".modules.receiver.MmsReceiver"
+            android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BROADCAST_WAP_PUSH">
             <intent-filter android:priority="999">

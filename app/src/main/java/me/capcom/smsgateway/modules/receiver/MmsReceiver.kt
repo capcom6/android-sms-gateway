@@ -27,6 +27,7 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
             return
         }
 
+
         try {
             // extras contain:
             //		android.telephony.extra.SUBSCRIPTION_INDEX=2,
@@ -74,6 +75,8 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
                     "data" to intent.dataString,
                     "extras" to bundle.keySet().joinToString(", ") { it },
                     "uri" to intent.extras?.getString("uri"),
+                    "header" to intent.extras?.getByteArray("header")
+                        ?.joinToString("") { "%02x".format(it) },
                     "pdu" to pdu.joinToString("") { "%02x".format(it) },
                 )
             )
