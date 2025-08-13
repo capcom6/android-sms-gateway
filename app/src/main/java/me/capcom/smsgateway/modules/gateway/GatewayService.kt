@@ -17,6 +17,7 @@ import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.messages.MessagesService
+import me.capcom.smsgateway.modules.messages.MessagesSettings
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.services.PushService
@@ -193,7 +194,11 @@ class GatewayService(
     internal suspend fun getNewMessages(context: Context) {
         if (!settings.enabled) return
         val settings = settings.registrationInfo ?: return
-        val messages = api.getMessages(settings.token)
+        val processingOrder = when (messagesService.processingOrder) {
+            MessagesSettings.ProcessingOrder.LIFO -> GatewayApi.ProcessingOrder.LIFO
+            MessagesSettings.ProcessingOrder.FIFO -> GatewayApi.ProcessingOrder.FIFO
+        }
+        val messages = api.getMessages(settings.token, processingOrder)
         for (message in messages) {
             try {
                 processMessage(context, message)

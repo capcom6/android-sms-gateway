@@ -9,6 +9,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -83,8 +84,9 @@ class GatewayApi(
         }
     }
 
-    suspend fun getMessages(token: String): List<Message> {
+    suspend fun getMessages(token: String, processingOrder: ProcessingOrder): List<Message> {
         return client.get("$baseUrl/message") {
+            parameter("order", processingOrder)
             bearerAuth(token)
         }.body()
     }
@@ -218,4 +220,16 @@ class GatewayApi(
         val url: String,
         val event: WebHookEvent,
     )
+
+    enum class ProcessingOrder {
+        @SerializedName("lifo")
+        LIFO,
+
+        @SerializedName("fifo")
+        FIFO;
+
+        override fun toString(): String {
+            return this.name.lowercase()
+        }
+    }
 }
