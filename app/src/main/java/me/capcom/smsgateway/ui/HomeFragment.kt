@@ -337,6 +337,7 @@ class HomeFragment : Fragment() {
                 Manifest.permission.READ_SMS,
                 Manifest.permission.RECEIVE_SMS,
                 Manifest.permission.SEND_SMS,
+                Manifest.permission.RECEIVE_MMS,
             )
                 .filter {
                     ContextCompat.checkSelfPermission(
