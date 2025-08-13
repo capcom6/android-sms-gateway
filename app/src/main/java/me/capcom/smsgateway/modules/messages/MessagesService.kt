@@ -50,6 +50,8 @@ class MessagesService(
     private val events: EventBus,
     private val logsService: LogsService,
 ) {
+    val processingOrder
+        get() = settings.processingOrder
 
     private val countryCode: String? =
         (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
