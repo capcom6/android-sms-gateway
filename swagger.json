@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.45.1",
+    "version": "1.46.0",
     "title": "SMS Gateway for Android™ Integration API",
     "description": "Provides the ability to send SMS messages by sending requests directly to a device or through a cloud server.",
     "contact": {
