@@ -89,8 +89,8 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 
 - 📜 **Multipart messages:** Send long messages with auto-partitioning.
 - 📊 **Message status tracking:** Monitor the status of sent messages in real-time.
-- 🔔 **Real-time incoming message notifications:** Receive instant notifications for incoming messages via webhook.
-- 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) using the same webhook system used for real-time notifications.
+- 🔔 **Real-time incoming message notifications:** Receive instant SMS and MMS notifications via webhooks.
+- 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) via the same webhooks used for real-time notifications.
 
 🔒 Security and Privacy:
 
@@ -153,6 +153,7 @@ To use the application, you need to grant the following permissions:
 - **READ_PHONE_STATE**: This permission is optional. If you want to select the SIM card, you can grant this permission.
 - **READ_SMS**: This permission is optional. If you want to read previous SMS messages, you need to grant this permission.
 - **RECEIVE_SMS**: This permission is optional. If you want to receive webhooks on incoming SMS, you need to grant this permission.
+- **RECEIVE_MMS**, **RECEIVE_WAP_PUSH**: This permissions are optional. If you want to receive webhooks on incoming MMS messages, you need to grant these permissions.
 
 ### Installation from APK
 
@@ -234,7 +235,7 @@ For further privacy, you can deploy your own private server. See the [Private Se
 
 ### Webhooks
 
-Webhooks can be utilized to get notifications of incoming SMS messages.
+Use webhooks to receive notifications for messaging events (e.g., incoming SMS and MMS).
 
 Follow these steps to set up webhooks:
 
@@ -247,7 +248,6 @@ Follow these steps to set up webhooks:
       -d '{ "id": "unique-id", "url": "https://webhook.site/<your-uuid>", "event": "sms:received" }' \
       http://<device_local_ip>:8080/webhooks
     ```
-    
 3. Send an SMS to the device.
 4. The application will dispatch POST request to the specified URL with a payload such as:
 
@@ -255,8 +255,10 @@ Follow these steps to set up webhooks:
     {
       "event": "sms:received",
       "payload": {
+        "messageId": "msg_12345abcde",
         "message": "Received SMS text",
         "phoneNumber": "+19162255887",
+        "simNumber": 1,
         "receivedAt": "2024-06-07T11:41:31.000+07:00"
       }
     }
@@ -375,5 +377,3 @@ Use this space to list resources you find helpful and would like to give credit 
 [issues-url]: https://github.com/capcom6/android-sms-gateway/issues
 [license-shield]: https://img.shields.io/github/license/capcom6/android-sms-gateway.svg?style=for-the-badge
 [license-url]: https://github.com/capcom6/android-sms-gateway/blob/master/LICENSE
-
-
