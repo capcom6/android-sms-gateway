@@ -30,8 +30,9 @@ class ReviewWebhooksWorker(appContext: Context, params: WorkerParameters) :
         notificationsService.notify(
             applicationContext,
             NotificationsService.NOTIFICATION_ID_SMS_RECEIVED_WEBHOOK,
-            applicationContext.getString(
-                R.string.you_have_sms_received_webhooks_registered_please_review_them_to_avoid_any_security_risks,
+            applicationContext.resources.getQuantityString(
+                R.plurals.review_incoming_sms_webhooks,
+                smsReceivedWebhooks.size,
                 smsReceivedWebhooks.size
             )
         )

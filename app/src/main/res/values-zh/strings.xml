@@ -11,7 +11,9 @@
     <string name="btn_continue">继续</string>
     <string name="by_code">通过验证码</string>
     <string name="can_affect_battery_life">可能影响电池寿命</string>
-    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">点击"继续"创建账户，无需提供个人信息。\n继续即表示您同意我们的隐私政策，详情见 https://docs.sms-gate.app/privacy/policy/</string>
+    <string
+        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">点击"继续"创建账户，无需提供个人信息。\n继续即表示您同意我们的隐私政策，详情见
+        https://docs.sms-gate.app/privacy/policy/</string>
     <string name="cloud">云端</string>
     <string name="cloud_server">云服务器</string>
     <string name="cloud_server_dotdotdot">云服务器…</string>
@@ -70,7 +72,8 @@
     <string name="period">周期</string>
     <string name="ping">心跳检测</string>
     <string name="ping_service_is_active">心跳服务已激活</string>
-    <string name="please_enter_one_time_code_displayed_on_already_registered_device">请输入已注册设备上显示的一次性验证码</string>
+    <string name="please_enter_one_time_code_displayed_on_already_registered_device">
+        请输入已注册设备上显示的一次性验证码</string>
     <string name="port">端口</string>
     <string name="port_credentials_etc">端口、凭据等</string>
     <string name="private_token">私有令牌</string>
@@ -84,7 +87,6 @@
     <string name="server">服务器</string>
     <string name="server_address">服务器地址：</string>
     <string name="set_maximum_value_to_activate">设置最大值以激活</string>
-    <string name="settings_address_is_sms_capcom_me">api.sms-gate.app</string>
     <string name="settings_changed_via_api_restart_the_app_to_apply_changes">设置已通过 API 修改，重启应用以生效。</string>
     <string name="settings_local_address_is">&lt;a href>%1$s:%2$d&lt;/a></string>
     <string name="settings_local_address_not_found">不可用</string>
@@ -105,7 +107,8 @@
     <string name="tab_text_messages">消息</string>
     <string name="tab_text_settings">设置</string>
     <string name="the_webhook_request_will_wait_for_an_internet_connection">Webhook 请求将等待网络连接</string>
-    <string name="to_add_a_device_to_an_existing_account_please_fill_in_the_credentials_below">如需将设备添加到现有账户，请填写以下凭据。</string>
+    <string name="to_add_a_device_to_an_existing_account_please_fill_in_the_credentials_below">
+        如需将设备添加到现有账户，请填写以下凭据。</string>
     <string name="to_apply_the_changes_restart_the_app_using_the_button_below">如需应用更改，请使用下方按钮重启应用。</string>
     <string name="use_empty_to_disable">留空则禁用</string>
     <string name="use_this_code_to_sign_in_on_another_device">使用此验证码在其他设备登录</string>
@@ -117,5 +120,7 @@
     <string name="webhook_list_title">已注册的 Webhook</string>
     <string name="webhooks">Webhook</string>
     <string name="webhooks_dotdotdot">Webhook…</string>
-    <string name="you_have_sms_received_webhooks_registered_please_review_them_to_avoid_any_security_risks">您已注册 %1$d 个短信接收 Webhook。请检查以避免安全风险。</string>
+    <plurals name="review_incoming_sms_webhooks">
+        <item quantity="other">您已注册 %1$d 个短信接收 Webhook。请检查以避免安全风险。</item>
+    </plurals>
 </resources>
