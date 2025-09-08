@@ -40,12 +40,12 @@
     <string name="interval_seconds">间隔（秒）</string>
     <string name="invalid_url">无效的 URL</string>
     <string name="is_not_a_valid_port_must_be_between_1024_and_65535">%1$s 不是有效端口。必须在 1024-65535 之间</string>
-    <string name="label_password">密码：</string>
-    <string name="label_username">用户名：</string>
+    <string name="label_password">密码</string>
+    <string name="label_username">用户名</string>
     <string name="limits">限制</string>
     <string name="list_of_last_50_log_entries">最近 50 条日志记录</string>
     <string name="local">本地</string>
-    <string name="local_address">本地地址：</string>
+    <string name="local_address">本地地址</string>
     <string name="local_server_dotdotdot">本地服务器…</string>
     <string name="local_sms_gateway_notifications">本地短信网关通知</string>
     <string name="login_code">登录验证码</string>
@@ -77,7 +77,7 @@
     <string name="port">端口</string>
     <string name="port_credentials_etc">端口、凭据等</string>
     <string name="private_token">私有令牌</string>
-    <string name="public_address">公共地址：</string>
+    <string name="public_address">公共地址</string>
     <string name="require_internet_connection">需要网络连接</string>
     <string name="restart_required_to_apply_changes">需重启以应用更改</string>
     <string name="retries_signing_etc">重试、签名等</string>
@@ -85,7 +85,7 @@
     <string name="send_messages_notification">发送消息中…</string>
     <string name="sending_webhook">发送 Webhook 中…</string>
     <string name="server">服务器</string>
-    <string name="server_address">服务器地址：</string>
+    <string name="server_address">服务器地址</string>
     <string name="set_maximum_value_to_activate">设置最大值以激活</string>
     <string name="settings_changed_via_api_restart_the_app_to_apply_changes">设置已通过 API 修改，重启应用以生效。</string>
     <string name="settings_local_address_is">&lt;a href>%1$s:%2$d&lt;/a></string>
