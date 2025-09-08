@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     tools:context=".ui.HomeFragment">
 
@@ -10,7 +11,7 @@
         android:id="@+id/textConnectionStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_margin="4dp"
         android:background="@drawable/rounded_background"
         android:backgroundTint="@color/connection_status_background"
         android:enabled="true"
@@ -31,151 +32,198 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <GridLayout
+            <androidx.cardview.widget.CardView
                 android:id="@+id/layoutLocalServer"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:columnCount="2"
-                android:visibility="gone"
-                tools:visibility="visible">
+                android:layout_margin="4dp"
+                app:cardCornerRadius="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_columnSpan="2"
-                    android:layout_margin="8dp"
-                    android:layout_gravity="center"
-                    android:text="@string/settings_local_server"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
+                    android:layout_margin="4dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_margin="4dp"
-                    android:text="@string/local_address" />
+                    <ImageView
+                        android:id="@+id/imageLocalServer"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_margin="4dp"
+                        android:src="@drawable/ic_local_server"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-                <TextView
-                    android:id="@+id/textLocalIP"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="4dp"
-                    android:layout_gravity="start"
-                    android:text="@string/dots"
-                    tools:text="127.0.0.1:8080" />
+                    <GridLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:columnCount="2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/imageLocalServer"
+                        app:layout_constraintTop_toTopOf="parent">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_margin="4dp"
-                    android:text="@string/public_address" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_columnSpan="2"
+                            android:text="@string/settings_local_server"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
 
-                <TextView
-                    android:id="@+id/textPublicIP"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="4dp"
-                    android:layout_gravity="start"
-                    android:text="@string/dots"
-                    tools:text="127.0.0.1:8080" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:text="@string/local_address" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_margin="4dp"
-                    android:text="@string/label_username" />
+                        <TextView
+                            android:id="@+id/textLocalIP"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:text="@string/dots"
+                            tools:text="127.0.0.1:8080" />
 
-                <TextView
-                    android:id="@+id/textLocalUsername"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="4dp"
-                    android:layout_gravity="start"
-                    android:autoLink="web"
-                    tools:text="sms" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:text="@string/public_address" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_margin="4dp"
-                    android:text="@string/label_password" />
+                        <TextView
+                            android:id="@+id/textPublicIP"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:text="@string/dots"
+                            tools:text="127.0.0.1:8080" />
 
-                <TextView
-                    android:id="@+id/textLocalPassword"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="4dp"
-                    android:layout_gravity="start"
-                    android:autoLink="web"
-                    tools:text="1q2w3e4r" />
-            </GridLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:text="@string/label_username" />
 
-            <GridLayout
+                        <TextView
+                            android:id="@+id/textLocalUsername"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:autoLink="web"
+                            tools:text="sms" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:text="@string/label_password" />
+
+                        <TextView
+                            android:id="@+id/textLocalPassword"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:autoLink="web"
+                            tools:text="1q2w3e4r" />
+                    </GridLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
                 android:id="@+id/layoutRemoteServer"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:columnCount="2"
-                android:visibility="gone"
-                tools:visibility="visible">
+                android:layout_margin="4dp"
+                app:cardCornerRadius="16dp">
 
-                <TextView
-                    android:id="@+id/textRemoteServer"
-                    android:layout_width="wrap_content"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="8dp"
-                    android:layout_columnSpan="2"
-                    android:layout_gravity="center"
-                    android:text="@string/cloud_server"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
+                    android:layout_margin="4dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_margin="4dp"
-                    android:text="@string/server_address" />
+                    <ImageView
+                        android:id="@+id/imageRemoteServer"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_margin="4dp"
+                        android:src="@drawable/ic_cloud_server"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-                <TextView
-                    android:id="@+id/textRemoteAddress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="4dp"
-                    android:autoLink="web"
-                    android:text="@string/settings_address_is_sms_capcom_me" />
+                    <GridLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:columnCount="2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/imageRemoteServer"
+                        app:layout_constraintTop_toTopOf="parent">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_margin="4dp"
-                    android:text="@string/label_username" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_columnSpan="2"
+                            android:text="@string/cloud_server"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
 
-                <TextView
-                    android:id="@+id/textRemoteUsername"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="4dp"
-                    android:text="@string/dots"
-                    tools:text="1Q2W3E" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:text="@string/server_address" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_margin="4dp"
-                    android:text="@string/label_password" />
+                        <TextView
+                            android:id="@+id/textRemoteAddress"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:autoLink="web"
+                            android:text="@string/dots"
+                            tools:text="@string/settings_address_is_sms_capcom_me" />
 
-                <TextView
-                    android:id="@+id/textRemotePassword"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="4dp"
-                    android:text="@string/dots"
-                    tools:text="1q2w3e4r" />
-            </GridLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:text="@string/label_username" />
+
+                        <TextView
+                            android:id="@+id/textRemoteUsername"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            tools:text="1Q2W3E" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            android:text="@string/label_password" />
+
+                        <TextView
+                            android:id="@+id/textRemotePassword"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_margin="4dp"
+                            tools:text="1q2w3e4r" />
+                    </GridLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
 
         </LinearLayout>
 
