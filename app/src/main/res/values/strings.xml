@@ -38,12 +38,12 @@
     <string name="interval_seconds">Interval (seconds)</string>
     <string name="invalid_url">Invalid URL</string>
     <string name="is_not_a_valid_port_must_be_between_1024_and_65535">%1$s is not a valid port. Must be between 1024 and 65535.</string>
-    <string name="label_password">Password:</string>
-    <string name="label_username">Username:</string>
+    <string name="label_password">Password</string>
+    <string name="label_username">Username</string>
     <string name="limits">Limits</string>
     <string name="list_of_last_50_log_entries">List of last 50 log entries</string>
     <string name="listening_to_the_server_events">Listening to server events…</string>
-    <string name="local_address">Local address:</string>
+    <string name="local_address">Local address</string>
     <string name="local_server_dotdotdot">Local Server…</string>
     <string name="local_sms_gateway_notifications">Local SMSGate notifications</string>
     <string name="local">Local</string>
@@ -75,14 +75,14 @@
     <string name="port_credentials_etc">Port, credentials, etc.</string>
     <string name="port">Port</string>
     <string name="private_token">Private Token</string>
-    <string name="public_address">Public address:</string>
+    <string name="public_address">Public address</string>
     <string name="require_internet_connection">Require Internet connection</string>
     <string name="restart_required_to_apply_changes">Restart required to apply changes</string>
     <string name="retries_signing_etc">Retries, signing, etc.</string>
     <string name="retry_count">Retry count</string>
     <string name="send_messages_notification">Sending messages…</string>
     <string name="sending_webhook">Sending webhook…</string>
-    <string name="server_address">Server address:</string>
+    <string name="server_address">Server address</string>
     <string name="server">Server</string>
     <string name="set_maximum_value_to_activate">Set maximum value to activate</string>
     <string name="settings_address_is_sms_capcom_me" translatable="false">api.sms-gate.app</string>

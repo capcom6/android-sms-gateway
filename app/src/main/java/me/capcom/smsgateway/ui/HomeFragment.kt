@@ -28,7 +28,7 @@ import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
-import me.capcom.smsgateway.databinding.FragmentSettingsBinding
+import me.capcom.smsgateway.databinding.FragmentHomeBinding
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.connection.ConnectionService
 import me.capcom.smsgateway.modules.events.EventBus
@@ -44,7 +44,7 @@ import org.koin.android.ext.android.inject
 
 class HomeFragment : Fragment() {
 
-    private var _binding: FragmentSettingsBinding? = null
+    private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
     private val settingsHelper: SettingsHelper by inject()
@@ -124,7 +124,7 @@ class HomeFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -135,6 +135,8 @@ class HomeFragment : Fragment() {
         binding.textPublicIP.movementMethod = LinkMovementMethod.getInstance()
         binding.textLocalUsername.movementMethod = LinkMovementMethod.getInstance()
         binding.textLocalPassword.movementMethod = LinkMovementMethod.getInstance()
+        binding.textLocalDeviceId.movementMethod = LinkMovementMethod.getInstance()
+        binding.textRemoteDeviceId.movementMethod = LinkMovementMethod.getInstance()
 
         binding.switchAutostart.isChecked = settingsHelper.autostart
 
@@ -190,6 +192,15 @@ class HomeFragment : Fragment() {
                             )
                     )
                 }
+
+                // Set Cloud Server Device ID
+                binding.textRemoteDeviceId.text = gatewaySettings.deviceId?.let {
+                    makeCopyableLink(
+                        Html.fromHtml(
+                            "<a href>$it</a>"
+                        )
+                    )
+                } ?: getString(R.string.n_a)
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
@@ -198,6 +209,15 @@ class HomeFragment : Fragment() {
 
                 binding.textRemoteUsername.text = getString(R.string.not_registered)
                 binding.textRemotePassword.text = getString(R.string.n_a)
+
+                // Set Cloud Server Device ID (even for failure cases)
+                binding.textRemoteDeviceId.text = gatewaySettings.deviceId?.let {
+                    makeCopyableLink(
+                        Html.fromHtml(
+                            "<a href>$it</a>"
+                        )
+                    )
+                } ?: getString(R.string.n_a)
 
                 Toast.makeText(
                     requireContext(),
@@ -244,6 +264,15 @@ class HomeFragment : Fragment() {
                         )
                     )
                 } ?: getString(R.string.settings_public_address_not_found)
+
+                // Set Local Server Device ID
+                binding.textLocalDeviceId.text = localServerSettings.deviceId?.let {
+                    makeCopyableLink(
+                        Html.fromHtml(
+                            "<a href>$it</a>"
+                        )
+                    )
+                } ?: getString(R.string.n_a)
             }
         }
 
