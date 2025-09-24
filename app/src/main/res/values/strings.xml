@@ -125,4 +125,10 @@
     </plurals>
     <string name="processing">Processing</string>
     <string name="processing_order_title">Processing order</string>
+    <string name="queue_status">📊 Queue Status</string>
+    <string name="total_messages">Total: %1$d</string>
+    <string name="pending_messages">Pending: %1$d</string>
+    <string name="sent_messages">Sent: %1$d</string>
+    <string name="delivered_messages">Delivered: %1$d</string>
+    <string name="failed_messages">Failed: %1$d</string>
 </resources>

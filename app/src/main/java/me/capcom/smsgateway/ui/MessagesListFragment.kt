@@ -21,16 +21,6 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
     private var _binding: FragmentMessagesListBinding? = null
     private val binding get() = _binding!!
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        viewModel.messages.observe(this) {
-            messagesAdapter.submitList(it) {
-                _binding?.recyclerView?.scrollToPosition(0)
-            }
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -47,6 +37,25 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
         binding.recyclerView.addItemDecoration(
             DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL)
         )
+
+        // Observe stats LiveData
+        viewModel.totals.observe(viewLifecycleOwner) { stats ->
+            stats?.let {
+                binding.totalMessages.text = getString(R.string.total_messages, it.total)
+                binding.pendingMessages.text = getString(R.string.pending_messages, it.pending)
+                binding.sentMessages.text = getString(R.string.sent_messages, it.sent)
+                binding.deliveredMessages.text =
+                    getString(R.string.delivered_messages, it.delivered)
+                binding.failedMessages.text = getString(R.string.failed_messages, it.failed)
+            }
+        }
+
+        viewModel.messages.observe(viewLifecycleOwner) {
+            val shouldScrollToTop = binding.recyclerView.computeVerticalScrollOffset() == 0
+            messagesAdapter.submitList(it) {
+                if (shouldScrollToTop) _binding?.recyclerView?.scrollToPosition(0)
+            }
+        }
     }
 
     override fun onDestroyView() {
