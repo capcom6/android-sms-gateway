@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.modules.messages
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.distinctUntilChanged
 import com.google.gson.GsonBuilder
 import me.capcom.smsgateway.data.dao.MessagesDao
@@ -7,6 +8,7 @@ import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageType
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
+import me.capcom.smsgateway.data.entities.MessagesTotals
 import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.modules.messages.data.SendParams
@@ -18,6 +20,8 @@ class MessagesRepository(private val dao: MessagesDao) {
     private val gson = GsonBuilder().serializeNulls().create()
 
     val lastMessages = dao.selectLast().distinctUntilChanged()
+
+    val messagesTotals: LiveData<MessagesTotals> = dao.getMessagesStats().distinctUntilChanged()
 
     fun get(id: String): StoredSendRequest {
         return dao.get(id)?.toRequest()
