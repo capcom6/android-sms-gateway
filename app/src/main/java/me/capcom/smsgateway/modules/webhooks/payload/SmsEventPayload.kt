@@ -11,6 +11,7 @@ sealed class SmsEventPayload(
         messageId: String,
         phoneNumber: String,
         simNumber: Int?,
+        val partsCount: Int,
         val sentAt: Date,
     ) : SmsEventPayload(messageId, phoneNumber, simNumber)
 

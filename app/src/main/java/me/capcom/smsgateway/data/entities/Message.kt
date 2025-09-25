@@ -42,6 +42,7 @@ data class Message(
     val content: String,
 
     val state: ProcessingState = ProcessingState.Pending,
+    val partsCount: Int? = null,
     @ColumnInfo(defaultValue = "0")
     val createdAt: Long = System.currentTimeMillis(),
     val processedAt: Long? = null,
