@@ -316,6 +316,71 @@ class MessagesService(
             dao.updateSimNumber(id, simNumber + 1)
         }
 
+        val sendFn: (String, PendingIntent, PendingIntent?) -> Unit =
+            when (val content = message.content) {
+                is MessageContent.Text -> {
+                    // Handle text messages
+                    val text = when (message.isEncrypted) {
+                        true -> encryptionService.decrypt(content.text)
+                        false -> content.text
+                    }
+
+                    val parts = smsManager.divideMessage(text)
+                    dao.updatePartsCount(id, parts.size)
+
+                    if (parts.size > 1) {
+                        { phoneNumber: String, sentIntent: PendingIntent, deliveredIntent: PendingIntent? ->
+                            smsManager.sendMultipartTextMessage(
+                                phoneNumber,
+                                null,
+                                parts,
+                                ArrayList(List(parts.size) { sentIntent }),
+                                deliveredIntent?.let { intent -> ArrayList(List(parts.size) { intent }) }
+                            )
+                        }
+                    } else {
+                        { phoneNumber: String, sentIntent: PendingIntent, deliveredIntent: PendingIntent? ->
+                            smsManager.sendTextMessage(
+                                phoneNumber,
+                                null,
+                                text,
+                                sentIntent,
+                                deliveredIntent
+                            )
+                        }
+                    }
+                }
+
+                is MessageContent.Data -> {
+                    val data = when (message.isEncrypted) {
+                        true -> encryptionService.decrypt(content.data)
+                        false -> content.data
+                    }
+                    val decodedData = try {
+                        Base64.decode(data, Base64.DEFAULT)
+                    } catch (e: IllegalArgumentException) {
+                        throw IllegalArgumentException(
+                            "Invalid Base64 data for message ${message.id}",
+                            e
+                        )
+                    }
+                    dao.updatePartsCount(id, 1);
+
+                    { phoneNumber: String, sentIntent: PendingIntent, deliveredIntent: PendingIntent? ->
+                        smsManager.sendDataMessage(
+                            phoneNumber,
+                            null,  // scAddress
+                            content.port.toShort(),
+                            decodedData,
+                            sentIntent,
+                            deliveredIntent
+                        )
+                    }
+                }
+            }
+
+
+
         request.message.phoneNumbers
             .forEach { sourcePhoneNumber ->
                 val sentIntent = PendingIntent.getBroadcast(
@@ -354,63 +419,7 @@ class MessagesService(
                         false -> PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
                     }
 
-                    val partsCount = when (val content = message.content) {
-                        is MessageContent.Text -> {
-                            // Handle text messages
-                            val text = when (message.isEncrypted) {
-                                true -> encryptionService.decrypt(content.text)
-                                false -> content.text
-                            }
-
-                            val parts = smsManager.divideMessage(text)
-                            if (parts.size > 1) {
-                                smsManager.sendMultipartTextMessage(
-                                    normalizedPhoneNumber,
-                                    null,
-                                    parts,
-                                    ArrayList(parts.map { sentIntent }),
-                                    deliveredIntent?.let { ArrayList(parts.map { deliveredIntent }) }
-                                )
-                            } else {
-                                smsManager.sendTextMessage(
-                                    normalizedPhoneNumber,
-                                    null,
-                                    text,
-                                    sentIntent,
-                                    deliveredIntent
-                                )
-                            }
-
-                            parts.size
-                        }
-
-                        is MessageContent.Data -> {
-                            val data = when (message.isEncrypted) {
-                                true -> encryptionService.decrypt(content.data)
-                                false -> content.data
-                            }
-                            val decodedData = try {
-                                Base64.decode(data, Base64.DEFAULT)
-                            } catch (e: IllegalArgumentException) {
-                                throw IllegalArgumentException(
-                                    "Invalid Base64 data for message ${message.id}",
-                                    e
-                                )
-                            }
-                            smsManager.sendDataMessage(
-                                normalizedPhoneNumber,
-                                null,  // scAddress
-                                content.port.toShort(),
-                                decodedData,
-                                sentIntent,
-                                deliveredIntent
-                            )
-
-                            1
-                        }
-                    }
-
-                    dao.updatePartsCount(id, partsCount)
+                    sendFn(normalizedPhoneNumber, sentIntent, deliveredIntent)
 
                     updateState(id, sourcePhoneNumber, ProcessingState.Processed)
                 } catch (th: Throwable) {
