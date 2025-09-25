@@ -44,6 +44,7 @@ class EventsReceiver : EventsReceiver() {
                                 messageId = event.id,
                                 phoneNumber = phoneNumber,
                                 event.simNumber,
+                                partsCount = event.partsCount ?: -1,
                                 sentAt = Date(),
                             )
 

@@ -183,6 +183,9 @@ interface MessagesDao {
         simNumber: Int
     )
 
+    @Query("UPDATE message SET partsCount = :partsCount WHERE id = :id")
+    fun updatePartsCount(id: String, partsCount: Int)
+
     @Query("DELETE FROM message WHERE createdAt < :until AND state <> 'Pending'")
     suspend fun truncateLog(until: Long)
 }

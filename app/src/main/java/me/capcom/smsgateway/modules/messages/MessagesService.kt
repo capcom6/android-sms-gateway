@@ -282,6 +282,7 @@ class MessagesService(
                 phone?.let { setOf(it) } ?: msg.recipients.map { it.phoneNumber }.toSet(),
                 state,
                 msg.message.simNumber,
+                msg.message.partsCount,
                 error
             )
         )
@@ -353,7 +354,7 @@ class MessagesService(
                         false -> PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
                     }
 
-                    when (val content = message.content) {
+                    val partsCount = when (val content = message.content) {
                         is MessageContent.Text -> {
                             // Handle text messages
                             val text = when (message.isEncrypted) {
@@ -379,6 +380,8 @@ class MessagesService(
                                     deliveredIntent
                                 )
                             }
+
+                            parts.size
                         }
 
                         is MessageContent.Data -> {
@@ -402,8 +405,12 @@ class MessagesService(
                                 sentIntent,
                                 deliveredIntent
                             )
+
+                            1
                         }
                     }
+
+                    dao.updatePartsCount(id, partsCount)
 
                     updateState(id, sourcePhoneNumber, ProcessingState.Processed)
                 } catch (th: Throwable) {
