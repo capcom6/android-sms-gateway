@@ -195,14 +195,20 @@ class MessagesService(
     }
 
     internal suspend fun sendPendingMessages() {
+        var previousPriority = Message.PRIORITY_MIN
+
         while (true) {
             val message = messages.getPending(settings.processingOrder) ?: return
             delay(1L)
 
             val priority = message.params.priority ?: Message.PRIORITY_DEFAULT
 
-            // don't apply limits for expedited messages
-            if (priority < Message.PRIORITY_EXPEDITED) {
+            // apply limits if:
+            // - message is not expedited
+            // - message is expedited and previous message had higher or equal priority
+            if (priority < Message.PRIORITY_EXPEDITED
+                || previousPriority >= priority
+            ) {
                 applyLimit()
             }
 
@@ -212,9 +218,12 @@ class MessagesService(
             }
 
             // don't apply delay for expedited messages
-            if (priority >= Message.PRIORITY_EXPEDITED) {
+            if (priority >= Message.PRIORITY_EXPEDITED && previousPriority < priority) {
+                previousPriority = priority
                 continue
             }
+
+            previousPriority = priority
 
             settings.sendIntervalRange?.let {
                 delay(it.random() * 1000L)
