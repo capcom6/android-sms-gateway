@@ -48,6 +48,7 @@ data class Message(
     val processedAt: Long? = null,
 ) {
     companion object {
+        const val PRIORITY_MIN: Byte = Byte.MIN_VALUE
         const val PRIORITY_DEFAULT: Byte = 0
         const val PRIORITY_EXPEDITED: Byte = 100
     }
