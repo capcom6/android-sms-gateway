@@ -45,6 +45,7 @@
     <string name="limits">限制</string>
     <string name="list_of_last_50_log_entries">最近 50 条日志记录</string>
     <string name="local">本地</string>
+    <string name="listening_to_the_server_events">正在监听服务器事件…</string>
     <string name="local_address">本地地址</string>
     <string name="local_server_dotdotdot">本地服务器…</string>
     <string name="local_sms_gateway_notifications">本地短信网关通知</string>
@@ -123,4 +124,10 @@
     <plurals name="review_incoming_sms_webhooks">
         <item quantity="other">您已注册 %1$d 个短信接收 Webhook。请检查以避免安全风险。</item>
     </plurals>
+    <string name="queue_status">📊 队列状态</string>
+    <string name="total_messages">总计：%1$d</string>
+    <string name="pending_messages">待处理：%1$d</string>
+    <string name="sent_messages">已发送：%1$d</string>
+    <string name="delivered_messages">已送达：%1$d</string>
+    <string name="failed_messages">失败：%1$d</string>
 </resources>
