@@ -129,4 +129,10 @@
     </plurals>
     <string name="processing">Обработка</string>
     <string name="processing_order_title">Порядок обработки</string>
+    <string name="queue_status">📊 Статус очереди</string>
+    <string name="total_messages">Всего: %1$d</string>
+    <string name="pending_messages">В ожидании: %1$d</string>
+    <string name="sent_messages">Отправлено: %1$d</string>
+    <string name="delivered_messages">Доставлено: %1$d</string>
+    <string name="failed_messages">Сбоев: %1$d</string>
 </resources>
