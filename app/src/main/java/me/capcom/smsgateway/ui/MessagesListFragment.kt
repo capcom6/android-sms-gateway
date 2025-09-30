@@ -7,12 +7,15 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.databinding.FragmentMessagesListBinding
 import me.capcom.smsgateway.modules.messages.vm.MessagesListViewModel
 import me.capcom.smsgateway.ui.adapters.MessagesAdapter
 import org.koin.androidx.viewmodel.ext.android.viewModel
+
 
 class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Message> {
 
@@ -34,6 +37,7 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
         super.onViewCreated(view, savedInstanceState)
 
         binding.recyclerView.adapter = messagesAdapter
+        binding.recyclerView.addOnScrollListener(scrollListener)
         binding.recyclerView.addItemDecoration(
             DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL)
         )
@@ -58,20 +62,32 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
-    companion object {
-        fun newInstance() =
-            MessagesListFragment()
-    }
-
     override fun onItemClick(item: Message) {
         parentFragmentManager.commit {
             replace(R.id.rootLayout, MessageDetailsFragment.newInstance(item.id))
             addToBackStack(null)
         }
+    }
+
+    override fun onDestroyView() {
+        binding.recyclerView.removeOnScrollListener(scrollListener)
+        super.onDestroyView()
+        _binding = null
+    }
+
+    private val scrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+
+            val linearLayoutManager = recyclerView.layoutManager as? LinearLayoutManager
+            linearLayoutManager?.findLastVisibleItemPosition()?.let {
+                if (it == messagesAdapter.itemCount - 1) viewModel.loadMore(messagesAdapter.itemCount)
+            }
+        }
+    }
+
+    companion object {
+        fun newInstance() =
+            MessagesListFragment()
     }
 }
