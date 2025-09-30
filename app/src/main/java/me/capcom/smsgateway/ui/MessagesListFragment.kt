@@ -55,7 +55,7 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
         }
 
         viewModel.messages.observe(viewLifecycleOwner) {
-            val shouldScrollToTop = binding.recyclerView.computeVerticalScrollOffset() == 0
+            val shouldScrollToTop = _binding?.recyclerView?.computeVerticalScrollOffset() == 0
             messagesAdapter.submitList(it) {
                 if (shouldScrollToTop) _binding?.recyclerView?.scrollToPosition(0)
             }
