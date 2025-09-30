@@ -38,8 +38,8 @@ interface MessagesDao {
     )
     fun getMessagesStats(): LiveData<MessagesTotals>
 
-    @Query("SELECT * FROM message ORDER BY createdAt DESC LIMIT 50")
-    fun selectLast(): LiveData<List<Message>>
+    @Query("SELECT * FROM message ORDER BY createdAt DESC LIMIT :limit")
+    fun selectLast(limit: Int): LiveData<List<Message>>
 
     /**
      * FIFO: oldest pending first (priority DESC, createdAt ASC)

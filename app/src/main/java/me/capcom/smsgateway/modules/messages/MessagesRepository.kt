@@ -19,7 +19,7 @@ import java.util.Date
 class MessagesRepository(private val dao: MessagesDao) {
     private val gson = GsonBuilder().serializeNulls().create()
 
-    val lastMessages = dao.selectLast().distinctUntilChanged()
+    fun selectLast(limit: Int) = dao.selectLast(limit).distinctUntilChanged()
 
     val messagesTotals: LiveData<MessagesTotals> = dao.getMessagesStats().distinctUntilChanged()
 
