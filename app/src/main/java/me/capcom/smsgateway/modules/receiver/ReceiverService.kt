@@ -23,11 +23,15 @@ class ReceiverService : KoinComponent {
     private val eventsReceiver by lazy { EventsReceiver() }
 
     fun start(context: Context) {
+        MessagesReceiver.register(context)
+        MmsReceiver.register(context)
         eventsReceiver.start()
     }
 
     fun stop(context: Context) {
         eventsReceiver.stop()
+        MmsReceiver.unregister(context)
+        MessagesReceiver.unregister(context)
     }
 
     fun export(context: Context, period: Pair<Date, Date>) {

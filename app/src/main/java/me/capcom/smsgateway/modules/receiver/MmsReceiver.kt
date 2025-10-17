@@ -3,6 +3,7 @@ package me.capcom.smsgateway.modules.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.provider.Telephony
 import android.util.Log
@@ -85,5 +86,26 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
     companion object {
         private const val TAG = "MmsReceiver"
+
+        private val INSTANCE: MmsReceiver by lazy { MmsReceiver() }
+
+        fun register(context: Context) {
+            val filter = IntentFilter().apply {
+                addAction(Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION)
+                addDataType("application/vnd.wap.mms-message")
+            }
+            context.registerReceiver(
+                INSTANCE,
+                filter
+            )
+        }
+
+        fun unregister(context: Context) {
+            try {
+                context.unregisterReceiver(INSTANCE)
+            } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "Receiver was not registered", e)
+            }
+        }
     }
 }
