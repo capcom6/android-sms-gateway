@@ -3,7 +3,9 @@ package me.capcom.smsgateway.modules.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.provider.Telephony.Sms.Intents
+import android.util.Log
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import org.koin.core.component.KoinComponent
@@ -45,5 +47,30 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
             context,
             inboxMessage
         )
+    }
+
+    companion object {
+        private const val TAG = "MessagesReceiver"
+
+        private val INSTANCE: MessagesReceiver by lazy { MessagesReceiver() }
+
+        fun register(context: Context) {
+            val filter = IntentFilter().apply {
+                addAction(Intents.SMS_RECEIVED_ACTION)
+                addAction(Intents.DATA_SMS_RECEIVED_ACTION)
+            }
+            context.registerReceiver(
+                INSTANCE,
+                filter
+            )
+        }
+
+        fun unregister(context: Context) {
+            try {
+                context.unregisterReceiver(INSTANCE)
+            } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "Receiver was not registered", e)
+            }
+        }
     }
 }
