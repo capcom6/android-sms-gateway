@@ -25,14 +25,23 @@ class PingSettings(
         )
     }
 
-    override fun import(data: Map<String, *>) {
-        data.forEach { (key, value) ->
+    override fun import(data: Map<String, *>): Boolean {
+        return data.map { (key, value) ->
             when (key) {
-                INTERVAL_SECONDS -> storage.set(
-                    key,
-                    value?.toString()?.toFloat()?.toInt()?.toString()
-                )
+                INTERVAL_SECONDS -> {
+                    val newValue = value?.toString()?.toFloat()?.toInt()?.takeIf { it > 0 }
+                    val changed = this.intervalSeconds != newValue
+
+                    storage.set(
+                        key,
+                        newValue?.toString()
+                    )
+
+                    changed
+                }
+
+                else -> false
             }
-        }
+        }.any { it }
     }
 }
