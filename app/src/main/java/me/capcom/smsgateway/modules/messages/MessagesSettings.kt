@@ -107,44 +107,92 @@ class MessagesSettings(
         )
     }
 
-    override fun import(data: Map<String, *>) {
-        data.forEach { (key, value) ->
+    override fun import(data: Map<String, *>): Boolean {
+        return data.map {
+            val key = it.key
+            val value = it.value
+
             when (key) {
-                SEND_INTERVAL_MIN -> storage.set(
-                    key,
-                    value?.toString()?.toFloat()?.toInt()?.toString()
-                )
+                SEND_INTERVAL_MIN -> {
+                    val newValue = value?.toString()?.toFloat()?.toInt()
+                    val changed = this.sendIntervalMin != newValue
 
-                SEND_INTERVAL_MAX -> storage.set(
-                    key,
-                    value?.toString()?.toFloat()?.toInt()?.toString()
-                )
+                    storage.set(
+                        key,
+                        newValue?.toString()
+                    )
 
-                LIMIT_PERIOD -> storage.set(key, value?.let { Period.valueOf(it.toString()) })
-                LIMIT_VALUE -> {
-                    val limitValue = value?.toString()?.toInt()
-                    if (limitValue != null && limitValue < 1) {
-                        throw IllegalArgumentException("Limit value must be >= 1")
-                    }
-                    storage.set(key, limitValue?.toString())
+                    changed
                 }
 
-                SIM_SELECTION_MODE -> storage.set(
-                    key,
-                    value?.let { SimSelectionMode.valueOf(it.toString()) })
+                SEND_INTERVAL_MAX -> {
+                    val newValue = value?.toString()?.toFloat()?.toInt()
+                    val changed = this.sendIntervalMax != newValue
 
-                PROCESSING_ORDER -> storage.set(
-                    key,
-                    value?.let { ProcessingOrder.valueOf(it.toString()) })
+                    storage.set(
+                        key,
+                        newValue?.toString()
+                    )
+
+                    changed
+                }
+
+                LIMIT_PERIOD -> {
+                    val newValue = value?.let { Period.valueOf(it.toString()) } ?: Period.Disabled
+                    val changed = this.limitPeriod != newValue
+
+                    storage.set(key, newValue)
+
+                    changed
+                }
+
+                LIMIT_VALUE -> {
+                    val limitValue = value?.toString()?.toFloat()?.toInt()
+                    if (limitValue != null && limitValue < 0) {
+                        throw IllegalArgumentException("Limit value must be >= 0")
+                    }
+
+                    val changed = this.limitValue != (limitValue ?: 0)
+
+                    storage.set(key, limitValue?.toString())
+
+                    changed
+                }
+
+                SIM_SELECTION_MODE -> {
+                    val newValue = value?.let { SimSelectionMode.valueOf(it.toString()) }
+                        ?: SimSelectionMode.OSDefault
+                    val changed = this.simSelectionMode != newValue
+
+                    storage.set(key, newValue)
+
+                    changed
+                }
+
+                PROCESSING_ORDER -> {
+                    val newValue = value?.let { ProcessingOrder.valueOf(it.toString()) }
+                        ?: ProcessingOrder.LIFO
+                    val changed = this.processingOrder != newValue
+
+                    storage.set(key, newValue)
+
+                    changed
+                }
 
                 LOG_LIFETIME_DAYS -> {
-                    val logLifetimeDays = value?.toString()?.toInt()
+                    val logLifetimeDays = value?.toString()?.toFloat()?.toInt()
                     if (logLifetimeDays != null && logLifetimeDays < 1) {
                         throw IllegalArgumentException("Log lifetime days must be >= 1")
                     }
+
+                    val changed = this.logLifetimeDays != logLifetimeDays
                     storage.set(key, logLifetimeDays?.toString())
+
+                    changed
                 }
+
+                else -> false
             }
-        }
+        }.any { it }
     }
 }

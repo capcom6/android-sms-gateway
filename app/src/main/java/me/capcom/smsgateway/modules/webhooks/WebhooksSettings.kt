@@ -36,20 +36,42 @@ class WebhooksSettings(
         )
     }
 
-    override fun import(data: Map<String, *>) {
-        data.forEach { (key, value) ->
+    override fun import(data: Map<String, *>): Boolean {
+        return data.map { (key, value) ->
             when (key) {
-                INTERNET_REQUIRED -> storage.set(key, value?.toString()?.toBoolean())
+                INTERNET_REQUIRED -> {
+                    val newValue = value?.toString()?.toBoolean()
+                    val changed = this.internetRequired != (newValue ?: true)
+
+                    storage.set(key, newValue)
+
+                    changed
+                }
+
                 RETRY_COUNT -> {
-                    val retryCount = value?.toString()?.toInt()
+                    val retryCount = value?.toString()?.toFloat()?.toInt() ?: 15
                     if (retryCount != null && retryCount < 1) {
                         throw IllegalArgumentException("Retry count must be >= 1")
                     }
+
+                    val changed = this.retryCount != retryCount
+
                     storage.set(key, retryCount?.toString())
+
+                    changed
                 }
 
-                SIGNING_KEY -> storage.set(key, value?.toString())
+                SIGNING_KEY -> {
+                    val newValue = value?.toString()
+                    val changed = this.signingKey != newValue
+
+                    storage.set(key, newValue)
+
+                    changed
+                }
+
+                else -> false
             }
-        }
+        }.any { it }
     }
 }

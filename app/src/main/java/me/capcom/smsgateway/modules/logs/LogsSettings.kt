@@ -44,11 +44,20 @@ class LogsSettings(
         )
     }
 
-    override fun import(data: Map<String, *>) {
-        data.forEach { (key, value) ->
-            when (key) {
-                LIFETIME_DAYS -> storage.set(key, value?.toString()?.toFloat()?.toInt()?.toString())
+    override fun import(data: Map<String, *>): Boolean {
+        return data.map {
+            when (it.key) {
+                LIFETIME_DAYS -> {
+                    val newValue = it.value?.toString()?.toFloat()?.toInt()?.takeIf { it > 0 }
+                    val changed = lifetimeDays != newValue
+
+                    storage.set(it.key, newValue?.toString())
+
+                    changed
+                }
+
+                else -> false
             }
-        }
+        }.any { it }
     }
 }

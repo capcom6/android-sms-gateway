@@ -38,7 +38,7 @@ class SettingsService(
             return
         }
 
-        data.forEach { (key, value) ->
+        val changed = data.map { (key, value) ->
             try {
                 settings[key]?.let {
                     (it as? Importer)?.import(value as Map<String, *>)
@@ -46,6 +46,10 @@ class SettingsService(
             } catch (e: IllegalArgumentException) {
                 throw IllegalArgumentException("Failed to import $key: ${e.message}", e)
             }
+        }
+
+        if (changed.none { it == true }) {
+            return
         }
 
         notificationsService.notify(

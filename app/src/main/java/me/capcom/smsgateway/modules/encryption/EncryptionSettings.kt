@@ -40,11 +40,18 @@ class EncryptionSettings(
         private const val VERSION = "version"
     }
 
-    override fun import(data: Map<String, *>) {
-        data.forEach { (key, value) ->
-            when (key) {
-                PASSPHRASE -> storage.set(key, value?.toString())
+    override fun import(data: Map<String, *>): Boolean {
+        return data.map {
+            when (it.key) {
+                PASSPHRASE -> {
+                    val newValue = it.value?.toString()
+                    val changed = passphrase != newValue
+                    storage.set(it.key, newValue)
+                    changed
+                }
+
+                else -> false
             }
-        }
+        }.any { it }
     }
 }
