@@ -55,13 +55,22 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
         private val INSTANCE: MessagesReceiver by lazy { MessagesReceiver() }
 
         fun register(context: Context) {
-            val filter = IntentFilter().apply {
+            val textFilter = IntentFilter().apply {
                 addAction(Intents.SMS_RECEIVED_ACTION)
-                addAction(Intents.DATA_SMS_RECEIVED_ACTION)
             }
             context.registerReceiver(
                 INSTANCE,
-                filter
+                textFilter
+            )
+
+            val dataFilter = IntentFilter().apply {
+                addAction(Intents.DATA_SMS_RECEIVED_ACTION)
+                addDataScheme("sms")
+                addDataAuthority("*", "53739")
+            }
+            context.registerReceiver(
+                INSTANCE,
+                dataFilter
             )
         }
 
