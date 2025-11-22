@@ -8,14 +8,18 @@ import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.helpers.BuildHelper
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.webhooks.db.WebHook
 import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
+import me.capcom.smsgateway.modules.webhooks.db.WebhookPriority
+import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueRepository
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookDTO
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
 import me.capcom.smsgateway.modules.webhooks.workers.ReviewWebhooksWorker
-import me.capcom.smsgateway.modules.webhooks.workers.SendWebhookWorker
+import me.capcom.smsgateway.modules.webhooks.workers.WebhookQueueProcessorWorker
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import java.net.URL
@@ -26,8 +30,11 @@ class WebHooksService(
     private val gatewaySettings: GatewaySettings,
     private val webhooksSettings: WebhooksSettings,
     private val notificationsService: NotificationsService,
+    private val logsService: LogsService,
+    private val webhookQueueRepository: WebhookQueueRepository,
 ) : KoinComponent {
     private val eventsReceiver by lazy { EventsReceiver() }
+    private val gson = com.google.gson.GsonBuilder().serializeNulls().create()
 
     fun start(context: Context) {
         eventsReceiver.start()
@@ -118,29 +125,129 @@ class WebHooksService(
     }
 
     fun emit(event: WebHookEvent, payload: Any) {
-        webHooksDao.selectByEvent(event).forEach {
+        val webhooksToProcess = webHooksDao.selectByEvent(event)
+        var queuedCount = 0
+        var skippedCount = 0
+
+        webhooksToProcess.forEach { webhook ->
             // skip emitting if source is disabled
             when {
-                it.source == EntitySource.Local && !localServerSettings.enabled -> return@forEach
-                (it.source == EntitySource.Cloud || it.source == EntitySource.Gateway) && !gatewaySettings.enabled -> return@forEach
+                webhook.source == EntitySource.Local && !localServerSettings.enabled -> {
+                    skippedCount++
+                    return@forEach
+                }
+                (webhook.source == EntitySource.Cloud || webhook.source == EntitySource.Gateway) && !gatewaySettings.enabled -> {
+                    skippedCount++
+                    return@forEach
+                }
             }
 
-            val deviceId = when (it.source) {
+            val deviceId = when (webhook.source) {
                 EntitySource.Local -> localServerSettings.deviceId
                 EntitySource.Cloud, EntitySource.Gateway -> gatewaySettings.deviceId
-            } ?: return@forEach
+            } ?: run {
+                skippedCount++
+                return@forEach
+            }
 
-            SendWebhookWorker.start(
-                get(),
-                url = it.url,
-                WebHookEventDTO(
+            try {
+                // Create the webhook event DTO
+                val webhookEventDTO = WebHookEventDTO(
                     id = NanoIdUtils.randomNanoId(),
-                    webhookId = it.id,
+                    webhookId = webhook.id,
                     event = event,
                     deviceId = deviceId,
                     payload = payload,
-                ),
-                webhooksSettings.internetRequired
+                )
+
+                // Serialize the event DTO to JSON
+                val serializedPayload = gson.toJson(webhookEventDTO)
+
+                // Determine priority based on internetRequired setting
+                val priority = if (webhooksSettings.internetRequired) {
+                    WebhookPriority.HIGH
+                } else {
+                    WebhookPriority.NORMAL
+                }
+
+                // Enqueue the webhook event
+                val queueId = webhookQueueRepository.enqueueWebhook(
+                    webhookId = webhook.id,
+                    payload = serializedPayload,
+                    priority = priority,
+                    source = webhook.source
+                )
+
+                queuedCount++
+                
+                logsService.insert(
+                    LogEntry.Priority.DEBUG,
+                    "WebHooksService",
+                    "Queued webhook event for processing",
+                    mapOf(
+                        "webhookId" to webhook.id,
+                        "event" to event.name,
+                        "queueId" to queueId,
+                        "priority" to priority.displayName,
+                        "internetRequired" to webhooksSettings.internetRequired
+                    )
+                )
+            } catch (e: Exception) {
+                logsService.insert(
+                    LogEntry.Priority.ERROR,
+                    "WebHooksService",
+                    "Failed to queue webhook event",
+                    mapOf(
+                        "webhookId" to webhook.id,
+                        "event" to event.name,
+                        "error" to e.message
+                    )
+                )
+                skippedCount++
+            }
+        }
+
+        // Start the queue processor if we queued any events
+        if (queuedCount > 0) {
+            try {
+                val context = get<Context>()
+                WebhookQueueProcessorWorker.start(context)
+                
+                logsService.insert(
+                    LogEntry.Priority.DEBUG,
+                    "WebHooksService",
+                    "Started webhook queue processor",
+                    mapOf(
+                        "queuedCount" to queuedCount,
+                        "skippedCount" to skippedCount,
+                        "totalWebhooks" to webhooksToProcess.size
+                    )
+                )
+            } catch (e: Exception) {
+                logsService.insert(
+                    LogEntry.Priority.ERROR,
+                    "WebHooksService",
+                    "Failed to start webhook queue processor",
+                    mapOf(
+                        "error" to e.message,
+                        "queuedCount" to queuedCount
+                    )
+                )
+            }
+        }
+
+        // Log summary for debugging
+        if (webhooksToProcess.isNotEmpty()) {
+            logsService.insert(
+                LogEntry.Priority.DEBUG,
+                "WebHooksService",
+                "Webhook emission summary",
+                mapOf(
+                    "event" to event.name,
+                    "totalWebhooks" to webhooksToProcess.size,
+                    "queued" to queuedCount,
+                    "skipped" to skippedCount
+                )
             )
         }
     }

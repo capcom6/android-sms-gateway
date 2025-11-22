@@ -14,6 +14,9 @@ import me.capcom.smsgateway.modules.logs.db.LogEntriesDao
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.webhooks.db.WebHook
 import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
+import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueEntity
+import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueDao
+import me.capcom.smsgateway.modules.webhooks.db.WebhookConverters
 
 @Database(
     entities = [
@@ -22,9 +25,10 @@ import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
         RecipientState::class,
         MessageState::class,
         WebHook::class,
+        WebhookQueueEntity::class,
         LogEntry::class,
     ],
-    version = 16,
+    version = 17,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -41,12 +45,14 @@ import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
         // AutoMigration(from = 13, to = 14),   // manual migration
         AutoMigration(from = 14, to = 15),
         AutoMigration(from = 15, to = 16),
+        AutoMigration(from = 16, to = 17),
     ]
 )
-@TypeConverters(Converters::class)
+@TypeConverters(Converters::class, me.capcom.smsgateway.modules.webhooks.db.WebhookConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun messagesDao(): MessagesDao
     abstract fun webhooksDao(): WebHooksDao
+    abstract fun webhookQueueDao(): WebhookQueueDao
     abstract fun logDao(): LogEntriesDao
 
     companion object {

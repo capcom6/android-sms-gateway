@@ -82,6 +82,7 @@
     <string name="retry_count">Retry count</string>
     <string name="send_messages_notification">Sending messages…</string>
     <string name="sending_webhook">Sending webhook…</string>
+    <string name="processing_webhook_queue">Processing webhook queue…</string>
     <string name="server_address">Server address</string>
     <string name="server">Server</string>
     <string name="set_maximum_value_to_activate">Set maximum value to activate</string>
