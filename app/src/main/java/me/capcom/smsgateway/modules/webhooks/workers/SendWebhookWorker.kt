@@ -26,6 +26,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.userAgent
 import io.ktor.serialization.gson.gson
+import kotlinx.coroutines.runBlocking
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.extensions.configure
@@ -35,6 +36,7 @@ import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.webhooks.NAME
 import me.capcom.smsgateway.modules.webhooks.TemporaryStorage
 import me.capcom.smsgateway.modules.webhooks.WebhooksSettings
+import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueRepository
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
 import me.capcom.smsgateway.modules.webhooks.plugins.PayloadSingingPlugin
 import org.json.JSONException
@@ -43,6 +45,10 @@ import org.koin.core.component.get
 import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
 
+/**
+ * Worker that sends webhook payloads to a URL.
+ * @deprecated Remove after 2026-11-30
+ */
 class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params), KoinComponent {
 
@@ -201,47 +207,91 @@ class SendWebhookWorker(appContext: Context, params: WorkerParameters) :
     }
 
     companion object : KoinComponent {
+        private val gson = GsonBuilder().configure().create()
+
         fun start(
             context: Context,
             url: String,
             data: WebHookEventDTO,
-            internetRequired: Boolean
+            internetRequired: Boolean,
         ) {
-            get<TemporaryStorage>().put(data.id, gson.toJson(data))
+            val logsService = get<LogsService>()
 
-            val work = OneTimeWorkRequestBuilder<SendWebhookWorker>()
-                .setInputData(
-                    workDataOf(
-                        INPUT_URL to url,
-                        INPUT_STORAGE_KEY to data.id,
-//                        INPUT_DATA to gson.toJson(data),
+            // Enqueue the webhook event to the persistent queue
+            try {
+                val queueRepository = get<WebhookQueueRepository>()
+
+                // Enqueue to the persistent queue
+                val queueId = runBlocking {
+                    queueRepository.enqueueWebhook(
+                        url = url,
+                        payload = gson.toJson(data),
+                    )
+                }
+
+                logsService.insert(
+                    priority = LogEntry.Priority.DEBUG,
+                    module = NAME,
+                    message = "Webhook enqueued to persistent queue",
+                    context = mapOf(
+                        "queueId" to queueId,
+                        "url" to url,
+                        "internetRequired" to internetRequired
                     )
                 )
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .setBackoffCriteria(
-                    BackoffPolicy.EXPONENTIAL,
-                    WorkRequest.MIN_BACKOFF_MILLIS,
-                    TimeUnit.MILLISECONDS
+
+                // Start the queue processor worker to handle the enqueued webhook
+                WebhookQueueProcessorWorker.start(
+                    context = context,
+                    internetRequired = internetRequired
                 )
-                .apply {
-                    if (internetRequired) {
-                        setConstraints(
-                            Constraints.Builder()
-                                .setRequiredNetworkType(NetworkType.CONNECTED)
-                                .build()
+
+            } catch (e: Exception) {
+                // Fallback to direct processing if queue enqueue fails
+                logsService.insert(
+                    priority = LogEntry.Priority.WARN,
+                    module = NAME,
+                    message = "Queue enqueue failed, falling back to direct processing: ${e.message}",
+                    context = mapOf(
+                        "error" to e.toString(),
+                        "url" to url
+                    )
+                )
+
+                // Store the payload in temporary storage
+                get<TemporaryStorage>().put(data.id, gson.toJson(data))
+
+                // Fallback to original behavior
+                val work = OneTimeWorkRequestBuilder<SendWebhookWorker>()
+                    .setInputData(
+                        workDataOf(
+                            INPUT_URL to url,
+                            INPUT_STORAGE_KEY to data.id,
                         )
+                    )
+                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    .setBackoffCriteria(
+                        BackoffPolicy.EXPONENTIAL,
+                        WorkRequest.MIN_BACKOFF_MILLIS,
+                        TimeUnit.MILLISECONDS
+                    )
+                    .apply {
+                        if (internetRequired) {
+                            setConstraints(
+                                Constraints.Builder()
+                                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                                    .build()
+                            )
+                        }
                     }
-                }
-                .build()
+                    .build()
 
-            WorkManager.getInstance(context)
-                .enqueue(work)
+                WorkManager.getInstance(context)
+                    .enqueue(work)
+            }
         }
-
-        private val gson = GsonBuilder().configure().create()
 
         private const val INPUT_URL = "url"
         private const val INPUT_STORAGE_KEY = "storageKey"
-//        private const val INPUT_DATA = "data"
     }
 }

@@ -21,6 +21,7 @@ class EventsReceiver : EventsReceiver() {
                     Log.d("EventsReceiver", "Event: $it")
 
                     get<WebHooksService>().emit(
+                        get(),
                         WebHookEvent.SystemPing,
                         mapOf("health" to it.health)
                     )
@@ -67,7 +68,7 @@ class EventsReceiver : EventsReceiver() {
                         }
 
                         get<WebHooksService>().emit(
-                            webhookEventType, payload
+                            get(), webhookEventType, payload
                         )
                     }
                 }
