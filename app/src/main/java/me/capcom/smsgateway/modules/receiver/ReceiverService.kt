@@ -99,7 +99,7 @@ class ReceiverService : KoinComponent {
             )
         }
 
-        webHooksService.emit(type, payload)
+        webHooksService.emit(context, type, payload)
 
         logsService.insert(
             LogEntry.Priority.DEBUG,
