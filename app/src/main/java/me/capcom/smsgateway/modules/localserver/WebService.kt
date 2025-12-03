@@ -37,6 +37,7 @@ import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.modules.health.HealthService
 import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.localserver.domain.Device
+import me.capcom.smsgateway.modules.localserver.routes.AuthRoutes
 import me.capcom.smsgateway.modules.localserver.routes.DocsRoutes
 import me.capcom.smsgateway.modules.localserver.routes.LogsRoutes
 import me.capcom.smsgateway.modules.localserver.routes.MessagesRoutes
@@ -175,6 +176,9 @@ class WebService : Service() {
                     }
                     route("/docs") {
                         DocsRoutes(get()).register(this)
+                    }
+                    route("/auth") {
+                        AuthRoutes().register(this)
                     }
                 }
             }
