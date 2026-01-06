@@ -4,7 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.database.ContentObserver
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Telephony
 import android.util.Log
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
@@ -61,140 +64,314 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
                 )
             )
 
-
             val mmsNotification = MMSParser.parseMNotificationInd(pdu)
 
-            Log.d(TAG, "MMS received from ${mmsNotification.from}")
-
-            // De-duplicate - skip if we've processed this transaction ID recently
-            val now = System.currentTimeMillis()
-            synchronized(processedTransactions) {
-                // Clean up old entries
-                processedTransactions.entries.removeIf { now - it.value > DUPLICATE_WINDOW_MS }
-                
-                // Check if already processed
-                if (processedTransactions.containsKey(mmsNotification.transactionId)) {
-                    Log.d(TAG, "Skipping duplicate MMS with transaction ID: ${mmsNotification.transactionId}")
-                    return
-                }
-                
-                // Mark as processed
-                processedTransactions[mmsNotification.transactionId] = now
-            }
-
-            // Try to read text parts from the MMS using the ContentProvider
-            var body: String? = null
-            Log.d(TAG, "Attempting to read MMS body from ContentProvider")
-            
-            try {
-                // Increase delay for MMS with images
-                Thread.sleep(1500)
-                
-                val mmsUri = Uri.parse("content://mms")
-                val projection = arrayOf("_id", "date", "m_size", "tr_id")
-                
-                Log.d(TAG, "Querying MMS provider for transaction ID: ${mmsNotification.transactionId}")
-                
-                // Try to match by transaction ID first
-                var cursor = context.contentResolver.query(
-                    mmsUri,
-                    projection,
-                    "tr_id = ?",
-                    arrayOf(mmsNotification.transactionId),
-                    null
-                )
-                
-                // If not found by transaction ID, fall back to latest message
-                if (cursor == null || cursor.count == 0) {
-                    cursor?.close()
-                    Log.d(TAG, "Transaction ID not found, trying latest message")
-                    cursor = context.contentResolver.query(
-                        mmsUri,
-                        projection,
-                        null,
-                        null,
-                        "_id DESC LIMIT 1"
-                    )
-                }
-                
-                if (cursor != null) {
-                    Log.d(TAG, "Found ${cursor.count} recent MMS messages")
-                    
-                    if (cursor.count > 0 && cursor.moveToFirst()) {
-                        val mmsId = cursor.getString(cursor.getColumnIndex("_id"))
-                        Log.d(TAG, "Using latest MMS ID=$mmsId")
-                        
-                        val partsUri = Uri.parse("content://mms/$mmsId/part")
-                        val partProjection = arrayOf("_id", "ct", "text")
-                        val partsCursor = context.contentResolver.query(partsUri, partProjection, null, null, null)
-                        
-                        if (partsCursor != null) {
-                            Log.d(TAG, "Found ${partsCursor.count} parts for MMS ID $mmsId")
-                            val ctIndex = partsCursor.getColumnIndex("ct")
-                            val textIndex = partsCursor.getColumnIndex("text")
-                            
-                            while (partsCursor.moveToNext()) {
-                                val ct = if (ctIndex >= 0) partsCursor.getString(ctIndex) else ""
-                                Log.d(TAG, "Part content-type: $ct")
-                                
-                                if (ct.startsWith("text")) {
-                                    val text = if (textIndex >= 0) partsCursor.getString(textIndex) else null
-                                    if (!text.isNullOrEmpty()) {
-                                        body = if (body == null) text else body + "\n" + text
-                                        Log.d(TAG, "Extracted text: ${text.take(100)}")
-                                    }
-                                }
-                            }
-                            partsCursor.close()
-                        }
-                    }
-                    cursor.close()
-                } else {
-                    Log.w(TAG, "Query returned null cursor")
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to read MMS parts: ${e.message}", e)
-            }
-            
-            // Debug log about extracted body
-            logsService.insert(
-                LogEntry.Priority.DEBUG,
-                MODULE_NAME,
-                "MMS body extraction",
-                mapOf(
-                    "bodyFound" to (body != null),
-                    "bodyLength" to (body?.length ?: 0),
-                    "bodyPreview" to (body?.take(200))
-                )
+            // Register a ContentObserver to wait for the MMS to appear in the ContentProvider
+            val subscriptionId = SubscriptionsHelper.extractSubscriptionId(context, intent)
+            watchForMms(
+                context,
+                mmsNotification.transactionId,
+                mmsNotification.messageId,
+                mmsNotification.subject,
+                mmsNotification.messageSize,
+                mmsNotification.contentClass?.name,
+                mmsNotification.from.substringBefore('/'),
+                mmsNotification.date ?: Date(),
+                subscriptionId
             )
-            Log.d("MmsReceiver", "MMS body extraction: found=${body != null} length=${body?.length ?: 0} preview=${body?.take(200) ?: "null"}")
-
-            val mmsMessage = InboxMessage.Mms(
-                messageId = mmsNotification.messageId,
-                transactionId = mmsNotification.transactionId,
-                subject = mmsNotification.subject,
-                size = mmsNotification.messageSize,
-                contentClass = mmsNotification.contentClass?.name,
-                body = body,
-                address = mmsNotification.from.substringBefore('/'),
-                date = mmsNotification.date ?: Date(),
-                subscriptionId = SubscriptionsHelper.extractSubscriptionId(context, intent),
-            )
-
-            // Process the message using the existing ReceiverService
-            receiverSvc.process(context, mmsMessage)
 
         } catch (e: Exception) {
             Log.e(TAG, "Error processing MMS", e)
         }
     }
 
+    private fun watchForMms(
+        context: Context,
+        transactionId: String,
+        messageId: String?,
+        subject: String?,
+        size: Long?,
+        contentClass: String?,
+        address: String,
+        date: Date,
+        subscriptionId: Int?
+    ) {
+        val mmsUri = Uri.parse("content://mms")
+        val handler = Handler(Looper.getMainLooper())
+        val timeoutMs = 30000L // 30 second timeout
+        val startTime = System.currentTimeMillis()
+
+        // Get the current highest MMS ID so we know to wait for a newer one
+        val currentMaxId = getCurrentMaxMmsId(context)
+        Log.d(TAG, "ContentObserver: Current max MMS ID is $currentMaxId, waiting for newer MMS from $address")
+
+        val observer = object : ContentObserver(handler) {
+            override fun onChange(selfChange: Boolean) {
+                onChange(selfChange, null)
+            }
+
+            override fun onChange(selfChange: Boolean, uri: Uri?) {
+                if (attemptBodyExtractionAndProcess(context, address, currentMaxId, startTime, timeoutMs, 
+                    transactionId, messageId, subject, size, contentClass, date, subscriptionId, this, handler)) {
+                    // Successfully processed or timed out
+                }
+            }
+        }
+
+        // Register the observer
+        context.contentResolver.registerContentObserver(mmsUri, true, observer)
+        
+        // Also do an immediate check in case the MMS is already there
+        handler.post {
+            attemptBodyExtractionAndProcess(context, address, currentMaxId, startTime, timeoutMs,
+                transactionId, messageId, subject, size, contentClass, date, subscriptionId, observer, handler)
+        }
+
+        // Set a timeout to process even if we don't get the body (should not hit)
+        handler.postDelayed({
+            context.contentResolver.unregisterContentObserver(observer)
+            Log.w(TAG, "ContentObserver: Timeout reached for address: $address, processing without body")
+            val body = tryExtractMmsByAddressAndDate(context, address, 0L)
+            processMmsMessage(context, transactionId, messageId, subject, size, contentClass, body, address, date, subscriptionId)
+        }, timeoutMs)
+    }
+
+    private fun attemptBodyExtractionAndProcess(
+        context: Context,
+        address: String,
+        minMmsId: Long,
+        startTime: Long,
+        timeoutMs: Long,
+        transactionId: String,
+        messageId: String?,
+        subject: String?,
+        size: Long?,
+        contentClass: String?,
+        date: Date,
+        subscriptionId: Int?,
+        observer: ContentObserver,
+        handler: Handler
+    ): Boolean {
+        val body = tryExtractMmsByAddressAndDate(context, address, minMmsId)
+        if (body != null || System.currentTimeMillis() - startTime > timeoutMs) {
+            // Found the MMS or timed out - unregister and process
+            context.contentResolver.unregisterContentObserver(observer)
+            handler.removeCallbacksAndMessages(null)
+            
+            if (body == null) {
+                Log.w(TAG, "ContentObserver: Timed out waiting for MMS body, processing without body")
+            }
+            processMmsMessage(context, transactionId, messageId, subject, size, contentClass, body, address, date, subscriptionId)
+            return true
+        }
+        return false
+    }
+
+    private fun getCurrentMaxMmsId(context: Context): Long {
+        try {
+            val cursor = context.contentResolver.query(
+                Uri.parse("content://mms"),
+                arrayOf("_id"),
+                null,
+                null,
+                "_id DESC LIMIT 1"
+            )
+            if (cursor != null && cursor.moveToFirst()) {
+                val idIndex = cursor.getColumnIndex("_id")
+                if (idIndex >= 0) {
+                    val maxId = cursor.getLong(idIndex)
+                    cursor.close()
+                    return maxId
+                }
+                cursor.close()
+            }
+            cursor?.close()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error getting max MMS ID: ${e.message}", e)
+        }
+        return 0L
+    }
+
+    private fun tryExtractMmsByAddressAndDate(context: Context, address: String, minMmsId: Long): String? {
+        try {
+            val mmsUri = Uri.parse("content://mms")
+            
+            // Get MMS messages with ID greater than minMmsId (newer messages)
+            val cursor = context.contentResolver.query(
+                mmsUri,
+                arrayOf("_id", "date"),
+                "_id > ?",
+                arrayOf(minMmsId.toString()),
+                "_id DESC LIMIT 10"
+            )
+            
+            Log.d(TAG, "Looking for MMS with ID > $minMmsId from address=$address, found ${cursor?.count ?: 0} candidates")
+            if (cursor != null && cursor.moveToFirst()) {
+                val idIndex = cursor.getColumnIndex("_id")
+                val dateIndex = cursor.getColumnIndex("date")
+                
+                if (idIndex < 0 || dateIndex < 0) {
+                    Log.w(TAG, "Required column not found in MMS query")
+                    cursor.close()
+                    return null
+                }
+                
+                do {
+                    val mmsId = cursor.getLong(idIndex)
+                    val mmsDate = cursor.getLong(dateIndex)
+                    
+                    // Check if this MMS is from the expected address.  This is to prevent the case
+                    // where 2 or more MMS is received at the same time and sending incorrect one.
+                    // If address data not populated, wait a bit and retry
+                    var senderMatch = checkMmsSender(context, mmsId.toString(), address)
+                    if (!senderMatch) {
+                        // Wait for address data to be populated
+                        Thread.sleep(ADDRESS_DATA_RETRY_DELAY_MS)
+                        senderMatch = checkMmsSender(context, mmsId.toString(), address)
+                    }
+                    
+                    if (senderMatch) {
+                        cursor.close()
+                        Log.d(TAG, "Found matching MMS ID=$mmsId for address=$address")
+                        return extractBodyFromMmsId(context, mmsId.toString())
+                    }
+                } while (cursor.moveToNext())
+                cursor.close()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error extracting MMS by address: ${e.message}", e)
+        }
+        return null
+    }
+
+    private fun checkMmsSender(context: Context, mmsId: String, expectedAddress: String): Boolean {
+        try {
+            val addrUri = Uri.parse("content://mms/$mmsId/addr")
+            val cursor = context.contentResolver.query(
+                addrUri,
+                arrayOf("address", "type"),
+                null,
+                null,
+                null
+            )
+            
+            if (cursor != null) {
+                val hasData = cursor.count > 0
+                val typeIndex = cursor.getColumnIndex("type")
+                val addressIndex = cursor.getColumnIndex("address")
+                
+                if (typeIndex < 0 || addressIndex < 0) {
+                    Log.w(TAG, "Required column not found in MMS address query")
+                    cursor.close()
+                    return false
+                }
+                
+                while (cursor.moveToNext()) {
+                    val type = cursor.getInt(typeIndex)
+                    val addr = cursor.getString(addressIndex)
+                    
+                    // Type 137 = FROM (sender)
+                    if (type == MMS_ADDR_TYPE_FROM && addr != null) {
+                        cursor.close()
+                        // Normalize addresses for comparison
+                        val normalizedExpected = expectedAddress.replace(Regex("[^0-9]"), "")
+                        val normalizedActual = addr.replace(Regex("[^0-9]"), "")
+                        return normalizedActual.endsWith(normalizedExpected) || normalizedExpected.endsWith(normalizedActual)
+                    }
+                }
+                cursor.close()
+                
+                // If cursor had no rows, addresses haven't been populated yet
+                if (!hasData) {
+                    Log.d(TAG, "MMS $mmsId has no address data yet")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error checking MMS sender: ${e.message}", e)
+        }
+        return false
+    }
+
+    private fun extractBodyFromMmsId(context: Context, mmsId: String): String? {
+        var body: String? = null
+        try {
+            val partsUri = Uri.parse("content://mms/$mmsId/part")
+            val partProjection = arrayOf("_id", "ct", "text")
+            val partsCursor = context.contentResolver.query(partsUri, partProjection, null, null, null)
+            
+            if (partsCursor != null) {
+                val ctIndex = partsCursor.getColumnIndex("ct")
+                val textIndex = partsCursor.getColumnIndex("text")
+                
+                if (ctIndex < 0 || textIndex < 0) {
+                    Log.w(TAG, "Required column not found in MMS parts query")
+                    partsCursor.close()
+                    return null
+                }
+                
+                while (partsCursor.moveToNext()) {
+                    val ct = partsCursor.getString(ctIndex)
+                    
+                    if (ct.startsWith("text")) {
+                        val text = partsCursor.getString(textIndex)
+                        if (!text.isNullOrEmpty()) {
+                            body = if (body == null) text else body + "\n" + text
+                        }
+                    }
+                }
+                partsCursor.close()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error extracting body from MMS ID $mmsId: ${e.message}", e)
+        }
+        return body
+    }
+
+    private fun processMmsMessage(
+        context: Context,
+        transactionId: String,
+        messageId: String?,
+        subject: String?,
+        size: Long?,
+        contentClass: String?,
+        body: String?,
+        address: String,
+        date: Date,
+        subscriptionId: Int?
+    ) {
+        // Debug log about extracted body
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "MMS body extraction",
+            mapOf(
+                "bodyFound" to (body != null),
+                "bodyLength" to (body?.length ?: 0),
+                "bodyPreview" to (body?.take(200))
+            )
+        )
+        val mmsMessage = InboxMessage.Mms(
+            messageId = messageId ?: transactionId,
+            transactionId = transactionId,
+            subject = subject,
+            size = size ?: 0L,
+            contentClass = contentClass,
+            body = body,
+            address = address,
+            date = date,
+            subscriptionId = subscriptionId,
+        )
+
+        // Process the message using the existing ReceiverService
+        receiverSvc.process(context, mmsMessage)
+    }
+
     companion object {
         private const val TAG = "MmsReceiver"
-        private const val DUPLICATE_WINDOW_MS = 60000L // 1 minute
+        private const val ADDRESS_DATA_RETRY_DELAY_MS = 500L // Wait for address data to be populated
+        private const val MMS_ADDR_TYPE_FROM = 137 // Sender address type in MMS addr table
 
         private val INSTANCE: MmsReceiver by lazy { MmsReceiver() }
-        private val processedTransactions = mutableMapOf<String, Long>()
 
         fun register(context: Context) {
             val filter = IntentFilter().apply {
