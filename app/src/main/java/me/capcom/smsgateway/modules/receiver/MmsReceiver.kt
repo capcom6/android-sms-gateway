@@ -7,8 +7,10 @@ import android.content.IntentFilter
 import android.database.ContentObserver
 import android.os.Bundle
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
 import android.provider.Telephony
+import java.util.concurrent.atomic.AtomicBoolean
 import android.util.Log
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.logs.LogsService
@@ -97,13 +99,25 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
         subscriptionId: Int?
     ) {
         val mmsUri = Uri.parse("content://mms")
-        val handler = Handler(Looper.getMainLooper())
+        val handlerThread = HandlerThread("MmsBodyExtractor").apply { start() }
+        val handler = Handler(handlerThread.looper)
+        val processed = AtomicBoolean(false)
         val timeoutMs = 30000L // 30 second timeout
         val startTime = System.currentTimeMillis()
 
         // Get the current highest MMS ID so we know to wait for a newer one
         val currentMaxId = getCurrentMaxMmsId(context)
         Log.d(TAG, "ContentObserver: Current max MMS ID is $currentMaxId, waiting for newer MMS from $address")
+
+        // Define timeout runnable so we can cancel it specifically
+        val timeoutRunnable = Runnable {
+            if (processed.compareAndSet(false, true)) {
+                Log.w(TAG, "ContentObserver: Timeout reached for address: $address, processing without body")
+                val body = tryExtractMmsByAddressAndDate(context, address, 0L)
+                processMmsMessage(context, transactionId, messageId, subject, size, contentClass, body, address, date, subscriptionId)
+                handlerThread.quitSafely()
+            }
+        }
 
         val observer = object : ContentObserver(handler) {
             override fun onChange(selfChange: Boolean) {
@@ -112,7 +126,8 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
             override fun onChange(selfChange: Boolean, uri: Uri?) {
                 if (attemptBodyExtractionAndProcess(context, address, currentMaxId, startTime, timeoutMs, 
-                    transactionId, messageId, subject, size, contentClass, date, subscriptionId, this, handler)) {
+                    transactionId, messageId, subject, size, contentClass, date, subscriptionId, 
+                    this, handler, processed, timeoutRunnable, handlerThread)) {
                     // Successfully processed or timed out
                 }
             }
@@ -124,16 +139,12 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
         // Also do an immediate check in case the MMS is already there
         handler.post {
             attemptBodyExtractionAndProcess(context, address, currentMaxId, startTime, timeoutMs,
-                transactionId, messageId, subject, size, contentClass, date, subscriptionId, observer, handler)
+                transactionId, messageId, subject, size, contentClass, date, subscriptionId, 
+                observer, handler, processed, timeoutRunnable, handlerThread)
         }
 
         // Set a timeout to process even if we don't get the body (should not hit)
-        handler.postDelayed({
-            context.contentResolver.unregisterContentObserver(observer)
-            Log.w(TAG, "ContentObserver: Timeout reached for address: $address, processing without body")
-            val body = tryExtractMmsByAddressAndDate(context, address, 0L)
-            processMmsMessage(context, transactionId, messageId, subject, size, contentClass, body, address, date, subscriptionId)
-        }, timeoutMs)
+        handler.postDelayed(timeoutRunnable, timeoutMs)
     }
 
     private fun attemptBodyExtractionAndProcess(
@@ -150,18 +161,27 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
         date: Date,
         subscriptionId: Int?,
         observer: ContentObserver,
-        handler: Handler
+        handler: Handler,
+        processed: AtomicBoolean,
+        timeoutRunnable: Runnable,
+        handlerThread: HandlerThread
     ): Boolean {
         val body = tryExtractMmsByAddressAndDate(context, address, minMmsId)
         if (body != null || System.currentTimeMillis() - startTime > timeoutMs) {
+            // Use atomic guard to prevent race condition between timeout, immediate check, and onChange
+            if (!processed.compareAndSet(false, true)) {
+                return true // Already processed by another callback
+            }
+            
             // Found the MMS or timed out - unregister and process
             context.contentResolver.unregisterContentObserver(observer)
-            handler.removeCallbacksAndMessages(null)
+            handler.removeCallbacks(timeoutRunnable)
             
             if (body == null) {
                 Log.w(TAG, "ContentObserver: Timed out waiting for MMS body, processing without body")
             }
             processMmsMessage(context, transactionId, messageId, subject, size, contentClass, body, address, date, subscriptionId)
+            handlerThread.quitSafely()
             return true
         }
         return false
@@ -312,7 +332,7 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
                 while (partsCursor.moveToNext()) {
                     val ct = partsCursor.getString(ctIndex)
                     
-                    if (ct.startsWith("text")) {
+                    if (ct?.startsWith("text") == true)  {
                         val text = partsCursor.getString(textIndex)
                         if (!text.isNullOrEmpty()) {
                             body = if (body == null) text else body + "\n" + text
@@ -339,17 +359,6 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
         date: Date,
         subscriptionId: Int?
     ) {
-        // Debug log about extracted body
-        logsService.insert(
-            LogEntry.Priority.DEBUG,
-            MODULE_NAME,
-            "MMS body extraction",
-            mapOf(
-                "bodyFound" to (body != null),
-                "bodyLength" to (body?.length ?: 0),
-                "bodyPreview" to (body?.take(200))
-            )
-        )
         val mmsMessage = InboxMessage.Mms(
             messageId = messageId ?: transactionId,
             transactionId = transactionId,
