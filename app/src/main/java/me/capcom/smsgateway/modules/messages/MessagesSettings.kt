@@ -99,11 +99,11 @@ class MessagesSettings(
         return mapOf(
             SEND_INTERVAL_MIN to sendIntervalMin,
             SEND_INTERVAL_MAX to sendIntervalMax,
-            LIMIT_PERIOD to limitPeriod,
+            LIMIT_PERIOD to limitPeriod.name,
             LIMIT_VALUE to limitValue,
-            SIM_SELECTION_MODE to simSelectionMode,
+            SIM_SELECTION_MODE to simSelectionMode.name,
             LOG_LIFETIME_DAYS to logLifetimeDays,
-            PROCESSING_ORDER to processingOrder,
+            PROCESSING_ORDER to processingOrder.name,
         )
     }
 
@@ -141,7 +141,7 @@ class MessagesSettings(
                     val newValue = value?.let { Period.valueOf(it.toString()) } ?: Period.Disabled
                     val changed = this.limitPeriod != newValue
 
-                    storage.set(key, newValue)
+                    storage.set(key, newValue.name)
 
                     changed
                 }
@@ -164,7 +164,7 @@ class MessagesSettings(
                         ?: SimSelectionMode.OSDefault
                     val changed = this.simSelectionMode != newValue
 
-                    storage.set(key, newValue)
+                    storage.set(key, newValue.name)
 
                     changed
                 }
@@ -174,7 +174,7 @@ class MessagesSettings(
                         ?: ProcessingOrder.LIFO
                     val changed = this.processingOrder != newValue
 
-                    storage.set(key, newValue)
+                    storage.set(key, newValue.name)
 
                     changed
                 }
