@@ -8,7 +8,7 @@
       "email": "support@sms-gate.app",
       "url": "https://docs.sms-gate.app/"
     },
-    "version": "1.52.1",
+    "version": "1.52.2",
     "license": {
       "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
       "name": "Apache 2.0"
