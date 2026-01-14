@@ -36,6 +36,7 @@ sealed class InboxMessage(
         val subject: String?,
         val size: Long,
         val contentClass: String?,
+        val body: String?,
         address: String,
         date: Date,
         subscriptionId: Int?
