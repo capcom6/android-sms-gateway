@@ -12,6 +12,14 @@
             app:key="gateway.private_token"
             app:summary="@string/ignored_for_public_server"
             app:title="@string/private_token" />
+        <ListPreference
+            app:icon="@drawable/ic_notifications"
+            app:key="gateway.notification_channel"
+            app:defaultValue="AUTO"
+            app:entries="@array/notification_channels_titles"
+            app:entryValues="@array/notification_channels_values"
+            app:title="@string/notification_channel"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
     <PreferenceCategory app:title="@string/credentials">
         <EditTextPreference

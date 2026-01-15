@@ -5,13 +5,17 @@
     <string name="app_name">SMSGate</string>
     <string name="app_version_build">App version (build)</string>
     <string name="battery_optimization_already_disabled">Battery optimization already disabled</string>
-    <string name="battery_optimization_is_not_supported_on_this_device">Battery optimization is not supported on this device</string>
+    <string name="battery_optimization_is_not_supported_on_this_device">Battery optimization is not
+        supported on this device</string>
     <string name="battery_optimization">Battery optimization</string>
     <string name="btn_cancel">Cancel</string>
     <string name="btn_continue">Continue</string>
     <string name="by_code">By Code</string>
     <string name="can_affect_battery_life">can affect battery life</string>
-    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Click Continue to create an account. No personal information is required.\nBy continuing, you agree to our Privacy Policy at https://docs.sms-gate.app/privacy/policy/</string>
+    <string
+        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Click
+        Continue to create an account. No personal information is required.\nBy continuing, you
+        agree to our Privacy Policy at https://docs.sms-gate.app/privacy/policy/</string>
     <string name="cloud_server_dotdotdot">Cloud server…</string>
     <string name="cloud_server">Cloud server</string>
     <string name="cloud">Cloud</string>
@@ -37,7 +41,8 @@
     <string name="internet_connection_unavailable">Internet connection: unavailable</string>
     <string name="interval_seconds">Interval (seconds)</string>
     <string name="invalid_url">Invalid URL</string>
-    <string name="is_not_a_valid_port_must_be_between_1024_and_65535">%1$s is not a valid port. Must be between 1024 and 65535.</string>
+    <string name="is_not_a_valid_port_must_be_between_1024_and_65535">%1$s is not a valid port. Must
+        be between 1024 and 65535.</string>
     <string name="label_password">Password</string>
     <string name="label_username">Username</string>
     <string name="limits">Limits</string>
@@ -62,7 +67,10 @@
     <string name="not_registered">not registered</string>
     <string name="not_set">Not set</string>
     <string name="notification_title">SMSGate</string>
-    <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery life</string>
+    <string name="notification_channel">Notification channel</string>
+    <string name="notifications">Notifications</string>
+    <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery
+        life</string>
     <string name="passphrase">Passphrase</string>
     <string name="password_changed_successfully">Password changed successfully</string>
     <string name="password_must_be_at_least_14_characters">Password must be at least 14 characters</string>
@@ -71,7 +79,8 @@
     <string name="period">Period</string>
     <string name="ping_service_is_active">Ping service is active</string>
     <string name="ping">Ping</string>
-    <string name="please_enter_one_time_code_displayed_on_already_registered_device">Please enter the one-time code displayed on the already-registered device</string>
+    <string name="please_enter_one_time_code_displayed_on_already_registered_device">Please enter
+        the one-time code displayed on the already-registered device</string>
     <string name="port_credentials_etc">Port, credentials, etc.</string>
     <string name="port">Port</string>
     <string name="private_token">Private Token</string>
@@ -87,7 +96,8 @@
     <string name="server">Server</string>
     <string name="set_maximum_value_to_activate">Set maximum value to activate</string>
     <string name="settings_address_is_sms_capcom_me" translatable="false">api.sms-gate.app</string>
-    <string name="settings_changed_via_api_restart_the_app_to_apply_changes">Settings changed via API. Restart the app to apply changes.</string>
+    <string name="settings_changed_via_api_restart_the_app_to_apply_changes">Settings changed via
+        API. Restart the app to apply changes.</string>
     <string name="settings_local_address_is">&lt;a href>%1$s:%2$d&lt;/a></string>
     <string name="settings_local_address_not_found">Not available</string>
     <string name="settings_local_server">Local server</string>
@@ -107,11 +117,15 @@
     <string name="tab_text_home">Home</string>
     <string name="tab_text_messages">MESSAGES</string>
     <string name="tab_text_settings">SETTINGS</string>
-    <string name="the_webhook_request_will_wait_for_an_internet_connection">The webhook request will wait for an internet connection</string>
-    <string name="to_add_a_device_to_an_existing_account_please_fill_in_the_credentials_below">To add a device to an existing account, please fill in the credentials below.</string>
-    <string name="to_apply_the_changes_restart_the_app_using_the_button_below">To apply the changes, restart the app using the button below.</string>
+    <string name="the_webhook_request_will_wait_for_an_internet_connection">The webhook request will
+        wait for an internet connection</string>
+    <string name="to_add_a_device_to_an_existing_account_please_fill_in_the_credentials_below">To
+        add a device to an existing account, please fill in the credentials below.</string>
+    <string name="to_apply_the_changes_restart_the_app_using_the_button_below">To apply the changes,
+        restart the app using the button below.</string>
     <string name="use_empty_to_disable">Use empty to disable</string>
-    <string name="use_this_code_to_sign_in_on_another_device">Use this code to sign in on another device</string>
+    <string name="use_this_code_to_sign_in_on_another_device">Use this code to sign in on another
+        device</string>
     <string name="username_must_be_at_least_3_characters">Username must be at least 3 characters</string>
     <string name="username">Username</string>
     <string name="view">View</string>
@@ -121,8 +135,10 @@
     <string name="webhooks_dotdotdot">Webhooks…</string>
     <string name="webhooks">Webhooks</string>
     <plurals name="review_incoming_sms_webhooks">
-        <item quantity="one">You have %1$d incoming SMS webhook registered. Please review it to avoid any security risks.</item>
-        <item quantity="other">You have %1$d incoming SMS webhooks registered. Please review them to avoid any security risks.</item>
+        <item quantity="one">You have %1$d incoming SMS webhook registered. Please review it to
+            avoid any security risks.</item>
+        <item quantity="other">You have %1$d incoming SMS webhooks registered. Please review them to
+            avoid any security risks.</item>
     </plurals>
     <string name="processing">Processing</string>
     <string name="processing_order_title">Processing order</string>

@@ -7,6 +7,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import me.capcom.smsgateway.modules.events.ExternalEvent
 import me.capcom.smsgateway.modules.events.ExternalEventType
+import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import me.capcom.smsgateway.modules.gateway.workers.RegistrationWorker
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
@@ -53,6 +54,18 @@ class PushService : FirebaseMessagingService(), KoinComponent {
     companion object : KoinComponent {
         fun register(context: Context): Unit {
             val logger = get<LogsService>()
+            val settings = get<GatewaySettings>()
+
+            if (settings.notificationChannel == GatewaySettings.NotificationChannel.SSE_ONLY) {
+                logger.insert(
+                    priority = LogEntry.Priority.INFO,
+                    module = PushService::class.java.simpleName,
+                    message = "FCM registration skipped: SSE_ONLY channel configured"
+                )
+                RegistrationWorker.start(context, null, false)
+                return
+            }
+
 
             logger.insert(
                 priority = LogEntry.Priority.INFO,
