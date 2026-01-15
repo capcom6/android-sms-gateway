@@ -96,7 +96,7 @@ class GatewayService(
     }
     //endregion
 
-    //region Device
+     //region Device
     internal suspend fun registerDevice(
         pushToken: String?,
         registerMode: RegistrationMode
@@ -162,15 +162,13 @@ class GatewayService(
         val settings = settings.registrationInfo ?: return
         val accessToken = settings.token
 
-        pushToken?.let {
-            api.devicePatch(
-                accessToken,
-                GatewayApi.DevicePatchRequest(
-                    settings.id,
-                    it
-                )
+        api.devicePatch(
+            accessToken,
+            GatewayApi.DevicePatchRequest(
+                settings.id,
+                pushToken
             )
-        }
+        )
 
         this.settings.fcmToken = pushToken
 

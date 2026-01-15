@@ -153,7 +153,7 @@ class GatewayApi(
 
     data class DevicePatchRequest(
         val id: String,
-        val pushToken: String,
+        val pushToken: String?,
     )
 
     data class MessagePatchRequest(

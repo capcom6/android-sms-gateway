@@ -15,7 +15,7 @@
         android:icon="@drawable/ic_messages"
         app:fragment="me.capcom.smsgateway.ui.settings.MessagesSettingsFragment"
         app:title="@string/messages"
-        app:summary="@string/delays_limits_etc"/>
+        app:summary="@string/delays_limits_etc" />
 
     <Preference
         android:icon="@drawable/ic_webhook"

@@ -29,4 +29,12 @@
         <item>LIFO</item>
         <item>FIFO</item>
     </string-array>
+    <string-array name="notification_channels_titles">
+        <item>Auto</item>
+        <item>SSE Only</item>
+    </string-array>
+    <string-array name="notification_channels_values" translatable="false">
+        <item>AUTO</item>
+        <item>SSE_ONLY</item>
+    </string-array>
 </resources>

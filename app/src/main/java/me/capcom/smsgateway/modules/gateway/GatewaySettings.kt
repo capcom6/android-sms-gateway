@@ -8,6 +8,11 @@ import me.capcom.smsgateway.modules.settings.get
 class GatewaySettings(
     private val storage: KeyValueStorage,
 ) : Exporter, Importer {
+    enum class NotificationChannel {
+        AUTO,
+        SSE_ONLY,
+    }
+
     var enabled: Boolean
         get() = storage.get<Boolean>(ENABLED) ?: false
         set(value) = storage.set(ENABLED, value)
@@ -33,6 +38,9 @@ class GatewaySettings(
     val privateToken: String?
         get() = storage.get<String>(PRIVATE_TOKEN)
 
+    val notificationChannel: NotificationChannel
+        get() = storage.get<NotificationChannel>(NOTIFICATION_CHANNEL) ?: NotificationChannel.AUTO
+
     companion object {
         private const val REGISTRATION_INFO = "REGISTRATION_INFO"
         private const val ENABLED = "ENABLED"
@@ -40,6 +48,7 @@ class GatewaySettings(
 
         private const val CLOUD_URL = "cloud_url"
         private const val PRIVATE_TOKEN = "private_token"
+        private const val NOTIFICATION_CHANNEL = "notification_channel"
 
         const val PUBLIC_URL = "https://api.sms-gate.app/mobile/v1"
     }
@@ -47,6 +56,7 @@ class GatewaySettings(
     override fun export(): Map<String, *> {
         return mapOf(
             CLOUD_URL to serverUrl,
+            NOTIFICATION_CHANNEL to notificationChannel.name,
         )
     }
 
@@ -71,6 +81,16 @@ class GatewaySettings(
                     val changed = privateToken != newValue
 
                     storage.set(it.key, newValue)
+
+                    changed
+                }
+
+                NOTIFICATION_CHANNEL -> {
+                    val newValue = it.value?.let { NotificationChannel.valueOf(it.toString()) }
+                        ?: NotificationChannel.AUTO
+                    val changed = notificationChannel != newValue
+
+                    storage.set(it.key, newValue.name)
 
                     changed
                 }
