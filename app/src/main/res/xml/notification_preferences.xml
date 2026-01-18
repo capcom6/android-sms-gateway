@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="@string/notifications">
+        <ListPreference
+            android:key="notification.mode"
+            app:title="@string/notification_mode"
+            app:entries="@array/notification_modes_titles"
+            app:entryValues="@array/notification_modes_values"
+            app:defaultValue="AUTO"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+</androidx.preference.PreferenceScreen>

@@ -15,13 +15,18 @@
         android:icon="@drawable/ic_messages"
         app:fragment="me.capcom.smsgateway.ui.settings.MessagesSettingsFragment"
         app:title="@string/messages"
-        app:summary="@string/delays_limits_etc"/>
+        app:summary="@string/delays_limits_etc" />
 
     <Preference
         android:icon="@drawable/ic_webhook"
         app:fragment="me.capcom.smsgateway.ui.settings.WebhooksSettingsFragment"
         app:summary="@string/retries_signing_etc"
         app:title="@string/webhooks_dotdotdot" />
+
+    <Preference
+        app:fragment="me.capcom.smsgateway.ui.settings.NotificationSettingsFragment"
+        app:summary="Notification delivery mode selection"
+        app:title="@string/notifications" />
 
     <PreferenceCategory app:title="@string/encryption">
         <EditTextPreference
