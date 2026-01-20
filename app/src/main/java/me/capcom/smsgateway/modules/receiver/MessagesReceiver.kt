@@ -55,6 +55,8 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
         private val INSTANCE: MessagesReceiver by lazy { MessagesReceiver() }
 
         fun register(context: Context) {
+            unregister(context)
+
             val textFilter = IntentFilter().apply {
                 addAction(Intents.SMS_RECEIVED_ACTION)
             }
