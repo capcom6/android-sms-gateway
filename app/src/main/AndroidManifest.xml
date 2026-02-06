@@ -83,6 +83,12 @@
             android:foregroundServiceType="dataSync"
             tools:node="merge" />
 
+        <provider
+            android:name="com.klinker.android.send_message.MmsFileProvider"
+            android:authorities="${applicationId}.MmsFileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

@@ -334,7 +334,7 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 
 *Note*: Webhooks are transmitted directly from the device; therefore, the device must have an outgoing internet connection. As the requests originate from the device, incoming messages remain inaccessible to us.
 
-*Known MMS limitation*: local API and storage pipelines are implemented for outbound MMS requests, but carrier-level MMS transmission still depends on full Android transport support on the device/network combination.
+*Known MMS limitation*: MMS transmission depends on carrier APN/mobile-data configuration and OEM telephony behavior; when delivery fails, API/message states report platform MMS error codes (e.g. invalid APN, network, HTTP, or retry-required).
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

@@ -460,7 +460,7 @@ class MessagesRoutes(
         val downloadUrl = attachment.downloadUrl?.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("MMS attachment must provide either data or downloadUrl")
 
-        return MmsAttachment(
+        val resolvedAttachment = MmsAttachment(
             id = attachment.id ?: NanoIdUtils.randomNanoId(),
             mimeType = mimeType,
             filename = attachment.filename,
@@ -471,6 +471,14 @@ class MessagesRoutes(
             sha256 = attachment.sha256,
             downloadUrl = downloadUrl,
         )
+
+        if (mediaService.resolveOutgoingAttachmentBytes(context, resolvedAttachment) == null) {
+            throw IllegalArgumentException(
+                "MMS attachment downloadUrl must reference media available on this device"
+            )
+        }
+
+        return resolvedAttachment
     }
 
     private suspend fun ApplicationCall.respondBadRequest(message: String) {

@@ -9,12 +9,17 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.telephony.SmsManager
 import android.telephony.SmsMessage
 import android.telephony.TelephonyManager
 import android.util.Base64
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import com.android.mms.MmsConfig
+import com.klinker.android.send_message.Settings as MmsTransactionSettings
+import com.klinker.android.send_message.Transaction
+import com.google.android.mms.MMSPart
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -32,6 +37,7 @@ import me.capcom.smsgateway.modules.health.domain.CheckResult
 import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
+import me.capcom.smsgateway.modules.media.MediaService
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
@@ -39,6 +45,7 @@ import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.receivers.EventsReceiver
+import java.io.File
 import java.util.Date
 
 class MessagesService(
@@ -49,6 +56,7 @@ class MessagesService(
     private val encryptionService: EncryptionService,
     private val events: EventBus,
     private val logsService: LogsService,
+    private val mediaService: MediaService,
 ) {
     val processingOrder
         get() = settings.processingOrder
@@ -160,7 +168,7 @@ class MessagesService(
                     resultCode
                 )
 
-                intent.hasExtra("uri") -> ProcessingState.Sent to null
+                intent.hasExtra("uri") || intent.hasExtra("content_uri") -> ProcessingState.Sent to null
                 else -> return
             }
 
@@ -181,6 +189,10 @@ class MessagesService(
                 else -> ProcessingState.Failed to "Delivery result: $resultCode"
             }
             else -> return
+        }
+
+        if (intent.action == EventsReceiver.ACTION_SENT) {
+            cleanupMmsPayloadFile(intent)
         }
 
         val (id, phone) = intent.dataString?.split("|", limit = 2) ?: return
@@ -393,15 +405,26 @@ class MessagesService(
                         throw IllegalArgumentException("MMS requires at least one attachment")
                     }
 
-                    dao.updatePartsCount(id, attachments.size)
+                    val text = content.text?.let {
+                        when (message.isEncrypted) {
+                            true -> encryptionService.decrypt(it)
+                            false -> it
+                        }
+                    }
 
-                    val unsupportedSender: (String, PendingIntent, PendingIntent?) -> Unit = { _: String, _: PendingIntent, _: PendingIntent? ->
-                        throw UnsupportedOperationException(
-                            "MMS transport is not available in background mode yet"
+                    dao.updatePartsCount(id, attachments.size + if (text.isNullOrBlank()) 0 else 1)
+
+                    val sendMultimedia: (String, PendingIntent, PendingIntent?) -> Unit = { phoneNumber: String, _: PendingIntent, _: PendingIntent? ->
+                        sendMms(
+                            messageId = id,
+                            phoneNumber = phoneNumber,
+                            text = text,
+                            attachments = attachments,
+                            simSlotIndex = simNumber,
                         )
                     }
 
-                    unsupportedSender
+                    sendMultimedia
                 }
             }
 
@@ -468,6 +491,134 @@ class MessagesService(
             }
     }
 
+    private fun sendMms(
+        messageId: String,
+        phoneNumber: String,
+        text: String?,
+        attachments: List<me.capcom.smsgateway.domain.MmsAttachment>,
+        simSlotIndex: Int?,
+    ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            throw UnsupportedOperationException("MMS sending requires Android 5.0+")
+        }
+
+        val subscriptionId = simSlotIndex?.let { slot ->
+            SubscriptionsHelper.getSubscriptionId(context, slot)
+        }
+
+        val settings = MmsTransactionSettings().apply {
+            setUseSystemSending(true)
+            setGroup(false)
+            setDeliveryReports(false)
+            setSubscriptionId(subscriptionId)
+        }
+        Transaction(context, settings)
+
+        val parts = buildMmsParts(phoneNumber, text, attachments)
+        val messageInfo = Transaction.getBytes(
+            context,
+            false,
+            null,
+            arrayOf(phoneNumber),
+            parts.toTypedArray(),
+            null,
+        )
+
+        val payloadFile = createMmsPayloadFile(messageId, phoneNumber, messageInfo.bytes)
+        val payloadUri = Uri.Builder()
+            .scheme("content")
+            .authority(context.packageName + ".MmsFileProvider")
+            .path(payloadFile.name)
+            .build()
+
+        val callbackIntent = Intent(
+            EventsReceiver.ACTION_SENT,
+            Uri.parse("$messageId|$phoneNumber"),
+            context,
+            EventsReceiver::class.java,
+        ).apply {
+            putExtra("uri", payloadUri.toString())
+            putExtra(EXTRA_MMS_FILE_PATH, payloadFile.absolutePath)
+        }
+        val callbackPendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            callbackIntent,
+            PendingIntent.FLAG_MUTABLE,
+        )
+
+        val configOverrides = Bundle().apply {
+            putBoolean(SmsManager.MMS_CONFIG_GROUP_MMS_ENABLED, false)
+            val httpParams = MmsConfig.getHttpParams()
+            if (!httpParams.isNullOrBlank()) {
+                putString(SmsManager.MMS_CONFIG_HTTP_PARAMS, httpParams)
+            }
+            putInt(SmsManager.MMS_CONFIG_MAX_MESSAGE_SIZE, MmsConfig.getMaxMessageSize())
+        }
+
+        getSmsManager(simSlotIndex).sendMultimediaMessage(
+            context,
+            payloadUri,
+            null,
+            configOverrides,
+            callbackPendingIntent,
+        )
+    }
+
+    private fun buildMmsParts(
+        phoneNumber: String,
+        text: String?,
+        attachments: List<me.capcom.smsgateway.domain.MmsAttachment>,
+    ): List<MMSPart> {
+        val parts = mutableListOf<MMSPart>()
+
+        attachments.forEachIndexed { index, attachment ->
+            val bytes = mediaService.resolveOutgoingAttachmentBytes(context, attachment)
+                ?: throw IllegalArgumentException(
+                    "MMS attachment bytes unavailable for ${attachment.id}. Submit attachment data with the request"
+                )
+
+            val part = MMSPart().apply {
+                Name = attachment.filename
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "attachment_${index + 1}_${phoneNumber.filter { it.isDigit() }}"
+                MimeType = attachment.mimeType
+                Data = bytes
+            }
+            parts += part
+        }
+
+        text?.takeIf { it.isNotBlank() }?.let {
+            parts += MMSPart().apply {
+                Name = "text"
+                MimeType = "text/plain"
+                Data = it.toByteArray(Charsets.UTF_8)
+            }
+        }
+
+        return parts
+    }
+
+    private fun createMmsPayloadFile(
+        messageId: String,
+        phoneNumber: String,
+        payload: ByteArray,
+    ): File {
+        val sanitizedPhone = phoneNumber.filter { it.isDigit() }
+            .ifBlank { "recipient" }
+        val file = File(context.cacheDir, "send.$messageId.$sanitizedPhone.dat")
+        file.writeBytes(payload)
+        return file
+    }
+
+    private fun cleanupMmsPayloadFile(intent: Intent) {
+        val path = intent.getStringExtra(EXTRA_MMS_FILE_PATH) ?: return
+
+        runCatching {
+            File(path).takeIf { it.exists() }?.delete()
+        }
+    }
+
     @SuppressLint("NewApi")
     private fun getSmsManager(simNumber: Int?): SmsManager {
         return if (simNumber != null) {
@@ -505,6 +656,12 @@ class MessagesService(
 
     private fun resultToErrorMessage(resultCode: Int): String {
         return when (resultCode) {
+            SmsManager.MMS_ERROR_UNSPECIFIED -> "MMS_ERROR_UNSPECIFIED (Generic MMS transport failure)"
+            SmsManager.MMS_ERROR_INVALID_APN -> "MMS_ERROR_INVALID_APN (APN configuration is invalid for MMS)"
+            SmsManager.MMS_ERROR_UNABLE_CONNECT_MMS -> "MMS_ERROR_UNABLE_CONNECT_MMS (Unable to connect to MMSC)"
+            SmsManager.MMS_ERROR_HTTP_FAILURE -> "MMS_ERROR_HTTP_FAILURE (HTTP error while sending MMS)"
+            SmsManager.MMS_ERROR_IO_ERROR -> "MMS_ERROR_IO_ERROR (I/O error while sending MMS)"
+            SmsManager.MMS_ERROR_RETRY -> "MMS_ERROR_RETRY (MMS send should be retried)"
             SmsManager.RESULT_ERROR_NONE -> "RESULT_ERROR_NONE (No error)"
             SmsManager.RESULT_ERROR_GENERIC_FAILURE -> "RESULT_ERROR_GENERIC_FAILURE (Generic failure cause)"
             SmsManager.RESULT_ERROR_RADIO_OFF -> "RESULT_ERROR_RADIO_OFF (Failed because radio was explicitly turned off)"
@@ -565,5 +722,9 @@ class MessagesService(
             SmsManager.RESULT_RIL_GENERIC_ERROR -> "RESULT_RIL_GENERIC_ERROR (A RIL error occurred during the SMS send)"
             else -> "Unknown error code: $resultCode."
         }
+    }
+
+    companion object {
+        private const val EXTRA_MMS_FILE_PATH = "mms_file_path"
     }
 }

@@ -97,6 +97,31 @@ class MediaService(
         }
     }
 
+    fun resolveOutgoingAttachmentBytes(context: Context, attachment: MmsAttachment): ByteArray? {
+        storage.readBytes(attachment.id)?.let {
+            return it
+        }
+
+        val source = attachment.downloadUrl ?: return null
+        return try {
+            when {
+                source.startsWith("content://") -> {
+                    context.contentResolver.openInputStream(Uri.parse(source))?.use { it.readBytes() }
+                }
+
+                source.startsWith("file://") -> {
+                    val path = Uri.parse(source).path ?: return null
+                    val file = File(path)
+                    if (!file.exists()) null else file.readBytes()
+                }
+
+                else -> null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     fun resolveDownload(id: String, expires: Long?, token: String?): MediaDownload? {
         if (!isTokenValid(id, expires, token)) {
             return null

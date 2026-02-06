@@ -115,6 +115,7 @@ dependencies {
     implementation 'androidx.preference:preference-ktx:1.2.1'
 
     implementation("com.aventrix.jnanoid:jnanoid:2.0.0")
+    implementation("com.klinkerapps:android-smsmms:5.2.6")
 
     implementation("androidx.room:room-ktx:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
