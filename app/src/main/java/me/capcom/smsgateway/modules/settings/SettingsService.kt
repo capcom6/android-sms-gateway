@@ -5,6 +5,7 @@ import me.capcom.smsgateway.R
 import me.capcom.smsgateway.modules.encryption.EncryptionSettings
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import me.capcom.smsgateway.modules.logs.LogsSettings
+import me.capcom.smsgateway.modules.media.MediaSettings
 import me.capcom.smsgateway.modules.messages.MessagesSettings
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.ping.PingSettings
@@ -18,6 +19,7 @@ class SettingsService(
     messagesSettings: MessagesSettings,
     pingSettings: PingSettings,
     logsSettings: LogsSettings,
+    mediaSettings: MediaSettings,
     webhooksSettings: WebhooksSettings
 ) {
     private val settings = mapOf(
@@ -26,6 +28,7 @@ class SettingsService(
         "messages" to messagesSettings,
         "ping" to pingSettings,
         "logs" to logsSettings,
+        "media" to mediaSettings,
         "webhooks" to webhooksSettings
     )
 

@@ -10,6 +10,7 @@ import android.util.Log
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
+import me.capcom.smsgateway.modules.media.MediaService
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.modules.receiver.parsers.MmsAttachmentExtractor
 import me.capcom.smsgateway.modules.receiver.parsers.MMSParser
@@ -20,6 +21,7 @@ import java.util.Date
 class MmsReceiver : BroadcastReceiver(), KoinComponent {
     private val receiverSvc: ReceiverService by inject()
     private val logsService: LogsService by inject()
+    private val mediaService: MediaService by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION) {
@@ -63,10 +65,13 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
 
             val mmsNotification = MMSParser.parseMNotificationInd(pdu)
-            val attachments = MmsAttachmentExtractor.extract(
+            val attachments = mediaService.cacheIncomingAttachments(
                 context,
-                mmsNotification.messageId,
-                mmsNotification.transactionId,
+                MmsAttachmentExtractor.extract(
+                    context,
+                    mmsNotification.messageId,
+                    mmsNotification.transactionId,
+                ),
             )
 
             Log.d(TAG, "MMS received from ${mmsNotification.from}")

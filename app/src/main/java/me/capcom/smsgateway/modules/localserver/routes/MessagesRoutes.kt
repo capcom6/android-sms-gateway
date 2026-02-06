@@ -1,8 +1,6 @@
 package me.capcom.smsgateway.modules.localserver.routes
 
 import android.content.Context
-import android.graphics.BitmapFactory
-import android.media.MediaMetadataRetriever
 import android.util.Base64
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import io.ktor.http.ContentType
@@ -31,19 +29,19 @@ import me.capcom.smsgateway.modules.localserver.domain.MmsAttachmentMessage
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
 import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
+import me.capcom.smsgateway.modules.media.MediaService
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.Message
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.receiver.ReceiverService
-import java.io.File
-import java.security.MessageDigest
 import java.util.Date
 
 class MessagesRoutes(
     private val context: Context,
     private val messagesService: MessagesService,
     private val receiverService: ReceiverService,
+    private val mediaService: MediaService,
     private val settings: LocalServerSettings,
 ) {
     fun register(routing: Route) {
@@ -281,7 +279,11 @@ class MessagesRoutes(
                     if (bytes.isNotEmpty()) {
                         val mimeType = part.contentType?.toString()?.takeIf { it.isNotBlank() }
                             ?: "application/octet-stream"
-                        attachments += storeOutgoingAttachment(bytes, part.originalFileName, mimeType)
+                        attachments += mediaService.storeOutgoingAttachment(
+                            bytes = bytes,
+                            originalFilename = part.originalFileName,
+                            mimeType = mimeType,
+                        )
                     }
                 }
 
@@ -443,11 +445,15 @@ class MessagesRoutes(
                 throw IllegalArgumentException("MMS attachment data must be valid Base64")
             }
 
-            return storeOutgoingAttachment(
+            return mediaService.storeOutgoingAttachment(
                 bytes = decoded,
                 originalFilename = attachment.filename,
                 mimeType = mimeType,
                 id = attachment.id,
+                width = attachment.width,
+                height = attachment.height,
+                durationMs = attachment.durationMs,
+                sha256 = attachment.sha256,
             )
         }
 
@@ -467,90 +473,6 @@ class MessagesRoutes(
         )
     }
 
-    private fun storeOutgoingAttachment(
-        bytes: ByteArray,
-        originalFilename: String?,
-        mimeType: String,
-        id: String? = null,
-    ): MmsAttachment {
-        val attachmentId = id ?: NanoIdUtils.randomNanoId()
-        val targetFile = createOutgoingAttachmentFile(attachmentId, originalFilename)
-        targetFile.writeBytes(bytes)
-
-        val metadata = resolveMediaMetadata(targetFile, bytes, mimeType)
-
-        return MmsAttachment(
-            id = attachmentId,
-            mimeType = mimeType,
-            filename = originalFilename ?: targetFile.name,
-            size = bytes.size.toLong(),
-            width = metadata.width,
-            height = metadata.height,
-            durationMs = metadata.durationMs,
-            sha256 = sha256(bytes),
-            downloadUrl = targetFile.toURI().toString(),
-        )
-    }
-
-    private fun createOutgoingAttachmentFile(id: String, originalFilename: String?): File {
-        val directory = File(context.filesDir, "outgoing-mms").apply {
-            mkdirs()
-        }
-        val sanitizedName = originalFilename
-            ?.replace(Regex("[^A-Za-z0-9._-]"), "_")
-            ?.takeIf { it.isNotBlank() }
-            ?: "attachment"
-
-        return File(directory, "$id-$sanitizedName")
-    }
-
-    private fun resolveMediaMetadata(file: File, bytes: ByteArray, mimeType: String): MediaMetadata {
-        val normalized = mimeType.lowercase()
-
-        return when {
-            normalized.startsWith("image/") -> {
-                val options = BitmapFactory.Options().apply {
-                    inJustDecodeBounds = true
-                }
-                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
-                MediaMetadata(
-                    width = options.outWidth.takeIf { it > 0 },
-                    height = options.outHeight.takeIf { it > 0 },
-                    durationMs = null,
-                )
-            }
-
-            normalized.startsWith("video/") || normalized.startsWith("audio/") -> {
-                val retriever = MediaMetadataRetriever()
-                try {
-                    retriever.setDataSource(file.absolutePath)
-                    MediaMetadata(
-                        width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-                            ?.toIntOrNull(),
-                        height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-                            ?.toIntOrNull(),
-                        durationMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                            ?.toLongOrNull(),
-                    )
-                } catch (_: Exception) {
-                    MediaMetadata(null, null, null)
-                } finally {
-                    try {
-                        retriever.release()
-                    } catch (_: Exception) {
-                    }
-                }
-            }
-
-            else -> MediaMetadata(null, null, null)
-        }
-    }
-
-    private fun sha256(bytes: ByteArray): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        return digest.digest(bytes).joinToString("") { "%02x".format(it) }
-    }
-
     private suspend fun ApplicationCall.respondBadRequest(message: String) {
         respond(
             HttpStatusCode.BadRequest,
@@ -561,12 +483,6 @@ class MessagesRoutes(
     private fun Map<String, MutableList<String>>.lastValue(key: String): String? {
         return this[key]?.lastOrNull()
     }
-
-    private data class MediaMetadata(
-        val width: Int?,
-        val height: Int?,
-        val durationMs: Long?,
-    )
 
     private fun Route.inboxRoutes(context: Context) {
         post("export") {

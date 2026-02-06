@@ -6,6 +6,7 @@ import me.capcom.smsgateway.modules.encryption.EncryptionSettings
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.logs.LogsSettings
+import me.capcom.smsgateway.modules.media.MediaSettings
 import me.capcom.smsgateway.modules.messages.MessagesSettings
 import me.capcom.smsgateway.modules.ping.PingSettings
 import me.capcom.smsgateway.modules.webhooks.TemporaryStorage
@@ -47,6 +48,11 @@ val settingsModule = module {
     factory {
         LogsSettings(
             PreferencesStorage(get(), "logs")
+        )
+    }
+    factory {
+        MediaSettings(
+            PreferencesStorage(get(), "media")
         )
     }
     factory {

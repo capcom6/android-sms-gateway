@@ -40,6 +40,7 @@ import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.routes.AuthRoutes
 import me.capcom.smsgateway.modules.localserver.routes.DocsRoutes
 import me.capcom.smsgateway.modules.localserver.routes.LogsRoutes
+import me.capcom.smsgateway.modules.localserver.routes.MediaRoutes
 import me.capcom.smsgateway.modules.localserver.routes.MessagesRoutes
 import me.capcom.smsgateway.modules.localserver.routes.WebhooksRoutes
 import me.capcom.smsgateway.modules.notifications.NotificationsService
@@ -150,13 +151,16 @@ class WebService : Service() {
                             call.respond(listOf(device))
                         }
                     }
-                    MessagesRoutes(applicationContext, get(), get(), get()).let {
+                    MessagesRoutes(applicationContext, get(), get(), get(), get()).let {
                         route("/message") {
                             it.register(this)
                         }
                         route("/messages") {
                             it.register(this)
                         }
+                    }
+                    route("/media") {
+                        MediaRoutes(get()).register(this)
                     }
                     WebhooksRoutes(get(), get()).let {
                         route("/webhook") {
