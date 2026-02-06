@@ -12,6 +12,8 @@ import me.capcom.smsgateway.data.entities.MessageState
 import me.capcom.smsgateway.data.entities.RecipientState
 import me.capcom.smsgateway.modules.logs.db.LogEntriesDao
 import me.capcom.smsgateway.modules.logs.db.LogEntry
+import me.capcom.smsgateway.modules.receiver.db.IncomingMmsDao
+import me.capcom.smsgateway.modules.receiver.db.IncomingMmsEntity
 import me.capcom.smsgateway.modules.webhooks.db.WebHook
 import me.capcom.smsgateway.modules.webhooks.db.WebHooksDao
 import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueDao
@@ -25,9 +27,10 @@ import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueEntity
         MessageState::class,
         WebHook::class,
         WebhookQueueEntity::class,
+        IncomingMmsEntity::class,
         LogEntry::class,
     ],
-    version = 17,
+    version = 18,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -45,6 +48,7 @@ import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueEntity
         AutoMigration(from = 14, to = 15),
         AutoMigration(from = 15, to = 16),
         AutoMigration(from = 16, to = 17),
+        AutoMigration(from = 17, to = 18),
     ]
 )
 @TypeConverters(Converters::class)
@@ -52,6 +56,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun messagesDao(): MessagesDao
     abstract fun webhooksDao(): WebHooksDao
     abstract fun webhookQueueDao(): WebhookQueueDao
+    abstract fun incomingMmsDao(): IncomingMmsDao
     abstract fun logDao(): LogEntriesDao
 
     companion object {

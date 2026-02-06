@@ -4,10 +4,14 @@ import android.content.Context
 import android.os.Build
 import android.provider.Telephony
 import android.util.Base64
+import com.google.gson.GsonBuilder
+import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
+import me.capcom.smsgateway.modules.receiver.db.IncomingMmsDao
+import me.capcom.smsgateway.modules.receiver.db.IncomingMmsEntity
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 import me.capcom.smsgateway.modules.webhooks.payload.MmsReceivedPayload
@@ -19,6 +23,8 @@ import java.util.Date
 class ReceiverService : KoinComponent {
     private val webHooksService: WebHooksService by inject()
     private val logsService: LogsService by inject()
+    private val incomingMmsDao: IncomingMmsDao by inject()
+    private val gson = GsonBuilder().configure().create()
 
     private val eventsReceiver by lazy { EventsReceiver() }
 
@@ -87,17 +93,20 @@ class ReceiverService : KoinComponent {
                 receivedAt = message.date,
             )
 
-            is InboxMessage.Mms -> WebHookEvent.MmsReceived to MmsReceivedPayload(
-                messageId = message.messageId ?: message.transactionId,
-                phoneNumber = message.address,
-                simNumber = simNumber,
-                transactionId = message.transactionId,
-                subject = message.subject,
-                size = message.size,
-                contentClass = message.contentClass,
-                attachments = message.attachments,
-                receivedAt = message.date
-            )
+            is InboxMessage.Mms -> {
+                persistMmsMetadata(message, simNumber)
+                WebHookEvent.MmsReceived to MmsReceivedPayload(
+                    messageId = message.messageId ?: message.transactionId,
+                    phoneNumber = message.address,
+                    simNumber = simNumber,
+                    transactionId = message.transactionId,
+                    subject = message.subject,
+                    size = message.size,
+                    contentClass = message.contentClass,
+                    attachments = message.attachments,
+                    receivedAt = message.date
+                )
+            }
         }
 
         webHooksService.emit(context, type, payload)
@@ -170,5 +179,33 @@ class ReceiverService : KoinComponent {
         )
 
         return messages
+    }
+
+    private fun persistMmsMetadata(message: InboxMessage.Mms, simNumber: Int?) {
+        try {
+            incomingMmsDao.upsert(
+                IncomingMmsEntity(
+                    transactionId = message.transactionId,
+                    messageId = message.messageId,
+                    phoneNumber = message.address,
+                    simNumber = simNumber,
+                    subject = message.subject,
+                    size = message.size,
+                    contentClass = message.contentClass,
+                    attachments = gson.toJson(message.attachments),
+                    receivedAt = message.date.time,
+                )
+            )
+        } catch (e: Exception) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "ReceiverService::persistMmsMetadata - failed",
+                mapOf(
+                    "transactionId" to message.transactionId,
+                    "error" to (e.message ?: e.toString()),
+                )
+            )
+        }
     }
 }

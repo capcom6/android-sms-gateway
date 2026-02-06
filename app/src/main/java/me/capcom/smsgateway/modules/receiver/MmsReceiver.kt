@@ -11,6 +11,7 @@ import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
+import me.capcom.smsgateway.modules.receiver.parsers.MmsAttachmentExtractor
 import me.capcom.smsgateway.modules.receiver.parsers.MMSParser
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -62,6 +63,11 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
 
             val mmsNotification = MMSParser.parseMNotificationInd(pdu)
+            val attachments = MmsAttachmentExtractor.extract(
+                context,
+                mmsNotification.messageId,
+                mmsNotification.transactionId,
+            )
 
             Log.d(TAG, "MMS received from ${mmsNotification.from}")
 
@@ -71,6 +77,7 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
                 subject = mmsNotification.subject,
                 size = mmsNotification.messageSize,
                 contentClass = mmsNotification.contentClass?.name,
+                attachments = attachments,
                 address = mmsNotification.from.substringBefore('/'),
                 date = mmsNotification.date ?: Date(),
                 subscriptionId = SubscriptionsHelper.extractSubscriptionId(context, intent),
