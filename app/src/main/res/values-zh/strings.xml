@@ -86,6 +86,8 @@
     <string name="send_messages_notification">发送消息中…</string>
     <string name="sending_webhook">发送 Webhook 中…</string>
     <string name="processing_webhook_queue">处理 Webhook 队列中…</string>
+    <string name="processing">处理中</string>
+    <string name="processing_order_title">处理顺序</string>
     <string name="server">服务器</string>
     <string name="server_address">服务器地址</string>
     <string name="set_maximum_value_to_activate">设置最大值以激活</string>

@@ -2,6 +2,7 @@ package me.capcom.smsgateway.modules.receiver.data
 
 import java.util.Arrays
 import java.util.Date
+import me.capcom.smsgateway.domain.MmsAttachment
 
 sealed class InboxMessage(
     val address: String,
@@ -36,6 +37,7 @@ sealed class InboxMessage(
         val subject: String?,
         val size: Long,
         val contentClass: String?,
+        val attachments: List<MmsAttachment> = emptyList(),
         address: String,
         date: Date,
         subscriptionId: Int?
