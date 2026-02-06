@@ -10,6 +10,7 @@ import java.util.Date
 enum class MessageType {
     Text,
     Data,
+    Mms,
 }
 
 @Entity(

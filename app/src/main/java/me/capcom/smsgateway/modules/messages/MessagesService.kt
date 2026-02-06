@@ -386,6 +386,23 @@ class MessagesService(
                         )
                     }
                 }
+
+                is MessageContent.Mms -> {
+                    val attachments = content.attachments
+                    if (attachments.isEmpty()) {
+                        throw IllegalArgumentException("MMS requires at least one attachment")
+                    }
+
+                    dao.updatePartsCount(id, attachments.size)
+
+                    val unsupportedSender: (String, PendingIntent, PendingIntent?) -> Unit = { _: String, _: PendingIntent, _: PendingIntent? ->
+                        throw UnsupportedOperationException(
+                            "MMS transport is not available in background mode yet"
+                        )
+                    }
+
+                    unsupportedSender
+                }
             }
 
 

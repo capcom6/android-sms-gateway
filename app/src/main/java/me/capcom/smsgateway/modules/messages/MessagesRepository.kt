@@ -35,6 +35,7 @@ class MessagesRepository(private val dao: MessagesDao) {
                 type = when (request.message.content) {
                     is MessageContent.Text -> MessageType.Text
                     is MessageContent.Data -> MessageType.Data
+                    is MessageContent.Mms -> MessageType.Mms
                 },
                 content = gson.toJson(request.message.content),
                 withDeliveryReport = request.params.withDeliveryReport,
@@ -95,6 +96,11 @@ class MessagesRepository(private val dao: MessagesDao) {
                     MessageType.Data -> gson.fromJson(
                         message.message.content,
                         MessageContent.Data::class.java
+                    )
+
+                    MessageType.Mms -> gson.fromJson(
+                        message.message.content,
+                        MessageContent.Mms::class.java
                     )
                 },
                 phoneNumbers = message.recipients.filter { it.state == ProcessingState.Pending }

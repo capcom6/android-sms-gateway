@@ -12,6 +12,24 @@ data class TextMessage(
     val text: String,
 )
 
+data class MmsAttachmentMessage(
+    val id: String? = null,
+    val mimeType: String,
+    val filename: String? = null,
+    val size: Long? = null,
+    val width: Int? = null,
+    val height: Int? = null,
+    val durationMs: Long? = null,
+    val sha256: String? = null,
+    val downloadUrl: String? = null,
+    val data: String? = null,
+)
+
+data class MmsMessage(
+    val text: String? = null,
+    val attachments: List<MmsAttachmentMessage>,
+)
+
 data class PostMessageRequest(
     val id: String?,
     @Deprecated("Use textMessage instead")
@@ -24,6 +42,7 @@ data class PostMessageRequest(
 
     val textMessage: TextMessage? = null,
     val dataMessage: DataMessage? = null,
+    val mmsMessage: MmsMessage? = null,
 
     val deviceId: String? = null,
 
