@@ -336,6 +336,8 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 
 *Known MMS limitation*: MMS transmission depends on carrier APN/mobile-data configuration and OEM telephony behavior; when delivery fails, API/message states report platform MMS error codes (e.g. invalid APN, network, HTTP, or retry-required).
 
+*Carrier troubleshooting note (Phonero / Norway / Pixel)*: if MMS delivery fails on Pixel devices, ensure mobile data is enabled for the SIM used to send messages, reset APN settings to carrier defaults, reboot the phone, and verify MMS/APN values with Phonero support (Phonero uses Telenor network infrastructure).
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
