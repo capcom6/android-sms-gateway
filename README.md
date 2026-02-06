@@ -203,6 +203,37 @@ This mode is ideal for sending messages from a local network.
       send --phones '+19162255887,+19162255888' 'Hello, doctors!'
     ```
 
+6. To enqueue an MMS message using JSON (text + media metadata):
+
+    ```sh
+    curl -X POST -u <username>:<password> \
+      -H "Content-Type: application/json" \
+      -d '{
+        "phoneNumbers": ["+19162255887"],
+        "mmsMessage": {
+          "text": "Hello with media",
+          "attachments": [
+            {
+              "mimeType": "image/jpeg",
+              "filename": "photo.jpg",
+              "data": "<base64-encoded-bytes>"
+            }
+          ]
+        }
+      }' \
+      http://<device_local_ip>:8080/message
+    ```
+
+7. To enqueue an MMS message using multipart/form-data:
+
+    ```sh
+    curl -X POST -u <username>:<password> \
+      -F "phoneNumbers=+19162255887" \
+      -F "text=Hello with image" \
+      -F "file=@/path/to/photo.jpg;type=image/jpeg" \
+      http://<device_local_ip>:8080/message
+    ```
+
 ### Cloud Server
 
 <div align="center">
@@ -264,6 +295,34 @@ Follow these steps to set up webhooks:
     }
     ```
 
+   Incoming MMS webhooks use the `mms:received` event and include media metadata:
+
+    ```json
+    {
+      "event": "mms:received",
+      "payload": {
+        "messageId": "mms_123",
+        "transactionId": "tx_123",
+        "phoneNumber": "+19162255887",
+        "attachments": [
+          {
+            "id": "part_1",
+            "mimeType": "image/jpeg",
+            "filename": "photo.jpg",
+            "size": 2048,
+            "width": 800,
+            "height": 600,
+            "durationMs": null,
+            "sha256": "<sha256>",
+            "downloadUrl": "/media/part_1?expires=<timestamp>&token=<signature>"
+          }
+        ]
+      }
+    }
+    ```
+
+   Use the signed `downloadUrl` path with basic auth credentials to fetch stored media.
+
 5. To deregister a webhook, execute a `curl` request using the following pattern:
 
     ```sh
@@ -274,6 +333,8 @@ Follow these steps to set up webhooks:
 For cloud mode the process is similar, simply change the URL to https://api.sms-gate.app/3rdparty/v1/webhooks. Webhooks in Local and Cloud mode are independent.
 
 *Note*: Webhooks are transmitted directly from the device; therefore, the device must have an outgoing internet connection. As the requests originate from the device, incoming messages remain inaccessible to us.
+
+*Known MMS limitation*: local API and storage pipelines are implemented for outbound MMS requests, but carrier-level MMS transmission still depends on full Android transport support on the device/network combination.
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
