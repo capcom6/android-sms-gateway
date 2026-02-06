@@ -105,8 +105,8 @@
     <string name="success_long_press_to_copy">Success, long press to copy</string>
     <string name="system">System</string>
     <string name="tab_text_home">Home</string>
-    <string name="tab_text_messages">MESSAGES</string>
-    <string name="tab_text_settings">SETTINGS</string>
+    <string name="tab_text_messages">Messages</string>
+    <string name="tab_text_settings">Settings</string>
     <string name="the_webhook_request_will_wait_for_an_internet_connection">The webhook request will wait for an internet connection</string>
     <string name="to_add_a_device_to_an_existing_account_please_fill_in_the_credentials_below">To add a device to an existing account, please fill in the credentials below.</string>
     <string name="to_apply_the_changes_restart_the_app_using_the_button_below">To apply the changes, restart the app using the button below.</string>

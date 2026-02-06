@@ -5,13 +5,16 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
+    android:background="@color/surface_background"
+    android:paddingHorizontal="6dp"
     tools:context=".ui.HomeFragment">
 
     <TextView
         android:id="@+id/textConnectionStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="4dp"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginTop="10dp"
         android:background="@drawable/rounded_background"
         android:backgroundTint="@color/connection_status_background"
         android:enabled="true"
@@ -24,20 +27,26 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingBottom="8dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp"
+                android:layout_marginHorizontal="8dp"
+                android:layout_marginTop="8dp"
                 app:cardCornerRadius="16dp"
-                app:contentPadding="8dp">
+                app:cardElevation="2dp"
+                app:strokeColor="#140E7490"
+                app:strokeWidth="1dp"
+                app:contentPadding="10dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
@@ -141,9 +150,13 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp"
+                android:layout_marginHorizontal="8dp"
+                android:layout_marginTop="8dp"
                 app:cardCornerRadius="16dp"
-                app:contentPadding="8dp">
+                app:cardElevation="2dp"
+                app:strokeColor="#140E7490"
+                app:strokeWidth="1dp"
+                app:contentPadding="10dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
@@ -244,7 +257,8 @@
         android:id="@+id/switchAutostart"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginTop="10dp"
         android:text="@string/settings_start_on_boot" />
 
     <Space
@@ -255,6 +269,9 @@
         android:id="@+id/buttonStart"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginBottom="10dp"
+        android:paddingVertical="10dp"
         android:textOff="@string/settings_offline"
         android:textOn="@string/settings_online" />
 </androidx.appcompat.widget.LinearLayoutCompat>
