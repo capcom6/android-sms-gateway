@@ -2,7 +2,7 @@
     <string name="address_is">%1$s</string>
     <string name="api_url_private_token_credentials_etc">API URL, private token, credentials, etc.</string>
     <string name="api_url">API URL</string>
-    <string name="app_name">SMSGate</string>
+    <string name="app_name">MessageGate</string>
     <string name="app_version_build">App version (build)</string>
     <string name="battery_optimization_already_disabled">Battery optimization already disabled</string>
     <string name="battery_optimization_is_not_supported_on_this_device">Battery optimization is not supported on this device</string>
@@ -11,7 +11,7 @@
     <string name="btn_continue">Continue</string>
     <string name="by_code">By Code</string>
     <string name="can_affect_battery_life">can affect battery life</string>
-    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Click Continue to create an account. No personal information is required.\nBy continuing, you agree to our Privacy Policy at https://docs.sms-gate.app/privacy/policy/</string>
+    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Click Continue to create an account. No personal information is required.</string>
     <string name="cloud_server_dotdotdot">Cloud server…</string>
     <string name="cloud_server">Cloud server</string>
     <string name="cloud">Cloud</string>
@@ -45,7 +45,7 @@
     <string name="listening_to_the_server_events">Listening to server events…</string>
     <string name="local_address">Local address</string>
     <string name="local_server_dotdotdot">Local Server…</string>
-    <string name="local_sms_gateway_notifications">Local SMSGate notifications</string>
+    <string name="local_sms_gateway_notifications">Local MessageGate notifications</string>
     <string name="local">Local</string>
     <string name="login_code_expires">Login Code, expires %1$s</string>
     <string name="login_code">Login Code</string>
@@ -61,7 +61,7 @@
     <string name="no_webhooks_found">No webhooks configured</string>
     <string name="not_registered">not registered</string>
     <string name="not_set">Not set</string>
-    <string name="notification_title">SMSGate</string>
+    <string name="notification_title">MessageGate</string>
     <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery life</string>
     <string name="passphrase">Passphrase</string>
     <string name="password_changed_successfully">Password changed successfully</string>
@@ -86,7 +86,7 @@
     <string name="server_address">Server address</string>
     <string name="server">Server</string>
     <string name="set_maximum_value_to_activate">Set maximum value to activate</string>
-    <string name="settings_address_is_sms_capcom_me" translatable="false">api.sms-gate.app</string>
+    <string name="settings_address_is_sms_capcom_me" translatable="false"></string>
     <string name="settings_changed_via_api_restart_the_app_to_apply_changes">Settings changed via API. Restart the app to apply changes.</string>
     <string name="settings_local_address_is">&lt;a href>%1$s:%2$d&lt;/a></string>
     <string name="settings_local_address_not_found">Not available</string>
@@ -99,14 +99,14 @@
     <string name="sign_in">Sign In</string>
     <string name="sign_up">Sign Up</string>
     <string name="signing_key">Signing Key</string>
-    <string name="sms_gateway_is_running_on_port">SMSGate is running on port %1$d</string>
-    <string name="sms_gateway">SMSGate</string>
+    <string name="sms_gateway_is_running_on_port">MessageGate is running on port %1$d</string>
+    <string name="sms_gateway">MessageGate</string>
     <string name="sms" translatable="false">sms</string>
     <string name="success_long_press_to_copy">Success, long press to copy</string>
     <string name="system">System</string>
     <string name="tab_text_home">Home</string>
-    <string name="tab_text_messages">MESSAGES</string>
-    <string name="tab_text_settings">SETTINGS</string>
+    <string name="tab_text_messages">Messages</string>
+    <string name="tab_text_settings">Settings</string>
     <string name="the_webhook_request_will_wait_for_an_internet_connection">The webhook request will wait for an internet connection</string>
     <string name="to_add_a_device_to_an_existing_account_please_fill_in_the_credentials_below">To add a device to an existing account, please fill in the credentials below.</string>
     <string name="to_apply_the_changes_restart_the_app_using_the_button_below">To apply the changes, restart the app using the button below.</string>
@@ -132,4 +132,10 @@
     <string name="sent_messages">Sent: %1$d</string>
     <string name="delivered_messages">Delivered: %1$d</string>
     <string name="failed_messages">Failed: %1$d</string>
+    <string name="reliability_tutorial_title">Keep MessageGate always online</string>
+    <string name="reliability_tutorial_body">For production phones: set battery to Unrestricted, disable battery optimization for MessageGate, and keep MessageGate as the default SMS app. These settings help webhooks and incoming/outgoing messages continue while the screen is off.</string>
+    <string name="reliability_disable_battery_optimization">Disable battery optimization</string>
+    <string name="reliability_open_app_battery_settings">Open app battery settings</string>
+    <string name="reliability_set_default_sms_app">Set default SMS app</string>
+    <string name="reliability_shortcut_unavailable">Shortcut not available on this device</string>
 </resources>

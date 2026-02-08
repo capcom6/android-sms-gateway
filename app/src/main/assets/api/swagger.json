@@ -1,10 +1,10 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "SMSGate API",
-    "description": "This API provides programmatic access to sending SMS messages on Android devices. Features include sending SMS, checking message status, device management, webhook configuration, and system health checks.",
+    "title": "MessageGate API",
+    "description": "This API provides programmatic access to sending SMS and MMS messages on Android devices. Features include message enqueueing, status tracking, signed MMS media retrieval, webhook configuration, and system health checks.",
     "contact": {
-      "name": "SMSGate Support",
+      "name": "MessageGate Support",
       "email": "support@sms-gate.app",
       "url": "https://docs.sms-gate.app/"
     },
@@ -614,6 +614,11 @@
               "schema": {
                 "$ref": "#/components/schemas/smsgateway.Message"
               }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/smsgateway.MultipartMmsMessage"
+              }
             }
           },
           "required": true
@@ -843,6 +848,87 @@
           },
           "500": {
             "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/media/{id}": {
+      "get": {
+        "tags": [
+          "User",
+          "Messages"
+        ],
+        "summary": "Download signed MMS media",
+        "description": "Returns stored MMS media by ID. Requires valid `expires` and `token` query parameters from attachment `downloadUrl`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Media ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expires",
+            "in": "query",
+            "description": "Expiration timestamp in milliseconds",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Signed access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media content",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Media not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1482,6 +1568,15 @@
               }
             ]
           },
+          "media": {
+            "type": "object",
+            "description": "Media contains settings related to MMS attachment storage and tokenized access.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.SettingsMedia"
+              }
+            ]
+          },
           "ping": {
             "type": "object",
             "description": "Ping contains settings related to ping functionality.",
@@ -1736,6 +1831,15 @@
               }
             ]
           },
+          "mmsMessage": {
+            "type": "object",
+            "description": "MMS message",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ]
+          },
           "deviceId": {
             "maxLength": 21,
             "type": "string",
@@ -1811,6 +1915,140 @@
             "type": "boolean",
             "description": "With delivery report",
             "example": true
+          }
+        }
+      },
+      "smsgateway.MmsAttachment": {
+        "required": [
+          "mimeType"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Attachment identifier",
+            "example": "att_123"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "Attachment MIME type",
+            "example": "image/jpeg"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Original filename",
+            "example": "photo.jpg"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Attachment size in bytes",
+            "example": 2048
+          },
+          "width": {
+            "type": "integer",
+            "description": "Image/video width in pixels",
+            "example": 800
+          },
+          "height": {
+            "type": "integer",
+            "description": "Image/video height in pixels",
+            "example": 600
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Audio/video duration in milliseconds",
+            "example": 12000
+          },
+          "sha256": {
+            "type": "string",
+            "description": "SHA-256 checksum",
+            "example": "5f16f7d6b6ad..."
+          },
+          "downloadUrl": {
+            "type": "string",
+            "description": "Signed local media URL",
+            "example": "/media/att_123?expires=1735000000000&token=abc"
+          },
+          "data": {
+            "type": "string",
+            "description": "Base64 attachment payload (for outbound JSON requests)",
+            "example": "SGVsbG8="
+          }
+        }
+      },
+      "smsgateway.MmsMessage": {
+        "required": [
+          "attachments"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Optional MMS text body",
+            "example": "Hello with photo"
+          },
+          "attachments": {
+            "type": "array",
+            "minItems": 1,
+            "description": "MMS attachments",
+            "items": {
+              "$ref": "#/components/schemas/smsgateway.MmsAttachment"
+            }
+          }
+        }
+      },
+      "smsgateway.MultipartMmsMessage": {
+        "required": [
+          "phoneNumbers"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Optional message ID"
+          },
+          "deviceId": {
+            "type": "string",
+            "description": "Optional target device ID"
+          },
+          "phoneNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Recipients"
+          },
+          "text": {
+            "type": "string",
+            "description": "Optional MMS text body"
+          },
+          "simNumber": {
+            "type": "integer",
+            "description": "SIM card number (1-based)"
+          },
+          "withDeliveryReport": {
+            "type": "boolean"
+          },
+          "isEncrypted": {
+            "type": "boolean"
+          },
+          "ttl": {
+            "type": "integer",
+            "description": "TTL in seconds"
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "ISO-8601 expiration timestamp"
+          },
+          "priority": {
+            "type": "integer"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "One or more multipart file parts named `file`"
           }
         }
       },
@@ -2064,6 +2302,30 @@
                 "$ref": "#/components/schemas/smsgateway.SimSelectionMode"
               }
             ]
+          }
+        }
+      },
+      "smsgateway.SettingsMedia": {
+        "type": "object",
+        "properties": {
+          "retention_days": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "Retention period for locally cached MMS media files (days)."
+          },
+          "token_ttl_seconds": {
+            "minimum": 60,
+            "type": "integer",
+            "description": "TTL for signed media download tokens in seconds."
+          },
+          "max_attachment_size_mb": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "Maximum accepted MMS attachment size in MB."
+          },
+          "signing_key": {
+            "type": "string",
+            "description": "HMAC signing key used for media download tokens."
           }
         }
       },

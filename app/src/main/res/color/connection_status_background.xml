@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- State: Disconnected -->
-    <item android:color="@android:color/holo_red_light" android:state_enabled="false" />
-
-    <!-- State: Connected -->
-    <item android:color="@android:color/holo_green_light" android:state_enabled="true" />
-
-    <!-- Default State -->
-    <item android:color="@android:color/darker_gray" />
+    <item android:color="#FF3AA174" android:state_enabled="true" />
+    <item android:color="#FFD64545" android:state_enabled="false" />
+    <item android:color="#FF7B8794" />
 </selector>

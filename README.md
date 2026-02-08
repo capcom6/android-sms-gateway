@@ -28,22 +28,24 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/capcom6/android-sms-gateway">
+  <a href="https://github.com/stappmus/android-sms-gateway">
     <img src="assets/logo.png" alt="Logo" width="80" height="80">
   </a>
 
-<h3 align="center">SMS Gateway for Android™</h3>
+<h3 align="center">MessageGate for Android™ (Fork)</h3>
 
   <p align="center">
-    Turns your smartphone into an SMS gateway for sending and receiving messages via API.
+    Turns your smartphone into an SMS/MMS gateway for sending and receiving messages via API.
     <br />
-    <a href="https://sms-gate.app"><strong>Explore the docs »</strong></a>
+    <em>Fork of <a href="https://github.com/capcom6/android-sms-gateway">capcom6/android-sms-gateway</a> with MMS support, media storage, and UI improvements.</em>
+    <br />
+    <strong>Local-only SMS/MMS gateway for Android</strong>
     <br />
     <br />
-    <!-- <a href="https://github.com/capcom6/android-sms-gateway">View Demo</a> -->
-    <a href="https://github.com/capcom6/android-sms-gateway/issues">Report Bug</a>
+    <!-- <a href="https://github.com/stappmus/android-sms-gateway">View Demo</a> -->
+    <a href="https://github.com/stappmus/android-sms-gateway/issues">Report Bug</a>
     ·
-    <a href="https://github.com/capcom6/android-sms-gateway/issues">Request Feature</a>
+    <a href="https://github.com/stappmus/android-sms-gateway/issues">Request Feature</a>
   </p>
 </div>
 
@@ -61,7 +63,6 @@
   - [Installation from APK](#installation-from-apk)
 - [Getting Started](#getting-started)
   - [Local Server](#local-server)
-  - [Cloud Server](#cloud-server)
   - [Webhooks](#webhooks)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
@@ -75,22 +76,22 @@
 <p align="center"><img src="assets/screenshot.png" width="360"></p>
 
 
-SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweight application that allows you to send SMS messages programmatically via an API or CLI tool and receive webhooks on incoming SMS. This makes it ideal for integrating SMS functionality into your own applications or services.
+MessageGate turns your Android smartphone into an SMS gateway. It's a lightweight application that allows you to send SMS messages programmatically via an API or CLI tool and receive webhooks on incoming SMS. This makes it ideal for integrating SMS functionality into your own applications or services.
 
 ### Features
 
 📱 Core Functionality:
 
-- 🆓 **No registration required:** No registration or email is required to create an account. In local mode, you don't need an account at all!
-- 📨 **Send and Receive SMS via API:** Use [our API](https://docs.sms-gate.app/integration/api/) to send messages directly from your applications or services.
-- 🤖 **Support for Android 5.0 and above:** Compatible with Android 5.0 and later versions. [See Android 15 Note](https://docs.sms-gate.app/faq/general/#does-the-app-support-android-15)
+- 🆓 **No registration required:** No registration or email is required. Runs entirely on your local network.
+- 📨 **Send and Receive SMS/MMS via API:** Use the local HTTP API to send messages directly from your applications or services.
+- 🤖 **Support for Android 5.0 and above:** Compatible with Android 5.0 and later versions.
 
 💬 Message Handling:
 
 - 📜 **Multipart messages:** Send long messages with auto-partitioning.
 - 📊 **Message status tracking:** Monitor the status of sent messages in real-time.
 - 🔔 **Real-time incoming message notifications:** Receive instant SMS and MMS notifications via webhooks.
-- 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) via the same webhooks used for real-time notifications.
+- 📖 **Read received messages:** Access previously received messages via the same webhooks used for real-time notifications.
 
 🔒 Security and Privacy:
 
@@ -99,13 +100,12 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 
 🔧 Advanced Features:
 
-- 💳 **Multiple SIM card support:** Supports devices with [multiple SIM cards](https://docs.sms-gate.app/features/multi-sim/).
-- 📱📱 **Multiple device support:** Connect [multiple devices](https://docs.sms-gate.app/features/multi-device/) to the same account with Cloud or Private server. Messages sent via the server are distributed across all connected devices.
-- 💾 **Data SMS support:** Send and receive binary [data payloads](https://docs.sms-gate.app/features/data-sms.md) via SMS for IoT commands, encrypted messages, and other specialized use cases.
+- 💳 **Multiple SIM card support:** Supports devices with multiple SIM cards.
+- 💾 **Data SMS support:** Send and receive binary data payloads via SMS for IoT commands, encrypted messages, and other specialized use cases.
 
 🔌 Integration:
 
-- 🪝 **Webhooks:** Set up [webhooks](https://docs.sms-gate.app/features/webhooks/) to be triggered on specified events.
+- 🪝 **Webhooks:** Set up webhooks to be triggered on specified events.
 
 ### Ideal For
 
@@ -132,7 +132,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 
 ## Installation
 
-You can install app to your device from [prebuilt APK](https://github.com/capcom6/android-sms-gateway/releases).
+You can install app to your device from [prebuilt APK](https://github.com/stappmus/android-sms-gateway/releases).
 
 ### Build Variants
 
@@ -157,7 +157,7 @@ To use the application, you need to grant the following permissions:
 
 ### Installation from APK
 
-1. Navigate to the [Releases](https://github.com/capcom6/android-sms-gateway/releases) page.
+1. Navigate to the [Releases](https://github.com/stappmus/android-sms-gateway/releases) page.
 2. Download the latest APK file from the list of available releases.
 3. Transfer the APK file to your Android device.
 4. On your Android device, go to **Settings** > **Security** (or **Privacy** on some devices).
@@ -171,9 +171,7 @@ To use the application, you need to grant the following permissions:
 <!-- GETTING STARTED -->
 ## Getting Started
 
-_For integration examples, please refer to the [CLI Tool Documentation](https://sms-gate.app/integration/cli/) and [API Documentation](https://sms-gate.app/integration/api/)_
-
-The SMS Gateway for Android can work in two modes: with a Local Server started on the device or with a Cloud Server. The basic API is the same for both modes and is documented on the [SMS Gateway for Android API Documentation](https://capcom6.github.io/android-sms-gateway/) page.
+This fork operates in **Local Server mode only** (the upstream cloud server has been removed). The device runs an embedded HTTP server that you interact with via REST API.
 
 ### Local Server
 
@@ -203,35 +201,36 @@ This mode is ideal for sending messages from a local network.
       send --phones '+19162255887,+19162255888' 'Hello, doctors!'
     ```
 
-### Cloud Server
-
-<div align="center">
-    <img src="/assets/cloud-server.png" alt="Cloud server example settings">
-</div>
-
-Use the cloud server mode when dealing with dynamic or shared device IP addresses.
-
-1. Launch the app on your device.
-2. Toggle the `Cloud Server` switch to the "on" position.
-3. Tap the `Online` button located at the bottom of the screen to connect to the cloud server.
-4. In the `Cloud Server` section, the credentials for basic authentication will be displayed.
-5. To send a message via the cloud server, perform a `curl` request with a command similar to the following, substituting `<username>` and `<password>` with the actual values obtained in step 4:
+6. To enqueue an MMS message using JSON (text + media metadata):
 
     ```sh
     curl -X POST -u <username>:<password> \
       -H "Content-Type: application/json" \
-      -d '{ "textMessage": { "text": "Hello, doctors!" }, "phoneNumbers": ["+19162255887", "+19162255888"] }' \
-      https://api.sms-gate.app/3rdparty/v1/message
+      -d '{
+        "phoneNumbers": ["+19162255887"],
+        "mmsMessage": {
+          "text": "Hello with media",
+          "attachments": [
+            {
+              "mimeType": "image/jpeg",
+              "filename": "photo.jpg",
+              "data": "<base64-encoded-bytes>"
+            }
+          ]
+        }
+      }' \
+      http://<device_local_ip>:8080/message
     ```
 
-    Or with CLI:
+7. To enqueue an MMS message using multipart/form-data:
 
     ```sh
-    smsgate -u <username> -p <password> \
-      send --phones '+19162255887,+19162255888' 'Hello, doctors!'
+    curl -X POST -u <username>:<password> \
+      -F "phoneNumbers=+19162255887" \
+      -F "text=Hello with image" \
+      -F "file=@/path/to/photo.jpg;type=image/jpeg" \
+      http://<device_local_ip>:8080/message
     ```
-
-For further privacy, you can deploy your own private server. See the [Private Server](https://sms-gate.app/getting-started/private-server/) section for more details.
 
 ### Webhooks
 
@@ -264,6 +263,34 @@ Follow these steps to set up webhooks:
     }
     ```
 
+   Incoming MMS webhooks use the `mms:received` event and include media metadata:
+
+    ```json
+    {
+      "event": "mms:received",
+      "payload": {
+        "messageId": "mms_123",
+        "transactionId": "tx_123",
+        "phoneNumber": "+19162255887",
+        "attachments": [
+          {
+            "id": "part_1",
+            "mimeType": "image/jpeg",
+            "filename": "photo.jpg",
+            "size": 2048,
+            "width": 800,
+            "height": 600,
+            "durationMs": null,
+            "sha256": "<sha256>",
+            "downloadUrl": "/media/part_1?expires=<timestamp>&token=<signature>"
+          }
+        ]
+      }
+    }
+    ```
+
+   Use the signed `downloadUrl` path with basic auth credentials to fetch stored media.
+
 5. To deregister a webhook, execute a `curl` request using the following pattern:
 
     ```sh
@@ -271,9 +298,9 @@ Follow these steps to set up webhooks:
       http://<device_local_ip>:8080/webhooks/unique-id
     ```
 
-For cloud mode the process is similar, simply change the URL to https://api.sms-gate.app/3rdparty/v1/webhooks. Webhooks in Local and Cloud mode are independent.
+*Note*: Webhooks are transmitted directly from the device; therefore, the device must have an outgoing internet connection.
 
-*Note*: Webhooks are transmitted directly from the device; therefore, the device must have an outgoing internet connection. As the requests originate from the device, incoming messages remain inaccessible to us.
+*Known MMS limitation*: MMS transmission depends on carrier APN/mobile-data configuration and OEM telephony behavior; when delivery fails, API/message states report platform MMS error codes (e.g. invalid APN, network, HTTP, or retry-required). See [Carrier Notes](docs/CARRIER_NOTES.md) for carrier-specific troubleshooting.
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -291,7 +318,7 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 - [ ] Provide an API endpoint to retrieve the list of available SIM cards on the device.
 - [x] Include detailed error messages in responses and logs.
 
-See the [open issues](https://github.com/capcom6/android-sms-gateway/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/stappmus/android-sms-gateway/issues) for a full list of proposed features (and known issues).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -327,20 +354,16 @@ Distributed under the Apache-2.0 license. See [LICENSE](LICENSE) for more inform
 <!-- CONTACT -->
 ## Contact
 
-If you have any questions or suggestions, feel free to reach out through the following channels:
+- **Issue Tracker:** [https://github.com/stappmus/android-sms-gateway/issues](https://github.com/stappmus/android-sms-gateway/issues)
+- **Author GitHub:** [stappmus](https://github.com/stappmus)
 
-- **Issue Tracker:** [https://github.com/capcom6/android-sms-gateway/issues](https://github.com/capcom6/android-sms-gateway/issues)
-- **Email:** [support@sms-gate.app](mailto:support@sms-gate.app)
-- **Discord:** [Join our Discord server](https://discord.gg/vv9raFK4gX)
+### Upstream Project
 
-### Links
+This fork is based on [capcom6/android-sms-gateway](https://github.com/capcom6/android-sms-gateway). For the original project:
 
 - **Website:** [https://sms-gate.app](https://sms-gate.app)
 - **Documentation:** [https://docs.sms-gate.app](https://docs.sms-gate.app)
-- **Status Page:** [https://status.sms-gate.app](https://status.sms-gate.app)
-- **Project:** [https://github.com/android-sms-gateway](https://github.com/android-sms-gateway)
-- **Main Repository:** [https://github.com/capcom6/android-sms-gateway](https://github.com/capcom6/android-sms-gateway)
-- **Author GitHub:** [capcom6](https://github.com/capcom6)
+- **Discord:** [Join the Discord server](https://discord.gg/vv9raFK4gX)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -367,13 +390,13 @@ Use this space to list resources you find helpful and would like to give credit 
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/capcom6/android-sms-gateway.svg?style=for-the-badge
-[contributors-url]: https://github.com/capcom6/android-sms-gateway/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/capcom6/android-sms-gateway.svg?style=for-the-badge
-[forks-url]: https://github.com/capcom6/android-sms-gateway/network/members
-[stars-shield]: https://img.shields.io/github/stars/capcom6/android-sms-gateway.svg?style=for-the-badge
-[stars-url]: https://github.com/capcom6/android-sms-gateway/stargazers
-[issues-shield]: https://img.shields.io/github/issues/capcom6/android-sms-gateway.svg?style=for-the-badge
-[issues-url]: https://github.com/capcom6/android-sms-gateway/issues
-[license-shield]: https://img.shields.io/github/license/capcom6/android-sms-gateway.svg?style=for-the-badge
-[license-url]: https://github.com/capcom6/android-sms-gateway/blob/master/LICENSE
+[contributors-shield]: https://img.shields.io/github/contributors/stappmus/android-sms-gateway.svg?style=for-the-badge
+[contributors-url]: https://github.com/stappmus/android-sms-gateway/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/stappmus/android-sms-gateway.svg?style=for-the-badge
+[forks-url]: https://github.com/stappmus/android-sms-gateway/network/members
+[stars-shield]: https://img.shields.io/github/stars/stappmus/android-sms-gateway.svg?style=for-the-badge
+[stars-url]: https://github.com/stappmus/android-sms-gateway/stargazers
+[issues-shield]: https://img.shields.io/github/issues/stappmus/android-sms-gateway.svg?style=for-the-badge
+[issues-url]: https://github.com/stappmus/android-sms-gateway/issues
+[license-shield]: https://img.shields.io/github/license/stappmus/android-sms-gateway.svg?style=for-the-badge
+[license-url]: https://github.com/stappmus/android-sms-gateway/blob/master/LICENSE

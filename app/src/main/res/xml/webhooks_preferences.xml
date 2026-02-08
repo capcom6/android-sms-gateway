@@ -24,7 +24,7 @@
     </PreferenceCategory>
     <Preference
         android:icon="@drawable/ic_webhooks_list"
-        app:fragment="me.capcom.smsgateway.ui.settings.WebhooksListFragment"
+        app:fragment="me.stappmus.messagegateway.ui.settings.WebhooksListFragment"
         app:summary="@string/webhook_list_summary"
         app:title="@string/webhook_list_title" />
 </androidx.preference.PreferenceScreen>

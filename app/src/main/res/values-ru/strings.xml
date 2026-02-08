@@ -3,7 +3,7 @@
     <string name="api_url_private_token_credentials_etc">URL API, приватный токен, учётные данные и
         т.д.</string>
     <string name="api_url">URL API</string>
-    <string name="app_name">SMSGate</string>
+    <string name="app_name">MessageGate</string>
     <string name="app_version_build">Версия приложения (сборка)</string>
     <string name="battery_optimization_already_disabled">Оптимизация батареи уже отключена</string>
     <string name="battery_optimization_is_not_supported_on_this_device">Оптимизация батареи не
@@ -14,9 +14,7 @@
     <string name="by_code">По коду</string>
     <string name="can_affect_battery_life">может влиять на время работы батареи</string>
     <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Нажмите
-        \"Продолжить\", чтобы создать аккаунт. Личная информация не требуется.\nПродолжая, вы
-        соглашаетесь с Политикой конфиденциальности по адресу
-        https://docs.sms-gate.app/privacy/policy/</string>
+        \"Продолжить\", чтобы создать аккаунт. Личная информация не требуется.</string>
     <string name="cloud_server_dotdotdot">Облачный сервер…</string>
     <string name="cloud_server">Облачный сервер</string>
     <string name="cloud">Облако</string>
@@ -51,7 +49,7 @@
     <string name="listening_to_the_server_events">Прослушивание событий сервера…</string>
     <string name="local_address">Локальный адрес</string>
     <string name="local_server_dotdotdot">Локальный сервер…</string>
-    <string name="local_sms_gateway_notifications">Уведомления локального SMS шлюза</string>
+    <string name="local_sms_gateway_notifications">Уведомления локального MessageGate</string>
     <string name="local">Локальный</string>
     <string name="login_code_expires">Код входа, действует до %1$s</string>
     <string name="login_code">Код входа</string>
@@ -68,7 +66,7 @@
     <string name="no_webhooks_found">Вебхуки не настроены</string>
     <string name="not_registered">не зарегистрировано</string>
     <string name="not_set">Не задано</string>
-    <string name="notification_title">SMSGate</string>
+    <string name="notification_title">MessageGate</string>
     <string name="online_status_at_the_cost_of_battery_life">Время автономной работы может быть
         снижено</string>
     <string name="passphrase">Ключ шифрования</string>
@@ -108,8 +106,8 @@
     <string name="sign_in">Войти</string>
     <string name="sign_up">Зарегистрироваться</string>
     <string name="signing_key">Ключ подписи</string>
-    <string name="sms_gateway_is_running_on_port">SMS шлюз работает на порту %1$d</string>
-    <string name="sms_gateway">SMSGate</string>
+    <string name="sms_gateway_is_running_on_port">MessageGate работает на порту %1$d</string>
+    <string name="sms_gateway">MessageGate</string>
     <string name="success_long_press_to_copy">Успешно, нажмите и удерживайте для копирования</string>
     <string name="system">Система</string>
     <string name="tab_text_home">Главная</string>
@@ -151,4 +149,10 @@
     <string name="sent_messages">Отправлено: %1$d</string>
     <string name="delivered_messages">Доставлено: %1$d</string>
     <string name="failed_messages">Сбоев: %1$d</string>
+    <string name="reliability_tutorial_title">Держите MessageGate всегда онлайн</string>
+    <string name="reliability_tutorial_body">Для рабочих телефонов: установите режим батареи "Без ограничений", отключите оптимизацию батареи для MessageGate и оставьте MessageGate приложением SMS по умолчанию. Эти настройки помогают вебхукам и входящим/исходящим сообщениям работать при выключенном экране.</string>
+    <string name="reliability_disable_battery_optimization">Отключить оптимизацию батареи</string>
+    <string name="reliability_open_app_battery_settings">Открыть настройки батареи приложения</string>
+    <string name="reliability_set_default_sms_app">Назначить SMS-приложением по умолчанию</string>
+    <string name="reliability_shortcut_unavailable">Быстрый переход недоступен на этом устройстве</string>
 </resources>

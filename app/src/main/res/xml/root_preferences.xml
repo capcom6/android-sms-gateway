@@ -2,24 +2,26 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Preference
         android:icon="@drawable/ic_local_server"
-        app:fragment="me.capcom.smsgateway.ui.settings.LocalServerSettingsFragment"
+        app:fragment="me.stappmus.messagegateway.ui.settings.LocalServerSettingsFragment"
         app:summary="@string/port_credentials_etc"
         app:title="@string/local_server_dotdotdot" />
+    <!-- Cloud server settings hidden: upstream server not available in this fork -->
     <Preference
         android:icon="@drawable/ic_cloud_server"
-        app:fragment="me.capcom.smsgateway.ui.settings.CloudServerSettingsFragment"
+        app:fragment="me.stappmus.messagegateway.ui.settings.CloudServerSettingsFragment"
         app:summary="@string/api_url_private_token_credentials_etc"
-        app:title="@string/cloud_server_dotdotdot" />
+        app:title="@string/cloud_server_dotdotdot"
+        app:isPreferenceVisible="false" />
 
     <Preference
         android:icon="@drawable/ic_messages"
-        app:fragment="me.capcom.smsgateway.ui.settings.MessagesSettingsFragment"
+        app:fragment="me.stappmus.messagegateway.ui.settings.MessagesSettingsFragment"
         app:title="@string/messages"
         app:summary="@string/delays_limits_etc"/>
 
     <Preference
         android:icon="@drawable/ic_webhook"
-        app:fragment="me.capcom.smsgateway.ui.settings.WebhooksSettingsFragment"
+        app:fragment="me.stappmus.messagegateway.ui.settings.WebhooksSettingsFragment"
         app:summary="@string/retries_signing_etc"
         app:title="@string/webhooks_dotdotdot" />
 
@@ -42,7 +44,7 @@
 
     <PreferenceCategory app:title="@string/logs">
         <Preference
-            app:fragment="me.capcom.smsgateway.ui.LogsListFragment"
+            app:fragment="me.stappmus.messagegateway.ui.LogsListFragment"
             app:summary="@string/list_of_last_50_log_entries"
             app:title="@string/view" />
         <EditTextPreference

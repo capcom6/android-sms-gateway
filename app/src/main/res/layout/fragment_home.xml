@@ -5,13 +5,16 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
+    android:background="@color/surface_background"
+    android:paddingHorizontal="6dp"
     tools:context=".ui.HomeFragment">
 
     <TextView
         android:id="@+id/textConnectionStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="4dp"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginTop="10dp"
         android:background="@drawable/rounded_background"
         android:backgroundTint="@color/connection_status_background"
         android:enabled="true"
@@ -24,20 +27,26 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingBottom="8dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp"
+                android:layout_marginHorizontal="8dp"
+                android:layout_marginTop="8dp"
                 app:cardCornerRadius="16dp"
-                app:contentPadding="8dp">
+                app:cardElevation="2dp"
+                app:strokeColor="#140E7490"
+                app:strokeWidth="1dp"
+                app:contentPadding="10dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
@@ -71,6 +80,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_margin="8dp"
+                        android:showText="true"
+                        android:textOff="@string/disabled"
+                        android:textOn="@string/enabled"
+                        app:switchMinWidth="74dp"
+                        app:thumbTint="@color/switch_thumb_tint"
+                        app:trackTint="@color/switch_track_tint"
                         app:layout_constraintBottom_toBottomOf="@id/imageLocalServer"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="@id/imageLocalServer" />
@@ -138,12 +153,18 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Cloud server card hidden: upstream server not available in this fork -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp"
+                android:layout_marginHorizontal="8dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
                 app:cardCornerRadius="16dp"
-                app:contentPadding="8dp">
+                app:cardElevation="2dp"
+                app:strokeColor="#140E7490"
+                app:strokeWidth="1dp"
+                app:contentPadding="10dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
@@ -177,6 +198,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_margin="8dp"
+                        android:showText="true"
+                        android:textOff="@string/disabled"
+                        android:textOn="@string/enabled"
+                        app:switchMinWidth="74dp"
+                        app:thumbTint="@color/switch_thumb_tint"
+                        app:trackTint="@color/switch_track_tint"
                         app:layout_constraintBottom_toBottomOf="@id/imageRemoteServer"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="@id/imageRemoteServer" />
@@ -236,6 +263,77 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeColor="#140E7490"
+                app:strokeWidth="1dp"
+                app:contentPadding="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="8dp"
+                            android:src="@drawable/ic_battery_optimizations" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/reliability_tutorial_title"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textReliabilityTutorial"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/reliability_tutorial_body"
+                        android:textColor="#FF5A6A85"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonDisableBatteryOptimization"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/reliability_disable_battery_optimization" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonOpenAppBatterySettings"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/reliability_open_app_battery_settings" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonSetDefaultSmsApp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/reliability_set_default_sms_app" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
     </ScrollView>
@@ -244,8 +342,11 @@
         android:id="@+id/switchAutostart"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:text="@string/settings_start_on_boot" />
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginTop="10dp"
+        android:text="@string/settings_start_on_boot"
+        app:thumbTint="@color/switch_thumb_tint"
+        app:trackTint="@color/switch_track_tint" />
 
     <Space
         android:layout_width="match_parent"
@@ -255,6 +356,14 @@
         android:id="@+id/buttonStart"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/toggle_server_button_background"
+        android:elevation="2dp"
+        android:gravity="center"
+        android:paddingVertical="10dp"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
         android:textOff="@string/settings_offline"
         android:textOn="@string/settings_online" />
 </androidx.appcompat.widget.LinearLayoutCompat>

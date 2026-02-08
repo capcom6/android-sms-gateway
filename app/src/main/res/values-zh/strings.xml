@@ -2,7 +2,7 @@
     <string name="address_is">%1$s</string>
     <string name="api_url">API 地址</string>
     <string name="api_url_private_token_credentials_etc">API 地址、私有令牌、凭据等</string>
-    <string name="app_name">短信网关</string>
+    <string name="app_name">MessageGate</string>
     <string name="app_version_build">应用版本（构建号）</string>
     <string name="battery_optimization">电池优化</string>
     <string name="battery_optimization_already_disabled">电池优化已禁用</string>
@@ -12,8 +12,7 @@
     <string name="by_code">通过验证码</string>
     <string name="can_affect_battery_life">可能影响电池寿命</string>
     <string
-        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">点击"继续"创建账户，无需提供个人信息。\n继续即表示您同意我们的隐私政策，详情见
-        https://docs.sms-gate.app/privacy/policy/</string>
+        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">点击"继续"创建账户，无需提供个人信息。</string>
     <string name="cloud">云端</string>
     <string name="cloud_server">云服务器</string>
     <string name="cloud_server_dotdotdot">云服务器…</string>
@@ -48,7 +47,7 @@
     <string name="listening_to_the_server_events">正在监听服务器事件…</string>
     <string name="local_address">本地地址</string>
     <string name="local_server_dotdotdot">本地服务器…</string>
-    <string name="local_sms_gateway_notifications">本地短信网关通知</string>
+    <string name="local_sms_gateway_notifications">本地 MessageGate 通知</string>
     <string name="login_code">登录验证码</string>
     <string name="login_code_expires">登录验证码，有效期至 %1$s</string>
     <string name="logs">日志</string>
@@ -63,7 +62,7 @@
     <string name="no_webhooks_found">未配置 Webhook</string>
     <string name="not_registered">未注册</string>
     <string name="not_set">未设置</string>
-    <string name="notification_title">短信网关</string>
+    <string name="notification_title">MessageGate</string>
     <string name="online_status_at_the_cost_of_battery_life">保持在线状态（可能消耗更多电量）</string>
     <string name="passphrase">密码短语</string>
     <string name="password">密码</string>
@@ -86,6 +85,8 @@
     <string name="send_messages_notification">发送消息中…</string>
     <string name="sending_webhook">发送 Webhook 中…</string>
     <string name="processing_webhook_queue">处理 Webhook 队列中…</string>
+    <string name="processing">处理中</string>
+    <string name="processing_order_title">处理顺序</string>
     <string name="server">服务器</string>
     <string name="server_address">服务器地址</string>
     <string name="set_maximum_value_to_activate">设置最大值以激活</string>
@@ -101,8 +102,8 @@
     <string name="sign_in">登录</string>
     <string name="sign_up">注册</string>
     <string name="signing_key">签名密钥</string>
-    <string name="sms_gateway">短信网关</string>
-    <string name="sms_gateway_is_running_on_port">短信网关已在端口 %1$d 运行</string>
+    <string name="sms_gateway">MessageGate</string>
+    <string name="sms_gateway_is_running_on_port">MessageGate 已在端口 %1$d 运行</string>
     <string name="success_long_press_to_copy">成功，长按可复制</string>
     <string name="system">系统</string>
     <string name="tab_text_home">首页</string>
@@ -131,4 +132,10 @@
     <string name="sent_messages">已发送：%1$d</string>
     <string name="delivered_messages">已送达：%1$d</string>
     <string name="failed_messages">失败：%1$d</string>
+    <string name="reliability_tutorial_title">保持 MessageGate 持续在线</string>
+    <string name="reliability_tutorial_body">对于生产用手机：将电池策略设为“不受限制”，为 MessageGate 关闭电池优化，并将 MessageGate 设为默认短信应用。这些设置可帮助在熄屏时继续处理 webhook 以及收发消息。</string>
+    <string name="reliability_disable_battery_optimization">关闭电池优化</string>
+    <string name="reliability_open_app_battery_settings">打开应用电池设置</string>
+    <string name="reliability_set_default_sms_app">设置默认短信应用</string>
+    <string name="reliability_shortcut_unavailable">此设备不支持该快捷入口</string>
 </resources>
