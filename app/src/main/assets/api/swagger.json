@@ -1,10 +1,10 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "SMSGate API",
+    "title": "MessageGate API",
     "description": "This API provides programmatic access to sending SMS and MMS messages on Android devices. Features include message enqueueing, status tracking, signed MMS media retrieval, webhook configuration, and system health checks.",
     "contact": {
-      "name": "SMSGate Support",
+      "name": "MessageGate Support",
       "email": "support@sms-gate.app",
       "url": "https://docs.sms-gate.app/"
     },

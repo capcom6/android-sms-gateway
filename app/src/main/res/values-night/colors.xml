@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="surface_background">#FF0D1B2A</color>
+    <color name="surface_card">#FF172536</color>
+    <color name="tab_indicator">#FF8CC8D6</color>
+    <color name="progressBarOverlay">#66FFFFFF</color>
+</resources>
