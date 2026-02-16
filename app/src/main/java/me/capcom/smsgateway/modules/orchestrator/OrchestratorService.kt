@@ -1,8 +1,6 @@
 package me.capcom.smsgateway.modules.orchestrator
 
-import android.app.ForegroundServiceStartNotAllowedException
 import android.content.Context
-import android.os.Build
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.localserver.LocalServerService
@@ -38,18 +36,21 @@ class OrchestratorService(
             pingSvc.start(context)
             receiverService.start(context)
         } catch (e: Throwable) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-                && e is ForegroundServiceStartNotAllowedException
-            ) {
-                logsSvc.insert(
-                    LogEntry.Priority.WARN,
-                    MODULE_NAME,
-                    "Can't start foreground services while the app is running in the background"
-                )
-                return
-            }
+            logsSvc.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Can't start foreground services while the app is running in the background"
+            )
+        }
 
-            throw e
+        try {
+            receiverService.start(context)
+        } catch (e: Throwable) {
+            logsSvc.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Can't register receiver"
+            )
         }
     }
 
