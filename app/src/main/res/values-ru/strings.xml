@@ -69,6 +69,8 @@
     <string name="not_registered">не зарегистрировано</string>
     <string name="not_set">Не задано</string>
     <string name="notification_title">SMSGate</string>
+    <string name="notification_channel">Канал уведомлений</string>
+    <string name="notifications">Уведомления</string>
     <string name="online_status_at_the_cost_of_battery_life">Время автономной работы может быть
         снижено</string>
     <string name="passphrase">Ключ шифрования</string>

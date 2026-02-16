@@ -64,6 +64,8 @@
     <string name="not_registered">未注册</string>
     <string name="not_set">未设置</string>
     <string name="notification_title">短信网关</string>
+    <string name="notification_channel">通知渠道</string>
+    <string name="notifications">通知</string>
     <string name="online_status_at_the_cost_of_battery_life">保持在线状态（可能消耗更多电量）</string>
     <string name="passphrase">密码短语</string>
     <string name="password">密码</string>
@@ -125,6 +127,8 @@
     <plurals name="review_incoming_sms_webhooks">
         <item quantity="other">您已注册 %1$d 个短信接收 Webhook。请检查以避免安全风险。</item>
     </plurals>
+    <string name="processing">处理中</string>
+    <string name="processing_order_title">处理顺序</string>
     <string name="queue_status">📊 队列状态</string>
     <string name="total_messages">总计：%1$d</string>
     <string name="pending_messages">待处理：%1$d</string>
