@@ -50,7 +50,16 @@ class SSEForegroundService : Service() {
             .apply {
                 onConnected = {
                     Log.d("SSEForegroundService", "SSE connected, pulling pending messages")
-                    PullMessagesWorker.start(this@SSEForegroundService)
+                    try {
+                        PullMessagesWorker.start(this@SSEForegroundService)
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+                        logsService.insert(
+                            LogEntry.Priority.ERROR,
+                            "SSEForegroundService",
+                            "Failed to start PullMessagesWorker on connect",
+                        )
+                    }
                 }
                 onEvent = { event, data ->
                     Log.d("SSEForegroundService", "$event: $data")
