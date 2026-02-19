@@ -63,39 +63,45 @@ class ReceiverService : KoinComponent {
             mapOf("message" to message)
         )
 
-        val simNumber = message.subscriptionId?.let {
-            SubscriptionsHelper.getSimSlotIndex(
-                context,
-                it
-            )
-        }?.let { it + 1 }
+        val simSlotIndex = message.subscriptionId?.let {
+            SubscriptionsHelper.getSimSlotIndex(context, it)
+        }
+        val simNumber = simSlotIndex?.let { it + 1 }
+        val recipient = simSlotIndex?.let {
+            SubscriptionsHelper.getPhoneNumber(context, it)
+        }
+
+        val sender = message.address
 
         val (type, payload) = when (message) {
             is InboxMessage.Text -> WebHookEvent.SmsReceived to SmsEventPayload.SmsReceived(
                 messageId = message.hashCode().toUInt().toString(16),
                 message = message.text,
-                phoneNumber = message.address,
-                simNumber = simNumber,
+                sender = sender,
+                simNumber = simNumber ?: 0,
                 receivedAt = message.date,
+                recipient = recipient,
             )
 
             is InboxMessage.Data -> WebHookEvent.SmsDataReceived to SmsEventPayload.SmsDataReceived(
                 messageId = message.hashCode().toUInt().toString(16),
                 data = Base64.encodeToString(message.data, Base64.NO_WRAP),
-                phoneNumber = message.address,
-                simNumber = simNumber,
+                simNumber = simNumber ?: 0,
                 receivedAt = message.date,
+                sender = sender,
+                recipient = recipient,
             )
 
             is InboxMessage.Mms -> WebHookEvent.MmsReceived to MmsReceivedPayload(
                 messageId = message.messageId ?: message.transactionId,
-                phoneNumber = message.address,
-                simNumber = simNumber,
+                simNumber = simNumber ?: 0,
                 transactionId = message.transactionId,
                 subject = message.subject,
                 size = message.size,
                 contentClass = message.contentClass,
-                receivedAt = message.date
+                receivedAt = message.date,
+                sender = sender,
+                recipient = recipient,
             )
         }
 
