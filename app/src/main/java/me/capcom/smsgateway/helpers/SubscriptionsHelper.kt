@@ -95,25 +95,8 @@ object SubscriptionsHelper {
         val subscriptionManager = getSubscriptionsManager(context) ?: return null
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            subscriptionManager.activeSubscriptionInfoList.find {
+            subscriptionManager.activeSubscriptionInfoList?.find {
                 it.simSlotIndex == simSlotIndex
-            }?.number?.takeIf { it.isNotBlank() }
-        } else {
-            null
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    fun getPhoneNumberBySubscriptionId(context: Context, subscriptionId: Int): String? {
-        if (!hasPhoneStatePermission(context)) {
-            return null
-        }
-
-        val subscriptionManager = getSubscriptionsManager(context) ?: return null
-
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            subscriptionManager.activeSubscriptionInfoList.find {
-                it.subscriptionId == subscriptionId
             }?.number?.takeIf { it.isNotBlank() }
         } else {
             null

@@ -6,6 +6,6 @@ abstract class MessageEventPayload(
     val recipient: String?,
     val simNumber: Int?,
 
-    @Deprecated("Use sender or recipient instead", replaceWith = ReplaceWith("recipient"))
+    @Deprecated("Use sender for received events, recipient for sent events")
     val phoneNumber: String,
 )
