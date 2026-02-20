@@ -10,7 +10,7 @@
       "email": "support@sms-gate.app"
     },
     "license": {
-      "url": "http://www.apache.org/licenses/LICENSE-2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0",
       "name": "Apache 2.0"
     }
   },
@@ -2226,7 +2226,9 @@
               "sms:sent",
               "system:ping",
               "sms:delivered",
-              "sms:failed"
+              "sms:failed",
+              "mms:received",
+              "sms:data-received"
             ],
             "description": "The type of event that triggered the webhook."
           },
@@ -2250,6 +2252,9 @@
               },
               {
                 "$ref": "#/components/schemas/SmsDataReceivedPayload"
+              },
+              {
+                "$ref": "#/components/schemas/MmsReceivedPayload"
               }
             ]
           }
@@ -2390,6 +2395,40 @@
               "receivedAt": {
                 "type": "string",
                 "description": "The timestamp when the SMS message was received.",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "MmsReceivedPayload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "transactionId": {
+                "type": "string",
+                "description": "Unique MMS transaction identifier"
+              },
+              "subject": {
+                "type": "string",
+                "nullable": true,
+                "description": "Message subject line"
+              },
+              "size": {
+                "type": "integer",
+                "description": "Attachment size in bytes"
+              },
+              "contentClass": {
+                "type": "string",
+                "description": "MMS content classification"
+              },
+              "receivedAt": {
+                "type": "string",
+                "description": "The timestamp when the MMS message was received.",
                 "format": "date-time"
               }
             }
