@@ -95,6 +95,7 @@ class ReceiverService : KoinComponent {
                 subject = message.subject,
                 size = message.size,
                 contentClass = message.contentClass,
+                body = message.body,
                 receivedAt = message.date
             )
         }
