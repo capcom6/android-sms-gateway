@@ -1,16 +1,16 @@
 {
   "openapi": "3.0.1",
   "info": {
+    "version": "{{VERSION}}",
     "title": "SMSGate API",
     "description": "This API provides programmatic access to sending SMS messages on Android devices. Features include sending SMS, checking message status, device management, webhook configuration, and system health checks.",
     "contact": {
       "name": "SMSGate Support",
-      "email": "support@sms-gate.app",
-      "url": "https://docs.sms-gate.app/"
+      "url": "https://docs.sms-gate.app/",
+      "email": "support@sms-gate.app"
     },
-    "version": "{{VERSION}}",
     "license": {
-      "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0",
       "name": "Apache 2.0"
     }
   },
@@ -32,17 +32,17 @@
           "Auth"
         ],
         "summary": "Generate token",
-        "description": "Generate new access token with specified scopes and ttl",
+        "description": "Generate new access token with specified scopes and ttl\n\n*Not available in Local Server mode*",
         "requestBody": {
           "description": "Request",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/smsgateway.TokenRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -103,8 +103,7 @@
           {
             "JWTAuth": []
           }
-        ],
-        "x-codegen-request-body-name": "request"
+        ]
       }
     },
     "/auth/token/{jti}": {
@@ -114,7 +113,7 @@
           "Auth"
         ],
         "summary": "Revoke token",
-        "description": "Revoke access token with specified jti",
+        "description": "Revoke access token with specified jti\n\n*Not available in Local Server mode*",
         "parameters": [
           {
             "name": "jti",
@@ -128,8 +127,7 @@
         ],
         "responses": {
           "204": {
-            "description": "No Content",
-            "content": {}
+            "description": "No Content"
           },
           "401": {
             "description": "Unauthorized",
@@ -266,8 +264,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Successfully removed",
-            "content": {}
+            "description": "Successfully removed"
           },
           "400": {
             "description": "Invalid request",
@@ -368,7 +365,7 @@
           "Logs"
         ],
         "summary": "Get logs",
-        "description": "Retrieve a list of log entries within a specified time range.",
+        "description": "Retrieve a list of log entries within a specified time range.\n\n*Not available in Cloud Server mode*",
         "parameters": [
           {
             "name": "from",
@@ -601,39 +598,39 @@
             "in": "query",
             "description": "Filter devices active within the specified number of hours",
             "schema": {
-              "minimum": 0,
               "type": "integer",
+              "minimum": 0,
               "default": 0
             }
           }
         ],
         "requestBody": {
           "description": "Send message request",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/smsgateway.Message"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "202": {
             "description": "Message enqueued",
-            "headers": {
-              "Location": {
-                "description": "Get message state URL",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/smsgateway.GetMessageResponse"
                 }
+              }
+            },
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Get message state URL"
               }
             }
           },
@@ -695,8 +692,7 @@
           {
             "JWTAuth": []
           }
-        ],
-        "x-codegen-request-body-name": "request"
+        ]
       }
     },
     "/messages/inbox/export": {
@@ -709,14 +705,14 @@
         "description": "Initiates process of inbox messages export via webhooks. For each message the `sms:received` webhook will be triggered. The webhooks will be triggered without specific order.",
         "requestBody": {
           "description": "Export inbox request",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/smsgateway.MessagesExportRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "202": {
@@ -777,8 +773,7 @@
           {
             "JWTAuth": []
           }
-        ],
-        "x-codegen-request-body-name": "request"
+        ]
       }
     },
     "/messages/{id}": {
@@ -930,14 +925,14 @@
         "description": "Replaces settings",
         "requestBody": {
           "description": "Settings",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/smsgateway.DeviceSettings"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -998,8 +993,7 @@
           {
             "JWTAuth": []
           }
-        ],
-        "x-codegen-request-body-name": "request"
+        ]
       },
       "patch": {
         "tags": [
@@ -1010,14 +1004,14 @@
         "description": "Partially updates settings for a specific user",
         "requestBody": {
           "description": "Settings",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/smsgateway.DeviceSettings"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -1078,8 +1072,7 @@
           {
             "JWTAuth": []
           }
-        ],
-        "x-codegen-request-body-name": "request"
+        ]
       }
     },
     "/webhooks": {
@@ -1153,14 +1146,14 @@
         "description": "Registers webhook. If webhook with same ID already exists, it will be replaced",
         "requestBody": {
           "description": "Webhook",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/smsgateway.Webhook"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -1214,6 +1207,30 @@
             }
           }
         },
+        "callbacks": {
+          "onEvent": {
+            "{$request.body#/url}": {
+              "post": {
+                "requestBody": {
+                  "description": "Event details.",
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/WebHookEvent"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "The server should return this HTTP status code if the data was received successfully."
+                  }
+                }
+              }
+            }
+          }
+        },
         "security": [
           {
             "ApiAuth": []
@@ -1221,8 +1238,7 @@
           {
             "JWTAuth": []
           }
-        ],
-        "x-codegen-request-body-name": "request"
+        ]
       }
     },
     "/webhooks/{id}": {
@@ -1390,30 +1406,102 @@
       }
     }
   },
+  "tags": [
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Devices"
+    },
+    {
+      "name": "Logs"
+    },
+    {
+      "name": "Messages"
+    },
+    {
+      "name": "Settings"
+    },
+    {
+      "name": "System"
+    },
+    {
+      "name": "User"
+    },
+    {
+      "name": "Webhooks"
+    }
+  ],
   "components": {
+    "securitySchemes": {
+      "ApiAuth": {
+        "type": "http",
+        "scheme": "basic"
+      },
+      "JWTAuth": {
+        "type": "apiKey",
+        "description": "JWT authentication",
+        "name": "Authorization",
+        "in": "header"
+      }
+    },
     "schemas": {
-      "smsgateway.DataMessage": {
-        "required": [
-          "data",
-          "port"
-        ],
+      "smsgateway.TokenRequest": {
         "type": "object",
         "properties": {
-          "data": {
-            "maxLength": 65535,
-            "minLength": 4,
-            "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
-            "type": "string",
-            "description": "Data is the base64-encoded payload.",
-            "format": "byte",
-            "example": "SGVsbG8gV29ybGQh"
+          "scopes": {
+            "type": "array",
+            "description": "scopes for which the access token is valid",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
           },
-          "port": {
-            "maximum": 65535,
-            "minimum": 1,
+          "ttl": {
             "type": "integer",
-            "description": "Port is the destination port.",
-            "example": 53739
+            "description": "lifetime of the access token in seconds"
+          }
+        },
+        "required": [
+          "scopes"
+        ]
+      },
+      "smsgateway.TokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "actual access token"
+          },
+          "expires_at": {
+            "type": "string",
+            "description": "time at which the access token is no longer valid"
+          },
+          "id": {
+            "type": "string",
+            "description": "unique identifier for the access token"
+          },
+          "token_type": {
+            "type": "string",
+            "description": "type of the access token"
+          }
+        }
+      },
+      "smsgateway.ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "Error code"
+          },
+          "data": {
+            "type": "object",
+            "description": "Error context"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "An error occurred"
           }
         }
       },
@@ -1451,6 +1539,449 @@
             "example": "2020-01-01T00:00:00Z"
           }
         }
+      },
+      "smsgateway.HealthResponse": {
+        "type": "object",
+        "properties": {
+          "checks": {
+            "type": "object",
+            "description": "A map of check names to their respective details.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.HealthChecks"
+              }
+            ]
+          },
+          "releaseId": {
+            "type": "integer",
+            "description": "Release ID of the application.\nIt is used to identify the version of the application."
+          },
+          "status": {
+            "type": "object",
+            "description": "Overall status of the application.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\".",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.HealthStatus"
+              }
+            ]
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the application."
+          }
+        }
+      },
+      "smsgateway.HealthChecks": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/smsgateway.HealthCheck"
+        }
+      },
+      "smsgateway.HealthCheck": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "A human-readable description of the check."
+          },
+          "observedUnit": {
+            "type": "string",
+            "description": "Unit of measurement for the observed value."
+          },
+          "observedValue": {
+            "type": "integer",
+            "description": "Observed value of the check."
+          },
+          "status": {
+            "type": "object",
+            "description": "Status of the check.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\".",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.HealthStatus"
+              }
+            ]
+          }
+        }
+      },
+      "smsgateway.HealthStatus": {
+        "type": "string",
+        "enum": [
+          "pass",
+          "warn",
+          "fail"
+        ]
+      },
+      "smsgateway.LogEntry": {
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "object",
+            "description": "Additional context information related to the log entry, typically including data relevant to the log event.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The timestamp when this log entry was created."
+          },
+          "id": {
+            "type": "integer",
+            "description": "A unique identifier for the log entry."
+          },
+          "message": {
+            "type": "string",
+            "description": "A message describing the log event."
+          },
+          "module": {
+            "type": "string",
+            "description": "The module or component of the system that generated the log entry."
+          },
+          "priority": {
+            "type": "object",
+            "description": "The priority level of the log entry.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.LogEntryPriority"
+              }
+            ]
+          }
+        }
+      },
+      "smsgateway.LogEntryPriority": {
+        "type": "string",
+        "enum": [
+          "DEBUG",
+          "INFO",
+          "WARN",
+          "ERROR"
+        ]
+      },
+      "smsgateway.MessageState": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "Device ID",
+            "maxLength": 21,
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
+          },
+          "id": {
+            "type": "string",
+            "description": "Message ID",
+            "maxLength": 36,
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
+          },
+          "isEncrypted": {
+            "type": "boolean",
+            "description": "Encrypted",
+            "example": false
+          },
+          "isHashed": {
+            "type": "boolean",
+            "description": "Hashed",
+            "example": false
+          },
+          "recipients": {
+            "type": "array",
+            "description": "Recipients states",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/smsgateway.RecipientState"
+            }
+          },
+          "state": {
+            "type": "string",
+            "description": "State",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.ProcessingState"
+              }
+            ],
+            "example": "Pending"
+          },
+          "states": {
+            "type": "object",
+            "description": "History of states",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "deviceId",
+          "id",
+          "recipients",
+          "state"
+        ]
+      },
+      "smsgateway.RecipientState": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error (for `Failed` state)",
+            "example": "timeout"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Phone number or first 16 symbols of SHA256 hash",
+            "minLength": 1,
+            "maxLength": 128,
+            "example": "79990001234"
+          },
+          "state": {
+            "type": "string",
+            "description": "State",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.ProcessingState"
+              }
+            ],
+            "example": "Pending"
+          }
+        },
+        "required": [
+          "phoneNumber",
+          "state"
+        ]
+      },
+      "smsgateway.ProcessingState": {
+        "type": "string",
+        "enum": [
+          "Pending",
+          "Processed",
+          "Sent",
+          "Delivered",
+          "Failed"
+        ]
+      },
+      "smsgateway.Message": {
+        "type": "object",
+        "properties": {
+          "dataMessage": {
+            "type": "object",
+            "description": "Data message",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.DataMessage"
+              }
+            ]
+          },
+          "deviceId": {
+            "type": "string",
+            "description": "Optional device ID for explicit selection",
+            "maxLength": 21,
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
+          },
+          "id": {
+            "type": "string",
+            "description": "ID (if not set - will be generated)",
+            "maxLength": 36,
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
+          },
+          "isEncrypted": {
+            "type": "boolean",
+            "description": "Is encrypted",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Message content (deprecated, use TextMessage instead)",
+            "maxLength": 65535,
+            "example": "Hello World!"
+          },
+          "phoneNumbers": {
+            "type": "array",
+            "description": "Recipients (phone numbers)",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "79990001234"
+            ]
+          },
+          "priority": {
+            "type": "number",
+            "description": "Priority, messages with values greater than `99` will bypass limits and delays",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MessagePriority"
+              }
+            ],
+            "example": 0
+          },
+          "simNumber": {
+            "type": "integer",
+            "description": "SIM card number (1-3), if not set - default SIM will be used",
+            "maximum": 3,
+            "example": 1
+          },
+          "textMessage": {
+            "type": "object",
+            "description": "Text message",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.TextMessage"
+              }
+            ]
+          },
+          "ttl": {
+            "type": "integer",
+            "description": "Time to live in seconds (conflicts with `ValidUntil`)",
+            "minimum": 5,
+            "example": 86400
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "Valid until (conflicts with `TTL`)",
+            "example": "2020-01-01T00:00:00Z"
+          },
+          "withDeliveryReport": {
+            "type": "boolean",
+            "description": "With delivery report",
+            "example": true
+          }
+        },
+        "required": [
+          "phoneNumbers"
+        ]
+      },
+      "smsgateway.DataMessage": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "description": "Data is the base64-encoded payload.",
+            "format": "byte",
+            "pattern": "^[\\w\\d+\\/=]*$",
+            "minLength": 4,
+            "maxLength": 65535,
+            "example": "SGVsbG8gV29ybGQh"
+          },
+          "port": {
+            "type": "integer",
+            "description": "Port is the destination port.",
+            "minimum": 1,
+            "maximum": 65535,
+            "example": 53739
+          }
+        },
+        "required": [
+          "data",
+          "port"
+        ]
+      },
+      "smsgateway.MessagePriority": {
+        "type": "integer",
+        "enum": [
+          -128,
+          0,
+          100,
+          127
+        ],
+        "format": "int32"
+      },
+      "smsgateway.TextMessage": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text is the message text.",
+            "minLength": 1,
+            "maxLength": 65535,
+            "example": "Hello World!"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "smsgateway.GetMessageResponse": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "Device ID",
+            "maxLength": 21,
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
+          },
+          "id": {
+            "type": "string",
+            "description": "Message ID",
+            "maxLength": 36,
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
+          },
+          "isEncrypted": {
+            "type": "boolean",
+            "description": "Encrypted",
+            "example": false
+          },
+          "isHashed": {
+            "type": "boolean",
+            "description": "Hashed",
+            "example": false
+          },
+          "recipients": {
+            "type": "array",
+            "description": "Recipients states",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/smsgateway.RecipientState"
+            }
+          },
+          "state": {
+            "type": "string",
+            "description": "State",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.ProcessingState"
+              }
+            ],
+            "example": "Pending"
+          },
+          "states": {
+            "type": "object",
+            "description": "History of states",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "deviceId",
+          "id",
+          "recipients",
+          "state"
+        ]
+      },
+      "smsgateway.MessagesExportRequest": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "DeviceID is the ID of the device to export messages for.",
+            "maxLength": 21,
+            "example": "PyDmBQZZXYmyxMwED8Fzy"
+          },
+          "since": {
+            "type": "string",
+            "description": "Since is the start of the time range to export.",
+            "example": "2024-01-01T00:00:00Z"
+          },
+          "until": {
+            "type": "string",
+            "description": "Until is the end of the time range to export.",
+            "example": "2024-01-01T23:59:59Z"
+          }
+        },
+        "required": [
+          "deviceId",
+          "since",
+          "until"
+        ]
       },
       "smsgateway.DeviceSettings": {
         "type": "object",
@@ -1502,500 +2033,6 @@
           }
         }
       },
-      "smsgateway.ErrorResponse": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "integer",
-            "description": "Error code"
-          },
-          "data": {
-            "type": "object",
-            "description": "Error context"
-          },
-          "message": {
-            "type": "string",
-            "description": "Error message",
-            "example": "An error occurred"
-          }
-        }
-      },
-      "smsgateway.GetMessageResponse": {
-        "required": [
-          "deviceId",
-          "id",
-          "recipients",
-          "state"
-        ],
-        "type": "object",
-        "properties": {
-          "deviceId": {
-            "maxLength": 21,
-            "type": "string",
-            "description": "Device ID",
-            "example": "PyDmBQZZXYmyxMwED8Fzy"
-          },
-          "id": {
-            "maxLength": 36,
-            "type": "string",
-            "description": "Message ID",
-            "example": "PyDmBQZZXYmyxMwED8Fzy"
-          },
-          "isEncrypted": {
-            "type": "boolean",
-            "description": "Encrypted",
-            "example": false
-          },
-          "isHashed": {
-            "type": "boolean",
-            "description": "Hashed",
-            "example": false
-          },
-          "recipients": {
-            "minItems": 1,
-            "type": "array",
-            "description": "Recipients states",
-            "items": {
-              "$ref": "#/components/schemas/smsgateway.RecipientState"
-            }
-          },
-          "state": {
-            "type": "object",
-            "description": "State",
-            "example": "Pending",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.ProcessingState"
-              }
-            ]
-          },
-          "states": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "History of states"
-          }
-        }
-      },
-      "smsgateway.HealthCheck": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "type": "string",
-            "description": "A human-readable description of the check."
-          },
-          "observedUnit": {
-            "type": "string",
-            "description": "Unit of measurement for the observed value."
-          },
-          "observedValue": {
-            "type": "integer",
-            "description": "Observed value of the check."
-          },
-          "status": {
-            "type": "object",
-            "description": "Status of the check.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\".",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.HealthStatus"
-              }
-            ]
-          }
-        }
-      },
-      "smsgateway.HealthChecks": {
-        "type": "object",
-        "additionalProperties": {
-          "$ref": "#/components/schemas/smsgateway.HealthCheck"
-        }
-      },
-      "smsgateway.HealthResponse": {
-        "type": "object",
-        "properties": {
-          "checks": {
-            "type": "object",
-            "description": "A map of check names to their respective details.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.HealthChecks"
-              }
-            ]
-          },
-          "releaseId": {
-            "type": "integer",
-            "description": "Release ID of the application.\nIt is used to identify the version of the application."
-          },
-          "status": {
-            "type": "object",
-            "description": "Overall status of the application.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\".",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.HealthStatus"
-              }
-            ]
-          },
-          "version": {
-            "type": "string",
-            "description": "Version of the application."
-          }
-        }
-      },
-      "smsgateway.HealthStatus": {
-        "type": "string",
-        "enum": [
-          "pass",
-          "warn",
-          "fail"
-        ],
-        "x-enum-varnames": [
-          "HealthStatusPass",
-          "HealthStatusWarn",
-          "HealthStatusFail"
-        ]
-      },
-      "smsgateway.LimitPeriod": {
-        "type": "string",
-        "enum": [
-          "Disabled",
-          "PerMinute",
-          "PerHour",
-          "PerDay"
-        ],
-        "x-enum-varnames": [
-          "Disabled",
-          "PerMinute",
-          "PerHour",
-          "PerDay"
-        ]
-      },
-      "smsgateway.LogEntry": {
-        "type": "object",
-        "properties": {
-          "context": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional context information related to the log entry, typically including data relevant to the log event."
-          },
-          "createdAt": {
-            "type": "string",
-            "description": "The timestamp when this log entry was created."
-          },
-          "id": {
-            "type": "integer",
-            "description": "A unique identifier for the log entry."
-          },
-          "message": {
-            "type": "string",
-            "description": "A message describing the log event."
-          },
-          "module": {
-            "type": "string",
-            "description": "The module or component of the system that generated the log entry."
-          },
-          "priority": {
-            "type": "object",
-            "description": "The priority level of the log entry.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.LogEntryPriority"
-              }
-            ]
-          }
-        }
-      },
-      "smsgateway.LogEntryPriority": {
-        "type": "string",
-        "enum": [
-          "DEBUG",
-          "INFO",
-          "WARN",
-          "ERROR"
-        ],
-        "x-enum-varnames": [
-          "LogEntryPriorityDebug",
-          "LogEntryPriorityInfo",
-          "LogEntryPriorityWarn",
-          "LogEntryPriorityError"
-        ]
-      },
-      "smsgateway.Message": {
-        "required": [
-          "phoneNumbers"
-        ],
-        "type": "object",
-        "properties": {
-          "dataMessage": {
-            "type": "object",
-            "description": "Data message",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.DataMessage"
-              }
-            ]
-          },
-          "deviceId": {
-            "maxLength": 21,
-            "type": "string",
-            "description": "Optional device ID for explicit selection",
-            "example": "PyDmBQZZXYmyxMwED8Fzy"
-          },
-          "id": {
-            "maxLength": 36,
-            "type": "string",
-            "description": "ID (if not set - will be generated)",
-            "example": "PyDmBQZZXYmyxMwED8Fzy"
-          },
-          "isEncrypted": {
-            "type": "boolean",
-            "description": "Is encrypted",
-            "example": true
-          },
-          "message": {
-            "maxLength": 65535,
-            "type": "string",
-            "description": "Message content (deprecated, use TextMessage instead)",
-            "example": "Hello World!"
-          },
-          "phoneNumbers": {
-            "maxItems": 100,
-            "minItems": 1,
-            "type": "array",
-            "description": "Recipients (phone numbers)",
-            "example": [
-              "79990001234"
-            ],
-            "items": {
-              "type": "string"
-            }
-          },
-          "priority": {
-            "type": "object",
-            "description": "Priority, messages with values greater than `99` will bypass limits and delays",
-            "example": 0,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.MessagePriority"
-              }
-            ]
-          },
-          "simNumber": {
-            "maximum": 3,
-            "type": "integer",
-            "description": "SIM card number (1-3), if not set - default SIM will be used",
-            "example": 1
-          },
-          "textMessage": {
-            "type": "object",
-            "description": "Text message",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.TextMessage"
-              }
-            ]
-          },
-          "ttl": {
-            "minimum": 5,
-            "type": "integer",
-            "description": "Time to live in seconds (conflicts with `ValidUntil`)",
-            "example": 86400
-          },
-          "validUntil": {
-            "type": "string",
-            "description": "Valid until (conflicts with `TTL`)",
-            "example": "2020-01-01T00:00:00Z"
-          },
-          "withDeliveryReport": {
-            "type": "boolean",
-            "description": "With delivery report",
-            "example": true
-          }
-        }
-      },
-      "smsgateway.MessagePriority": {
-        "type": "integer",
-        "format": "int32",
-        "enum": [
-          -128,
-          0,
-          100,
-          127
-        ],
-        "x-enum-comments": {
-          "PriorityBypassThreshold": "Threshold at which messages bypass limits and delays"
-        },
-        "x-enum-descriptions": [
-          "",
-          "",
-          "Threshold at which messages bypass limits and delays",
-          ""
-        ],
-        "x-enum-varnames": [
-          "PriorityMinimum",
-          "PriorityDefault",
-          "PriorityBypassThreshold",
-          "PriorityMaximum"
-        ]
-      },
-      "smsgateway.MessageState": {
-        "required": [
-          "deviceId",
-          "id",
-          "recipients",
-          "state"
-        ],
-        "type": "object",
-        "properties": {
-          "deviceId": {
-            "maxLength": 21,
-            "type": "string",
-            "description": "Device ID",
-            "example": "PyDmBQZZXYmyxMwED8Fzy"
-          },
-          "id": {
-            "maxLength": 36,
-            "type": "string",
-            "description": "Message ID",
-            "example": "PyDmBQZZXYmyxMwED8Fzy"
-          },
-          "isEncrypted": {
-            "type": "boolean",
-            "description": "Encrypted",
-            "example": false
-          },
-          "isHashed": {
-            "type": "boolean",
-            "description": "Hashed",
-            "example": false
-          },
-          "recipients": {
-            "minItems": 1,
-            "type": "array",
-            "description": "Recipients states",
-            "items": {
-              "$ref": "#/components/schemas/smsgateway.RecipientState"
-            }
-          },
-          "state": {
-            "type": "object",
-            "description": "State",
-            "example": "Pending",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.ProcessingState"
-              }
-            ]
-          },
-          "states": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "History of states"
-          }
-        }
-      },
-      "smsgateway.MessagesExportRequest": {
-        "required": [
-          "deviceId",
-          "since",
-          "until"
-        ],
-        "type": "object",
-        "properties": {
-          "deviceId": {
-            "maxLength": 21,
-            "type": "string",
-            "description": "DeviceID is the ID of the device to export messages for.",
-            "example": "PyDmBQZZXYmyxMwED8Fzy"
-          },
-          "since": {
-            "type": "string",
-            "description": "Since is the start of the time range to export.",
-            "example": "2024-01-01T00:00:00Z"
-          },
-          "until": {
-            "type": "string",
-            "description": "Until is the end of the time range to export.",
-            "example": "2024-01-01T23:59:59Z"
-          }
-        }
-      },
-      "smsgateway.MessagesProcessingOrder": {
-        "type": "string",
-        "enum": [
-          "LIFO",
-          "FIFO"
-        ],
-        "x-enum-varnames": [
-          "LIFO",
-          "FIFO"
-        ]
-      },
-      "smsgateway.ProcessingState": {
-        "type": "string",
-        "enum": [
-          "Pending",
-          "Processed",
-          "Sent",
-          "Delivered",
-          "Failed"
-        ],
-        "x-enum-comments": {
-          "ProcessingStateDelivered": "Delivered",
-          "ProcessingStateFailed": "Failed",
-          "ProcessingStatePending": "Pending",
-          "ProcessingStateProcessed": "Processed (received by device)",
-          "ProcessingStateSent": "Sent"
-        },
-        "x-enum-descriptions": [
-          "Pending",
-          "Processed (received by device)",
-          "Sent",
-          "Delivered",
-          "Failed"
-        ],
-        "x-enum-varnames": [
-          "ProcessingStatePending",
-          "ProcessingStateProcessed",
-          "ProcessingStateSent",
-          "ProcessingStateDelivered",
-          "ProcessingStateFailed"
-        ]
-      },
-      "smsgateway.RecipientState": {
-        "required": [
-          "phoneNumber",
-          "state"
-        ],
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "description": "Error (for `Failed` state)",
-            "example": "timeout"
-          },
-          "phoneNumber": {
-            "maxLength": 128,
-            "minLength": 1,
-            "type": "string",
-            "description": "Phone number or first 16 symbols of SHA256 hash",
-            "example": "79990001234"
-          },
-          "state": {
-            "type": "object",
-            "description": "State",
-            "example": "Pending",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.ProcessingState"
-              }
-            ]
-          }
-        }
-      },
       "smsgateway.SettingsEncryption": {
         "type": "object",
         "properties": {
@@ -2009,9 +2046,9 @@
         "type": "object",
         "properties": {
           "lifetime_days": {
-            "minimum": 1,
             "type": "integer",
-            "description": "LifetimeDays is the number of days to retain logs.\nMust be at least 1 when provided."
+            "description": "LifetimeDays is the number of days to retain logs.\nMust be at least 1 when provided.",
+            "minimum": 1
           }
         }
       },
@@ -2028,14 +2065,14 @@
             ]
           },
           "limit_value": {
-            "minimum": 1,
             "type": "integer",
-            "description": "LimitValue is the maximum number of messages allowed per limit period.\nMust be at least 1 when provided."
+            "description": "LimitValue is the maximum number of messages allowed per limit period.\nMust be at least 1 when provided.",
+            "minimum": 1
           },
           "log_lifetime_days": {
-            "minimum": 1,
             "type": "integer",
-            "description": "LogLifetimeDays is the number of days to retain message logs.\nMust be at least 1 when provided."
+            "description": "LogLifetimeDays is the number of days to retain message logs.\nMust be at least 1 when provided.",
+            "minimum": 1
           },
           "processing_order": {
             "type": "object",
@@ -2047,14 +2084,14 @@
             ]
           },
           "send_interval_max": {
-            "minimum": 1,
             "type": "integer",
-            "description": "SendIntervalMax is the maximum interval between message sends (in seconds).\nMust be at least 1 when provided and greater than or equal to SendIntervalMin."
+            "description": "SendIntervalMax is the maximum interval between message sends (in seconds).\nMust be at least 1 when provided and greater than or equal to SendIntervalMin.",
+            "minimum": 1
           },
           "send_interval_min": {
-            "minimum": 1,
             "type": "integer",
-            "description": "SendIntervalMin is the minimum interval between message sends (in seconds).\nMust be at least 1 when provided."
+            "description": "SendIntervalMin is the minimum interval between message sends (in seconds).\nMust be at least 1 when provided.",
+            "minimum": 1
           },
           "sim_selection_mode": {
             "type": "object",
@@ -2067,13 +2104,37 @@
           }
         }
       },
+      "smsgateway.LimitPeriod": {
+        "type": "string",
+        "enum": [
+          "Disabled",
+          "PerMinute",
+          "PerHour",
+          "PerDay"
+        ]
+      },
+      "smsgateway.MessagesProcessingOrder": {
+        "type": "string",
+        "enum": [
+          "LIFO",
+          "FIFO"
+        ]
+      },
+      "smsgateway.SimSelectionMode": {
+        "type": "string",
+        "enum": [
+          "OSDefault",
+          "RoundRobin",
+          "Random"
+        ]
+      },
       "smsgateway.SettingsPing": {
         "type": "object",
         "properties": {
           "interval_seconds": {
-            "minimum": 1,
             "type": "integer",
-            "description": "IntervalSeconds is the interval between ping requests (in seconds).\nMust be at least 1 when provided."
+            "description": "IntervalSeconds is the interval between ping requests (in seconds).\nMust be at least 1 when provided.",
+            "minimum": 1
           }
         }
       },
@@ -2085,9 +2146,9 @@
             "description": "InternetRequired indicates whether internet access is required for webhooks."
           },
           "retry_count": {
-            "minimum": 1,
             "type": "integer",
-            "description": "RetryCount is the number of times to retry failed webhook deliveries.\nMust be at least 1 when provided."
+            "description": "RetryCount is the number of times to retry failed webhook deliveries.\nMust be at least 1 when provided.",
+            "minimum": 1
           },
           "signing_key": {
             "type": "string",
@@ -2095,102 +2156,29 @@
           }
         }
       },
-      "smsgateway.SimSelectionMode": {
-        "type": "string",
-        "enum": [
-          "OSDefault",
-          "RoundRobin",
-          "Random"
-        ],
-        "x-enum-varnames": [
-          "OSDefault",
-          "RoundRobin",
-          "Random"
-        ]
-      },
-      "smsgateway.TextMessage": {
-        "required": [
-          "text"
-        ],
-        "type": "object",
-        "properties": {
-          "text": {
-            "maxLength": 65535,
-            "minLength": 1,
-            "type": "string",
-            "description": "Text is the message text.",
-            "example": "Hello World!"
-          }
-        }
-      },
-      "smsgateway.TokenRequest": {
-        "required": [
-          "scopes"
-        ],
-        "type": "object",
-        "properties": {
-          "scopes": {
-            "minItems": 1,
-            "type": "array",
-            "description": "scopes for which the access token is valid",
-            "items": {
-              "type": "string"
-            }
-          },
-          "ttl": {
-            "type": "integer",
-            "description": "lifetime of the access token in seconds"
-          }
-        }
-      },
-      "smsgateway.TokenResponse": {
-        "type": "object",
-        "properties": {
-          "access_token": {
-            "type": "string",
-            "description": "actual access token"
-          },
-          "expires_at": {
-            "type": "string",
-            "description": "time at which the access token is no longer valid"
-          },
-          "id": {
-            "type": "string",
-            "description": "unique identifier for the access token"
-          },
-          "token_type": {
-            "type": "string",
-            "description": "type of the access token"
-          }
-        }
-      },
       "smsgateway.Webhook": {
-        "required": [
-          "event",
-          "url"
-        ],
         "type": "object",
         "properties": {
           "deviceId": {
-            "maxLength": 21,
             "type": "string",
             "description": "The unique identifier of the device the webhook is associated with.",
+            "maxLength": 21,
             "example": "PyDmBQZZXYmyxMwED8Fzy"
           },
           "event": {
-            "type": "object",
+            "type": "string",
             "description": "The type of event the webhook is triggered for.",
-            "example": "sms:received",
             "allOf": [
               {
                 "$ref": "#/components/schemas/smsgateway.WebhookEvent"
               }
-            ]
+            ],
+            "example": "sms:received"
           },
           "id": {
-            "maxLength": 36,
             "type": "string",
             "description": "The unique identifier of the webhook.",
+            "maxLength": 36,
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           "url": {
@@ -2198,7 +2186,11 @@
             "description": "The URL the webhook will be sent to.",
             "example": "https://example.com/webhook"
           }
-        }
+        },
+        "required": [
+          "event",
+          "url"
+        ]
       },
       "smsgateway.WebhookEvent": {
         "type": "string",
@@ -2210,48 +2202,200 @@
           "sms:received",
           "sms:sent",
           "system:ping"
-        ],
-        "x-enum-comments": {
-          "WebhookEventMmsReceived": "Triggered when an MMS is received.",
-          "WebhookEventSmsDataReceived": "Triggered when a data SMS is received.",
-          "WebhookEventSmsDelivered": "Triggered when an SMS is delivered.",
-          "WebhookEventSmsFailed": "Triggered when an SMS processing fails.",
-          "WebhookEventSmsReceived": "Triggered when an SMS is received.",
-          "WebhookEventSmsSent": "Triggered when an SMS is sent.",
-          "WebhookEventSystemPing": "Triggered when the device pings the server."
-        },
-        "x-enum-descriptions": [
-          "Triggered when an MMS is received.",
-          "Triggered when a data SMS is received.",
-          "Triggered when an SMS is delivered.",
-          "Triggered when an SMS processing fails.",
-          "Triggered when an SMS is received.",
-          "Triggered when an SMS is sent.",
-          "Triggered when the device pings the server."
-        ],
-        "x-enum-varnames": [
-          "WebhookEventMmsReceived",
-          "WebhookEventSmsDataReceived",
-          "WebhookEventSmsDelivered",
-          "WebhookEventSmsFailed",
-          "WebhookEventSmsReceived",
-          "WebhookEventSmsSent",
-          "WebhookEventSystemPing"
+        ]
+      },
+      "WebHookEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the webhook event."
+          },
+          "webhookId": {
+            "type": "string",
+            "description": "The identifier of the webhook configuration that triggered this event."
+          },
+          "deviceId": {
+            "type": "string",
+            "description": "The unique identifier of the device."
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "sms:received",
+              "sms:sent",
+              "system:ping",
+              "sms:delivered",
+              "sms:failed"
+            ],
+            "description": "The type of event that triggered the webhook."
+          },
+          "payload": {
+            "description": "The data associated with the event.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SmsReceivedPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SmsSentPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SmsDeliveredPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SmsFailedPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SystemPingPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SmsDataReceivedPayload"
+              }
+            ]
+          }
+        }
+      },
+      "SmsReceivedPayload": {
+        "title": "SmsReceivedPayload",
+        "description": "Payload of `sms:received` event.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "The content of the SMS message received."
+              },
+              "receivedAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message was received.",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "SmsEventPayload": {
+        "type": "object",
+        "title": "SmsEventPayload",
+        "description": "Base payload for SMS-related events.",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "description": "The unique identifier of the SMS message."
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "The phone number of the sender (for incoming messages) or recipient (for outgoing messages)."
+          },
+          "sender": {
+            "type": "string",
+            "description": "The phone number of the message sender. For incoming messages, this is the external sender; for outgoing messages, this is the device's phone number. May be `null` for device's phone number."
+          },
+          "destination": {
+            "type": "string",
+            "nullable": true,
+            "description": "The phone number of the message recipient. For incoming messages, this is the device's/SIM's phone number that received the message; for outgoing messages, this is the recipient's phone number. May be `null` for device's phone number."
+          },
+          "simNumber": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The SIM card number that sent or received the SMS. May be `null` if the SIM cannot be determined or the default was used."
+          }
+        }
+      },
+      "SmsSentPayload": {
+        "title": "SmsSentPayload",
+        "description": "Payload of `sms:sent` event.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "sentAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message was sent.",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "SmsDeliveredPayload": {
+        "title": "SmsDeliveredPayload",
+        "description": "Payload of `sms:delivered` event.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "deliveredAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message was delivered.",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "SmsFailedPayload": {
+        "title": "SmsFailedPayload",
+        "description": "Payload of `sms:failed` event.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "failedAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message failed.",
+                "format": "date-time"
+              },
+              "reason": {
+                "type": "string",
+                "description": "The reason for the failure."
+              }
+            }
+          }
+        ]
+      },
+      "SystemPingPayload": {
+        "type": "object",
+        "title": "SystemPingPayload",
+        "description": "Payload of `system:ping` event."
+      },
+      "SmsDataReceivedPayload": {
+        "title": "SmsDataReceivedPayload",
+        "description": "Payload of `sms:data-received` event.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "string",
+                "description": "Base64-encoded content of the SMS message received."
+              },
+              "receivedAt": {
+                "type": "string",
+                "description": "The timestamp when the SMS message was received.",
+                "format": "date-time"
+              }
+            }
+          }
         ]
       }
-    },
-    "securitySchemes": {
-      "ApiAuth": {
-        "type": "http",
-        "scheme": "basic"
-      },
-      "JWTAuth": {
-        "type": "apiKey",
-        "description": "JWT authentication",
-        "name": "Authorization",
-        "in": "header"
-      }
     }
-  },
-  "x-original-swagger-version": "2.0"
+  }
 }
