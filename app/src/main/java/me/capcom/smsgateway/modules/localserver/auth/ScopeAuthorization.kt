@@ -2,6 +2,7 @@ package me.capcom.smsgateway.modules.localserver.auth
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.call
 import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal

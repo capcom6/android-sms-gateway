@@ -34,7 +34,6 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.util.date.GMTDate
 import me.capcom.smsgateway.R
-import me.capcom.smsgateway.data.dao.RevokedTokensDao
 import me.capcom.smsgateway.domain.HealthResponse
 import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.modules.health.HealthService
@@ -59,8 +58,7 @@ class WebService : Service() {
     private val settings: LocalServerSettings by inject()
     private val notificationsService: NotificationsService by inject()
     private val healthService: HealthService by inject()
-    private val revokedTokensDao: RevokedTokensDao by inject()
-    private val jwtService: JwtService by lazy { JwtService(settings, revokedTokensDao) }
+    private val jwtService: JwtService by lazy { JwtService(get(), get(), get()) }
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {

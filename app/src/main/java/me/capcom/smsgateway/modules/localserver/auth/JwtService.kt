@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.modules.localserver.auth
 
+import android.content.Context
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
@@ -15,9 +16,12 @@ data class GeneratedToken(
 )
 
 class JwtService(
+    context: Context,
     private val settings: LocalServerSettings,
     private val revokedTokensDao: RevokedTokensDao,
 ) {
+    private val issuer = context.packageName
+
     private val algorithm: Algorithm
         get() = Algorithm.HMAC256(settings.jwtSecret)
 
@@ -25,9 +29,6 @@ class JwtService(
         val effectiveScopes = (scopes ?: emptyList())
             .map { it.trim() }
             .filter { it.isNotEmpty() }
-            .ifEmpty {
-                AuthScopes.parseCsv(settings.jwtDefaultScopes)
-            }
 
         require(effectiveScopes.isNotEmpty()) { "scopes must not be empty" }
         require(AuthScopes.firstUnsupported(effectiveScopes) == null) { "unsupported scope provided" }
@@ -44,7 +45,7 @@ class JwtService(
 
         val token = JWT.create()
             .withJWTId(tokenId)
-            .withIssuer(settings.jwtIssuer)
+            .withIssuer(issuer)
             .withIssuedAt(now)
             .withExpiresAt(expiresAt)
             .withClaim("scopes", effectiveScopes)
@@ -54,7 +55,7 @@ class JwtService(
     }
 
     fun verifier() = JWT.require(algorithm)
-        .withIssuer(settings.jwtIssuer)
+        .withIssuer(issuer)
         .build()
 
     suspend fun revokeToken(jti: String) {
