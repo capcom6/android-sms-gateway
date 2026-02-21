@@ -16,6 +16,18 @@ class LocalServerSettingsFragment : BasePreferenceFragment() {
 
         findPreference<Preference>("transient.device_id")?.summary =
             settings.deviceId ?: getString(R.string.n_a)
+        findPreference<Preference>("transient.jwt_regenerate_secret")?.setOnPreferenceClickListener {
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle(R.string.jwt_regenerate_secret)
+                .setMessage(R.string.confirm_regenerate_jwt_secret)
+                .setPositiveButton(R.string.confirm) { _, _ ->
+                    settings.regenerateJwtSecret()
+                    showToast(getString(R.string.jwt_secret_regenerated))
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+            true
+        }
 
         findPreference<EditTextPreference>("localserver.PORT")?.setOnPreferenceChangeListener { _, newValue ->
             val value = newValue as? String
@@ -51,10 +63,22 @@ class LocalServerSettingsFragment : BasePreferenceFragment() {
 
             true
         }
+
+        findPreference<EditTextPreference>("localserver.JWT_TTL_SECONDS")?.setOnPreferenceChangeListener { _, newValue ->
+            val value = newValue as? String
+            val ttl = value?.toLongOrNull()
+            if (ttl == null || ttl <= 0 || ttl > LocalServerSettings.MAX_JWT_TTL_SECONDS) {
+                showToast(getString(R.string.jwt_ttl_must_be_between_1_second_and_365_days))
+                return@setOnPreferenceChangeListener false
+            }
+
+            true
+        }
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
         if (preference.key == "localserver.PORT"
+            || preference.key == "localserver.JWT_TTL_SECONDS"
         ) {
             (preference as EditTextPreference).setOnBindEditTextListener {
                 it.inputType = InputType.TYPE_CLASS_NUMBER

@@ -13,7 +13,8 @@
     <string name="btn_continue">Продолжить</string>
     <string name="by_code">По коду</string>
     <string name="can_affect_battery_life">может влиять на время работы батареи</string>
-    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Нажмите
+    <string
+        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Нажмите
         \"Продолжить\", чтобы создать аккаунт. Личная информация не требуется.\nПродолжая, вы
         соглашаетесь с Политикой конфиденциальности по адресу
         https://docs.sms-gate.app/privacy/policy/</string>
@@ -153,4 +154,15 @@
     <string name="sent_messages">Отправлено: %1$d</string>
     <string name="delivered_messages">Доставлено: %1$d</string>
     <string name="failed_messages">Сбоев: %1$d</string>
+    <string name="jwt">JWT</string>
+    <string name="jwt_default_ttl_seconds">TTL JWT по умолчанию (в секундах)</string>
+    <string name="jwt_ttl_must_be_between_1_second_and_365_days">TTL JWT должен быть между 1
+        секундой и 365 днями</string>
+    <string name="jwt_regenerate_secret">Перегенерировать секрет JWT</string>
+    <string name="jwt_regenerate_secret_summary">Все текущие токены станут недействительными</string>
+    <string name="jwt_secret_regenerated">Секрет JWT перегенерирован</string>
+    <string name="confirm_regenerate_jwt_secret">Вы уверены, что хотите перегенерировать секрет JWT?
+        Все текущие токены станут недействительными.</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="cancel">Отмена</string>
 </resources>
