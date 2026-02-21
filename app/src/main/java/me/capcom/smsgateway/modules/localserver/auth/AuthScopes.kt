@@ -30,6 +30,7 @@ object AuthScopes {
         return value.split(',')
             .map { it.trim() }
             .filter { it.isNotEmpty() }
+            .distinct()
     }
 
     fun firstUnsupported(scopes: List<String>): String? {

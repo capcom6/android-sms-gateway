@@ -155,6 +155,7 @@
     <string name="jwt_default_scopes">JWT default scopes</string>
     <string name="jwt_default_scopes_hint">Comma-separated scopes used when /auth/token request does not include scopes.</string>
     <string name="jwt_available_scopes">Available scopes</string>
+    <!-- MUST MATCH AuthScopes.allowed in AuthScopes.kt — update both places when changing scopes. -->
     <string name="jwt_available_scopes_values">messages:send, messages:read, devices:list, devices:write, webhooks:list, webhooks:write, settings:read, settings:write, logs:read, all:any</string>
     <string name="jwt_issuer_must_not_be_empty">JWT issuer must not be empty</string>
     <string name="jwt_ttl_must_be_positive_seconds">JWT TTL must be a positive number of seconds</string>

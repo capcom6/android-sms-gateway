@@ -35,9 +35,19 @@ class JwtService(
         val now = Date()
         val ttl = ttlSeconds ?: settings.jwtTtlSeconds
         require(ttl > 0) { "ttl must be > 0" }
+        require(ttl <= MAX_TTL_SECONDS) { "ttl exceeds maximum allowed value" }
+
+        val safeMaxTtlSeconds = (Long.MAX_VALUE - now.time) / 1000
+        require(ttl <= safeMaxTtlSeconds) { "ttl is too large for current time" }
+
+        val ttlMillis = try {
+            Math.multiplyExact(ttl, 1000)
+        } catch (_: ArithmeticException) {
+            throw IllegalArgumentException("ttl value overflow")
+        }
 
         val tokenId = NanoIdUtils.randomNanoId()
-        val expiresAt = Date(now.time + (ttl * 1000))
+        val expiresAt = Date(now.time + ttlMillis)
 
         val token = JWT.create()
             .withJWTId(tokenId)
@@ -60,5 +70,9 @@ class JwtService(
 
     fun isTokenRevoked(jti: String): Boolean {
         return revokedTokensDao.exists(jti)
+    }
+
+    companion object {
+        private const val MAX_TTL_SECONDS: Long = 365L * 24L * 60L * 60L
     }
 }

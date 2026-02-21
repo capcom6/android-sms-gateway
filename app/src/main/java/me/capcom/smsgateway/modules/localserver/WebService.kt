@@ -96,7 +96,7 @@ class WebService : Service() {
                 }
                 jwt("auth-jwt") {
                     realm = "Access to SMS Gateway"
-                    verifier(jwtService.verifier())
+                    verifier { jwtService.verifier() }
                     validate { credential ->
                         val tokenId = credential.payload.id ?: return@validate null
                         if (jwtService.isTokenRevoked(tokenId)) {
