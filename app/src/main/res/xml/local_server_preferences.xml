@@ -24,6 +24,39 @@
             app:title="@string/password"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
+    <PreferenceCategory app:title="@string/jwt">
+        <Preference
+            android:icon="@drawable/ic_token"
+            android:key="transient.jwt_secret"
+            android:title="@string/jwt_secret"
+            app:enableCopying="true"
+            android:persistent="false" />
+        <EditTextPreference
+            app:icon="@drawable/ic_token"
+            app:key="localserver.JWT_ISSUER"
+            app:title="@string/jwt_issuer"
+            app:defaultValue="sms-gateway.local"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:icon="@drawable/ic_timer"
+            app:key="localserver.JWT_TTL_SECONDS"
+            app:title="@string/jwt_default_ttl_seconds"
+            app:defaultValue="86400"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:icon="@drawable/ic_advanced"
+            app:key="localserver.JWT_DEFAULT_SCOPES"
+            app:title="@string/jwt_default_scopes"
+            app:defaultValue="messages:send,messages:read,devices:list,devices:write,webhooks:list,webhooks:write,settings:read,settings:write,logs:read"
+            app:dialogMessage="@string/jwt_default_scopes_hint"
+            app:useSimpleSummaryProvider="true" />
+        <Preference
+            android:key="transient.jwt_available_scopes"
+            android:title="@string/jwt_available_scopes"
+            android:summary="@string/jwt_available_scopes_values"
+            android:persistent="false" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/device">
         <Preference
             android:icon="@drawable/ic_device_id"

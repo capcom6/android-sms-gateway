@@ -6,6 +6,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import me.capcom.smsgateway.helpers.DateTimeParser
+import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
+import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.GetLogsResponse
 import me.capcom.smsgateway.modules.logs.LogsService
 
@@ -21,6 +23,7 @@ class LogsRoutes(
 
     private fun Route.logsRoutes() {
         get {
+            if (!requireScope(AuthScopes.LOGS_READ)) return@get
             try {
                 val from = call.request.queryParameters["from"]?.let {
                     DateTimeParser.parseIsoDateTime(it)?.time

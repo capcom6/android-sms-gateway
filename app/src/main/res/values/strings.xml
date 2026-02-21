@@ -148,4 +148,17 @@
     <string name="sent_messages">Sent: %1$d</string>
     <string name="delivered_messages">Delivered: %1$d</string>
     <string name="failed_messages">Failed: %1$d</string>
+    <string name="jwt">JWT</string>
+    <string name="jwt_secret">JWT secret</string>
+    <string name="jwt_issuer">JWT issuer</string>
+    <string name="jwt_default_ttl_seconds">JWT default TTL (seconds)</string>
+    <string name="jwt_default_scopes">JWT default scopes</string>
+    <string name="jwt_default_scopes_hint">Comma-separated scopes used when /auth/token request does not include scopes.</string>
+    <string name="jwt_available_scopes">Available scopes</string>
+    <string name="jwt_available_scopes_values">messages:send, messages:read, devices:list, devices:write, webhooks:list, webhooks:write, settings:read, settings:write, logs:read, all:any</string>
+    <string name="jwt_issuer_must_not_be_empty">JWT issuer must not be empty</string>
+    <string name="jwt_ttl_must_be_positive_seconds">JWT TTL must be a positive number of seconds</string>
+    <string name="jwt_scopes_must_not_be_empty">JWT default scopes must not be empty</string>
+    <string name="jwt_scope_is_not_supported">Unsupported JWT scope: %1$s</string>
+
 </resources>

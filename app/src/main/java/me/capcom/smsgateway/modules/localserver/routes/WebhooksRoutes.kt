@@ -10,6 +10,8 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
+import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
+import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookDTO
 
@@ -25,9 +27,11 @@ class WebhooksRoutes(
 
     private fun Route.webhooksRoutes() {
         get {
+            if (!requireScope(AuthScopes.WEBHOOKS_LIST)) return@get
             call.respond(webHooksService.select(EntitySource.Local))
         }
         post {
+            if (!requireScope(AuthScopes.WEBHOOKS_WRITE)) return@post
             val webhook = call.receive<WebHookDTO>()
             if (webhook.deviceId != null && webhook.deviceId != localServerSettings.deviceId) {
                 throw IllegalArgumentException(
@@ -40,6 +44,7 @@ class WebhooksRoutes(
             call.respond(HttpStatusCode.Created, updated)
         }
         delete("/{id}") {
+            if (!requireScope(AuthScopes.WEBHOOKS_WRITE)) return@delete
             val id = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
             webHooksService.delete(EntitySource.Local, id)
             call.respond(HttpStatusCode.NoContent)

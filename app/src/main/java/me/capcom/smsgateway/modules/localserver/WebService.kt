@@ -19,6 +19,8 @@ import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.basic
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.BadRequestException
@@ -32,10 +34,14 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.util.date.GMTDate
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.data.dao.RevokedTokensDao
 import me.capcom.smsgateway.domain.HealthResponse
 import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.modules.health.HealthService
 import me.capcom.smsgateway.modules.health.domain.Status
+import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
+import me.capcom.smsgateway.modules.localserver.auth.JwtService
+import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.routes.AuthRoutes
 import me.capcom.smsgateway.modules.localserver.routes.DocsRoutes
@@ -53,6 +59,8 @@ class WebService : Service() {
     private val settings: LocalServerSettings by inject()
     private val notificationsService: NotificationsService by inject()
     private val healthService: HealthService by inject()
+    private val revokedTokensDao: RevokedTokensDao by inject()
+    private val jwtService: JwtService by lazy { JwtService(settings, revokedTokensDao) }
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -84,6 +92,18 @@ class WebService : Service() {
 
                             else -> null
                         }
+                    }
+                }
+                jwt("auth-jwt") {
+                    realm = "Access to SMS Gateway"
+                    verifier(jwtService.verifier())
+                    validate { credential ->
+                        val tokenId = credential.payload.id ?: return@validate null
+                        if (jwtService.isTokenRevoked(tokenId)) {
+                            return@validate null
+                        }
+
+                        JWTPrincipal(credential.payload)
                     }
                 }
             }
@@ -128,12 +148,13 @@ class WebService : Service() {
                         HealthResponse(healthResult)
                     )
                 }
-                authenticate("auth-basic") {
+                authenticate("auth-basic", "auth-jwt") {
                     get("/") {
                         call.respond(mapOf("status" to "ok", "model" to Build.MODEL))
                     }
                     route("/device") {
                         get {
+                            if (!requireScope(AuthScopes.DEVICES_LIST)) return@get
                             val firstInstallTime = packageManager.getPackageInfo(
                                 packageName,
                                 0
@@ -178,7 +199,7 @@ class WebService : Service() {
                         DocsRoutes(get()).register(this)
                     }
                     route("/auth") {
-                        AuthRoutes().register(this)
+                        AuthRoutes(jwtService).register(this)
                     }
                 }
             }

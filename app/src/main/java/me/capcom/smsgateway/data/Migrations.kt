@@ -84,3 +84,17 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
         database.execSQL("CREATE INDEX IF NOT EXISTS index_Message_processedAt ON message (processedAt)")
     }
 }
+
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `revoked_token` (
+                `id` TEXT NOT NULL,
+                `revokedAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent()
+        )
+    }
+}

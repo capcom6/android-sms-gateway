@@ -8,4 +8,5 @@ val dbModule = module {
     single { get<AppDatabase>().webhooksDao() }
     single { get<AppDatabase>().webhookQueueDao() }
     single { get<AppDatabase>().logDao() }
+    single { get<AppDatabase>().revokedTokensDao() }
 }

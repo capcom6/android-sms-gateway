@@ -6,6 +6,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
+import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
 import org.koin.android.ext.android.inject
 
 class LocalServerSettingsFragment : BasePreferenceFragment() {
@@ -16,6 +17,8 @@ class LocalServerSettingsFragment : BasePreferenceFragment() {
 
         findPreference<Preference>("transient.device_id")?.summary =
             settings.deviceId ?: getString(R.string.n_a)
+        findPreference<Preference>("transient.jwt_secret")?.summary =
+            settings.jwtSecret
 
         findPreference<EditTextPreference>("localserver.PORT")?.setOnPreferenceChangeListener { _, newValue ->
             val value = newValue as? String
@@ -51,10 +54,51 @@ class LocalServerSettingsFragment : BasePreferenceFragment() {
 
             true
         }
+
+        findPreference<EditTextPreference>("localserver.JWT_ISSUER")?.setOnPreferenceChangeListener { _, newValue ->
+            val value = (newValue as? String)?.trim().orEmpty()
+            if (value.isEmpty()) {
+                showToast(getString(R.string.jwt_issuer_must_not_be_empty))
+                return@setOnPreferenceChangeListener false
+            }
+
+            true
+        }
+        findPreference<EditTextPreference>("localserver.JWT_TTL_SECONDS")?.setOnPreferenceChangeListener { _, newValue ->
+            val value = newValue as? String
+            val ttl = value?.toLongOrNull()
+            if (ttl == null || ttl <= 0) {
+                showToast(getString(R.string.jwt_ttl_must_be_positive_seconds))
+                return@setOnPreferenceChangeListener false
+            }
+
+            true
+        }
+        findPreference<EditTextPreference>("localserver.JWT_DEFAULT_SCOPES")?.setOnPreferenceChangeListener { _, newValue ->
+            val value = (newValue as? String).orEmpty()
+            val scopes = value
+                .split(',')
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+
+            if (scopes.isEmpty()) {
+                showToast(getString(R.string.jwt_scopes_must_not_be_empty))
+                return@setOnPreferenceChangeListener false
+            }
+
+            val invalidScope = scopes.firstOrNull { it !in AuthScopes.allowed }
+            if (invalidScope != null) {
+                showToast(getString(R.string.jwt_scope_is_not_supported, invalidScope))
+                return@setOnPreferenceChangeListener false
+            }
+
+            true
+        }
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
         if (preference.key == "localserver.PORT"
+            || preference.key == "localserver.JWT_TTL_SECONDS"
         ) {
             (preference as EditTextPreference).setOnBindEditTextListener {
                 it.inputType = InputType.TYPE_CLASS_NUMBER
@@ -65,6 +109,8 @@ class LocalServerSettingsFragment : BasePreferenceFragment() {
 
         if (preference.key == "localserver.PASSWORD"
             || preference.key == "localserver.USERNAME"
+            || preference.key == "localserver.JWT_ISSUER"
+            || preference.key == "localserver.JWT_DEFAULT_SCOPES"
         ) {
             (preference as EditTextPreference).setOnBindEditTextListener {
                 it.inputType = InputType.TYPE_CLASS_TEXT

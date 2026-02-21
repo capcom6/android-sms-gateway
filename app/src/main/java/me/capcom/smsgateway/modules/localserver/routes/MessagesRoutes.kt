@@ -16,6 +16,8 @@ import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.helpers.DateTimeParser
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
+import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
+import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.GetMessageResponse
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
@@ -44,6 +46,7 @@ class MessagesRoutes(
 
     private fun Route.messagesRoutes() {
         get {
+            if (!requireScope(AuthScopes.MESSAGES_READ)) return@get
             // Parse and validate parameters
             val state = call.request.queryParameters["state"]?.takeIf { it.isNotEmpty() }
                 ?.let { ProcessingState.valueOf(it) }
@@ -106,6 +109,7 @@ class MessagesRoutes(
         }
 
         post {
+            if (!requireScope(AuthScopes.MESSAGES_SEND)) return@post
             val request = call.receive<PostMessageRequest>()
 
             if (request.deviceId?.let { it == settings.deviceId } == false) {
@@ -264,6 +268,7 @@ class MessagesRoutes(
             )
         }
         get("{id}") {
+            if (!requireScope(AuthScopes.MESSAGES_READ)) return@get
             val id = call.parameters["id"]
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
@@ -285,6 +290,7 @@ class MessagesRoutes(
 
     private fun Route.inboxRoutes(context: Context) {
         post("export") {
+            if (!requireScope(AuthScopes.MESSAGES_READ)) return@post
             val request = call.receive<PostMessagesInboxExportRequest>().validate()
             try {
                 receiverService.export(context, request.period)
