@@ -25,4 +25,15 @@ object AuthScopes {
         SETTINGS_WRITE,
         LOGS_READ,
     )
+
+    fun parseCsv(value: String): List<String> {
+        return value.split(',')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+    }
+
+    fun firstUnsupported(scopes: List<String>): String? {
+        return scopes.firstOrNull { it !in allowed }
+    }
 }
+

@@ -52,6 +52,15 @@ class LocalServerSettings(
             ?: "messages:send,messages:read,devices:list,devices:write,webhooks:list,webhooks:write,settings:read,settings:write,logs:read"
         set(value) = storage.set(JWT_DEFAULT_SCOPES, value)
 
+
+    fun regenerateJwtSecret(): String {
+        return NanoIdUtils.randomNanoId(
+            NanoIdUtils.DEFAULT_NUMBER_GENERATOR,
+            NanoIdUtils.DEFAULT_ALPHABET,
+            48
+        ).also { storage.set(JWT_SECRET, it) }
+    }
+
     companion object {
         private const val ENABLED = "ENABLED"
 

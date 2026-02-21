@@ -19,6 +19,21 @@ class LocalServerSettingsFragment : BasePreferenceFragment() {
             settings.deviceId ?: getString(R.string.n_a)
         findPreference<Preference>("transient.jwt_secret")?.summary =
             settings.jwtSecret
+        findPreference<Preference>("transient.jwt_regenerate_secret")?.setOnPreferenceClickListener {
+            val newSecret = settings.regenerateJwtSecret()
+            findPreference<Preference>("transient.jwt_secret")?.summary = newSecret
+            showToast(getString(R.string.jwt_secret_regenerated))
+            true
+        }
+        findPreference<Preference>("transient.jwt_reset_default_scopes")?.setOnPreferenceClickListener {
+            val restored = AuthScopes.allowed
+                .filter { it != AuthScopes.ALL_ANY }
+                .joinToString(",")
+            settings.jwtDefaultScopes = restored
+            findPreference<EditTextPreference>("localserver.JWT_DEFAULT_SCOPES")?.text = restored
+            showToast(getString(R.string.jwt_default_scopes_restored))
+            true
+        }
 
         findPreference<EditTextPreference>("localserver.PORT")?.setOnPreferenceChangeListener { _, newValue ->
             val value = newValue as? String
@@ -76,17 +91,14 @@ class LocalServerSettingsFragment : BasePreferenceFragment() {
         }
         findPreference<EditTextPreference>("localserver.JWT_DEFAULT_SCOPES")?.setOnPreferenceChangeListener { _, newValue ->
             val value = (newValue as? String).orEmpty()
-            val scopes = value
-                .split(',')
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
+            val scopes = AuthScopes.parseCsv(value)
 
             if (scopes.isEmpty()) {
                 showToast(getString(R.string.jwt_scopes_must_not_be_empty))
                 return@setOnPreferenceChangeListener false
             }
 
-            val invalidScope = scopes.firstOrNull { it !in AuthScopes.allowed }
+            val invalidScope = AuthScopes.firstUnsupported(scopes)
             if (invalidScope != null) {
                 showToast(getString(R.string.jwt_scope_is_not_supported, invalidScope))
                 return@setOnPreferenceChangeListener false

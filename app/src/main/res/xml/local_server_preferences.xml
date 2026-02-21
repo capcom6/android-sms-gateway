@@ -55,6 +55,18 @@
             android:title="@string/jwt_available_scopes"
             android:summary="@string/jwt_available_scopes_values"
             android:persistent="false" />
+        <Preference
+            android:icon="@drawable/ic_advanced"
+            android:key="transient.jwt_regenerate_secret"
+            android:title="@string/jwt_regenerate_secret"
+            android:summary="@string/jwt_regenerate_secret_summary"
+            android:persistent="false" />
+        <Preference
+            android:icon="@drawable/ic_advanced"
+            android:key="transient.jwt_reset_default_scopes"
+            android:title="@string/jwt_reset_default_scopes"
+            android:summary="@string/jwt_reset_default_scopes_summary"
+            android:persistent="false" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/device">

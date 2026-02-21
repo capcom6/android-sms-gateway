@@ -26,14 +26,11 @@ class JwtService(
             .map { it.trim() }
             .filter { it.isNotEmpty() }
             .ifEmpty {
-                settings.jwtDefaultScopes
-                    .split(',')
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
+                AuthScopes.parseCsv(settings.jwtDefaultScopes)
             }
 
         require(effectiveScopes.isNotEmpty()) { "scopes must not be empty" }
-        require(effectiveScopes.all { it in AuthScopes.allowed }) { "unsupported scope provided" }
+        require(AuthScopes.firstUnsupported(effectiveScopes) == null) { "unsupported scope provided" }
 
         val now = Date()
         val ttl = ttlSeconds ?: settings.jwtTtlSeconds
