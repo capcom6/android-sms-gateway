@@ -1262,14 +1262,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Webhook deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
+            "description": "Webhook deleted"
           },
           "401": {
             "description": "Unauthorized",
@@ -2221,16 +2214,12 @@
           },
           "event": {
             "type": "string",
-            "enum": [
-              "sms:received",
-              "sms:sent",
-              "system:ping",
-              "sms:delivered",
-              "sms:failed",
-              "mms:received",
-              "sms:data-received"
-            ],
-            "description": "The type of event that triggered the webhook."
+            "description": "The type of event that triggered the webhook.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.WebhookEvent"
+              }
+            ]
           },
           "payload": {
             "description": "The data associated with the event.",
@@ -2258,7 +2247,14 @@
               }
             ]
           }
-        }
+        },
+        "required": [
+          "id",
+          "webhookId",
+          "deviceId",
+          "event",
+          "payload"
+        ]
       },
       "SmsReceivedPayload": {
         "title": "SmsReceivedPayload",
@@ -2402,6 +2398,8 @@
         ]
       },
       "MmsReceivedPayload": {
+        "title": "MmsReceivedPayload",
+        "description": "Payload of `mms:received` event.",
         "allOf": [
           {
             "$ref": "#/components/schemas/SmsEventPayload"
