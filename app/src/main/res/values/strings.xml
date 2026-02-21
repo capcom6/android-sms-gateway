@@ -148,4 +148,15 @@
     <string name="sent_messages">Sent: %1$d</string>
     <string name="delivered_messages">Delivered: %1$d</string>
     <string name="failed_messages">Failed: %1$d</string>
+    <string name="jwt">JWT</string>
+    <string name="jwt_default_ttl_seconds">JWT default TTL (seconds)</string>
+    <string name="jwt_ttl_must_be_between_1_second_and_365_days">JWT TTL must be between 1 second and 365 days</string>
+    <string name="jwt_regenerate_secret">Regenerate JWT secret</string>
+    <string name="jwt_regenerate_secret_summary">Invalidates all existing JWT signatures
+        immediately.</string>
+    <string name="jwt_secret_regenerated">JWT secret regenerated</string>
+    <string name="confirm_regenerate_jwt_secret">Are you sure you want to regenerate the JWT secret?
+        This will invalidate all existing JWT signatures immediately.</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
 </resources>

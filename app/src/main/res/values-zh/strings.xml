@@ -135,4 +135,13 @@
     <string name="sent_messages">已发送：%1$d</string>
     <string name="delivered_messages">已送达：%1$d</string>
     <string name="failed_messages">失败：%1$d</string>
+    <string name="jwt">JWT</string>
+    <string name="jwt_default_ttl_seconds">JWT 默认 TTL（秒）</string>
+    <string name="jwt_ttl_must_be_between_1_second_and_365_days">JWT TTL 必须在 1 秒到 365 天之间</string>
+    <string name="jwt_regenerate_secret">重新生成 JWT 密钥</string>
+    <string name="jwt_regenerate_secret_summary">立即使所有现有的 JWT 签名无效</string>
+    <string name="jwt_secret_regenerated">JWT 密钥已重新生成</string>
+    <string name="confirm_regenerate_jwt_secret">您确定要重新生成 JWT 密钥吗？这将立即使所有现有的 JWT 签名无效。</string>
+    <string name="confirm">确认</string>
+    <string name="cancel">取消</string>
 </resources>
