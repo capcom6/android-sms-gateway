@@ -10,8 +10,8 @@ import me.capcom.smsgateway.data.entities.RevokedToken
 interface RevokedTokensDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun upsert(token: RevokedToken)
+    suspend fun upsert(token: RevokedToken)
 
     @Query("SELECT EXISTS (SELECT 1 FROM revoked_token WHERE id = :id)")
-    fun exists(id: String): Boolean
+    suspend fun exists(id: String): Boolean
 }
