@@ -2386,7 +2386,9 @@
             "properties": {
               "data": {
                 "type": "string",
-                "description": "Base64-encoded content of the SMS message received."
+                "description": "Base64-encoded content of the SMS message received.",
+                "format": "byte",
+                "pattern": "^[\\w\\d+\\/=]*$"
               },
               "receivedAt": {
                 "type": "string",
