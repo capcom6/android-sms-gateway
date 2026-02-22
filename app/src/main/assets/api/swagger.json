@@ -355,7 +355,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/logs": {
@@ -1333,7 +1334,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/health/ready": {
@@ -1364,7 +1366,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/health/startup": {
@@ -1395,7 +1398,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     }
   },
@@ -1432,10 +1436,8 @@
         "scheme": "basic"
       },
       "JWTAuth": {
-        "type": "apiKey",
-        "description": "JWT authentication",
-        "name": "Authorization",
-        "in": "header"
+        "type": "http",
+        "scheme": "bearer"
       }
     },
     "schemas": {
@@ -1468,7 +1470,8 @@
           },
           "expires_at": {
             "type": "string",
-            "description": "time at which the access token is no longer valid"
+            "description": "time at which the access token is no longer valid",
+            "format": "date-time"
           },
           "id": {
             "type": "string",
@@ -1809,6 +1812,7 @@
           "simNumber": {
             "type": "integer",
             "description": "SIM card number (1-3), if not set - default SIM will be used",
+            "minimum": 1,
             "maximum": 3,
             "example": 1
           },
