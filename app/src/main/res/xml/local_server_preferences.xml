@@ -24,6 +24,21 @@
             app:title="@string/password"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
+    <PreferenceCategory app:title="@string/jwt">
+        <EditTextPreference
+            app:icon="@drawable/ic_timer"
+            app:key="localserver.JWT_TTL_SECONDS"
+            app:title="@string/jwt_default_ttl_seconds"
+            app:defaultValue="86400"
+            app:useSimpleSummaryProvider="true" />
+        <Preference
+            android:icon="@drawable/ic_advanced"
+            android:key="transient.jwt_regenerate_secret"
+            android:title="@string/jwt_regenerate_secret"
+            android:summary="@string/jwt_regenerate_secret_summary"
+            android:persistent="false" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/device">
         <Preference
             android:icon="@drawable/ic_device_id"

@@ -7,6 +7,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.patch
+import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
+import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.settings.SettingsService
 
 class SettingsRoutes(
@@ -20,6 +22,7 @@ class SettingsRoutes(
 
     private fun Route.settingsRoutes() {
         get {
+            if (!requireScope(AuthScopes.SETTINGS_READ)) return@get
             try {
                 val settings = settingsService.getAll()
                 call.respond(settings)
@@ -32,6 +35,7 @@ class SettingsRoutes(
             }
         }
         patch {
+            if (!requireScope(AuthScopes.SETTINGS_WRITE)) return@patch
             try {
                 val settings = call.receive<Map<String, *>>()
 

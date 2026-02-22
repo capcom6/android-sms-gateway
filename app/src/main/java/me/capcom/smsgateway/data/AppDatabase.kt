@@ -6,10 +6,12 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import me.capcom.smsgateway.data.dao.MessagesDao
+import me.capcom.smsgateway.data.dao.RevokedTokensDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageState
 import me.capcom.smsgateway.data.entities.RecipientState
+import me.capcom.smsgateway.data.entities.RevokedToken
 import me.capcom.smsgateway.modules.logs.db.LogEntriesDao
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.webhooks.db.WebHook
@@ -26,8 +28,9 @@ import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueEntity
         WebHook::class,
         WebhookQueueEntity::class,
         LogEntry::class,
+        RevokedToken::class,
     ],
-    version = 17,
+    version = 18,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -45,6 +48,7 @@ import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueEntity
         AutoMigration(from = 14, to = 15),
         AutoMigration(from = 15, to = 16),
         AutoMigration(from = 16, to = 17),
+        // AutoMigration(from = 17, to = 18),   // manual migration
     ]
 )
 @TypeConverters(Converters::class)
@@ -53,6 +57,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun webhooksDao(): WebHooksDao
     abstract fun webhookQueueDao(): WebhookQueueDao
     abstract fun logDao(): LogEntriesDao
+    abstract fun revokedTokensDao(): RevokedTokensDao
 
     companion object {
         fun getDatabase(context: android.content.Context): AppDatabase {
@@ -64,6 +69,7 @@ abstract class AppDatabase : RoomDatabase() {
                 .addMigrations(
                     MIGRATION_7_8,
                     MIGRATION_13_14,
+                    MIGRATION_17_18,
                 )
                 .allowMainThreadQueries()
                 .build()
