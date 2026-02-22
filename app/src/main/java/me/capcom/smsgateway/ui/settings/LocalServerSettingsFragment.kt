@@ -82,8 +82,6 @@ class LocalServerSettingsFragment : BasePreferenceFragment() {
 
         if (preference.key == "localserver.PASSWORD"
             || preference.key == "localserver.USERNAME"
-            || preference.key == "localserver.JWT_ISSUER"
-            || preference.key == "localserver.JWT_DEFAULT_SCOPES"
         ) {
             (preference as EditTextPreference).setOnBindEditTextListener {
                 it.inputType = InputType.TYPE_CLASS_TEXT

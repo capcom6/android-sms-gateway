@@ -27,7 +27,7 @@ class AuthRoutes(
 
     private fun Route.tokenRoutes() {
         post {
-            if (!requireScope(AuthScopes.SETTINGS_WRITE)) return@post
+            if (!requireScope(AuthScopes.TOKENS_MANAGE)) return@post
             val request = call.receive<TokenRequest>()
             val token = jwtService.generateToken(request.scopes, request.ttl)
             call.respond(
@@ -41,7 +41,7 @@ class AuthRoutes(
             )
         }
         delete("/{jti}") {
-            if (!requireScope(AuthScopes.SETTINGS_WRITE)) return@delete
+            if (!requireScope(AuthScopes.TOKENS_MANAGE)) return@delete
             val jti = call.parameters["jti"]?.trim()
             if (jti.isNullOrEmpty()) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "jti is required"))

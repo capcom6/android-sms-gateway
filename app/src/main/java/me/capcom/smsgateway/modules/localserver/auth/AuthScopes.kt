@@ -11,6 +11,7 @@ object AuthScopes {
     const val SETTINGS_READ = "settings:read"
     const val SETTINGS_WRITE = "settings:write"
     const val LOGS_READ = "logs:read"
+    const val TOKENS_MANAGE = "tokens:manage"
 
     val allowed = setOf(
         ALL_ANY,
@@ -22,6 +23,7 @@ object AuthScopes {
         SETTINGS_READ,
         SETTINGS_WRITE,
         LOGS_READ,
+        TOKENS_MANAGE,
     )
 
     fun firstUnsupported(scopes: List<String>): String? {
