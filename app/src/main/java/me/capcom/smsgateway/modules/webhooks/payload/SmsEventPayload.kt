@@ -4,45 +4,54 @@ import java.util.Date
 
 sealed class SmsEventPayload(
     messageId: String,
-    phoneNumber: String,
+    sender: String?,
+    recipient: String?,
     simNumber: Int?,
-) : MessageEventPayload(messageId, phoneNumber, simNumber) {
+
+    phoneNumber: String,
+) : MessageEventPayload(messageId, sender, recipient, simNumber, phoneNumber) {
+
     class SmsSent(
         messageId: String,
-        phoneNumber: String,
+        sender: String?,
+        recipient: String,
         simNumber: Int?,
         val partsCount: Int,
         val sentAt: Date,
-    ) : SmsEventPayload(messageId, phoneNumber, simNumber)
+    ) : SmsEventPayload(messageId, sender, recipient, simNumber, recipient)
 
     class SmsDelivered(
         messageId: String,
-        phoneNumber: String,
+        sender: String?,
+        recipient: String,
         simNumber: Int?,
         val deliveredAt: Date,
-    ) : SmsEventPayload(messageId, phoneNumber, simNumber)
+    ) : SmsEventPayload(messageId, sender, recipient, simNumber, recipient)
 
     class SmsFailed(
         messageId: String,
-        phoneNumber: String,
+        sender: String?,
+        recipient: String,
         simNumber: Int?,
         val failedAt: Date,
         val reason: String,
-    ) : SmsEventPayload(messageId, phoneNumber, simNumber)
+    ) : SmsEventPayload(messageId, sender, recipient, simNumber, recipient)
 
     class SmsReceived(
         messageId: String,
-        phoneNumber: String,
+        sender: String,
+        recipient: String?,
         simNumber: Int?,
         val message: String,
         val receivedAt: Date,
-    ) : SmsEventPayload(messageId, phoneNumber, simNumber)
+    ) : SmsEventPayload(messageId, sender, recipient, simNumber, sender)
 
     class SmsDataReceived(
         messageId: String,
-        phoneNumber: String,
+        sender: String,
+        recipient: String?,
         simNumber: Int?,
         val data: String,
         val receivedAt: Date,
-    ) : SmsEventPayload(messageId, phoneNumber, simNumber)
+    ) : SmsEventPayload(messageId, sender, recipient, simNumber, sender)
 }
