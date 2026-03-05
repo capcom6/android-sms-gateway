@@ -37,6 +37,64 @@
         "description": "Payload of `mms:received` event.",
         "title": "MmsReceivedPayload"
       },
+      "MmsDownloadedPayload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "properties": {
+              "body": {
+                "description": "Aggregated text content of the MMS message.",
+                "nullable": true,
+                "type": "string"
+              },
+              "subject": {
+                "description": "Message subject line.",
+                "nullable": true,
+                "type": "string"
+              },
+              "attachments": {
+                "description": "Metadata for non-text MMS parts (no binary data).",
+                "items": {
+                  "$ref": "#/components/schemas/MmsDownloadedAttachment"
+                },
+                "type": "array"
+              },
+              "receivedAt": {
+                "description": "The timestamp when the MMS message was received.",
+                "format": "date-time",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "description": "Payload of `mms:downloaded` event. Includes message body and attachment metadata extracted from the content provider after the MMS has been fully downloaded.",
+        "title": "MmsDownloadedPayload"
+      },
+      "MmsDownloadedAttachment": {
+        "properties": {
+          "partId": {
+            "description": "The _id from content://mms/part.",
+            "type": "integer"
+          },
+          "contentType": {
+            "description": "MIME type of the attachment (e.g. image/jpeg, audio/amr).",
+            "type": "string"
+          },
+          "name": {
+            "description": "Filename of the attachment, if present.",
+            "nullable": true,
+            "type": "string"
+          },
+          "size": {
+            "description": "Size in bytes, 0 if unknown.",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "SmsDataReceivedPayload": {
         "allOf": [
           {
@@ -884,6 +942,7 @@
       },
       "smsgateway.WebhookEvent": {
         "enum": [
+          "mms:downloaded",
           "mms:received",
           "sms:data-received",
           "sms:delivered",
@@ -983,6 +1042,9 @@
               },
               {
                 "$ref": "#/components/schemas/MmsReceivedPayload"
+              },
+              {
+                "$ref": "#/components/schemas/MmsDownloadedPayload"
               }
             ]
           },

@@ -10,6 +10,7 @@ import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
+import me.capcom.smsgateway.modules.webhooks.payload.MmsDownloadedPayload
 import me.capcom.smsgateway.modules.webhooks.payload.MmsReceivedPayload
 import me.capcom.smsgateway.modules.webhooks.payload.SmsEventPayload
 import org.koin.core.component.KoinComponent
@@ -21,14 +22,27 @@ class ReceiverService : KoinComponent {
     private val logsService: LogsService by inject()
 
     private val eventsReceiver by lazy { EventsReceiver() }
+    private var mmsContentObserver: MmsContentObserver? = null
 
     fun start(context: Context) {
+        if (mmsContentObserver != null) {
+            return
+        }
+
         MessagesReceiver.register(context)
         MmsReceiver.register(context)
         eventsReceiver.start()
+
+        val observer = MmsContentObserver(context) { mmsId ->
+            processMmsDownloaded(context, mmsId)
+        }
+        observer.start()
+        mmsContentObserver = observer
     }
 
     fun stop(context: Context) {
+        mmsContentObserver?.stop()
+        mmsContentObserver = null
         eventsReceiver.stop()
         MmsReceiver.unregister(context)
         MessagesReceiver.unregister(context)
@@ -113,6 +127,45 @@ class ReceiverService : KoinComponent {
             "ReceiverService::process - message processed",
             mapOf("type" to type, "payload" to payload)
         )
+    }
+
+    private fun processMmsDownloaded(context: Context, mmsId: Long) {
+        val message = MmsContentReader.read(context, mmsId) ?: return
+
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "ReceiverService::processMmsDownloaded",
+            mapOf("mmsId" to mmsId)
+        )
+
+        val simSlotIndex = message.subscriptionId?.let {
+            SubscriptionsHelper.getSimSlotIndex(context, it)
+        }
+        val simNumber = simSlotIndex?.let { it + 1 }
+        val recipient = simSlotIndex?.let {
+            SubscriptionsHelper.getPhoneNumber(context, it)
+        }
+
+        val payload = MmsDownloadedPayload(
+            messageId = mmsId.toString(),
+            sender = message.sender,
+            recipient = recipient,
+            simNumber = simNumber,
+            body = message.body,
+            subject = message.subject,
+            attachments = message.attachments.map {
+                MmsDownloadedPayload.Attachment(
+                    partId = it.partId,
+                    contentType = it.contentType,
+                    name = it.name,
+                    size = it.size,
+                )
+            },
+            receivedAt = message.date,
+        )
+
+        webHooksService.emit(context, WebHookEvent.MmsDownloaded, payload)
     }
 
     fun select(context: Context, period: Pair<Date, Date>): List<InboxMessage> {
