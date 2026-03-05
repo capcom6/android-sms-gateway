@@ -55,7 +55,7 @@
                 "type": "string"
               },
               "attachments": {
-                "description": "Metadata for non-text MMS parts (no binary data).",
+                "description": "Metadata for non-text MMS parts, including optional Base64 content.",
                 "items": {
                   "$ref": "#/components/schemas/MmsDownloadedAttachment"
                 },
@@ -91,6 +91,13 @@
           "size": {
             "description": "Size in bytes, 0 if unknown.",
             "type": "integer"
+          },
+          "data": {
+            "description": "Base64-encoded attachment data, null if unavailable.",
+            "format": "byte",
+            "nullable": true,
+            "pattern": "^[\\w\\d+\\/=]*$",
+            "type": "string"
           }
         },
         "type": "object"
