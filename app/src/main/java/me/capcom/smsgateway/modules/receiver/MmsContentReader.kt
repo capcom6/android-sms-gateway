@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.util.Base64
 import java.util.Date
 
 object MmsContentReader {
@@ -23,6 +24,7 @@ object MmsContentReader {
         val contentType: String,
         val name: String?,
         val size: Long,
+        val data: String?,
     )
 
     fun read(context: Context, mmsId: Long): MmsMessage? {
@@ -100,6 +102,7 @@ object MmsContentReader {
                             contentType = contentType,
                             name = name,
                             size = size,
+                            data = readPartData(resolver, partId),
                         )
                     )
                 }
@@ -137,5 +140,17 @@ object MmsContentReader {
                 0L
             }
         } ?: 0L
+    }
+
+
+    private fun readPartData(resolver: ContentResolver, partId: Long): String? {
+        return try {
+            resolver.openInputStream(Uri.parse("content://mms/part/$partId"))?.use { input ->
+                val bytes = input.readBytes()
+                if (bytes.isNotEmpty()) Base64.encodeToString(bytes, Base64.NO_WRAP) else null
+            }
+        } catch (_: Exception) {
+            null
+        }
     }
 }

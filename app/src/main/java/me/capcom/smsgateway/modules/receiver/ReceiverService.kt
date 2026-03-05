@@ -163,6 +163,7 @@ class ReceiverService : KoinComponent {
                     contentType = it.contentType,
                     name = it.name,
                     size = it.size,
+                    data = it.data,
                 )
             },
             receivedAt = message.date,

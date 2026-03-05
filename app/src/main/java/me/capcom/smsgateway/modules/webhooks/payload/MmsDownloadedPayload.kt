@@ -18,5 +18,6 @@ class MmsDownloadedPayload(
         val contentType: String,
         val name: String?,
         val size: Long,
+        val data: String?,
     )
 }
