@@ -5,6 +5,7 @@ import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.Log
 
 class MmsContentObserver(
     private val context: Context,
@@ -53,7 +54,7 @@ class MmsContentObserver(
             Uri.parse("content://mms"),
             arrayOf("_id"),
             null, null,
-            "_id DESC"
+            "_id DESC LIMIT 1"
         ) ?: return 0
 
         return cursor.use { c ->
@@ -76,7 +77,11 @@ class MmsContentObserver(
         cursor.use { c ->
             while (c.moveToNext()) {
                 val mmsId = c.getLong(0)
-                onMmsDownloaded(mmsId)
+                try {
+                    onMmsDownloaded(mmsId)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed processing downloaded MMS (id=$mmsId)", e)
+                }
                 if (mmsId > newMark) {
                     newMark = mmsId
                 }
@@ -95,6 +100,7 @@ class MmsContentObserver(
     }
 
     companion object {
+        private const val TAG = "MmsContentObserver"
         private const val KEY_HIGH_WATER_MARK = "last_processed_mms_id"
     }
 }

@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.modules.receiver
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.os.Build
@@ -91,13 +92,7 @@ object MmsContentReader {
                         ?: c.getString(4)
                         ?: c.getString(5)
                     val dataPath = c.getString(6)
-                    val size = dataPath?.let {
-                        try {
-                            java.io.File(it).length()
-                        } catch (_: Exception) {
-                            0L
-                        }
-                    } ?: 0L
+                    val size = readPartSize(resolver, partId, dataPath)
 
                     attachments.add(
                         MmsAttachment(
@@ -120,5 +115,27 @@ object MmsContentReader {
             attachments = attachments,
             subscriptionId = subscriptionId,
         )
+    }
+
+    private fun readPartSize(resolver: ContentResolver, partId: Long, dataPath: String?): Long {
+        val sizeFromProvider = try {
+            resolver.openFileDescriptor(Uri.parse("content://mms/part/$partId"), "r")?.use { pfd ->
+                pfd.statSize
+            }
+        } catch (_: Exception) {
+            null
+        }
+
+        if (sizeFromProvider != null && sizeFromProvider >= 0L) {
+            return sizeFromProvider
+        }
+
+        return dataPath?.let {
+            try {
+                java.io.File(it).length()
+            } catch (_: Exception) {
+                0L
+            }
+        } ?: 0L
     }
 }

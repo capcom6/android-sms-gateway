@@ -22,10 +22,11 @@ class ReceiverService : KoinComponent {
     private val logsService: LogsService by inject()
 
     private val eventsReceiver by lazy { EventsReceiver() }
+    private var started = false
     private var mmsContentObserver: MmsContentObserver? = null
 
     fun start(context: Context) {
-        if (mmsContentObserver != null) {
+        if (started) {
             return
         }
 
@@ -38,11 +39,13 @@ class ReceiverService : KoinComponent {
         }
         observer.start()
         mmsContentObserver = observer
+        started = true
     }
 
     fun stop(context: Context) {
         mmsContentObserver?.stop()
         mmsContentObserver = null
+        started = false
         eventsReceiver.stop()
         MmsReceiver.unregister(context)
         MessagesReceiver.unregister(context)
