@@ -424,7 +424,7 @@ class MessagesService(
                         false -> sourcePhoneNumber
                     }
                     val normalizedPhoneNumber = when (request.params.skipPhoneValidation) {
-                        true -> phoneNumber.filter { it.isDigit() || it == '+' }
+                        true -> phoneNumber.filter { it.isDigit() || it == '+' || it == '*' || it == '#' }
                         false -> PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
                     }
 
