@@ -5,19 +5,20 @@ import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
 import android.os.HandlerThread
-import android.util.Log
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
+import me.capcom.smsgateway.modules.receiver.data.InboxMessage
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class MmsContentObserver(
-    private val context: Context,
-    private val onMmsDownloaded: (mmsId: Long) -> Unit,
-) {
-    private val prefs = context.getSharedPreferences("mms_observer", Context.MODE_PRIVATE)
+class MmsContentObserver : KoinComponent {
+    private val context: Context by inject()
+    private val storage: StateStorage by inject()
+    private val receiverSvc: ReceiverService by inject()
+    private val logsService: LogsService by inject()
+
     private var handlerThread: HandlerThread? = null
-    private var observer: Observer? = null
-
-    private var highWaterMark: Long
-        get() = prefs.getLong(KEY_HIGH_WATER_MARK, 0)
-        set(value) = prefs.edit().putLong(KEY_HIGH_WATER_MARK, value).apply()
+    private var observer: ContentObserver? = null
 
     fun start() {
         if (observer != null) {
@@ -25,14 +26,19 @@ class MmsContentObserver(
         }
 
         // Initialize high-water mark to current max ID if not set
-        if (highWaterMark == 0L) {
-            highWaterMark = queryMaxMmsId()
+        if (storage.mmsLastProcessedID == 0L) {
+            storage.mmsLastProcessedID = queryMaxMmsId()
         }
 
         val thread = HandlerThread("MmsContentObserver").apply { start() }
         handlerThread = thread
 
-        val obs = Observer(Handler(thread.looper))
+        val obs = object : ContentObserver(Handler(thread.looper)) {
+            override fun onChange(selfChange: Boolean) {
+                super.onChange(selfChange)
+                processNewMessages()
+            }
+        }
         observer = obs
 
         context.contentResolver.registerContentObserver(
@@ -63,7 +69,7 @@ class MmsContentObserver(
     }
 
     private fun processNewMessages() {
-        val mark = highWaterMark
+        val mark = storage.mmsLastProcessedID
         // msg_type 132 = retrieve-conf (fully downloaded), msg_box 1 = inbox
         val cursor = context.contentResolver.query(
             Uri.parse("content://mms"),
@@ -73,34 +79,49 @@ class MmsContentObserver(
             "_id ASC"
         ) ?: return
 
-        var newMark = mark
         cursor.use { c ->
             while (c.moveToNext()) {
                 val mmsId = c.getLong(0)
                 try {
-                    onMmsDownloaded(mmsId)
+                    processMmsDownloaded(mmsId)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed processing downloaded MMS (id=$mmsId)", e)
+                    logsService.insert(
+                        LogEntry.Priority.ERROR,
+                        MODULE_NAME,
+                        "Failed processing downloaded MMS (id=$mmsId)",
+                        mapOf("mmsId" to mmsId)
+                    )
                 }
-                if (mmsId > newMark) {
-                    newMark = mmsId
-                }
+                storage.mmsLastProcessedID = mmsId
             }
-        }
-
-        if (newMark > mark) {
-            highWaterMark = newMark
         }
     }
 
-    private inner class Observer(handler: Handler) : ContentObserver(handler) {
-        override fun onChange(selfChange: Boolean) {
-            processNewMessages()
-        }
+    private fun processMmsDownloaded(mmsId: Long) {
+        val message = MmsContentReader.read(context, mmsId) ?: return
+        receiverSvc.process(
+            context,
+            InboxMessage.MMS(
+                mmsId.toString(),
+                message.body,
+                message.subject,
+                message.attachments.map {
+                    InboxMessage.MMS.Attachment(
+                        it.partId,
+                        it.contentType,
+                        it.name,
+                        it.size,
+                        it.data
+                    )
+                },
+                message.sender,
+                message.date,
+                message.subscriptionId
+            )
+        )
     }
 
     companion object {
         private const val TAG = "MmsContentObserver"
-        private const val KEY_HIGH_WATER_MARK = "last_processed_mms_id"
     }
 }
