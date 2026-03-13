@@ -5,13 +5,15 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.util.Base64
+import java.io.IOException
+import java.nio.charset.Charset
 import java.util.Date
 
 object MmsContentReader {
 
     data class MmsMessage(
         val id: Long,
-        val sender: String?,
+        val sender: String,
         val subject: String?,
         val body: String?,
         val date: Date,
@@ -23,7 +25,7 @@ object MmsContentReader {
         val partId: Long,
         val contentType: String,
         val name: String?,
-        val size: Long,
+        val size: Long?,
         val data: String?,
     )
 
@@ -66,14 +68,14 @@ object MmsContentReader {
             null, null
         )?.use { c ->
             if (c.moveToFirst()) c.getString(0)?.takeIf { it.isNotBlank() } else null
-        }
+        } ?: "unknown"
 
         // 3. Parts (body text + attachment metadata)
         val partUri = Uri.parse("content://mms/$mmsId/part")
         val partCursor = resolver.query(
             partUri,
             arrayOf("_id", "ct", "text", "name", "fn", "cl", "_data"),
-            null, null, null
+            null, null, "_id"
         )
 
         val bodyParts = mutableListOf<String>()
@@ -83,13 +85,22 @@ object MmsContentReader {
             while (c.moveToNext()) {
                 val partId = c.getLong(0)
                 val contentType = c.getString(1) ?: continue
+                val mimeType = contentType.substringBefore(";").trim()
 
-                if (contentType == "text/plain") {
-                    val text = c.getString(2)
+                if (mimeType.equals("text/plain", ignoreCase = true)) {
+                    val text = c.getString(6)?.let {
+                        readTextPart(resolver, partId, contentType)
+                    }
+                        ?: c.getString(2)
+
                     if (!text.isNullOrBlank()) {
                         bodyParts.add(text)
                     }
-                } else if (contentType != "application/smil") {
+
+                    continue
+                }
+
+                if (!mimeType.equals("application/smil", ignoreCase = true)) {
                     val name = c.getString(3)
                         ?: c.getString(4)
                         ?: c.getString(5)
@@ -120,7 +131,7 @@ object MmsContentReader {
         )
     }
 
-    private fun readPartSize(resolver: ContentResolver, partId: Long, dataPath: String?): Long {
+    private fun readPartSize(resolver: ContentResolver, partId: Long, dataPath: String?): Long? {
         val sizeFromProvider = try {
             resolver.openFileDescriptor(Uri.parse("content://mms/part/$partId"), "r")?.use { pfd ->
                 pfd.statSize
@@ -137,9 +148,9 @@ object MmsContentReader {
             try {
                 java.io.File(it).length()
             } catch (_: Exception) {
-                0L
+                null
             }
-        } ?: 0L
+        }
     }
 
 
@@ -152,5 +163,41 @@ object MmsContentReader {
         } catch (_: Exception) {
             null
         }
+    }
+
+    private fun readTextPart(
+        resolver: ContentResolver,
+        partId: Long,
+        contentType: String?
+    ): String? {
+        return try {
+            resolver.openInputStream(Uri.parse("content://mms/part/$partId"))?.use { input ->
+                val bytes = input.readBytes()
+                if (bytes.isEmpty()) return null
+
+                val charset = parseCharset(contentType)
+                String(bytes, charset)
+            }
+        } catch (_: IOException) {
+            null
+        }
+    }
+
+    private fun parseCharset(contentType: String?): Charset {
+        if (contentType == null) return Charsets.UTF_8
+
+        val parts = contentType.split(";").map { it.trim() }
+        for (part in parts) {
+            if (part.startsWith("charset=", ignoreCase = true)) {
+                val charsetName =
+                    part.substringAfter("=").trim().removeSurrounding("\"").removeSurrounding("'")
+                return try {
+                    Charset.forName(charsetName)
+                } catch (_: IllegalArgumentException) {
+                    Charsets.UTF_8
+                }
+            }
+        }
+        return Charsets.UTF_8
     }
 }

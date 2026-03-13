@@ -22,30 +22,17 @@ class ReceiverService : KoinComponent {
     private val logsService: LogsService by inject()
 
     private val eventsReceiver by lazy { EventsReceiver() }
-    private var started = false
-    private var mmsContentObserver: MmsContentObserver? = null
+    private val mmsContentObserver by lazy { MmsContentObserver() }
 
     fun start(context: Context) {
-        if (started) {
-            return
-        }
-
         MessagesReceiver.register(context)
         MmsReceiver.register(context)
         eventsReceiver.start()
-
-        val observer = MmsContentObserver(context) { mmsId ->
-            processMmsDownloaded(context, mmsId)
-        }
-        observer.start()
-        mmsContentObserver = observer
-        started = true
+        mmsContentObserver.start()
     }
 
     fun stop(context: Context) {
-        mmsContentObserver?.stop()
-        mmsContentObserver = null
-        started = false
+        mmsContentObserver.stop()
         eventsReceiver.stop()
         MmsReceiver.unregister(context)
         MessagesReceiver.unregister(context)
@@ -109,7 +96,7 @@ class ReceiverService : KoinComponent {
                 recipient = recipient,
             )
 
-            is InboxMessage.Mms -> WebHookEvent.MmsReceived to MmsReceivedPayload(
+            is InboxMessage.MmsHeaders -> WebHookEvent.MmsReceived to MmsReceivedPayload(
                 messageId = message.messageId ?: message.transactionId,
                 simNumber = simNumber,
                 transactionId = message.transactionId,
@@ -119,6 +106,25 @@ class ReceiverService : KoinComponent {
                 receivedAt = message.date,
                 sender = sender,
                 recipient = recipient,
+            )
+
+            is InboxMessage.MMS -> WebHookEvent.MmsDownloaded to MmsDownloadedPayload(
+                messageId = message.messageId,
+                sender = sender,
+                recipient = recipient,
+                simNumber = simNumber,
+                body = message.body,
+                subject = message.subject,
+                attachments = message.attachments.map {
+                    MmsDownloadedPayload.Attachment(
+                        partId = it.partId,
+                        contentType = it.contentType,
+                        name = it.name,
+                        size = it.size,
+                        data = it.data
+                    )
+                },
+                receivedAt = message.date,
             )
         }
 
@@ -132,45 +138,6 @@ class ReceiverService : KoinComponent {
         )
     }
 
-    private fun processMmsDownloaded(context: Context, mmsId: Long) {
-        val message = MmsContentReader.read(context, mmsId) ?: return
-
-        logsService.insert(
-            LogEntry.Priority.DEBUG,
-            MODULE_NAME,
-            "ReceiverService::processMmsDownloaded",
-            mapOf("mmsId" to mmsId)
-        )
-
-        val simSlotIndex = message.subscriptionId?.let {
-            SubscriptionsHelper.getSimSlotIndex(context, it)
-        }
-        val simNumber = simSlotIndex?.let { it + 1 }
-        val recipient = simSlotIndex?.let {
-            SubscriptionsHelper.getPhoneNumber(context, it)
-        }
-
-        val payload = MmsDownloadedPayload(
-            messageId = mmsId.toString(),
-            sender = message.sender,
-            recipient = recipient,
-            simNumber = simNumber,
-            body = message.body,
-            subject = message.subject,
-            attachments = message.attachments.map {
-                MmsDownloadedPayload.Attachment(
-                    partId = it.partId,
-                    contentType = it.contentType,
-                    name = it.name,
-                    size = it.size,
-                    data = it.data,
-                )
-            },
-            receivedAt = message.date,
-        )
-
-        webHooksService.emit(context, WebHookEvent.MmsDownloaded, payload)
-    }
 
     fun select(context: Context, period: Pair<Date, Date>): List<InboxMessage> {
         logsService.insert(
