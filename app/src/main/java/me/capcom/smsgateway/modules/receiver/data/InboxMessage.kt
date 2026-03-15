@@ -30,7 +30,7 @@ sealed class InboxMessage(
         }
     }
 
-    class Mms(
+    class MmsHeaders(
         val messageId: String?,
         val transactionId: String,
         val subject: String?,
@@ -41,11 +41,37 @@ sealed class InboxMessage(
         subscriptionId: Int?
     ) : InboxMessage(address, date, subscriptionId) {
         override fun equals(other: Any?): Boolean {
-            return other is Mms && other.transactionId == this.transactionId
+            return other is MmsHeaders && other.transactionId == this.transactionId
         }
 
         override fun hashCode(): Int {
             return transactionId.hashCode()
+        }
+    }
+
+    class MMS(
+        val messageId: String,
+        val body: String?,
+        val subject: String?,
+        val attachments: List<Attachment>,
+        address: String,
+        date: Date,
+        subscriptionId: Int?
+    ) : InboxMessage(address, date, subscriptionId) {
+        class Attachment(
+            val partId: Long,
+            val contentType: String,
+            val name: String?,
+            val size: Long?,
+            val data: String?,
+        )
+
+        override fun equals(other: Any?): Boolean {
+            return other is MMS && other.messageId == this.messageId
+        }
+
+        override fun hashCode(): Int {
+            return messageId.hashCode()
         }
     }
 

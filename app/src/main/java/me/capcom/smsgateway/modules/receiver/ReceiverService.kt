@@ -10,6 +10,7 @@ import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
+import me.capcom.smsgateway.modules.webhooks.payload.MmsDownloadedPayload
 import me.capcom.smsgateway.modules.webhooks.payload.MmsReceivedPayload
 import me.capcom.smsgateway.modules.webhooks.payload.SmsEventPayload
 import org.koin.core.component.KoinComponent
@@ -21,14 +22,17 @@ class ReceiverService : KoinComponent {
     private val logsService: LogsService by inject()
 
     private val eventsReceiver by lazy { EventsReceiver() }
+    private val mmsContentObserver by lazy { MmsContentObserver() }
 
     fun start(context: Context) {
         MessagesReceiver.register(context)
         MmsReceiver.register(context)
         eventsReceiver.start()
+        mmsContentObserver.start()
     }
 
     fun stop(context: Context) {
+        mmsContentObserver.stop()
         eventsReceiver.stop()
         MmsReceiver.unregister(context)
         MessagesReceiver.unregister(context)
@@ -92,7 +96,7 @@ class ReceiverService : KoinComponent {
                 recipient = recipient,
             )
 
-            is InboxMessage.Mms -> WebHookEvent.MmsReceived to MmsReceivedPayload(
+            is InboxMessage.MmsHeaders -> WebHookEvent.MmsReceived to MmsReceivedPayload(
                 messageId = message.messageId ?: message.transactionId,
                 simNumber = simNumber,
                 transactionId = message.transactionId,
@@ -102,6 +106,25 @@ class ReceiverService : KoinComponent {
                 receivedAt = message.date,
                 sender = sender,
                 recipient = recipient,
+            )
+
+            is InboxMessage.MMS -> WebHookEvent.MmsDownloaded to MmsDownloadedPayload(
+                messageId = message.messageId,
+                sender = sender,
+                recipient = recipient,
+                simNumber = simNumber,
+                body = message.body,
+                subject = message.subject,
+                attachments = message.attachments.map {
+                    MmsDownloadedPayload.Attachment(
+                        partId = it.partId,
+                        contentType = it.contentType,
+                        name = it.name,
+                        size = it.size,
+                        data = it.data
+                    )
+                },
+                receivedAt = message.date,
             )
         }
 
@@ -114,6 +137,7 @@ class ReceiverService : KoinComponent {
             mapOf("type" to type, "payload" to payload)
         )
     }
+
 
     fun select(context: Context, period: Pair<Date, Date>): List<InboxMessage> {
         logsService.insert(

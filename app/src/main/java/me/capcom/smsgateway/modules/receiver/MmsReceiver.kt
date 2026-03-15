@@ -65,7 +65,7 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
             Log.d(TAG, "MMS received from ${mmsNotification.from}")
 
-            val mmsMessage = InboxMessage.Mms(
+            val mmsMessage = InboxMessage.MmsHeaders(
                 messageId = mmsNotification.messageId,
                 transactionId = mmsNotification.transactionId,
                 subject = mmsNotification.subject,
