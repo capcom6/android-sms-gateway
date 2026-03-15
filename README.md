@@ -63,6 +63,8 @@
   - [Local Server](#local-server)
   - [Cloud Server](#cloud-server)
   - [Webhooks](#webhooks)
+    - [Supported Events](#supported-events)
+    - [Setting Up Webhooks](#setting-up-webhooks)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -91,6 +93,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 📊 **Message status tracking:** Monitor the status of sent messages in real-time.
 - 🔔 **Real-time incoming message notifications:** Receive instant SMS and MMS notifications via webhooks.
 - 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) via the same webhooks used for real-time notifications.
+- 📎 **MMS download notifications:** Receive webhook notifications when MMS messages are fully downloaded, including message body and attachments.
 
 🔒 Security and Privacy:
 
@@ -236,6 +239,21 @@ For further privacy, you can deploy your own private server. See the [Private Se
 ### Webhooks
 
 Use webhooks to receive notifications for messaging events (e.g., incoming SMS and MMS).
+
+#### Supported Events
+
+| Event               | Description                                                                 |
+| ------------------- | --------------------------------------------------------------------------- |
+| `sms:received`      | Triggered when an SMS message is received                                   |
+| `sms:sent`          | Triggered when an SMS message is sent                                       |
+| `sms:delivered`     | Triggered when an SMS message is delivered                                  |
+| `sms:failed`        | Triggered when an SMS message fails to send                                 |
+| `sms:data-received` | Triggered when a data SMS is received                                       |
+| `mms:received`      | Triggered when an MMS notification is received (before download)            |
+| `mms:downloaded`    | Triggered when an MMS message is fully downloaded with body and attachments |
+| `system:ping`       | Periodic heartbeat event                                                    |
+
+#### Setting Up Webhooks
 
 Follow these steps to set up webhooks:
 
