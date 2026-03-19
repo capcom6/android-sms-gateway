@@ -1,6 +1,80 @@
 {
   "components": {
     "schemas": {
+      "MmsDownloadedAttachment": {
+        "properties": {
+          "contentType": {
+            "description": "MIME type of the attachment (e.g. image/jpeg, audio/amr).",
+            "type": "string"
+          },
+          "data": {
+            "description": "Base64-encoded attachment data, null if unavailable.",
+            "format": "byte",
+            "nullable": true,
+            "pattern": "^[\\w\\d+\\/=]*$",
+            "type": "string"
+          },
+          "name": {
+            "description": "Filename of the attachment, if present.",
+            "nullable": true,
+            "type": "string"
+          },
+          "partId": {
+            "description": "The _id from content://mms/part.",
+            "type": "integer"
+          },
+          "size": {
+            "description": "Size in bytes, 0 if unknown.",
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "partId",
+          "contentType"
+        ],
+        "type": "object"
+      },
+      "MmsDownloadedPayload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "properties": {
+              "attachments": {
+                "description": "Metadata for non-text MMS parts, including optional Base64 content.",
+                "items": {
+                  "$ref": "#/components/schemas/MmsDownloadedAttachment"
+                },
+                "type": "array"
+              },
+              "body": {
+                "description": "Aggregated text content of the MMS message.",
+                "nullable": true,
+                "type": "string"
+              },
+              "receivedAt": {
+                "description": "The timestamp when the MMS message was received.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "subject": {
+                "description": "Message subject line.",
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "required": [
+              "attachments",
+              "receivedAt"
+            ],
+            "type": "object"
+          }
+        ],
+        "description": "Payload of `mms:downloaded` event. Includes message body and attachment metadata extracted from the content provider after the MMS has been fully downloaded.",
+        "title": "MmsDownloadedPayload"
+      },
       "MmsReceivedPayload": {
         "allOf": [
           {
@@ -82,10 +156,10 @@
         "title": "SmsDeliveredPayload"
       },
       "SmsEventPayload": {
-        "description": "Base payload for SMS-related events.",
+        "description": "Base payload for message-related events.",
         "properties": {
           "messageId": {
-            "description": "The unique identifier of the SMS message.",
+            "description": "The unique identifier of the message.",
             "type": "string"
           },
           "phoneNumber": {
@@ -107,7 +181,7 @@
             "type": "integer"
           }
         },
-        "title": "SmsEventPayload",
+        "title": "MessageEventPayload",
         "type": "object"
       },
       "SmsFailedPayload": {
@@ -884,6 +958,7 @@
       },
       "smsgateway.WebhookEvent": {
         "enum": [
+          "mms:downloaded",
           "mms:received",
           "sms:data-received",
           "sms:delivered",
@@ -983,6 +1058,9 @@
               },
               {
                 "$ref": "#/components/schemas/MmsReceivedPayload"
+              },
+              {
+                "$ref": "#/components/schemas/MmsDownloadedPayload"
               }
             ]
           },
@@ -1024,7 +1102,7 @@
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
     },
     "title": "SMSGate API",
-    "version": "1.55.1"
+    "version": "1.56.0"
   },
   "openapi": "3.0.1",
   "paths": {
