@@ -2,7 +2,6 @@
     <string name="address_is">%1$s</string>
     <string name="api_url">API 地址</string>
     <string name="api_url_private_token_credentials_etc">API 地址、私有令牌、凭据等</string>
-    <string name="app_name">短信网关</string>
     <string name="app_version_build">应用版本（构建号）</string>
     <string name="battery_optimization">电池优化</string>
     <string name="battery_optimization_already_disabled">电池优化已禁用</string>
@@ -92,12 +91,10 @@
     <string name="server_address">服务器地址</string>
     <string name="set_maximum_value_to_activate">设置最大值以激活</string>
     <string name="settings_changed_via_api_restart_the_app_to_apply_changes">设置已通过 API 修改，重启应用以生效。</string>
-    <string name="settings_local_address_is">&lt;a href>%1$s:%2$d&lt;/a></string>
     <string name="settings_local_address_not_found">不可用</string>
     <string name="settings_local_server">本地服务器</string>
     <string name="settings_offline">离线</string>
     <string name="settings_online">在线</string>
-    <string name="settings_public_address_is">&lt;a href>%1$s:%2$d&lt;/a></string>
     <string name="settings_public_address_not_found">不可用</string>
     <string name="settings_start_on_boot">开机启动</string>
     <string name="sign_in">登录</string>
@@ -119,7 +116,6 @@
     <string name="username">用户名</string>
     <string name="username_must_be_at_least_3_characters">用户名长度至少 3 个字符</string>
     <string name="view">查看</string>
-    <string name="webhook_id_format">ID：%1$s</string>
     <string name="webhook_list_summary">查看已注册的 Webhook</string>
     <string name="webhook_list_title">已注册的 Webhook</string>
     <string name="webhooks">Webhook</string>
@@ -144,4 +140,10 @@
     <string name="confirm_regenerate_jwt_secret">您确定要重新生成 JWT 密钥吗？这将立即使所有现有的 JWT 签名无效。</string>
     <string name="confirm">确认</string>
     <string name="cancel">取消</string>
+    <string name="incoming_messages">接收</string>
+    <string name="incoming_messages_status">📥 接收状态</string>
+    <string name="incoming_sms_messages">短信：%1$d</string>
+    <string name="incoming_data_messages">数据短信：%1$d</string>
+    <string name="incoming_mms_messages">彩信：%1$d</string>
+    <string name="outgoing_messages">发送</string>
 </resources>

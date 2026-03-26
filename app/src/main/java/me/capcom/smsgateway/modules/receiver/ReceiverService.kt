@@ -5,6 +5,7 @@ import android.os.Build
 import android.provider.Telephony
 import android.util.Base64
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
+import me.capcom.smsgateway.modules.incoming.IncomingMessagesService
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
@@ -20,6 +21,7 @@ import java.util.Date
 class ReceiverService : KoinComponent {
     private val webHooksService: WebHooksService by inject()
     private val logsService: LogsService by inject()
+    private val incomingMessagesService: IncomingMessagesService by inject()
 
     private val eventsReceiver by lazy { EventsReceiver() }
     private val mmsContentObserver by lazy { MmsContentObserver() }
@@ -76,6 +78,21 @@ class ReceiverService : KoinComponent {
         }
 
         val sender = message.address
+
+        try {
+            incomingMessagesService.save(message, sender, recipient, simNumber)
+        } catch (e: Exception) {
+            logsService.insert(
+                LogEntry.Priority.ERROR,
+                MODULE_NAME,
+                "Failed to save message",
+                mapOf(
+                    "message" to message,
+                    "exception" to e.stackTraceToString(),
+                )
+            )
+        }
+
 
         val (type, payload) = when (message) {
             is InboxMessage.Text -> WebHookEvent.SmsReceived to SmsEventPayload.SmsReceived(
