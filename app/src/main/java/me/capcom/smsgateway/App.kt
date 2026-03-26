@@ -7,6 +7,7 @@ import me.capcom.smsgateway.modules.connection.connectionModule
 import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.events.eventBusModule
 import me.capcom.smsgateway.modules.gateway.GatewayService
+import me.capcom.smsgateway.modules.incoming.incomingModule
 import me.capcom.smsgateway.modules.localserver.localserverModule
 import me.capcom.smsgateway.modules.logs.logsModule
 import me.capcom.smsgateway.modules.messages.messagesModule
@@ -38,6 +39,7 @@ class App: Application() {
                 logsModule,
                 notificationsModule,
                 messagesModule,
+                incomingModule,
                 receiverModule,
                 encryptionModule,
                 me.capcom.smsgateway.modules.gateway.gatewayModule,

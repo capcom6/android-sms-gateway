@@ -91,6 +91,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 
 - 📜 **Multipart messages:** Send long messages with auto-partitioning.
 - 📊 **Message status tracking:** Monitor the status of sent messages in real-time.
+- 📥 **Incoming messages viewer:** View all received SMS, Data SMS, and MMS messages directly in the app with organized tabs and statistics.
 - 🔔 **Real-time incoming message notifications:** Receive instant SMS and MMS notifications via webhooks.
 - 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) via the same webhooks used for real-time notifications.
 - 📎 **MMS download notifications:** Receive webhook notifications when MMS messages are fully downloaded, including message body and attachments.
