@@ -1,28 +1,46 @@
 package me.capcom.smsgateway.modules.webhooks.db
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils
+import me.capcom.smsgateway.modules.webhooks.WebhookPayloadStorage
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+
 /**
  * Repository for webhook queue operations.
  * Provides business logic and a clean API for the rest of the application.
  */
 class WebhookQueueRepository(
     private val dao: WebhookQueueDao,
-) {
+) : KoinComponent {
+    private val payloadStorage: WebhookPayloadStorage by inject()
+
     /**
      * Enqueue a new webhook event for processing.
      */
     suspend fun enqueueWebhook(
         url: String,
         payload: String,
-    ): Long {
-        return dao.insertWebhook(
-            WebhookQueueEntity(
-                url = url,
-                payload = payload,
-                status = WebhookStatus.PENDING,
-                createdAt = System.currentTimeMillis(),
-                nextAttempt = System.currentTimeMillis()
-            )
-        )
+    ): String {
+        val id = NanoIdUtils.randomNanoId()
+        val payloadRef = payloadStorage.save(id, payload)
+
+        try {
+            dao.insertWebhook(
+                WebhookQueueEntity(
+                    id = id,
+                    url = url,
+                    payload = payloadRef,
+                    status = WebhookStatus.PENDING,
+                    createdAt = System.currentTimeMillis(),
+                    nextAttempt = System.currentTimeMillis()
+                )
+             )
+        } catch (e: Exception) {
+            payloadStorage.delete(id)
+            throw e
+        }
+
+        return id
     }
 
     /**
@@ -42,14 +60,15 @@ class WebhookQueueRepository(
     /**
      * Start processing a webhook by marking it as processing.
      */
-    suspend fun startProcessing(webhookId: Long) {
+    suspend fun startProcessing(webhookId: String) {
         dao.markAsProcessing(id = webhookId)
     }
 
     /**
      * Complete a webhook processing successfully.
      */
-    suspend fun completeWebhook(webhookId: Long) {
+    suspend fun completeWebhook(webhookId: String) {
+        payloadStorage.delete(webhookId)
         dao.markAsCompleted(id = webhookId)
     }
 
@@ -57,7 +76,7 @@ class WebhookQueueRepository(
      * Mark webhook as failed and schedule retry.
      */
     suspend fun scheduleRetry(
-        webhookId: Long,
+        webhookId: String,
         error: String?,
         maxRetries: Int = 3,
         baseDelayMs: Long = 5000L
@@ -75,8 +94,8 @@ class WebhookQueueRepository(
             )
         } else {
             // Max retries exceeded, mark as permanently failed
-            dao.markAsPermanentlyFailed(
-                id = webhookId,
+            permanentlyFailWebhook(
+                webhookId = webhookId,
                 error = error ?: "Max retries exceeded",
             )
         }
@@ -85,7 +104,8 @@ class WebhookQueueRepository(
     /**
      * Permanently fail a webhook.
      */
-    suspend fun permanentlyFailWebhook(webhookId: Long, error: String) {
+    suspend fun permanentlyFailWebhook(webhookId: String, error: String) {
+        payloadStorage.delete(webhookId.toString())
         dao.markAsPermanentlyFailed(
             id = webhookId,
             error = error
@@ -97,7 +117,9 @@ class WebhookQueueRepository(
      */
     suspend fun cleanupOldEntries(retentionDays: Int = 7) {
         val cutoffTime = System.currentTimeMillis() - (retentionDays * 24 * 60 * 60 * 1000L)
-        dao.cleanupOldEntries(cutoffTime)
+        val oldEntryIds = dao.getOldEntryIds(cutoffTime)
+        oldEntryIds.forEach { payloadStorage.delete(it) }
+        dao.cleanupOldEntries(oldEntryIds)
     }
 
     /**
@@ -123,11 +145,4 @@ class WebhookQueueRepository(
  */
 fun WebhookQueueEntity.canRetry(maxRetries: Int = 3): Boolean {
     return retryCount < maxRetries && status != WebhookStatus.PERMANENTLY_FAILED
-}
-
-/**
- * Extension function to check if webhook is in processing state.
- */
-fun WebhookQueueEntity.isProcessing(): Boolean {
-    return WebhookStatus.isProcessing(status)
 }

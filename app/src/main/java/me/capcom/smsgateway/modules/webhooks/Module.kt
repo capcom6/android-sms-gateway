@@ -7,6 +7,7 @@ import org.koin.dsl.module
 val webhooksModule = module {
     singleOf(::WebHooksService)
     singleOf(::WebhookQueueRepository)
+    singleOf(::WebhookPayloadStorage)
 }
 
 val NAME = "webhooks"

@@ -35,6 +35,7 @@ import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.webhooks.NAME
+import me.capcom.smsgateway.modules.webhooks.WebhookPayloadStorage
 import me.capcom.smsgateway.modules.webhooks.WebhooksSettings
 import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueEntity
 import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueRepository
@@ -57,6 +58,7 @@ class WebhookQueueProcessorWorker(
     private val notificationsSvc: NotificationsService by inject()
     private val logsSvc: LogsService by inject()
     private val webhookRepository: WebhookQueueRepository by inject()
+    private val payloadStorage: WebhookPayloadStorage by inject()
     private val settings: WebhooksSettings by inject()
 
     companion object {
@@ -296,7 +298,8 @@ class WebhookQueueProcessorWorker(
         withContext(Dispatchers.IO) {
             return@withContext try {
                 val url = webhook.url
-                val data = gson.fromJson(webhook.payload, JsonObject::class.java)
+                val payload = payloadStorage.read(webhook.payload) ?: return@withContext false
+                val data = gson.fromJson(payload, JsonObject::class.java)
                     ?: return@withContext false
 
                 val response = client.post(url) {
@@ -373,7 +376,7 @@ class WebhookQueueProcessorWorker(
     /**
      * Handle webhook failure and schedule retry if appropriate.
      */
-    private suspend fun handleWebhookFailure(webhookId: Long, error: String?) {
+    private suspend fun handleWebhookFailure(webhookId: String, error: String?) {
         try {
             webhookRepository.scheduleRetry(
                 webhookId = webhookId,
