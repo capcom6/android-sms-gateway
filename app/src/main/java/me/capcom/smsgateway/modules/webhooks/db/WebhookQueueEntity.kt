@@ -18,8 +18,8 @@ import androidx.room.TypeConverters
 )
 @TypeConverters(WebhookConverters::class)
 data class WebhookQueueEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String,
 
     @ColumnInfo(name = "url")
     val url: String,
