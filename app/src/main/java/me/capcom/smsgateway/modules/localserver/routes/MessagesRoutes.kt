@@ -18,14 +18,15 @@ import me.capcom.smsgateway.helpers.DateTimeParser
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
 import me.capcom.smsgateway.modules.localserver.auth.requireScope
-import me.capcom.smsgateway.modules.localserver.domain.GetMessageResponse
-import me.capcom.smsgateway.modules.localserver.domain.PostMessageRequest
-import me.capcom.smsgateway.modules.localserver.domain.PostMessageResponse
 import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
+import me.capcom.smsgateway.modules.localserver.domain.messages.DataMessage
+import me.capcom.smsgateway.modules.localserver.domain.messages.PostMessageRequest
+import me.capcom.smsgateway.modules.localserver.domain.messages.TextMessage
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.data.Message
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
+import me.capcom.smsgateway.modules.messages.exceptions.ConflictException
 import me.capcom.smsgateway.modules.receiver.ReceiverService
 import java.util.Date
 
@@ -52,6 +53,15 @@ class MessagesRoutes(
                 ?.let { ProcessingState.valueOf(it) }
             val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
             val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+            val includeContent = call.request.queryParameters["includeContent"]?.let {
+                it.toBooleanStrictOrNull() ?: run {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "includeContent must be true or false")
+                    )
+                    return@get
+                }
+            } ?: false
 
             // Parse date range parameters
             val from = call.request.queryParameters["from"]?.let {
@@ -104,7 +114,9 @@ class MessagesRoutes(
             call.response.headers.append("X-Total-Count", total.toString())
 
             call.respond(
-                messages.map { it.toDomain(requireNotNull(settings.deviceId)) } as GetMessageResponse
+                messages.map {
+                    it.toDomain(requireNotNull(settings.deviceId), includeContent)
+                }
             )
         }
 
@@ -244,27 +256,21 @@ class MessagesRoutes(
                     priority = request.priority,
                 )
             )
-            messagesService.enqueueMessage(sendRequest)
 
-            val messageId = sendRequest.message.id
+            val message = try {
+                messagesService.enqueueMessage(sendRequest)
+            } catch (e: ConflictException) {
+                call.respond(
+                    HttpStatusCode.Conflict,
+                    mapOf("message" to e.message)
+                )
+                return@post
+            }
+
 
             call.respond(
                 HttpStatusCode.Accepted,
-                PostMessageResponse(
-                    id = messageId,
-                    deviceId = requireNotNull(settings.deviceId),
-                    state = ProcessingState.Pending,
-                    isHashed = false,
-                    isEncrypted = request.isEncrypted ?: false,
-                    recipients = request.phoneNumbers.map {
-                        me.capcom.smsgateway.modules.localserver.domain.Message.Recipient(
-                            it,
-                            ProcessingState.Pending,
-                            null
-                        )
-                    },
-                    states = mapOf(ProcessingState.Pending to Date())
-                )
+                message.toDomain(requireNotNull(settings.deviceId), true)
             )
         }
         get("{id}") {
@@ -283,7 +289,10 @@ class MessagesRoutes(
             }
 
             call.respond(
-                message.toDomain(requireNotNull(settings.deviceId)) as PostMessageResponse
+                message.toDomain(
+                    requireNotNull(settings.deviceId),
+                    includeContent = true
+                )
             )
         }
     }
@@ -304,15 +313,36 @@ class MessagesRoutes(
         }
     }
 
-    private fun MessageWithRecipients.toDomain(deviceId: String) =
-        me.capcom.smsgateway.modules.localserver.domain.Message(
+    private fun MessageWithRecipients.toDomain(
+        deviceId: String,
+        includeContent: Boolean = false
+    ): me.capcom.smsgateway.modules.localserver.domain.messages.Message {
+        return me.capcom.smsgateway.modules.localserver.domain.messages.Message(
             id = message.id,
             deviceId = deviceId,
             state = message.state,
             isHashed = false,
             isEncrypted = message.isEncrypted,
+            textMessage = when (includeContent) {
+                true -> message.textContent?.let {
+                    TextMessage(it.text)
+                }
+
+                else -> null
+            },
+            dataMessage = when (includeContent) {
+                true -> message.dataContent?.let {
+                    DataMessage(
+                        data = it.data,
+                        port = it.port.toInt()
+                    )
+                }
+
+                else -> null
+            },
+            hashedMessage = null,
             recipients = recipients.map {
-                me.capcom.smsgateway.modules.localserver.domain.Message.Recipient(
+                me.capcom.smsgateway.modules.localserver.domain.messages.Message.Recipient(
                     it.phoneNumber,
                     it.state,
                     it.error
@@ -322,4 +352,5 @@ class MessagesRoutes(
                 it.state to Date(it.updatedAt)
             }
         )
+    }
 }

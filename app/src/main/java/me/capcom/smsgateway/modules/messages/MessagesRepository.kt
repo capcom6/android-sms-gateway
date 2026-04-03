@@ -28,15 +28,11 @@ class MessagesRepository(private val dao: MessagesDao) {
             ?: throw IllegalArgumentException("Message with id $id not found")
     }
 
-    fun enqueue(request: SendRequest) {
+    fun enqueue(request: SendRequest): MessageWithRecipients {
         val message = MessageWithRecipients(
             Message(
                 id = request.message.id,
-                type = when (request.message.content) {
-                    is MessageContent.Text -> MessageType.Text
-                    is MessageContent.Data -> MessageType.Data
-                },
-                content = gson.toJson(request.message.content),
+                content = request.message.content,
                 withDeliveryReport = request.params.withDeliveryReport,
                 simNumber = request.params.simNumber,
                 validUntil = request.params.validUntil,
@@ -57,6 +53,8 @@ class MessagesRepository(private val dao: MessagesDao) {
         )
 
         dao.insert(message)
+
+        return message
     }
 
     fun getPending(order: MessagesSettings.ProcessingOrder): StoredSendRequest? {
