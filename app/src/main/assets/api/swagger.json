@@ -215,7 +215,7 @@
             "format": "byte",
             "maxLength": 65535,
             "minLength": 4,
-            "pattern": "^[\\w\\d+\\/=]*$",
+            "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
             "type": "string"
           },
           "port": {
@@ -278,6 +278,15 @@
             "description": "Encryption contains settings related to message encryption.",
             "type": "object"
           },
+          "gateway": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.SettingsGateway"
+              }
+            ],
+            "description": "Gateway contains settings related to the gateway.",
+            "type": "object"
+          },
           "logs": {
             "allOf": [
               {
@@ -337,11 +346,29 @@
       },
       "smsgateway.GetMessageResponse": {
         "properties": {
+          "dataMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.DataMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is data.",
+            "type": "object"
+          },
           "deviceId": {
             "description": "Device ID",
             "example": "PyDmBQZZXYmyxMwED8Fzy",
             "maxLength": 21,
             "type": "string"
+          },
+          "hashedMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.HashedMessage"
+              }
+            ],
+            "description": "Hashed message content, if isHashed is true",
+            "type": "object"
           },
           "id": {
             "description": "Message ID",
@@ -375,13 +402,22 @@
             ],
             "description": "State",
             "example": "Pending",
-            "type": "string"
+            "type": "object"
           },
           "states": {
             "additionalProperties": {
               "type": "string"
             },
             "description": "History of states",
+            "type": "object"
+          },
+          "textMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.TextMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is text.",
             "type": "object"
           }
         },
@@ -390,6 +426,18 @@
           "id",
           "recipients",
           "state"
+        ],
+        "type": "object"
+      },
+      "smsgateway.HashedMessage": {
+        "properties": {
+          "hash": {
+            "example": "1d4b6e3b1b6e3b1b6e3b1b6e3b1b6e3b1b6e3b1b",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hash"
         ],
         "type": "object"
       },
@@ -462,7 +510,12 @@
           "warn",
           "fail"
         ],
-        "type": "string"
+        "type": "string",
+        "x-enum-varnames": [
+          "HealthStatusPass",
+          "HealthStatusWarn",
+          "HealthStatusFail"
+        ]
       },
       "smsgateway.LimitPeriod": {
         "enum": [
@@ -471,13 +524,19 @@
           "PerHour",
           "PerDay"
         ],
-        "type": "string"
+        "type": "string",
+        "x-enum-varnames": [
+          "Disabled",
+          "PerMinute",
+          "PerHour",
+          "PerDay"
+        ]
       },
       "smsgateway.LogEntry": {
         "properties": {
           "context": {
             "additionalProperties": {
-              "type": "string"
+              "type": "object"
             },
             "description": "Additional context information related to the log entry, typically including data relevant to the log event.",
             "type": "object"
@@ -518,7 +577,13 @@
           "WARN",
           "ERROR"
         ],
-        "type": "string"
+        "type": "string",
+        "x-enum-varnames": [
+          "LogEntryPriorityDebug",
+          "LogEntryPriorityInfo",
+          "LogEntryPriorityWarn",
+          "LogEntryPriorityError"
+        ]
       },
       "smsgateway.Message": {
         "properties": {
@@ -574,7 +639,7 @@
             ],
             "description": "Priority, messages with values greater than `99` will bypass limits and delays",
             "example": 0,
-            "type": "number"
+            "type": "object"
           },
           "simNumber": {
             "description": "SIM card number (1-3), if not set - default SIM will be used",
@@ -622,7 +687,22 @@
           127
         ],
         "format": "int32",
-        "type": "integer"
+        "type": "integer",
+        "x-enum-comments": {
+          "PriorityBypassThreshold": "Threshold at which messages bypass limits and delays"
+        },
+        "x-enum-descriptions": [
+          "",
+          "",
+          "Threshold at which messages bypass limits and delays",
+          ""
+        ],
+        "x-enum-varnames": [
+          "PriorityMinimum",
+          "PriorityDefault",
+          "PriorityBypassThreshold",
+          "PriorityMaximum"
+        ]
       },
       "smsgateway.MessagesExportRequest": {
         "properties": {
@@ -655,15 +735,37 @@
           "LIFO",
           "FIFO"
         ],
-        "type": "string"
+        "type": "string",
+        "x-enum-varnames": [
+          "LIFO",
+          "FIFO"
+        ]
       },
       "smsgateway.MessageState": {
         "properties": {
+          "dataMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.DataMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is data.",
+            "type": "object"
+          },
           "deviceId": {
             "description": "Device ID",
             "example": "PyDmBQZZXYmyxMwED8Fzy",
             "maxLength": 21,
             "type": "string"
+          },
+          "hashedMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.HashedMessage"
+              }
+            ],
+            "description": "Hashed message content, if isHashed is true",
+            "type": "object"
           },
           "id": {
             "description": "Message ID",
@@ -697,13 +799,22 @@
             ],
             "description": "State",
             "example": "Pending",
-            "type": "string"
+            "type": "object"
           },
           "states": {
             "additionalProperties": {
               "type": "string"
             },
             "description": "History of states",
+            "type": "object"
+          },
+          "textMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.TextMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is text.",
             "type": "object"
           }
         },
@@ -723,7 +834,28 @@
           "Delivered",
           "Failed"
         ],
-        "type": "string"
+        "type": "string",
+        "x-enum-comments": {
+          "ProcessingStateDelivered": "Delivered",
+          "ProcessingStateFailed": "Failed",
+          "ProcessingStatePending": "Pending",
+          "ProcessingStateProcessed": "Processed (received by device)",
+          "ProcessingStateSent": "Sent"
+        },
+        "x-enum-descriptions": [
+          "Pending",
+          "Processed (received by device)",
+          "Sent",
+          "Delivered",
+          "Failed"
+        ],
+        "x-enum-varnames": [
+          "ProcessingStatePending",
+          "ProcessingStateProcessed",
+          "ProcessingStateSent",
+          "ProcessingStateDelivered",
+          "ProcessingStateFailed"
+        ]
       },
       "smsgateway.RecipientState": {
         "properties": {
@@ -747,7 +879,7 @@
             ],
             "description": "State",
             "example": "Pending",
-            "type": "string"
+            "type": "object"
           }
         },
         "required": [
@@ -760,6 +892,27 @@
         "properties": {
           "passphrase": {
             "description": "Passphrase is the encryption passphrase. If nil or empty, encryption is disabled. Must not be used with Cloud Server.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "smsgateway.SettingsGateway": {
+        "properties": {
+          "cloud_url": {
+            "description": "CloudURL is the URL of the cloud server. Must not be used with Cloud Server.",
+            "type": "string"
+          },
+          "notification_channel": {
+            "description": "NotificationChannel is the way device receives notifications.",
+            "enum": [
+              "AUTO",
+              "SSE_ONLY"
+            ],
+            "type": "string"
+          },
+          "private_token": {
+            "description": "PrivateToken is the auth token for the private server. Must not be used with Cloud Server.",
             "type": "string"
           }
         },
@@ -861,7 +1014,12 @@
           "RoundRobin",
           "Random"
         ],
-        "type": "string"
+        "type": "string",
+        "x-enum-varnames": [
+          "OSDefault",
+          "RoundRobin",
+          "Random"
+        ]
       },
       "smsgateway.TextMessage": {
         "properties": {
@@ -913,6 +1071,10 @@
             "description": "unique identifier for the access token",
             "type": "string"
           },
+          "refresh_token": {
+            "description": "refresh token",
+            "type": "string"
+          },
           "token_type": {
             "description": "type of the access token",
             "type": "string"
@@ -936,7 +1098,7 @@
             ],
             "description": "The type of event the webhook is triggered for.",
             "example": "sms:received",
-            "type": "string"
+            "type": "object"
           },
           "id": {
             "description": "The unique identifier of the webhook.",
@@ -958,16 +1120,46 @@
       },
       "smsgateway.WebhookEvent": {
         "enum": [
-          "mms:downloaded",
-          "mms:received",
+          "sms:received",
           "sms:data-received",
+          "sms:sent",
           "sms:delivered",
           "sms:failed",
-          "sms:received",
-          "sms:sent",
-          "system:ping"
+          "system:ping",
+          "mms:received",
+          "mms:downloaded"
         ],
-        "type": "string"
+        "type": "string",
+        "x-enum-comments": {
+          "WebhookEventMmsDownloaded": "Triggered when an MMS is downloaded.",
+          "WebhookEventMmsReceived": "Triggered when an MMS is received.",
+          "WebhookEventSmsDataReceived": "Triggered when a data SMS is received.",
+          "WebhookEventSmsDelivered": "Triggered when an SMS is delivered.",
+          "WebhookEventSmsFailed": "Triggered when an SMS processing fails.",
+          "WebhookEventSmsReceived": "Triggered when an SMS is received.",
+          "WebhookEventSmsSent": "Triggered when an SMS is sent.",
+          "WebhookEventSystemPing": "Triggered when the device pings the server."
+        },
+        "x-enum-descriptions": [
+          "Triggered when an SMS is received.",
+          "Triggered when a data SMS is received.",
+          "Triggered when an SMS is sent.",
+          "Triggered when an SMS is delivered.",
+          "Triggered when an SMS processing fails.",
+          "Triggered when the device pings the server.",
+          "Triggered when an MMS is received.",
+          "Triggered when an MMS is downloaded."
+        ],
+        "x-enum-varnames": [
+          "WebhookEventSmsReceived",
+          "WebhookEventSmsDataReceived",
+          "WebhookEventSmsSent",
+          "WebhookEventSmsDelivered",
+          "WebhookEventSmsFailed",
+          "WebhookEventSystemPing",
+          "WebhookEventMmsReceived",
+          "WebhookEventMmsDownloaded"
+        ]
       },
       "SmsReceivedPayload": {
         "allOf": [
@@ -1085,8 +1277,28 @@
         "type": "http"
       },
       "JWTAuth": {
-        "scheme": "bearer",
-        "type": "http"
+        "description": "JWT authentication",
+        "in": "header",
+        "name": "Authorization",
+        "type": "apiKey"
+      },
+      "MobileToken": {
+        "description": "Mobile device token",
+        "in": "header",
+        "name": "Authorization",
+        "type": "apiKey"
+      },
+      "ServerKey": {
+        "description": "Private server authentication",
+        "in": "header",
+        "name": "Authorization",
+        "type": "apiKey"
+      },
+      "UserCode": {
+        "description": "User one-time code authentication",
+        "in": "header",
+        "name": "Authorization",
+        "type": "apiKey"
       }
     }
   },
@@ -1108,7 +1320,7 @@
   "paths": {
     "/auth/token": {
       "post": {
-        "description": "Generate new access token with specified scopes and ttl\n\n*Not available in Local Server mode*",
+        "description": "Generate new access token with specified scopes and ttl",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1170,6 +1382,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Not implemented"
           }
         },
         "security": [
@@ -1184,12 +1406,13 @@
         "tags": [
           "User",
           "Auth"
-        ]
+        ],
+        "x-codegen-request-body-name": "request"
       }
     },
     "/auth/token/{jti}": {
       "delete": {
-        "description": "Revoke access token with specified jti\n\n*Not available in Local Server mode*",
+        "description": "Revoke access token with specified jti",
         "parameters": [
           {
             "description": "JWT ID",
@@ -1203,6 +1426,7 @@
         ],
         "responses": {
           "204": {
+            "content": {},
             "description": "No Content"
           },
           "401": {
@@ -1234,6 +1458,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Not implemented"
           }
         },
         "security": [
@@ -1245,6 +1479,73 @@
           }
         ],
         "summary": "Revoke token",
+        "tags": [
+          "User",
+          "Auth"
+        ]
+      }
+    },
+    "/auth/token/refresh": {
+      "post": {
+        "description": "Refresh access token with specified refresh token\n\n*Not available in Local Server mode*",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.TokenResponse"
+                }
+              }
+            },
+            "description": "Token"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Not implemented"
+          }
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "Refresh token",
         "tags": [
           "User",
           "Auth"
@@ -1340,6 +1641,7 @@
         ],
         "responses": {
           "204": {
+            "content": {},
             "description": "Successfully removed"
           },
           "400": {
@@ -1684,6 +1986,15 @@
               "default": 0,
               "type": "integer"
             }
+          },
+          {
+            "description": "Include textMessage/dataMessage content for each message. Default is false",
+            "in": "query",
+            "name": "includeContent",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -1870,7 +2181,8 @@
         "tags": [
           "User",
           "Messages"
-        ]
+        ],
+        "x-codegen-request-body-name": "request"
       }
     },
     "/messages/{id}": {
@@ -2032,7 +2344,8 @@
         "tags": [
           "User",
           "Messages"
-        ]
+        ],
+        "x-codegen-request-body-name": "request"
       }
     },
     "/settings": {
@@ -2171,7 +2484,8 @@
         "tags": [
           "User",
           "Settings"
-        ]
+        ],
+        "x-codegen-request-body-name": "request"
       },
       "put": {
         "description": "Replaces settings",
@@ -2250,7 +2564,8 @@
         "tags": [
           "User",
           "Settings"
-        ]
+        ],
+        "x-codegen-request-body-name": "request"
       }
     },
     "/webhooks": {
@@ -2416,7 +2731,8 @@
         "tags": [
           "User",
           "Webhooks"
-        ]
+        ],
+        "x-codegen-request-body-name": "request"
       }
     },
     "/webhooks/{id}": {
@@ -2435,7 +2751,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Webhook deleted"
+            "description": "Successfully removed"
           },
           "401": {
             "content": {

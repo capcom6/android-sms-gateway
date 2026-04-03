@@ -1,16 +1,8 @@
-package me.capcom.smsgateway.modules.localserver.domain
+package me.capcom.smsgateway.modules.localserver.domain.messages
 
 import com.google.gson.annotations.SerializedName
 import java.util.Date
 
-data class DataMessage(
-    val data: String,  // Base64-encoded payload
-    val port: Int,      // Destination port (0-65535)
-)
-
-data class TextMessage(
-    val text: String,
-)
 
 data class PostMessageRequest(
     val id: String?,

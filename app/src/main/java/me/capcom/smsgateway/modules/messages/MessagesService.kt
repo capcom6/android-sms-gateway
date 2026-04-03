@@ -13,7 +13,6 @@ import android.telephony.SmsManager
 import android.telephony.SmsMessage
 import android.telephony.TelephonyManager
 import android.util.Base64
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
@@ -36,6 +35,7 @@ import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
+import me.capcom.smsgateway.modules.messages.exceptions.ConflictException
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.receivers.EventsReceiver
@@ -89,17 +89,18 @@ class MessagesService(
     //#endregion
 
     //#region Send
-    fun enqueueMessage(request: SendRequest) {
+    fun enqueueMessage(request: SendRequest): MessageWithRecipients {
         if (getMessage(request.message.id) != null) {
-            Log.d(this.javaClass.name, "Message already exists: ${request.message.id}")
-            return
+            throw ConflictException()
         }
 
-        messages.enqueue(request)
+        val message = messages.enqueue(request)
 
         val priority = request.params.priority ?: Message.PRIORITY_DEFAULT
 
         SendMessagesWorker.start(context, priority >= Message.PRIORITY_EXPEDITED)
+
+        return message
     }
     //#endregion
 
