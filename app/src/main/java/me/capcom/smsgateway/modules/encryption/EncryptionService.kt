@@ -36,6 +36,10 @@ class EncryptionService(
             params.getValue("i").toInt()
         )
 
+        // SECURITY NOTE: Using salt as IV weakens AES-CBC. Identical passphrase+salt
+        // pairs produce identical keystreams. A proper fix requires coordinated changes
+        // to both the encryption (server) and decryption (this app) sides to derive
+        // the IV independently — e.g., PBKDF2 output of 384 bits (256 key + 128 IV).
         return decryptText(text, secretKey, salt)
     }
 
