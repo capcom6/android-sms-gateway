@@ -25,6 +25,11 @@ class EncryptionService(
             throw RuntimeException("Missing iteration count")
         }
 
+        val iterationCount = params.getValue("i").toInt()
+        require(iterationCount >= MIN_ITERATIONS) {
+            "Iteration count too low: $iterationCount (minimum: $MIN_ITERATIONS)"
+        }
+
         val salt = decode(chunks[3])
         val text = chunks[4]
 
@@ -33,7 +38,7 @@ class EncryptionService(
             passphrase.toCharArray(),
             salt,
             256,
-            params.getValue("i").toInt()
+            iterationCount
         )
 
         return decryptText(text, secretKey, salt)
@@ -68,5 +73,9 @@ class EncryptionService(
         return params.split(',')
             .map { it.split('=', limit = 2) }
             .associate { it[0] to it[1] }
+    }
+
+    companion object {
+        const val MIN_ITERATIONS = 100_000
     }
 }
