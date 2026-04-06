@@ -37,4 +37,18 @@
         <item>AUTO</item>
         <item>SSE_ONLY</item>
     </string-array>
+    <string-array name="language_entries">
+        <item>@string/language_system</item>
+        <item>English</item>
+        <item>العربية</item>
+        <item>Русский</item>
+        <item>中文</item>
+    </string-array>
+    <string-array name="language_values">
+        <item></item>
+        <item>en</item>
+        <item>ar</item>
+        <item>ru</item>
+        <item>zh</item>
+    </string-array>
 </resources>

@@ -60,6 +60,12 @@
             app:key="system.disable_battery_optimizations"
             app:summary="@string/can_affect_battery_life"
             app:title="@string/battery_optimization" />
+        <ListPreference
+            android:entries="@array/language_entries"
+            android:entryValues="@array/language_values"
+            android:key="app.language"
+            android:title="@string/language"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/information">
