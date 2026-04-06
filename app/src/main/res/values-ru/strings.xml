@@ -167,4 +167,6 @@
     <string name="incoming_data_messages">Данные SMS: %1$d</string>
     <string name="incoming_mms_messages">MMS: %1$d</string>
     <string name="outgoing_messages">ИСХОДЯЩИЕ</string>
+    <string name="language">Язык</string>
+    <string name="language_system">Системный (по умолчанию)</string>
 </resources>

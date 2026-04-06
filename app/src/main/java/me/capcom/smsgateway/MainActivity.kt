@@ -10,10 +10,15 @@ import me.capcom.smsgateway.databinding.ActivityMainBinding
 import me.capcom.smsgateway.ui.HolderFragment
 import me.capcom.smsgateway.ui.HomeFragment
 import me.capcom.smsgateway.ui.SettingsFragment
+import me.capcom.smsgateway.helpers.LocaleHelper
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

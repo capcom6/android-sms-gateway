@@ -169,4 +169,6 @@
     <string name="incoming_type_sms" translatable="false">SMS</string>
     <string name="incoming_type_data_sms" translatable="false">Data SMS</string>
     <string name="incoming_type_mms" translatable="false">MMS</string>
+    <string name="language">Language</string>
+    <string name="language_system">System default</string>
 </resources>
