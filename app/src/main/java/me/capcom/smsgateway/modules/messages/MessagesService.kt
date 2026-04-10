@@ -16,6 +16,7 @@ import android.util.Base64
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
@@ -40,6 +41,7 @@ import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.receivers.EventsReceiver
 import java.util.Date
+import kotlin.coroutines.coroutineContext
 
 class MessagesService(
     private val context: Context,
@@ -78,7 +80,7 @@ class MessagesService(
 
     //#region Lifecycle
     fun start(context: Context) {
-        SendMessagesWorker.start(context, false)
+        SendMessagesWorker.start(context, false, SendMessagesWorker.IMMEDIATE)
         LogTruncateWorker.start(context)
     }
 
@@ -90,15 +92,28 @@ class MessagesService(
 
     //#region Send
     fun enqueueMessage(request: SendRequest): MessageWithRecipients {
+        val priority = request.params.priority ?: Message.PRIORITY_DEFAULT
+        val scheduleAt = request.params.scheduleAt?.time
+        val earliest = request.params.scheduleAt?.let {
+            val nextScheduled = dao.nextScheduledTime() ?: 0
+            nextScheduled != 0L && it.time < nextScheduled
+        } ?: true
+
         val message = try {
             messages.enqueue(request)
         } catch (_: android.database.sqlite.SQLiteConstraintException) {
             throw ConflictException()
         }
 
-        val priority = request.params.priority ?: Message.PRIORITY_DEFAULT
-
-        SendMessagesWorker.start(context, priority >= Message.PRIORITY_EXPEDITED)
+        if (scheduleAt != null && scheduleAt > System.currentTimeMillis()) {
+            SendMessagesWorker.start(context, earliest, scheduleAt)
+        } else {
+            SendMessagesWorker.start(
+                context,
+                priority >= Message.PRIORITY_EXPEDITED,
+                SendMessagesWorker.IMMEDIATE
+            )
+        }
 
         return message
     }
@@ -196,38 +211,48 @@ class MessagesService(
     }
 
     internal suspend fun sendPendingMessages() {
-        var previousPriority = Message.PRIORITY_MIN
+        try {
+            var previousPriority = Message.PRIORITY_MIN
 
-        while (true) {
-            val message = messages.getPending(settings.processingOrder) ?: return
-            delay(1L)
+            while (true) {
+                val message = messages.getPending(settings.processingOrder) ?: return
+                delay(1L)
 
-            val priority = message.params.priority ?: Message.PRIORITY_DEFAULT
+                val priority = message.params.priority ?: Message.PRIORITY_DEFAULT
 
-            // apply limits if:
-            // - message is not expedited
-            // - message is expedited and previous message had higher or equal priority
-            if (priority < Message.PRIORITY_EXPEDITED
-                || previousPriority >= priority
-            ) {
-                applyLimit()
-            }
+                // apply limits if:
+                // - message is not expedited
+                // - message is expedited and previous message had higher or equal priority
+                if (priority < Message.PRIORITY_EXPEDITED
+                    || previousPriority >= priority
+                ) {
+                    applyLimit()
+                }
 
-            if (!withContext(NonCancellable) { sendMessage(message) }) {
-                // if message was not sent - don't need any delay before next message
-                continue
-            }
+                if (!withContext(NonCancellable) { sendMessage(message) }) {
+                    // if message was not sent - don't need any delay before next message
+                    continue
+                }
 
-            // don't apply delay for expedited messages
-            if (priority >= Message.PRIORITY_EXPEDITED && previousPriority < priority) {
+                // don't apply delay for expedited messages
+                if (priority >= Message.PRIORITY_EXPEDITED && previousPriority < priority) {
+                    previousPriority = priority
+                    continue
+                }
+
                 previousPriority = priority
-                continue
+
+                settings.sendIntervalRange?.let {
+                    delay(it.random() * 1000L)
+                }
             }
-
-            previousPriority = priority
-
-            settings.sendIntervalRange?.let {
-                delay(it.random() * 1000L)
+        } finally {
+            if (coroutineContext.isActive) {
+                // After processing all pending messages, check if there are any scheduled messages for the future
+                val nextScheduledTime = dao.nextScheduledTime() ?: 0
+                if (nextScheduledTime > System.currentTimeMillis()) {
+                    SendMessagesWorker.start(context, true, nextScheduledTime)
+                }
             }
         }
     }

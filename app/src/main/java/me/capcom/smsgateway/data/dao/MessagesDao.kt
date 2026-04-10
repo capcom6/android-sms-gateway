@@ -15,6 +15,7 @@ import me.capcom.smsgateway.data.entities.MessagesTotals
 import me.capcom.smsgateway.data.entities.RecipientState
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.ProcessingState
+import java.util.Date
 
 @Dao
 interface MessagesDao {
@@ -45,15 +46,18 @@ interface MessagesDao {
      * FIFO: oldest pending first (priority DESC, createdAt ASC)
      */
     @Transaction
-    @Query("SELECT *, `rowid` FROM message WHERE state = 'Pending' ORDER BY priority DESC, createdAt ASC LIMIT 1")
-    fun getPendingFifo(): MessageWithRecipients?
+    @Query("SELECT *, `rowid` FROM message WHERE state = 'Pending' AND (scheduleAt IS NULL OR scheduleAt <= :now) ORDER BY priority DESC, createdAt ASC LIMIT 1")
+    fun getPendingFifo(now: Date): MessageWithRecipients?
 
     /**
      * LIFO: newest pending first (priority DESC, createdAt DESC)
      */
     @Transaction
-    @Query("SELECT *, `rowid` FROM message WHERE state = 'Pending' ORDER BY priority DESC, createdAt DESC LIMIT 1")
-    fun getPendingLifo(): MessageWithRecipients?
+    @Query("SELECT *, `rowid` FROM message WHERE state = 'Pending' AND (scheduleAt IS NULL OR scheduleAt <= :now) ORDER BY priority DESC, createdAt DESC LIMIT 1")
+    fun getPendingLifo(now: Date): MessageWithRecipients?
+
+    @Query("SELECT COALESCE(strftime('%s', MIN(`scheduleAt`)) * 1000, 0) FROM message WHERE state = 'Pending'")
+    fun nextScheduledTime(): Long?
 
     @Transaction
     @Query("SELECT *, `rowid` FROM message WHERE id = :id")

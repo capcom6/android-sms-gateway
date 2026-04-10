@@ -242,6 +242,7 @@ class GatewayService(
                 skipPhoneValidation = true,
                 simNumber = message.simNumber,
                 validUntil = message.validUntil,
+                scheduleAt = message.scheduleAt,
                 priority = message.priority,
             )
         )
