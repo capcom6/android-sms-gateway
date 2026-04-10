@@ -16,6 +16,37 @@ interface IncomingMessagesDao {
 
     @Query(
         """
+        SELECT COUNT(*)
+        FROM incoming_messages
+        WHERE (:type IS NULL OR type = :type)
+          AND createdAt BETWEEN :from AND :to
+        """
+    )
+    suspend fun count(type: IncomingMessageType?, from: Long, to: Long): Int
+
+    @Query(
+        """
+        SELECT *
+        FROM incoming_messages
+        WHERE (:type IS NULL OR type = :type)
+          AND createdAt BETWEEN :from AND :to
+        ORDER BY createdAt DESC, id DESC
+        LIMIT :limit OFFSET :offset
+        """
+    )
+    suspend fun select(
+        type: IncomingMessageType?,
+        from: Long,
+        to: Long,
+        limit: Int,
+        offset: Int
+    ): List<IncomingMessage>
+
+    @Query("SELECT * FROM incoming_messages WHERE id = :id LIMIT 1")
+    fun selectById(id: String): IncomingMessage?
+
+    @Query(
+        """
         SELECT
             COUNT(*) as total,
             COALESCE(SUM(CASE WHEN type = 'SMS' THEN 1 ELSE 0 END), 0) as sms,
