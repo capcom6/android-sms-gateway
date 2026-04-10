@@ -7,6 +7,10 @@ enum class AuthScopes(val value: String) {
     MessagesRead("messages:read"),
     MessagesExport("messages:export"),
 
+    InboxList("inbox:list"),
+    InboxRead("inbox:read"),
+    InboxRefresh("inbox:refresh"),
+
     DevicesList("devices:list"),
 
     WebhooksList("webhooks:list"),

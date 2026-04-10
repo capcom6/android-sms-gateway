@@ -302,7 +302,7 @@ class MessagesRoutes(
             if (!requireScope(AuthScopes.MessagesExport)) return@post
             val request = call.receive<PostMessagesInboxExportRequest>().validate()
             try {
-                receiverService.export(context, request.period)
+                receiverService.export(context, request.period, true)
                 call.respond(HttpStatusCode.Accepted)
             } catch (e: Exception) {
                 call.respond(
