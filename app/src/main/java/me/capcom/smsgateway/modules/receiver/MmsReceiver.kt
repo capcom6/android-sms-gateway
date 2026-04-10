@@ -77,7 +77,7 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
             )
 
             // Process the message using the existing ReceiverService
-            receiverSvc.process(context, mmsMessage)
+            receiverSvc.process(context, mmsMessage, true)
 
         } catch (e: Exception) {
             Log.e(TAG, "Error processing MMS", e)

@@ -45,7 +45,8 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
 
         receiverSvc.process(
             context,
-            inboxMessage
+            inboxMessage,
+            true,
         )
     }
 
