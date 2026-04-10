@@ -22,7 +22,8 @@ data class PostMessageRequest(
     @SerializedName("ttl")
     private val _ttl: Long?,
     @SerializedName("validUntil")
-    private val _validUntil: Date?
+    private val _validUntil: Date?,
+    val scheduleAt: Date? = null,
 ) {
     val validUntil: Date?
         get() {
@@ -39,4 +40,50 @@ data class PostMessageRequest(
 
             return validUntil
         }
+
+    fun validate(): PostMessageRequest {
+        val messageTypes =
+            listOfNotNull(textMessage, dataMessage, message)
+        when {
+            messageTypes.isEmpty() -> throw IllegalArgumentException("Must specify exactly one of: textMessage, dataMessage, or message")
+            messageTypes.size > 1 -> throw IllegalArgumentException("Cannot specify multiple message types simultaneously")
+        }
+
+        // Validate message parameters
+        if (message?.isEmpty() == true) {
+            throw IllegalArgumentException("Text message is empty")
+        }
+
+        // Validate data message parameters
+        dataMessage?.let { dataMsg ->
+            // Port validation
+            if (dataMsg.port < 0 || dataMsg.port > 65535) {
+                throw IllegalArgumentException("Port must be between 0 and 65535")
+            }
+
+            // Data validation (only for non-empty check)
+            if (dataMsg.data.isEmpty()) {
+                throw IllegalArgumentException("Data message cannot be empty")
+            }
+        }
+
+        // Validate text message parameters
+        if (textMessage?.text?.isEmpty() == true) {
+            throw IllegalArgumentException("Text message is empty")
+        }
+
+        if (phoneNumbers.isEmpty()) {
+            throw IllegalArgumentException("Empty phone numbers list")
+        }
+
+        if (simNumber != null && simNumber < 1) {
+            throw IllegalArgumentException("SIM number cannot be less than 1")
+        }
+
+        if (scheduleAt?.after(Date()) == false) {
+            throw IllegalArgumentException("scheduleAt must be in the future")
+        }
+
+        return this
+    }
 }

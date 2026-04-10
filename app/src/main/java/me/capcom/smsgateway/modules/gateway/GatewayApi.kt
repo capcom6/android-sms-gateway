@@ -196,6 +196,7 @@ class GatewayApi(
         val withDeliveryReport: Boolean?,
         val isEncrypted: Boolean?,
         val validUntil: Date?,
+        val scheduleAt: Date?,
         val priority: Byte?,
         val createdAt: Date?,
 

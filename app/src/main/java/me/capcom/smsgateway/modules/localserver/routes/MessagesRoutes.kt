@@ -122,7 +122,7 @@ class MessagesRoutes(
 
         post {
             if (!requireScope(AuthScopes.MessagesSend)) return@post
-            val request = call.receive<PostMessageRequest>()
+            val request = call.receive<PostMessageRequest>().validate()
 
             if (request.deviceId?.let { it == settings.deviceId } == false) {
                 call.respond(
@@ -132,86 +132,6 @@ class MessagesRoutes(
                 return@post
             }
 
-            val messageTypes =
-                listOfNotNull(request.textMessage, request.dataMessage, request.message)
-            when {
-                messageTypes.isEmpty() -> {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        mapOf("message" to "Must specify exactly one of: textMessage, dataMessage, or message")
-                    )
-                    return@post
-                }
-
-                messageTypes.size > 1 -> {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        mapOf("message" to "Cannot specify multiple message types simultaneously")
-                    )
-                    return@post
-                }
-            }
-
-            // Validate message parameters
-            request.message?.let { msg ->
-                // Text validation
-                if (msg.isEmpty()) {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        mapOf("message" to "Text message is empty")
-                    )
-                    return@post
-                }
-            }
-
-            // Validate data message parameters
-            request.dataMessage?.let { dataMsg ->
-                // Port validation
-                if (dataMsg.port < 0 || dataMsg.port > 65535) {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        mapOf("message" to "Port must be between 0 and 65535")
-                    )
-                    return@post
-                }
-
-                // Data validation (only for non-empty check)
-                if (dataMsg.data.isEmpty()) {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        mapOf("message" to "Data message cannot be empty")
-                    )
-                    return@post
-                }
-            }
-
-            // Validate text message parameters
-            request.textMessage?.let { textMsg ->
-                // Text validation
-                if (textMsg.text.isEmpty()) {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        mapOf("message" to "Text message is empty")
-                    )
-                    return@post
-                }
-            }
-
-            // Existing validation
-            if (request.phoneNumbers.isEmpty()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    mapOf("message" to "phoneNumbers is empty")
-                )
-                return@post
-            }
-            if (request.simNumber != null && request.simNumber < 1) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    mapOf("message" to "simNumber must be >= 1")
-                )
-                return@post
-            }
             val skipPhoneValidation =
                 call.request.queryParameters["skipPhoneValidation"]
                     ?.toBooleanStrict() ?: false
@@ -253,6 +173,7 @@ class MessagesRoutes(
                     skipPhoneValidation = skipPhoneValidation,
                     simNumber = request.simNumber,
                     validUntil = request.validUntil,
+                    scheduleAt = request.scheduleAt,
                     priority = request.priority,
                 )
             )
@@ -350,7 +271,8 @@ class MessagesRoutes(
             },
             states = states.associate {
                 it.state to Date(it.updatedAt)
-            }
+            },
+            scheduleAt = message.scheduleAt,
         )
     }
 }

@@ -18,6 +18,7 @@ import me.capcom.smsgateway.modules.notifications.NotificationsService
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
 class SendMessagesWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params), KoinComponent {
@@ -75,15 +76,23 @@ class SendMessagesWorker(appContext: Context, params: WorkerParameters) :
 
     companion object {
         private const val NAME = "SendMessagesWorker"
+        const val IMMEDIATE = 0L
 
-        fun start(context: Context, force: Boolean) {
+        fun start(context: Context, force: Boolean, scheduleAt: Long) {
+            val initialDelay = max(0, scheduleAt - System.currentTimeMillis())
+
             val work = OneTimeWorkRequestBuilder<SendMessagesWorker>()
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setBackoffCriteria(
                     BackoffPolicy.LINEAR,
                     WorkRequest.MIN_BACKOFF_MILLIS,
                     TimeUnit.MILLISECONDS
                 )
+                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+                .apply {
+                    if (initialDelay == 0L) {
+                        setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    }
+                }
                 .build()
 
             WorkManager.getInstance(context)

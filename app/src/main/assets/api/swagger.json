@@ -748,6 +748,12 @@
             "example": "2020-01-01T00:00:00Z",
             "type": "string"
           },
+          "scheduleAt": {
+            "description": "Schedule message delivery at (must be in the future)",
+            "example": "2020-01-01T08:30:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
           "withDeliveryReport": {
             "description": "With delivery report",
             "example": true,
