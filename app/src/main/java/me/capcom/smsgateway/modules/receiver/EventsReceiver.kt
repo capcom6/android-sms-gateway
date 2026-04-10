@@ -22,6 +22,7 @@ class EventsReceiver : EventsReceiver() {
                     service.export(
                         get(),
                         event.since to event.until,
+                        true,
                     )
                 }
             }

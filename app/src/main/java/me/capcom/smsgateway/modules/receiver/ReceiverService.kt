@@ -40,7 +40,7 @@ class ReceiverService : KoinComponent {
         MessagesReceiver.unregister(context)
     }
 
-    fun export(context: Context, period: Pair<Date, Date>) {
+    suspend fun export(context: Context, period: Pair<Date, Date>, triggerWebhooks: Boolean) {
         logsService.insert(
             LogEntry.Priority.DEBUG,
             MODULE_NAME,
@@ -50,7 +50,7 @@ class ReceiverService : KoinComponent {
 
         select(context, period)
             .forEach {
-                process(context, it)
+                process(context, it, triggerWebhooks)
             }
 
         logsService.insert(
@@ -61,7 +61,7 @@ class ReceiverService : KoinComponent {
         )
     }
 
-    fun process(context: Context, message: InboxMessage) {
+    fun process(context: Context, message: InboxMessage, triggerWebhooks: Boolean) {
         logsService.insert(
             LogEntry.Priority.DEBUG,
             MODULE_NAME,
@@ -93,65 +93,65 @@ class ReceiverService : KoinComponent {
             )
         }
 
+        if (triggerWebhooks) {
+            val (type, payload) = when (message) {
+                is InboxMessage.Text -> WebHookEvent.SmsReceived to SmsEventPayload.SmsReceived(
+                    messageId = message.hashCode().toUInt().toString(16),
+                    message = message.text,
+                    sender = sender,
+                    simNumber = simNumber,
+                    receivedAt = message.date,
+                    recipient = recipient,
+                )
 
-        val (type, payload) = when (message) {
-            is InboxMessage.Text -> WebHookEvent.SmsReceived to SmsEventPayload.SmsReceived(
-                messageId = message.hashCode().toUInt().toString(16),
-                message = message.text,
-                sender = sender,
-                simNumber = simNumber,
-                receivedAt = message.date,
-                recipient = recipient,
-            )
+                is InboxMessage.Data -> WebHookEvent.SmsDataReceived to SmsEventPayload.SmsDataReceived(
+                    messageId = message.hashCode().toUInt().toString(16),
+                    data = Base64.encodeToString(message.data, Base64.NO_WRAP),
+                    simNumber = simNumber,
+                    receivedAt = message.date,
+                    sender = sender,
+                    recipient = recipient,
+                )
 
-            is InboxMessage.Data -> WebHookEvent.SmsDataReceived to SmsEventPayload.SmsDataReceived(
-                messageId = message.hashCode().toUInt().toString(16),
-                data = Base64.encodeToString(message.data, Base64.NO_WRAP),
-                simNumber = simNumber,
-                receivedAt = message.date,
-                sender = sender,
-                recipient = recipient,
-            )
+                is InboxMessage.MmsHeaders -> WebHookEvent.MmsReceived to MmsReceivedPayload(
+                    messageId = message.messageId ?: message.transactionId,
+                    simNumber = simNumber,
+                    transactionId = message.transactionId,
+                    subject = message.subject,
+                    size = message.size,
+                    contentClass = message.contentClass,
+                    receivedAt = message.date,
+                    sender = sender,
+                    recipient = recipient,
+                )
 
-            is InboxMessage.MmsHeaders -> WebHookEvent.MmsReceived to MmsReceivedPayload(
-                messageId = message.messageId ?: message.transactionId,
-                simNumber = simNumber,
-                transactionId = message.transactionId,
-                subject = message.subject,
-                size = message.size,
-                contentClass = message.contentClass,
-                receivedAt = message.date,
-                sender = sender,
-                recipient = recipient,
-            )
+                is InboxMessage.MMS -> WebHookEvent.MmsDownloaded to MmsDownloadedPayload(
+                    messageId = message.messageId,
+                    sender = sender,
+                    recipient = recipient,
+                    simNumber = simNumber,
+                    body = message.body,
+                    subject = message.subject,
+                    attachments = message.attachments.map {
+                        MmsDownloadedPayload.Attachment(
+                            partId = it.partId,
+                            contentType = it.contentType,
+                            name = it.name,
+                            size = it.size,
+                            data = it.data
+                        )
+                    },
+                    receivedAt = message.date,
+                )
+            }
 
-            is InboxMessage.MMS -> WebHookEvent.MmsDownloaded to MmsDownloadedPayload(
-                messageId = message.messageId,
-                sender = sender,
-                recipient = recipient,
-                simNumber = simNumber,
-                body = message.body,
-                subject = message.subject,
-                attachments = message.attachments.map {
-                    MmsDownloadedPayload.Attachment(
-                        partId = it.partId,
-                        contentType = it.contentType,
-                        name = it.name,
-                        size = it.size,
-                        data = it.data
-                    )
-                },
-                receivedAt = message.date,
-            )
+            webHooksService.emit(context, type, payload)
         }
-
-        webHooksService.emit(context, type, payload)
 
         logsService.insert(
             LogEntry.Priority.DEBUG,
             MODULE_NAME,
             "ReceiverService::process - message processed",
-            mapOf("type" to type, "payload" to payload)
         )
     }
 
