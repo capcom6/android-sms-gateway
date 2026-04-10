@@ -31,6 +31,24 @@ class IncomingMessagesService(
         )
     }
 
+    suspend fun count(type: IncomingMessageType?, from: Long, to: Long): Int {
+        return repository.count(type, from, to)
+    }
+
+    suspend fun select(
+        type: IncomingMessageType?,
+        from: Long,
+        to: Long,
+        limit: Int,
+        offset: Int
+    ): List<IncomingMessage> {
+        return repository.select(type, from, to, limit, offset)
+    }
+
+    fun getById(id: String): IncomingMessage? {
+        return repository.selectById(id)
+    }
+
     private fun buildId(message: InboxMessage): String {
         val base = when (message) {
             is InboxMessage.MmsHeaders -> message.messageId ?: message.transactionId
