@@ -44,6 +44,7 @@ import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.routes.AuthRoutes
 import me.capcom.smsgateway.modules.localserver.routes.DocsRoutes
+import me.capcom.smsgateway.modules.localserver.routes.InboxRoutes
 import me.capcom.smsgateway.modules.localserver.routes.LogsRoutes
 import me.capcom.smsgateway.modules.localserver.routes.MessagesRoutes
 import me.capcom.smsgateway.modules.localserver.routes.WebhooksRoutes
@@ -174,6 +175,11 @@ class WebService : Service() {
                             it.register(this)
                         }
                         route("/messages") {
+                            it.register(this)
+                        }
+                    }
+                    InboxRoutes(applicationContext, get(), get(), get()).let {
+                        route("/inbox") {
                             it.register(this)
                         }
                     }
