@@ -61,6 +61,7 @@
             app:summary="@string/can_affect_battery_life"
             app:title="@string/battery_optimization" />
         <ListPreference
+            android:icon="@drawable/ic_language"
             android:entries="@array/language_entries"
             android:entryValues="@array/language_values"
             android:key="app.language"

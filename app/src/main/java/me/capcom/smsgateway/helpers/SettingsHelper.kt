@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import me.capcom.smsgateway.receivers.BootReceiver
+import java.util.Locale
 
 class SettingsHelper(private val context: Context) {
     private val settings = PreferenceManager.getDefaultSharedPreferences(context)
@@ -27,6 +28,17 @@ class SettingsHelper(private val context: Context) {
             settings.edit { putBoolean(PREF_KEY_AUTOSTART, value) }
         }
 
+    var language: String
+        get() {
+            return when (val stored = settings.getString(APP_LANGUAGE, "")) {
+                null, "system" -> ""   // keep legacy "system" compatible
+                else -> stored         // "" means "follow system"
+            }
+        }
+        set(value) = settings.edit(true) {
+            putString(APP_LANGUAGE, value)
+        }
+
     private fun migrate() {
         // remove after 2025-11-28
         val PREF_KEY_SERVER_TOKEN = "server_token"
@@ -41,6 +53,6 @@ class SettingsHelper(private val context: Context) {
     companion object {
         private const val PREF_KEY_AUTOSTART = "autostart"
 
-        private const val PREF_KEY_FCM_TOKEN = "fcm_token"
+        private const val APP_LANGUAGE = "app.language"
     }
 }

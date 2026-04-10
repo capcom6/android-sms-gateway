@@ -1,28 +1,27 @@
 <resources>
     <string name="address_is">%1$s</string>
-    <string name="api_url">API 地址</string>
-    <string name="api_url_private_token_credentials_etc">API 地址、私有令牌、凭据等</string>
+    <string name="api_url_private_token_credentials_etc">API URL、私有令牌、凭据等</string>
+    <string name="api_url">API URL</string>
     <string name="app_version_build">应用版本（构建号）</string>
-    <string name="battery_optimization">电池优化</string>
     <string name="battery_optimization_already_disabled">电池优化已禁用</string>
     <string name="battery_optimization_is_not_supported_on_this_device">此设备不支持电池优化</string>
+    <string name="battery_optimization">电池优化</string>
     <string name="btn_cancel">取消</string>
     <string name="btn_continue">继续</string>
     <string name="by_code">通过验证码</string>
     <string name="can_affect_battery_life">可能影响电池寿命</string>
-    <string
-        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">点击"继续"创建账户，无需提供个人信息。\n继续即表示您同意我们的隐私政策，详情见
+    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">点击"继续"创建账户，无需提供个人信息。\n继续即表示您同意我们的隐私政策，详情见
         https://docs.sms-gate.app/privacy/policy/</string>
-    <string name="cloud">云端</string>
-    <string name="cloud_server">云服务器</string>
     <string name="cloud_server_dotdotdot">云服务器…</string>
+    <string name="cloud_server">云服务器</string>
+    <string name="cloud">云端</string>
     <string name="copied_to_clipboard">已复制</string>
     <string name="credentials">凭据</string>
     <string name="delays_limits_etc">延迟、限制等</string>
     <string name="delays_seconds">延迟（秒）</string>
     <string name="delete_after_days">自动删除（天）</string>
-    <string name="device">设备</string>
     <string name="device_id">设备 ID</string>
+    <string name="device">设备</string>
     <string name="disabled">已禁用</string>
     <string name="dots">…</string>
     <string name="enabled">已启用</string>
@@ -43,18 +42,18 @@
     <string name="label_username">用户名</string>
     <string name="limits">限制</string>
     <string name="list_of_last_50_log_entries">最近 50 条日志记录</string>
-    <string name="local">本地</string>
     <string name="listening_to_the_server_events">正在监听服务器事件…</string>
     <string name="local_address">本地地址</string>
     <string name="local_server_dotdotdot">本地服务器…</string>
     <string name="local_sms_gateway_notifications">本地短信网关通知</string>
-    <string name="login_code">登录验证码</string>
+    <string name="local">本地</string>
     <string name="login_code_expires">登录验证码，有效期至 %1$s</string>
+    <string name="login_code">登录验证码</string>
     <string name="logs">日志</string>
     <string name="maximum">最大值</string>
-    <string name="messages">消息…</string>
     <string name="messages_count">消息数量</string>
     <string name="messages_header">消息</string>
+    <string name="messages">消息…</string>
     <string name="minimum">最小值</string>
     <string name="more_settings">更多设置…</string>
     <string name="n_a">无数据</string>
@@ -67,17 +66,17 @@
     <string name="notifications">通知</string>
     <string name="online_status_at_the_cost_of_battery_life">保持在线状态（可能消耗更多电量）</string>
     <string name="passphrase">密码短语</string>
-    <string name="password">密码</string>
     <string name="password_changed_successfully">密码修改成功</string>
     <string name="password_must_be_at_least_14_characters">密码长度至少 14 个字符</string>
     <string name="password_must_be_at_least_8_characters">密码长度至少 8 个字符</string>
+    <string name="password">密码</string>
     <string name="period">周期</string>
-    <string name="ping">心跳检测</string>
     <string name="ping_service_is_active">心跳服务已激活</string>
+    <string name="ping">心跳检测</string>
     <string name="please_enter_one_time_code_displayed_on_already_registered_device">
         请输入已注册设备上显示的一次性验证码</string>
-    <string name="port">端口</string>
     <string name="port_credentials_etc">端口、凭据等</string>
+    <string name="port">端口</string>
     <string name="private_token">私有令牌</string>
     <string name="public_address">公共地址</string>
     <string name="require_internet_connection">需要网络连接</string>
@@ -87,8 +86,8 @@
     <string name="send_messages_notification">发送消息中…</string>
     <string name="sending_webhook">发送 Webhook 中…</string>
     <string name="processing_webhook_queue">处理 Webhook 队列中…</string>
-    <string name="server">服务器</string>
     <string name="server_address">服务器地址</string>
+    <string name="server">服务器</string>
     <string name="set_maximum_value_to_activate">设置最大值以激活</string>
     <string name="settings_changed_via_api_restart_the_app_to_apply_changes">设置已通过 API 修改，重启应用以生效。</string>
     <string name="settings_local_address_not_found">不可用</string>
@@ -100,8 +99,8 @@
     <string name="sign_in">登录</string>
     <string name="sign_up">注册</string>
     <string name="signing_key">签名密钥</string>
-    <string name="sms_gateway">短信网关</string>
     <string name="sms_gateway_is_running_on_port">短信网关已在端口 %1$d 运行</string>
+    <string name="sms_gateway">短信网关</string>
     <string name="success_long_press_to_copy">成功，长按可复制</string>
     <string name="system">系统</string>
     <string name="tab_text_home">首页</string>
@@ -113,13 +112,13 @@
     <string name="to_apply_the_changes_restart_the_app_using_the_button_below">如需应用更改，请使用下方按钮重启应用。</string>
     <string name="use_empty_to_disable">留空则禁用</string>
     <string name="use_this_code_to_sign_in_on_another_device">使用此验证码在其他设备登录</string>
-    <string name="username">用户名</string>
     <string name="username_must_be_at_least_3_characters">用户名长度至少 3 个字符</string>
+    <string name="username">用户名</string>
     <string name="view">查看</string>
     <string name="webhook_list_summary">查看已注册的 Webhook</string>
     <string name="webhook_list_title">已注册的 Webhook</string>
-    <string name="webhooks">Webhook</string>
     <string name="webhooks_dotdotdot">Webhook…</string>
+    <string name="webhooks">Webhook</string>
     <plurals name="review_incoming_sms_webhooks">
         <item quantity="other">您已注册 %1$d 个短信接收 Webhook。请检查以避免安全风险。</item>
     </plurals>
@@ -131,6 +130,12 @@
     <string name="sent_messages">已发送：%1$d</string>
     <string name="delivered_messages">已送达：%1$d</string>
     <string name="failed_messages">失败：%1$d</string>
+    <string name="incoming_messages">接收</string>
+    <string name="incoming_messages_status">📥 接收状态</string>
+    <string name="incoming_sms_messages">短信：%1$d</string>
+    <string name="incoming_data_messages">数据短信：%1$d</string>
+    <string name="incoming_mms_messages">彩信：%1$d</string>
+    <string name="outgoing_messages">发送</string>
     <string name="jwt">JWT</string>
     <string name="jwt_default_ttl_seconds">JWT 默认 TTL（秒）</string>
     <string name="jwt_ttl_must_be_between_1_second_and_365_days">JWT TTL 必须在 1 秒到 365 天之间</string>
@@ -140,10 +145,6 @@
     <string name="confirm_regenerate_jwt_secret">您确定要重新生成 JWT 密钥吗？这将立即使所有现有的 JWT 签名无效。</string>
     <string name="confirm">确认</string>
     <string name="cancel">取消</string>
-    <string name="incoming_messages">接收</string>
-    <string name="incoming_messages_status">📥 接收状态</string>
-    <string name="incoming_sms_messages">短信：%1$d</string>
-    <string name="incoming_data_messages">数据短信：%1$d</string>
-    <string name="incoming_mms_messages">彩信：%1$d</string>
-    <string name="outgoing_messages">发送</string>
+    <string name="language">语言</string>
+    <string name="language_system">系统默认</string>
 </resources>
