@@ -14,8 +14,8 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import me.capcom.smsgateway.BuildConfig
-import me.capcom.smsgateway.R
 import me.capcom.smsgateway.MainActivity
+import me.capcom.smsgateway.R
 import me.capcom.smsgateway.helpers.LocaleHelper
 
 class SettingsFragment : PreferenceFragmentCompat() {
@@ -35,12 +35,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 if (isIgnoringBatteryOptimizations()) getString(R.string.disabled) else getString(R.string.enabled)
         }
 
-        findPreference<Preference>("app.language")?.setOnPreferenceChangeListener { _, _ ->
-            val intent = Intent(requireContext(), MainActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        findPreference<Preference>("app.language")?.setOnPreferenceChangeListener { _, newValue ->
+            LocaleHelper.setLocale(requireContext(), newValue as String)
+            val intent =
+                MainActivity.starter(requireContext(), MainActivity.TAB_INDEX_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
             startActivity(intent)
             requireActivity().finish()
-            true
+            false
         }
     }
 

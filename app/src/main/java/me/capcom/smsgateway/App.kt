@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import healthModule
 import me.capcom.smsgateway.data.dbModule
+import me.capcom.smsgateway.helpers.LocaleHelper
 import me.capcom.smsgateway.modules.connection.connectionModule
 import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.events.eventBusModule
@@ -20,7 +21,6 @@ import me.capcom.smsgateway.modules.receiver.receiverModule
 import me.capcom.smsgateway.modules.settings.settingsModule
 import me.capcom.smsgateway.modules.webhooks.webhooksModule
 import me.capcom.smsgateway.receivers.EventsReceiver
-import me.capcom.smsgateway.helpers.LocaleHelper
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
@@ -29,12 +29,11 @@ import org.koin.core.context.startKoin
 
 class App: Application() {
     override fun attachBaseContext(base: Context?) {
-        super.attachBaseContext(base?.let { LocaleHelper.onAttach(it) } ?: base)
+        super.attachBaseContext(base?.let { LocaleHelper.onAttach(it) })
     }
 
     override fun onCreate() {
         super.onCreate()
-        LocaleHelper.onAttach(this)
 
         startKoin {
             androidLogger()

@@ -93,7 +93,7 @@
     <string name="settings_offline">غير متصل</string>
     <string name="settings_online">متصل</string>
     <string name="settings_public_address_not_found">غير متاح</string>
-    <string name="settings_start_on_boot">بدء التشغيل عند بناء النظام</string>
+    <string name="settings_start_on_boot">بدء التشغيل عند إقلاع النظام</string>
     <string name="sign_in">تسجيل الدخول</string>
     <string name="sign_up">إنشاء حساب</string>
     <string name="signing_key">مفتاح التوقيع</string>
