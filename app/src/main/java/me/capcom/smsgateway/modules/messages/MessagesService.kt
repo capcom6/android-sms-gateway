@@ -90,11 +90,11 @@ class MessagesService(
 
     //#region Send
     fun enqueueMessage(request: SendRequest): MessageWithRecipients {
-        if (getMessage(request.message.id) != null) {
+        val message = try {
+            messages.enqueue(request)
+        } catch (_: android.database.sqlite.SQLiteConstraintException) {
             throw ConflictException()
         }
-
-        val message = messages.enqueue(request)
 
         val priority = request.params.priority ?: Message.PRIORITY_DEFAULT
 
