@@ -1102,7 +1102,7 @@
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
     },
     "title": "SMSGate API",
-    "version": "1.57.0"
+    "version": "1.57.1"
   },
   "openapi": "3.0.1",
   "paths": {
