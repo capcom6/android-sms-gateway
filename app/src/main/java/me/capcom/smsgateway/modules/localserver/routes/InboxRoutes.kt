@@ -16,7 +16,7 @@ import me.capcom.smsgateway.modules.incoming.db.IncomingMessageType
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
 import me.capcom.smsgateway.modules.localserver.auth.requireScope
-import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
+import me.capcom.smsgateway.modules.localserver.domain.InboxRefreshRequest
 import me.capcom.smsgateway.modules.receiver.ReceiverService
 import java.util.Date
 
@@ -158,7 +158,7 @@ class InboxRoutes(
             if (!requireScope(AuthScopes.InboxRefresh)) return@post
 
             val request = try {
-                call.receive<PostMessagesInboxExportRequest>().validate()
+                call.receive<InboxRefreshRequest>().validate()
             } catch (e: IllegalArgumentException) {
                 call.respond(
                     HttpStatusCode.BadRequest,
@@ -171,7 +171,12 @@ class InboxRoutes(
             }
 
             try {
-                receiverService.export(context, request.period, false)
+                receiverService.export(
+                    context,
+                    request.period,
+                    request.messageTypes ?: setOf(IncomingMessageType.SMS),
+                    request.triggerWebhooks ?: false,
+                )
                 call.respond(HttpStatusCode.Accepted)
             } catch (e: CancellationException) {
                 throw e

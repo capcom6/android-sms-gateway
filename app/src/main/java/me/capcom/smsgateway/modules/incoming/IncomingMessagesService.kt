@@ -1,15 +1,28 @@
 package me.capcom.smsgateway.modules.incoming
 
+import android.content.Context
+import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessage
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessageType
 import me.capcom.smsgateway.modules.incoming.repositories.IncomingMessagesRepository
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
-import java.util.UUID
 
 class IncomingMessagesService(
+    private val context: Context,
     private val repository: IncomingMessagesRepository,
+    private val logsService: LogsService,
 ) {
-    fun save(message: InboxMessage, sender: String, recipient: String?, simNumber: Int?) {
+    fun save(message: InboxMessage): IncomingMessage {
+        val simSlotIndex = message.subscriptionId?.let {
+            SubscriptionsHelper.getSimSlotIndex(context, it)
+        }
+        val simNumber = simSlotIndex?.let { it + 1 }
+        val recipient = simSlotIndex?.let {
+            SubscriptionsHelper.getPhoneNumber(context, it)
+        }
+
         val type = when (message) {
             is InboxMessage.Text -> IncomingMessageType.SMS
             is InboxMessage.Data -> IncomingMessageType.DATA_SMS
@@ -17,18 +30,30 @@ class IncomingMessagesService(
             is InboxMessage.MMS -> IncomingMessageType.MMS_DOWNLOADED
         }
 
-        repository.insert(
-            IncomingMessage(
-                id = buildId(message),
-                type = type,
-                sender = sender,
-                recipient = recipient,
-                simNumber = simNumber,
-                subscriptionId = message.subscriptionId,
-                contentPreview = message.toPreview(),
-                createdAt = message.date.time,
-            )
-        )
+        return IncomingMessage(
+            id = buildId(message),
+            type = type,
+            sender = message.address,
+            recipient = recipient,
+            simNumber = simNumber,
+            subscriptionId = message.subscriptionId,
+            contentPreview = message.toPreview(),
+            createdAt = message.date.time,
+        ).also {
+            try {
+                repository.insert(it)
+            } catch (e: Exception) {
+                logsService.insert(
+                    LogEntry.Priority.ERROR,
+                    MODULE_NAME,
+                    "Failed to save message",
+                    mapOf(
+                        "message" to message,
+                        "exception" to e.stackTraceToString(),
+                    )
+                )
+            }
+        }
     }
 
     suspend fun count(type: IncomingMessageType?, from: Long, to: Long): Int {
@@ -50,21 +75,25 @@ class IncomingMessagesService(
     }
 
     private fun buildId(message: InboxMessage): String {
-        val base = when (message) {
-            is InboxMessage.MmsHeaders -> message.messageId ?: message.transactionId
-            is InboxMessage.MMS -> message.messageId
-            else -> null
+        val prefix = when (message) {
+            is InboxMessage.Data -> "data:"
+            is InboxMessage.MMS -> "mms:"
+            is InboxMessage.MmsHeaders -> "mms-header:"
+            is InboxMessage.Text -> "text:"
         }
 
-        return base ?: UUID.nameUUIDFromBytes(
-            "${message.address}-${message.date.time}-${message.subscriptionId}".toByteArray()
-        ).toString()
+        return prefix + message.hashCode().toString()
     }
 
     private fun InboxMessage.toPreview(): String {
         return when (this) {
             is InboxMessage.Text -> text
-            is InboxMessage.Data -> data?.let { "Binary data (${it.size} bytes)" } ?: "Binary data"
+            is InboxMessage.Data -> data?.let { bytes ->
+                val preview = bytes.take(64).joinToString(separator = "") { "%02x".format(it) }
+                if (bytes.size > 64) "$preview..." else preview
+            }
+                ?: "Empty data"
+
             is InboxMessage.MmsHeaders -> subject ?: "MMS notification"
             is InboxMessage.MMS -> body ?: subject ?: "MMS content"
         }

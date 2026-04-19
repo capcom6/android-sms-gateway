@@ -20,9 +20,10 @@ class EventsReceiver : EventsReceiver() {
                     Log.d("EventsReceiver", "Event: $event")
 
                     service.export(
-                        get(),
-                        event.since to event.until,
-                        true,
+                        context = get(),
+                        period = event.since to event.until,
+                        messageTypes = event.messageTypes,
+                        triggerWebhooks = event.triggerWebhooks,
                     )
                 }
             }

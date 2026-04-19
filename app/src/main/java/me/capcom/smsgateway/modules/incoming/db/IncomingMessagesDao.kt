@@ -56,4 +56,15 @@ interface IncomingMessagesDao {
         """
     )
     fun getStats(): LiveData<IncomingMessageTotals>
+
+    @Query(
+        """
+            DELETE FROM incoming_messages
+            WHERE type IN (:types) AND createdAt BETWEEN :from and :to 
+        """
+    )
+    fun delete(from: Long, to: Long, types: Set<IncomingMessageType>)
+
+    @Query("DELETE FROM incoming_messages WHERE createdAt < :until")
+    fun truncate(until: Long)
 }
