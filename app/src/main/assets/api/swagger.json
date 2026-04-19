@@ -517,6 +517,45 @@
           "HealthStatusFail"
         ]
       },
+      "smsgateway.InboxRefreshRequest": {
+        "properties": {
+          "deviceId": {
+            "description": "DeviceID is the ID of the device to export messages for.",
+            "example": "PyDmBQZZXYmyxMwED8Fzy",
+            "maxLength": 21,
+            "type": "string"
+          },
+          "messageTypes": {
+            "description": "MessageTypes is the list of message types to export. By default, SMS messages are exported.",
+            "items": {
+              "$ref": "#/components/schemas/smsgateway.IncomingMessageType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "since": {
+            "description": "Since is the start of the time range to export.",
+            "example": "2024-01-01T00:00:00Z",
+            "type": "string"
+          },
+          "triggerWebhooks": {
+            "description": "TriggerWebhooks indicates whether to trigger webhooks for the exported messages.",
+            "example": true,
+            "type": "boolean"
+          },
+          "until": {
+            "description": "Until is the end of the time range to export.",
+            "example": "2024-01-01T23:59:59Z",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deviceId",
+          "since",
+          "until"
+        ],
+        "type": "object"
+      },
       "smsgateway.IncomingMessage": {
         "properties": {
           "contentPreview": {
@@ -789,32 +828,6 @@
           "PriorityBypassThreshold",
           "PriorityMaximum"
         ]
-      },
-      "smsgateway.MessagesExportRequest": {
-        "properties": {
-          "deviceId": {
-            "description": "DeviceID is the ID of the device to export messages for.",
-            "example": "PyDmBQZZXYmyxMwED8Fzy",
-            "maxLength": 21,
-            "type": "string"
-          },
-          "since": {
-            "description": "Since is the start of the time range to export.",
-            "example": "2024-01-01T00:00:00Z",
-            "type": "string"
-          },
-          "until": {
-            "description": "Until is the end of the time range to export.",
-            "example": "2024-01-01T23:59:59Z",
-            "type": "string"
-          }
-        },
-        "required": [
-          "deviceId",
-          "since",
-          "until"
-        ],
-        "type": "object"
       },
       "smsgateway.MessagesProcessingOrder": {
         "enum": [
@@ -2081,16 +2094,16 @@
     },
     "/inbox/refresh": {
       "post": {
-        "description": "Refreshes inbox messages. Webhooks will not be triggered.",
+        "description": "Refreshes inbox messages. Webhooks are triggered when triggerWebhooks is true.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/smsgateway.MessagesExportRequest"
+                "$ref": "#/components/schemas/smsgateway.InboxRefreshRequest"
               }
             }
           },
-          "description": "Export inbox request",
+          "description": "Refresh inbox request",
           "required": true
         },
         "responses": {
@@ -2143,16 +2156,6 @@
               }
             },
             "description": "Internal server error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
-                }
-              }
-            },
-            "description": "Not implemented"
           }
         },
         "security": [
@@ -2342,7 +2345,15 @@
                 }
               }
             },
-            "description": "A list of messages"
+            "description": "A list of messages",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total number of items available",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
           },
           "400": {
             "content": {
@@ -2597,88 +2608,6 @@
           "User",
           "Messages"
         ]
-      }
-    },
-    "/messages/inbox/export": {
-      "post": {
-        "description": "Initiates process of inbox messages export via webhooks. For each message the `sms:received` webhook will be triggered. The webhooks will be triggered without specific order.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/smsgateway.MessagesExportRequest"
-              }
-            }
-          },
-          "description": "Export inbox request",
-          "required": true
-        },
-        "responses": {
-          "202": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Inbox export request accepted"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
-                }
-              }
-            },
-            "description": "Invalid request"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
-                }
-              }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
-                }
-              }
-            },
-            "description": "Internal server error"
-          }
-        },
-        "security": [
-          {
-            "ApiAuth": []
-          },
-          {
-            "JWTAuth": []
-          }
-        ],
-        "summary": "Request inbox messages export",
-        "tags": [
-          "User",
-          "Messages"
-        ],
-        "x-codegen-request-body-name": "request"
       }
     },
     "/settings": {
@@ -2964,30 +2893,6 @@
         ]
       },
       "post": {
-        "callbacks": {
-          "onEvent": {
-            "{$request.body#/url}": {
-              "post": {
-                "requestBody": {
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "$ref": "#/components/schemas/WebHookEvent"
-                      }
-                    }
-                  },
-                  "description": "Event details.",
-                  "required": true
-                },
-                "responses": {
-                  "200": {
-                    "description": "The server should return this HTTP status code if the data was received successfully."
-                  }
-                }
-              }
-            }
-          }
-        },
         "description": "Registers webhook. If webhook with same ID already exists, it will be replaced",
         "requestBody": {
           "content": {
@@ -3084,6 +2989,7 @@
         ],
         "responses": {
           "204": {
+            "content": {},
             "description": "Successfully removed"
           },
           "401": {
@@ -3135,41 +3041,8 @@
   },
   "servers": [
     {
-      "description": "Local Server",
-      "url": "/"
-    },
-    {
-      "description": "Cloud Server",
-      "url": "https://api.sms-gate.app/3rdparty/v1"
+      "url": "http://localhost:3000/api"
     }
   ],
-  "tags": [
-    {
-      "name": "Auth"
-    },
-    {
-      "name": "Devices"
-    },
-    {
-      "name": "Logs"
-    },
-    {
-      "name": "Messages"
-    },
-    {
-      "name": "Settings"
-    },
-    {
-      "name": "System"
-    },
-    {
-      "name": "User"
-    },
-    {
-      "name": "Webhooks"
-    },
-    {
-      "name": "Inbox"
-    }
-  ]
+  "x-original-swagger-version": "2.0"
 }

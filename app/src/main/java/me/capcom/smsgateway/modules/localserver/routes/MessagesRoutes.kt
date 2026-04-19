@@ -15,10 +15,11 @@ import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.helpers.DateTimeParser
+import me.capcom.smsgateway.modules.incoming.db.IncomingMessageType
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
 import me.capcom.smsgateway.modules.localserver.auth.requireScope
-import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
+import me.capcom.smsgateway.modules.localserver.domain.InboxRefreshRequest
 import me.capcom.smsgateway.modules.localserver.domain.messages.DataMessage
 import me.capcom.smsgateway.modules.localserver.domain.messages.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.messages.TextMessage
@@ -221,9 +222,14 @@ class MessagesRoutes(
     private fun Route.inboxRoutes(context: Context) {
         post("export") {
             if (!requireScope(AuthScopes.MessagesExport)) return@post
-            val request = call.receive<PostMessagesInboxExportRequest>().validate()
+            val request = call.receive<InboxRefreshRequest>().validate()
             try {
-                receiverService.export(context, request.period, true)
+                receiverService.export(
+                    context = context,
+                    period = request.period,
+                    messageTypes = request.messageTypes ?: setOf(IncomingMessageType.SMS),
+                    triggerWebhooks = request.triggerWebhooks ?: true,
+                )
                 call.respond(HttpStatusCode.Accepted)
             } catch (e: Exception) {
                 call.respond(
