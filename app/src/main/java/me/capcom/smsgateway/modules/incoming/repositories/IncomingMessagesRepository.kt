@@ -28,4 +28,7 @@ class IncomingMessagesRepository(private val dao: IncomingMessagesDao) {
     val totals: LiveData<IncomingMessageTotals> = dao.getStats().distinctUntilChanged()
 
     fun insert(message: IncomingMessage) = dao.insert(message)
+
+    fun delete(from: Long, to: Long, types: Set<IncomingMessageType>) = dao.delete(from, to, types)
+    fun truncate(until: Long) = dao.truncate(until)
 }

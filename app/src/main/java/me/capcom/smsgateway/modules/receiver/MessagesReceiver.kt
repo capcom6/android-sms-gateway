@@ -23,9 +23,10 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
         }
 
         val messages = Intents.getMessagesFromIntent(intent) ?: return
+        if (messages.isEmpty()) return
+
         val isDataMessage = intent.action == Intents.DATA_SMS_RECEIVED_ACTION
         val firstMessage = messages.first()
-//        val text = messages.joinToString(separator = "") { it.displayMessageBody }
 
         val inboxMessage = when (isDataMessage) {
             false -> InboxMessage.Text(

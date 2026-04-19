@@ -84,3 +84,13 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
         database.execSQL("CREATE INDEX IF NOT EXISTS index_Message_processedAt ON message (processedAt)")
     }
 }
+
+val MIGRATION_21_22 = object : Migration(21, 22) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            """
+            DELETE FROM incoming_messages WHERE 1
+        """.trimIndent()
+        )
+    }
+}
