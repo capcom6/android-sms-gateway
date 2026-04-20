@@ -517,6 +517,86 @@
           "HealthStatusFail"
         ]
       },
+      "smsgateway.IncomingMessage": {
+        "properties": {
+          "contentPreview": {
+            "description": "Message body preview or metadata",
+            "example": "Hello World!",
+            "type": "string"
+          },
+          "createdAt": {
+            "description": "Message received timestamp",
+            "example": "2020-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "Incoming message ID",
+            "example": "PyDmBQZZXYmyxMwED8Fzy",
+            "type": "string"
+          },
+          "recipient": {
+            "description": "Recipient phone number on the device",
+            "example": "+79990001234",
+            "type": "string"
+          },
+          "sender": {
+            "description": "Incoming sender phone number",
+            "example": "+79990001234",
+            "type": "string"
+          },
+          "simNumber": {
+            "description": "SIM slot number",
+            "example": 1,
+            "type": "integer"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.IncomingMessageType"
+              }
+            ],
+            "description": "Message type",
+            "example": "SMS",
+            "type": "object"
+          }
+        },
+        "required": [
+          "contentPreview",
+          "createdAt",
+          "id",
+          "sender",
+          "type"
+        ],
+        "type": "object"
+      },
+      "smsgateway.IncomingMessageType": {
+        "enum": [
+          "SMS",
+          "DATA_SMS",
+          "MMS",
+          "MMS_DOWNLOADED"
+        ],
+        "type": "string",
+        "x-enum-comments": {
+          "IncomingMessageTypeDataSMS": "Data SMS message",
+          "IncomingMessageTypeMMS": "MMS message",
+          "IncomingMessageTypeMmsDownloaded": "Downloaded MMS message",
+          "IncomingMessageTypeSMS": "SMS message"
+        },
+        "x-enum-descriptions": [
+          "SMS message",
+          "Data SMS message",
+          "MMS message",
+          "Downloaded MMS message"
+        ],
+        "x-enum-varnames": [
+          "IncomingMessageTypeSMS",
+          "IncomingMessageTypeDataSMS",
+          "IncomingMessageTypeMMS",
+          "IncomingMessageTypeMmsDownloaded"
+        ]
+      },
       "smsgateway.LimitPeriod": {
         "enum": [
           "Disabled",
@@ -1314,7 +1394,7 @@
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
     },
     "title": "SMSGate API",
-    "version": "1.58.0"
+    "version": "1.59.0"
   },
   "openapi": "3.0.1",
   "paths": {
@@ -1487,7 +1567,7 @@
     },
     "/auth/token/refresh": {
       "post": {
-        "description": "Refresh access token with specified refresh token\n\n*Not available in Local Server mode*",
+        "description": "Refresh access token with specified refresh token",
         "responses": {
           "201": {
             "content": {
@@ -1838,9 +1918,256 @@
         ]
       }
     },
+    "/inbox": {
+      "get": {
+        "description": "Retrieves incoming messages with filtering and pagination.",
+        "parameters": [
+          {
+            "description": "Filter incoming messages by type",
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "enum": [
+                "SMS",
+                "DATA_SMS",
+                "MMS",
+                "MMS_DOWNLOADED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Maximum number of messages to return",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of messages to skip",
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Start of date range (ISO 8601)",
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "End of date range (ISO 8601)",
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Device ID",
+            "in": "query",
+            "name": "deviceId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/smsgateway.IncomingMessage"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "A list of incoming messages",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total number of items available",
+                "schema": {
+                  "format": "int64",
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Not implemented"
+          }
+        },
+        "security": [
+          {
+            "ApiAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "Get incoming messages",
+        "tags": [
+          "User",
+          "Inbox"
+        ]
+      }
+    },
+    "/inbox/refresh": {
+      "post": {
+        "description": "Refreshes inbox messages. Webhooks will not be triggered.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/smsgateway.MessagesExportRequest"
+              }
+            }
+          },
+          "description": "Export inbox request",
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Inbox refresh request accepted"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Not implemented"
+          }
+        },
+        "security": [
+          {
+            "ApiAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "Request inbox messages refresh",
+        "tags": [
+          "User",
+          "Inbox"
+        ],
+        "x-codegen-request-body-name": "request"
+      }
+    },
     "/logs": {
       "get": {
-        "description": "Retrieve a list of log entries within a specified time range.\n\n*Not available in Cloud Server mode*",
+        "description": "Retrieve a list of log entries within a specified time range.",
         "parameters": [
           {
             "description": "The start of the time range for the logs to retrieve. Logs created after this timestamp will be included.",
@@ -2834,6 +3161,9 @@
     },
     {
       "name": "Webhooks"
+    },
+    {
+      "name": "Inbox"
     }
   ]
 }
