@@ -7,20 +7,20 @@ import android.content.Intent
 import android.provider.Telephony
 import android.util.Log
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
-import me.capcom.smsgateway.modules.receiver.ReceiverService
-import me.capcom.smsgateway.modules.receiver.data.InboxMessage
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
-import java.util.Date
 
 /**
  * Required static receiver when the app is the default SMS app. The system
- * only delivers `SMS_DELIVER_ACTION` to the default app, and expects that app
- * to persist the message into the Telephony provider so other apps can see it.
+ * only delivers `SMS_DELIVER_ACTION` to the default app, and expects that
+ * app to persist the message into the Telephony provider so other apps can
+ * see it.
+ *
+ * Processing (gateway DB + webhooks) is driven from `SmsContentObserver`,
+ * not from here — that path is carrier-agnostic and also handles the
+ * (common) case where a vendor CarrierMessagingService swallows the
+ * `SMS_DELIVER` broadcast but still writes the row into `content://sms/inbox`
+ * (e.g. Verizon on Pixel).
  */
-class DefaultSmsReceiver : BroadcastReceiver(), KoinComponent {
-    private val receiverSvc: ReceiverService by inject()
-
+class DefaultSmsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_DELIVER_ACTION) return
 
@@ -28,11 +28,11 @@ class DefaultSmsReceiver : BroadcastReceiver(), KoinComponent {
         val first = messages.firstOrNull() ?: return
         val body = messages.joinToString("") { it.displayMessageBody }
         val address = first.displayOriginatingAddress
-        val date = Date(first.timestampMillis)
         val subId = SubscriptionsHelper.extractSubscriptionId(context, intent)
 
-        // Persist into the system Telephony provider so messaging apps
-        // (and our MmsContentObserver code path for uniformity) can see it.
+        // Persist into the system Telephony provider so messaging apps can
+        // see the message. The subsequent content-provider notification is
+        // picked up by SmsContentObserver, which drives processing.
         try {
             val values = ContentValues().apply {
                 put(Telephony.Sms.Inbox.ADDRESS, address)
@@ -47,12 +47,6 @@ class DefaultSmsReceiver : BroadcastReceiver(), KoinComponent {
         } catch (e: Throwable) {
             Log.w(TAG, "Failed to persist incoming SMS", e)
         }
-
-        receiverSvc.process(
-            context,
-            InboxMessage.Text(body, address, date, subId),
-            true,
-        )
     }
 
     companion object {
