@@ -22,12 +22,15 @@ enum class AuthScopes(val value: String) {
 
     LogsRead("logs:read"),
 
-    TokensManage("tokens:manage");
+    TokensManage("tokens:manage"),
+    TokensRefresh("tokens:refresh");
 
     companion object {
         private val supportedValues: Set<String> = values().mapTo(HashSet()) { it.value }
         fun firstUnsupported(scopes: Iterable<String>): String? {
-            return scopes.firstOrNull { it !in supportedValues }
+            // TokensRefresh is a system-only scope: clients must not request it on access tokens;
+            // it is issued by the server on the refresh-token component of a generated pair.
+            return scopes.firstOrNull { it !in supportedValues || it == TokensRefresh.value }
         }
     }
 }

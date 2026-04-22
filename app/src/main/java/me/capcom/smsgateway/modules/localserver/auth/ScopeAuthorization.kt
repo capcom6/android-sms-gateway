@@ -9,8 +9,11 @@ import io.ktor.server.auth.principal
 import io.ktor.server.response.respond
 import io.ktor.util.pipeline.PipelineContext
 
-suspend fun PipelineContext<Unit, ApplicationCall>.requireScope(scope: AuthScopes): Boolean {
-    if (call.principal<UserIdPrincipal>() != null) {
+suspend fun PipelineContext<Unit, ApplicationCall>.requireScope(
+    scope: AuthScopes,
+    exact: Boolean = false
+): Boolean {
+    if (call.principal<UserIdPrincipal>() != null && !exact) {
         return true
     }
 
@@ -21,15 +24,17 @@ suspend fun PipelineContext<Unit, ApplicationCall>.requireScope(scope: AuthScope
     }
 
     val scopes = try {
-        jwtPrincipal.payload
-            .getClaim("scopes")
-            .asList(String::class.java)
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            ?: emptyList()
+        jwtPrincipal.getListClaim("scopes", String::class)
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
     } catch (e: Exception) {
         android.util.Log.d("ScopeAuthorization", "Failed to parse scopes claim", e)
         emptyList()
+    }
+
+    if (exact && scopes.singleOrNull() != scope.value) {
+        call.respond(HttpStatusCode.Forbidden, mapOf("message" to "Insufficient permissions"))
+        return false
     }
 
     if (AuthScopes.AllAny.value in scopes || scope.value in scopes) {
