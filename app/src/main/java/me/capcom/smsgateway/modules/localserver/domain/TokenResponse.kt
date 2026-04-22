@@ -12,4 +12,6 @@ data class TokenResponse(
     val accessToken: String,
     @SerializedName("expires_at")
     val expiresAt: Date,
+    @SerializedName("refresh_token")
+    val refreshToken: String? = null,
 )
