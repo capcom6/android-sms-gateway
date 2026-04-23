@@ -98,7 +98,10 @@ class MmsDownloader(private val context: Context) {
     }
 
     private fun pendingIntentFlags(): Int {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        // FLAG_MUTABLE was added in API 31 (S) — combining it on older
+        // SDK levels would NoSuchFieldError at compile-time / not be
+        // recognized at runtime.
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
         } else {
             PendingIntent.FLAG_UPDATE_CURRENT

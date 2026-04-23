@@ -286,6 +286,9 @@ object MMSRetrieveParser {
         // Value-length + (well-known-media|extension-media) + *(Parameter)
         val len = readValueLength(buf)
         val innerStart = buf.position()
+        require(len in 1..buf.remaining()) {
+            "Content-Type length ($len) exceeds remaining PDU bytes (${buf.remaining()})"
+        }
         val innerEnd = innerStart + len
 
         val second = buf.get().toInt() and 0xFF
@@ -317,6 +320,22 @@ object MMSRetrieveParser {
         return ContentTypeInfo(typeName, params)
     }
 
+    /**
+     * Maps WSP / MMS MIBEnum charset codes to IANA names that
+     * `Charset.forName` understands. Falls back to UTF-8 for unknown
+     * values — same behavior as the prior `Charset.forName` failure path
+     * downstream, but without the exception detour.
+     */
+    private fun charsetName(mibEnum: Int): String = when (mibEnum) {
+        3 -> "US-ASCII"
+        4 -> "ISO-8859-1"
+        106 -> "UTF-8"
+        1015 -> "UTF-16"
+        1013 -> "UTF-16BE"
+        1014 -> "UTF-16LE"
+        else -> "UTF-8"
+    }
+
     private fun paramName(code: Int): String? = when (code) {
         0x01 -> "charset"
         0x05 -> "name"
@@ -331,12 +350,17 @@ object MMSRetrieveParser {
         // Mostly text-string for what we care about; charset is short-integer.
         if (pCode == 0x01) {
             val b = buf.get().toInt() and 0xFF
-            return if (b >= 0x80) "charset-${b and 0x7F}" else {
-                // long-integer for larger charset codes
-                val bytes = ByteArray(b)
-                buf.get(bytes)
-                "charset-${bytes.joinToString(":") { "%02x".format(it) }}"
+            val mibEnum = if (b >= 0x80) {
+                b and 0x7F
+            } else {
+                // long-integer: first byte is length, then big-endian value.
+                var value = 0
+                repeat(b.coerceAtMost(buf.remaining())) {
+                    value = (value shl 8) or (buf.get().toInt() and 0xFF)
+                }
+                value
             }
+            return charsetName(mibEnum)
         }
         if (pCode == 0x09) {
             val mark = buf.position()
@@ -360,22 +384,31 @@ object MMSRetrieveParser {
                 "Multipart headers length ($headersLen) exceeds remaining PDU bytes (${buf.remaining()})"
             }
             val headersEnd = buf.position() + headersLen
-
-            val ct = readContentType(buf)
+            // Temporarily clip the buffer to the declared header slice so
+            // readContentType / readTextString cannot consume payload bytes
+            // when an inner length is malformed.
+            val originalLimit = buf.limit()
+            val ct: ContentTypeInfo
             var contentLocation: String? = null
             var contentId: String? = null
-            while (buf.position() < headersEnd) {
-                val headerCode = buf.get().toInt() and 0xFF
-                when (headerCode) {
-                    0x8E -> contentLocation = readTextString(buf) // Content-Location
-                    0xC0 -> contentId = readTextString(buf)       // Content-ID
-                    else -> {
-                        // Unknown, try skipping as text-string.
-                        buf.position(buf.position() - 1)
-                        readTextString(buf) // name
-                        readTextString(buf) // value
+            try {
+                buf.limit(headersEnd)
+                ct = readContentType(buf)
+                while (buf.hasRemaining()) {
+                    val headerCode = buf.get().toInt() and 0xFF
+                    when (headerCode) {
+                        0x8E -> contentLocation = readTextString(buf) // Content-Location
+                        0xC0 -> contentId = readTextString(buf)       // Content-ID
+                        else -> {
+                            // Unknown, try skipping as text-string.
+                            buf.position(buf.position() - 1)
+                            readTextString(buf) // name
+                            readTextString(buf) // value
+                        }
                     }
                 }
+            } finally {
+                buf.limit(originalLimit)
             }
             buf.position(headersEnd)
 
