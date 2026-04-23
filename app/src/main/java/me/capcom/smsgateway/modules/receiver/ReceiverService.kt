@@ -80,6 +80,10 @@ class ReceiverService : KoinComponent {
     fun processDownloadedMmsIntent(context: Context, intent: Intent, resultCode: Int) {
         val messageId = intent.getStringExtra(GlobalEventsReceiver.EXTRA_MESSAGE_ID) ?: return
         val path = intent.getStringExtra(GlobalEventsReceiver.EXTRA_PDU_PATH)
+        val subscriptionId = intent
+            .takeIf { it.hasExtra(GlobalEventsReceiver.EXTRA_SUBSCRIPTION_ID) }
+            ?.getIntExtra(GlobalEventsReceiver.EXTRA_SUBSCRIPTION_ID, -1)
+            ?.takeIf { it >= 0 }
 
         if (resultCode != Activity.RESULT_OK) {
             logsService.insert(
@@ -149,7 +153,17 @@ class ReceiverService : KoinComponent {
             val base64 = Base64.encodeToString(part.data, Base64.NO_WRAP)
             try {
                 attachmentStorage.store(messageId, part.partId, name, part.data)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                logsService.insert(
+                    LogEntry.Priority.WARN,
+                    MODULE_NAME,
+                    "Failed to persist MMS attachment",
+                    mapOf(
+                        "messageId" to messageId,
+                        "partId" to part.partId,
+                        "error" to (e.message ?: e.toString()),
+                    )
+                )
             }
             attachments += InboxMessage.MMS.Attachment(
                 partId = part.partId,
@@ -168,7 +182,7 @@ class ReceiverService : KoinComponent {
             attachments = attachments,
             address = sender,
             date = retrieved.date ?: Date(),
-            subscriptionId = null,
+            subscriptionId = subscriptionId,
         )
         process(context, mmsInbox, true)
     }

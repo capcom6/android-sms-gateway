@@ -74,7 +74,7 @@ data class PostMessageRequest(
         }
 
         mmsMessage?.let { mms ->
-            val hasBody = !mms.text.isNullOrEmpty()
+            val hasBody = !mms.text.isNullOrBlank()
             if (!hasBody && mms.attachments.isEmpty()) {
                 throw IllegalArgumentException("MMS must have text or at least one attachment")
             }
@@ -83,10 +83,10 @@ data class PostMessageRequest(
                 if (att.contentType.isBlank()) {
                     throw IllegalArgumentException("Attachment $i: contentType is required")
                 }
-                if (att.data.isNullOrEmpty() && att.url.isNullOrEmpty()) {
+                if (att.data.isNullOrBlank() && att.url.isNullOrBlank()) {
                     throw IllegalArgumentException("Attachment $i: must provide data or url")
                 }
-                if (!att.data.isNullOrEmpty() && !att.url.isNullOrEmpty()) {
+                if (!att.data.isNullOrBlank() && !att.url.isNullOrBlank()) {
                     throw IllegalArgumentException("Attachment $i: data and url are mutually exclusive")
                 }
             }

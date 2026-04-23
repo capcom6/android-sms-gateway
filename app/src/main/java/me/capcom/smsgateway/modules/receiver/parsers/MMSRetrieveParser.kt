@@ -351,9 +351,8 @@ object MMSRetrieveParser {
                     else -> {
                         // Unknown, try skipping as text-string.
                         buf.position(buf.position() - 1)
-                        val name = readTextString(buf)
-                        val _value = readTextString(buf)
-                        if (name.isBlank()) {}
+                        readTextString(buf) // name
+                        readTextString(buf) // value
                     }
                 }
             }

@@ -64,6 +64,7 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
         const val EXTRA_MESSAGE_ID = "messageId"
         const val EXTRA_PDU_PATH = "pduPath"
         const val EXTRA_MMS_URI = "mmsUri"
+        const val EXTRA_SUBSCRIPTION_ID = "subscriptionId"
 
         private fun getInstance(): EventsReceiver {
             return INSTANCE ?: EventsReceiver().also { INSTANCE = it }

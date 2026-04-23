@@ -59,6 +59,9 @@ class MmsDownloader(private val context: Context) {
                 putExtra(EventsReceiver.EXTRA_MESSAGE_ID, messageId)
                 putExtra(EventsReceiver.EXTRA_MMS_URI, uri.toString())
                 putExtra(EventsReceiver.EXTRA_PDU_PATH, file.absolutePath)
+                if (subscriptionId != null) {
+                    putExtra(EventsReceiver.EXTRA_SUBSCRIPTION_ID, subscriptionId)
+                }
                 flags = Intent.FLAG_RECEIVER_FOREGROUND
             },
             pendingIntentFlags()
