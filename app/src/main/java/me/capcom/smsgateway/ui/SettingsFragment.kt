@@ -36,6 +36,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 if (isIgnoringBatteryOptimizations()) getString(R.string.disabled) else getString(R.string.enabled)
         }
 
+        refreshDefaultSmsAppSummary()
+
         findPreference<Preference>("app.language")?.setOnPreferenceChangeListener { _, newValue ->
             LocaleHelper.setLocale(requireContext(), newValue as String)
             val intent =
@@ -46,7 +48,17 @@ class SettingsFragment : PreferenceFragmentCompat() {
             requireActivity().finish()
             false
         }
+    }
 
+    override fun onResume() {
+        super.onResume()
+        // The role-request dialog returns its result to MainActivity, not
+        // here, so the summary set in onCreatePreferences would otherwise
+        // stay stale until the screen is recreated. Re-evaluate on resume.
+        refreshDefaultSmsAppSummary()
+    }
+
+    private fun refreshDefaultSmsAppSummary() {
         findPreference<Preference>("system.default_sms_app")?.summary =
             if (DefaultSmsAppHelper.isDefault(requireContext())) {
                 getString(R.string.default_sms_app_already)

@@ -70,6 +70,8 @@ object MMSRetrieveParser {
     private const val F_PREVIOUSLY_SENT_BY = 0xA0
     private const val F_PREVIOUSLY_SENT_DATE = 0xA1
 
+    private const val MESSAGE_TYPE_RETRIEVE_CONF = 0x84
+
     private val WELL_KNOWN_CONTENT_TYPES = mapOf(
         0x02 to "text/html",
         0x03 to "text/plain",
@@ -99,12 +101,13 @@ object MMSRetrieveParser {
         var subject: String? = null
         var date: Date? = null
         var contentTypeParsed: ContentTypeInfo? = null
+        var messageType: Int? = null
 
         // Parse headers until Content-Type is consumed; the body follows.
         while (buf.hasRemaining()) {
             val code = buf.get().toInt() and 0xFF
             when (code) {
-                F_MESSAGE_TYPE -> readShortInt(buf)
+                F_MESSAGE_TYPE -> messageType = readShortInt(buf)
                 F_TRANSACTION_ID -> transactionId = readTextString(buf)
                 F_MMS_VERSION -> readShortInt(buf)
                 F_DATE -> date = Date(readLongInt(buf) * 1000L)
@@ -139,6 +142,15 @@ object MMSRetrieveParser {
                     readTextString(buf)
                 }
             }
+        }
+
+        // 0x84 = M-Retrieve.conf. Reject other PDU types (notifications,
+        // status, error, etc.) so a misdirected callback can't be persisted
+        // as a downloaded MMS body.
+        require(messageType == MESSAGE_TYPE_RETRIEVE_CONF) {
+            "Expected M-Retrieve.conf (0x84), got ${
+                messageType?.let { "0x%02X".format(it) } ?: "missing"
+            }"
         }
 
         val parts = if (contentTypeParsed != null && buf.hasRemaining()) {
@@ -179,6 +191,12 @@ object MMSRetrieveParser {
             if ((b and 0x80) == 0) break
         }
         return v
+    }
+
+    private fun readUintvarInt(buf: ByteBuffer, field: String): Int {
+        val value = readUintvar(buf)
+        require(value in 0..Int.MAX_VALUE) { "$field is out of range: $value" }
+        return value.toInt()
     }
 
     private fun readTextString(buf: ByteBuffer): String {
@@ -333,11 +351,14 @@ object MMSRetrieveParser {
     }
 
     private fun readMultipart(buf: ByteBuffer): List<Part> {
-        val entries = readUintvar(buf).toInt()
+        val entries = readUintvarInt(buf, "multipart entry count")
         val out = mutableListOf<Part>()
         repeat(entries) {
-            val headersLen = readUintvar(buf).toInt()
-            val dataLen = readUintvar(buf).toInt()
+            val headersLen = readUintvarInt(buf, "multipart headers length")
+            val dataLen = readUintvarInt(buf, "multipart data length")
+            require(headersLen <= buf.remaining()) {
+                "Multipart headers length ($headersLen) exceeds remaining PDU bytes (${buf.remaining()})"
+            }
             val headersEnd = buf.position() + headersLen
 
             val ct = readContentType(buf)
@@ -358,6 +379,9 @@ object MMSRetrieveParser {
             }
             buf.position(headersEnd)
 
+            require(dataLen <= buf.remaining()) {
+                "Multipart data length ($dataLen) exceeds remaining PDU bytes (${buf.remaining()})"
+            }
             val bytes = ByteArray(dataLen)
             if (dataLen > 0) buf.get(bytes)
 

@@ -10,6 +10,7 @@ import androidx.core.content.FileProvider
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.receivers.EventsReceiver
 import java.io.File
+import java.security.MessageDigest
 
 /**
  * Actively downloads an MMS given the `Content-Location` from an incoming
@@ -79,11 +80,21 @@ class MmsDownloader(private val context: Context) {
 
     private fun prepareOutputFile(messageId: String): File {
         val dir = File(context.filesDir, "mms-in").apply { mkdirs() }
-        val safeId = messageId.replace(Regex("[^A-Za-z0-9_.-]"), "_")
-        val file = File(dir, "$safeId-retrieve.pdu")
+        // sha256 keeps the mapping one-to-one so concurrent downloads of
+        // distinct messageIds (e.g. `a/b` vs `a?b`) cannot collide on disk
+        // and have one delete/overwrite the other's PDU before parse.
+        val file = File(dir, "${pduDigest(messageId)}-retrieve.pdu")
         if (file.exists()) file.delete()
         file.createNewFile()
         return file
+    }
+
+    private fun pduDigest(messageId: String): String {
+        val bytes = MessageDigest.getInstance("SHA-256")
+            .digest(messageId.toByteArray(Charsets.UTF_8))
+        val sb = StringBuilder(bytes.size * 2)
+        for (b in bytes) sb.append("%02x".format(b))
+        return sb.toString()
     }
 
     private fun pendingIntentFlags(): Int {
