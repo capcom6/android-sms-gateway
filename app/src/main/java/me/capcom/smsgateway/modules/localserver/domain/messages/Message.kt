@@ -12,6 +12,7 @@ open class Message(
     val scheduleAt: Date?,
     val textMessage: TextMessage?,
     val dataMessage: DataMessage?,
+    val mmsMessage: MmsMessage?,
     val hashedMessage: HashedMessage?,
     val recipients: List<Recipient>,
     val states: Map<ProcessingState, Date>,

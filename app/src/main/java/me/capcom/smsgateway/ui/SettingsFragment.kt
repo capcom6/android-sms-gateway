@@ -16,6 +16,7 @@ import androidx.preference.PreferenceFragmentCompat
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.MainActivity
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.helpers.DefaultSmsAppHelper
 import me.capcom.smsgateway.helpers.LocaleHelper
 
 class SettingsFragment : PreferenceFragmentCompat() {
@@ -45,6 +46,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
             requireActivity().finish()
             false
         }
+
+        findPreference<Preference>("system.default_sms_app")?.summary =
+            if (DefaultSmsAppHelper.isDefault(requireContext())) {
+                getString(R.string.default_sms_app_already)
+            } else {
+                getString(R.string.default_sms_app_summary)
+            }
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
@@ -72,6 +80,18 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
         if (preference.key == "system.disable_battery_optimizations") {
             requestIgnoreBatteryOptimizations()
+            return true
+        }
+        if (preference.key == "system.default_sms_app") {
+            if (DefaultSmsAppHelper.isDefault(requireContext())) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.default_sms_app_already),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            } else {
+                DefaultSmsAppHelper.requestDefault(requireActivity(), REQUEST_DEFAULT_SMS_APP)
+            }
             return true
         }
 
@@ -109,6 +129,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     companion object {
+        private const val REQUEST_DEFAULT_SMS_APP = 9321
+
         fun newInstance() = SettingsFragment()
     }
 }

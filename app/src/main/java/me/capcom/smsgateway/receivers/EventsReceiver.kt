@@ -12,19 +12,28 @@ import me.capcom.smsgateway.modules.logs.LogsUtils.toLogContext
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.messages.MODULE_NAME
 import me.capcom.smsgateway.modules.messages.MessagesService
+import me.capcom.smsgateway.modules.receiver.ReceiverService
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 class EventsReceiver : BroadcastReceiver(), KoinComponent {
 
     private val messagesService: MessagesService by inject()
+    private val receiverService: ReceiverService by inject()
     private val logsService: LogsService by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
+        val action = intent.action
+        val rc = resultCode
+        val pendingResult = if (action == ACTION_MMS_DOWNLOADED) goAsync() else null
+
         scope.launch {
             try {
-                messagesService
-                    .processStateIntent(intent, resultCode)
+                if (action == ACTION_MMS_DOWNLOADED) {
+                    receiverService.processDownloadedMmsIntent(context, intent, rc)
+                } else {
+                    messagesService.processStateIntent(intent, rc)
+                }
             } catch (e: Throwable) {
                 logsService.insert(
                     LogEntry.Priority.ERROR,
@@ -32,8 +41,9 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
                     "Can't process message state intent",
                     intent.toLogContext() + e.toLogContext()
                 )
+            } finally {
+                pendingResult?.finish()
             }
-
         }
     }
 
@@ -45,6 +55,12 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
 
         const val ACTION_SENT = "me.capcom.smsgateway.ACTION_SENT"
         const val ACTION_DELIVERED = "me.capcom.smsgateway.ACTION_DELIVERED"
+        const val ACTION_MMS_SENT = "me.capcom.smsgateway.ACTION_MMS_SENT"
+        const val ACTION_MMS_DOWNLOADED = "me.capcom.smsgateway.ACTION_MMS_DOWNLOADED"
+
+        const val EXTRA_MESSAGE_ID = "messageId"
+        const val EXTRA_PDU_PATH = "pduPath"
+        const val EXTRA_MMS_URI = "mmsUri"
 
         private fun getInstance(): EventsReceiver {
             return INSTANCE ?: EventsReceiver().also { INSTANCE = it }
@@ -53,8 +69,11 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
         fun register(context: Context) {
             context.registerReceiver(
                 getInstance(),
-                IntentFilter(ACTION_SENT)
-                    .apply { addAction(ACTION_DELIVERED) }
+                IntentFilter(ACTION_SENT).apply {
+                    addAction(ACTION_DELIVERED)
+                    addAction(ACTION_MMS_SENT)
+                    addAction(ACTION_MMS_DOWNLOADED)
+                }
             )
         }
     }

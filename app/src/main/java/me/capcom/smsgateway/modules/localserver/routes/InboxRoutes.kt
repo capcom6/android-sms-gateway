@@ -1,10 +1,13 @@
 package me.capcom.smsgateway.modules.localserver.routes
 
 import android.content.Context
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -17,13 +20,16 @@ import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
 import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
+import me.capcom.smsgateway.modules.mms.MmsAttachmentStorage
 import me.capcom.smsgateway.modules.receiver.ReceiverService
+import java.io.File
 import java.util.Date
 
 class InboxRoutes(
     private val context: Context,
     private val incomingMessagesService: IncomingMessagesService,
     private val receiverService: ReceiverService,
+    private val attachmentStorage: MmsAttachmentStorage,
     private val settings: LocalServerSettings,
 ) {
     fun register(routing: Route) {
@@ -136,23 +142,56 @@ class InboxRoutes(
             call.respond(messages.map { it.toDomain() } as GetIncomingMessagesResponse)
         }
 
-//        get("{id}") {
-//            if (!requireScope(AuthScopes.InboxRead)) return@get
-//            val id = call.parameters["id"]
-//                ?: return@get call.respond(HttpStatusCode.BadRequest)
-//
-//            val message = try {
-//                incomingMessagesService.getById(id)
-//                    ?: return@get call.respond(HttpStatusCode.NotFound)
-//            } catch (e: Throwable) {
-//                return@get call.respond(
-//                    HttpStatusCode.InternalServerError,
-//                    mapOf("message" to e.message)
-//                )
-//            }
-//
-//            call.respond(message.toDomain())
-//        }
+        get("{id}") {
+            if (!requireScope(AuthScopes.InboxRead)) return@get
+            val id = call.parameters["id"]
+                ?: return@get call.respond(HttpStatusCode.BadRequest)
+
+            val message = try {
+                incomingMessagesService.getById(id)
+                    ?: return@get call.respond(HttpStatusCode.NotFound)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                return@get call.respond(
+                    HttpStatusCode.InternalServerError,
+                    mapOf("message" to e.message)
+                )
+            }
+
+            val detail = InboxMessageDetail(
+                id = message.id,
+                type = message.type,
+                sender = message.sender,
+                recipient = message.recipient,
+                simNumber = message.simNumber,
+                contentPreview = message.contentPreview,
+                createdAt = Date(message.createdAt),
+                attachments = listAttachmentRefs(id),
+            )
+            call.respond(detail)
+        }
+
+        get("{id}/attachments/{partId}") {
+            if (!requireScope(AuthScopes.InboxRead)) return@get
+            val id = call.parameters["id"]
+                ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val partId = call.parameters["partId"]?.toLongOrNull()
+                ?: return@get call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to "partId must be a number")
+                )
+
+            val file = attachmentStorage.find(id, partId)
+                ?: return@get call.respond(HttpStatusCode.NotFound)
+
+            val contentType = guessContentType(file)
+            call.response.header(
+                "Content-Disposition",
+                "attachment; filename=\"${file.name.substringAfter('-', file.name)}\""
+            )
+            call.respondBytes(file.readBytes(), contentType)
+        }
 
         post("refresh") {
             if (!requireScope(AuthScopes.InboxRefresh)) return@post
@@ -193,6 +232,64 @@ class InboxRoutes(
         val contentPreview: String,
         val createdAt: Date,
     )
+
+    data class InboxMessageDetail(
+        val id: String,
+        val type: IncomingMessageType,
+        val sender: String,
+        val recipient: String?,
+        val simNumber: Int?,
+        val contentPreview: String,
+        val createdAt: Date,
+        val attachments: List<AttachmentRef>,
+    )
+
+    data class AttachmentRef(
+        val partId: Long,
+        val name: String,
+        val size: Long,
+        val contentType: String,
+        val url: String,
+    )
+
+    private fun listAttachmentRefs(messageId: String): List<AttachmentRef> {
+        val dir = File(File(context.filesDir, "mms-in"), sanitize(messageId))
+        if (!dir.isDirectory) return emptyList()
+        return dir.listFiles().orEmpty().mapNotNull { file ->
+            val name = file.name
+            val dashIdx = name.indexOf('-').takeIf { it > 0 } ?: return@mapNotNull null
+            val partId = name.substring(0, dashIdx).toLongOrNull() ?: return@mapNotNull null
+            val displayName = name.substring(dashIdx + 1)
+            AttachmentRef(
+                partId = partId,
+                name = displayName,
+                size = file.length(),
+                contentType = guessContentType(file).toString(),
+                url = "/inbox/$messageId/attachments/$partId",
+            )
+        }.sortedBy { it.partId }
+    }
+
+    private fun guessContentType(file: File): ContentType {
+        val name = file.name.lowercase()
+        return when {
+            name.endsWith(".jpg") || name.endsWith(".jpeg") -> ContentType.Image.JPEG
+            name.endsWith(".png") -> ContentType.Image.PNG
+            name.endsWith(".gif") -> ContentType.Image.GIF
+            name.endsWith(".webp") -> ContentType.parse("image/webp")
+            name.endsWith(".txt") -> ContentType.Text.Plain
+            name.endsWith(".mp4") -> ContentType.parse("video/mp4")
+            name.endsWith(".3gp") -> ContentType.parse("video/3gpp")
+            name.endsWith(".mp3") -> ContentType.parse("audio/mpeg")
+            name.endsWith(".amr") -> ContentType.parse("audio/amr")
+            name.endsWith(".wav") -> ContentType.parse("audio/wav")
+            name.endsWith(".ogg") -> ContentType.parse("audio/ogg")
+            name.endsWith(".pdf") -> ContentType.Application.Pdf
+            else -> ContentType.Application.OctetStream
+        }
+    }
+
+    private fun sanitize(s: String): String = s.replace(Regex("[^A-Za-z0-9._-]"), "_")
 
     private fun IncomingMessage.toDomain() = InboxMessage(
         id = id,
