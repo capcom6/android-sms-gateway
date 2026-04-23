@@ -25,7 +25,10 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         val rc = resultCode
-        val pendingResult = if (action == ACTION_MMS_DOWNLOADED) goAsync() else null
+        // All four actions dispatch into the coroutine scope below; without
+        // goAsync the process can be reclaimed before the work finishes,
+        // dropping Sent/Failed updates and MMS download cleanup.
+        val pendingResult = goAsync()
 
         scope.launch {
             try {
@@ -42,7 +45,7 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
                     intent.toLogContext() + e.toLogContext()
                 )
             } finally {
-                pendingResult?.finish()
+                pendingResult.finish()
             }
         }
     }

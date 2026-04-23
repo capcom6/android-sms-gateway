@@ -141,10 +141,10 @@ object MMSRetrieveParser {
             }
         }
 
-        val parts = when {
-            contentTypeParsed == null || !buf.hasRemaining() -> emptyList()
-            contentTypeParsed.isMultipart -> readMultipart(buf)
-            else -> listOf(readSinglePart(contentTypeParsed, buf))
+        val parts = if (contentTypeParsed != null && buf.hasRemaining()) {
+            readMultipart(buf)
+        } else {
+            emptyList()
         }
 
         return MRetrieveConf(
@@ -253,25 +253,7 @@ object MMSRetrieveParser {
     private data class ContentTypeInfo(
         val type: String,
         val params: Map<String, String>,
-    ) {
-        val isMultipart: Boolean
-            get() = type.startsWith("multipart/", ignoreCase = true) ||
-                type.startsWith("application/vnd.wap.multipart.", ignoreCase = true)
-    }
-
-    private fun readSinglePart(ct: ContentTypeInfo, buf: ByteBuffer): Part {
-        val bytes = ByteArray(buf.remaining())
-        buf.get(bytes)
-        return Part(
-            partId = 1L,
-            contentType = ct.type,
-            name = ct.params["name"] ?: ct.params["filename"],
-            contentLocation = null,
-            contentId = null,
-            charset = ct.params["charset"],
-            data = bytes,
-        )
-    }
+    )
 
     private fun readContentType(buf: ByteBuffer): ContentTypeInfo {
         val mark = buf.position()

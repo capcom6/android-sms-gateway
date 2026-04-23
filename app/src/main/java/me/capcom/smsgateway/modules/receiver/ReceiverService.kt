@@ -88,7 +88,7 @@ class ReceiverService : KoinComponent {
                 "MMS download failed",
                 mapOf("messageId" to messageId, "resultCode" to resultCode)
             )
-            path?.let { File(it).delete() }
+            deletePduFile(context, path)
             return
         }
         if (path == null) {
@@ -124,10 +124,10 @@ class ReceiverService : KoinComponent {
                     "error" to (e.message ?: e.toString()),
                 )
             )
+            deletePduFile(context, path)
             return
-        } finally {
-            file.delete()
         }
+        deletePduFile(context, path)
 
         val attachments = mutableListOf<InboxMessage.MMS.Attachment>()
         val bodyParts = mutableListOf<String>()
@@ -171,6 +171,31 @@ class ReceiverService : KoinComponent {
             subscriptionId = null,
         )
         process(context, mmsInbox, true)
+    }
+
+    /**
+     * EventsReceiver is exported (it receives PendingIntent callbacks from
+     * SmsManager). A third-party app can broadcast ACTION_MMS_DOWNLOADED with
+     * a spoofed EXTRA_PDU_PATH and a non-OK result code, so the cleanup must
+     * canonicalize the supplied path and refuse to delete anything outside
+     * `files/mms-in/`.
+     */
+    private fun deletePduFile(context: Context, path: String?) {
+        if (path.isNullOrBlank()) return
+        runCatching {
+            val file = File(path).canonicalFile
+            val root = File(context.filesDir, "mms-in").canonicalFile
+            if (file.path.startsWith(root.path + File.separator)) {
+                file.delete()
+            } else {
+                logsService.insert(
+                    LogEntry.Priority.WARN,
+                    MODULE_NAME,
+                    "Refused to delete MMS PDU path outside mms-in/",
+                    mapOf("path" to path)
+                )
+            }
+        }
     }
 
     fun process(context: Context, message: InboxMessage, triggerWebhooks: Boolean) {

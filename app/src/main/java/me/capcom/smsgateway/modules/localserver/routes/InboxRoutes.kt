@@ -150,9 +150,7 @@ class InboxRoutes(
             val message = try {
                 incomingMessagesService.getById(id)
                     ?: return@get call.respond(HttpStatusCode.NotFound)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 return@get call.respond(
                     HttpStatusCode.InternalServerError,
                     mapOf("message" to e.message)

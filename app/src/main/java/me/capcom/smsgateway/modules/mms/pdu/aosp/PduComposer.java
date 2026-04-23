@@ -288,7 +288,7 @@ public class PduComposer {
          * ; a Quote character must precede it. Otherwise the Quote character
          * ;must be omitted. The Quote is not part of the contents.
          */
-        if (text.length > 0 && ((text[0]) & 0xff) > TEXT_MAX) {
+        if (((text[0])&0xff) > TEXT_MAX) { // No need to check for <= 255
             append(TEXT_MAX);
         }
 
@@ -793,17 +793,17 @@ public class PduComposer {
         boolean recipient = false;
 
         // To
-        if (appendHeader(PduHeaders.TO) == PDU_COMPOSE_SUCCESS) {
+        if (appendHeader(PduHeaders.TO) != PDU_COMPOSE_CONTENT_ERROR) {
             recipient = true;
         }
 
         // Cc
-        if (appendHeader(PduHeaders.CC) == PDU_COMPOSE_SUCCESS) {
+        if (appendHeader(PduHeaders.CC) != PDU_COMPOSE_CONTENT_ERROR) {
             recipient = true;
         }
 
         // Bcc
-        if (appendHeader(PduHeaders.BCC) == PDU_COMPOSE_SUCCESS) {
+        if (appendHeader(PduHeaders.BCC) != PDU_COMPOSE_CONTENT_ERROR) {
             recipient = true;
         }
 
@@ -872,7 +872,7 @@ public class PduComposer {
             part = body.getPart(0);
 
             byte[] start = part.getContentId();
-            if (start != null) {
+            if (start != null && start.length > 0) {
                 appendOctet(PduPart.P_DEP_START);
                 if (('<' == start[0]) && ('>' == start[start.length - 1])) {
                     appendTextString(start);
@@ -960,7 +960,7 @@ public class PduComposer {
             // content id
             byte[] contentId = part.getContentId();
 
-            if (null != contentId) {
+            if (null != contentId && contentId.length > 0) {
                 appendOctet(PduPart.P_CONTENT_ID);
                 if (('<' == contentId[0]) && ('>' == contentId[contentId.length - 1])) {
                     appendQuotedString(contentId);

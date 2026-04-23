@@ -368,18 +368,17 @@ class MessagesService(
 
         dao.updatePartsCount(id, 1 + decryptedContent.attachments.size)
 
-        // Move recipients out of Pending BEFORE dispatching to the platform.
-        // sendMultimediaMessage may fire ACTION_MMS_SENT very quickly (e.g.
-        // immediate failure), and processStateIntent must not race with us
-        // overwriting Sent/Failed back to Processed.
-        message.phoneNumbers.forEach { src ->
-            updateState(id, src, ProcessingState.Processed)
-        }
-
         // Don't set fromMsisdn — insert-address-token lets the MMSC fill
         // the From field, which matches how Google Messages composes its
         // PDUs and is what Verizon's MMSC expects.
         mmsSender.send(id, recipients, decryptedContent, subscriptionId, null)
+
+        // Move all recipients out of Pending immediately so the worker loop
+        // does not re-pull this message while we wait for ACTION_MMS_SENT.
+        // State transitions to Sent/Failed are driven by processStateIntent.
+        message.phoneNumbers.forEach { src ->
+            updateState(id, src, ProcessingState.Processed)
+        }
     }
 
     private suspend fun updateState(

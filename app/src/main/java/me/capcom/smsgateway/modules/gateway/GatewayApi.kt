@@ -187,8 +187,15 @@ class GatewayApi(
         class Mms(
             val subject: String?,
             val text: String?,
-            val attachments: List<Attachment>,
+            // Gson can leave this null when the field is omitted (text-only
+            // MMS), despite the non-null Kotlin type. Normalize via the
+            // public accessor below so callers never see null.
+            @SerializedName("attachments")
+            private val _attachments: List<Attachment>?,
         ) : MessageContent() {
+            val attachments: List<Attachment>
+                get() = _attachments.orEmpty()
+
             class Attachment(
                 val contentType: String,
                 val name: String?,

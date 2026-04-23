@@ -409,6 +409,15 @@
             "description": "Present only when `includeContent=true` and the message type is data.",
             "type": "object"
           },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is MMS.",
+            "type": "object"
+          },
           "deviceId": {
             "description": "Device ID",
             "example": "PyDmBQZZXYmyxMwED8Fzy",
@@ -899,6 +908,15 @@
               }
             ],
             "description": "Present only when `includeContent=true` and the message type is data.",
+            "type": "object"
+          },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is MMS.",
             "type": "object"
           },
           "deviceId": {

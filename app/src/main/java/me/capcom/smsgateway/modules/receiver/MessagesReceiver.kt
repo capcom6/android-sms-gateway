@@ -24,7 +24,8 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intents.DATA_SMS_RECEIVED_ACTION) return
 
-        val firstMessage = Intents.getMessagesFromIntent(intent)?.firstOrNull() ?: return
+        val messages = Intents.getMessagesFromIntent(intent) ?: return
+        val firstMessage = messages.first()
 
         val inboxMessage = InboxMessage.Data(
             firstMessage.userData,
