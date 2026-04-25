@@ -110,6 +110,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 🔌 Integration:
 
 - 🪝 **Webhooks:** Set up [webhooks](https://docs.sms-gate.app/features/webhooks/) to be triggered on specified events.
+- 🔒 **Security:** All local server communications use HTTPS with self-signed certificates; cloud API calls are TLS-encrypted.
 
 ### Ideal For
 
