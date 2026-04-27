@@ -4,8 +4,11 @@ import android.content.Context
 import android.os.Build
 import android.provider.Telephony
 import android.util.Base64
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.incoming.IncomingMessagesService
+import me.capcom.smsgateway.modules.incoming.db.IncomingMessageType
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
@@ -40,15 +43,20 @@ class ReceiverService : KoinComponent {
         MessagesReceiver.unregister(context)
     }
 
-    suspend fun export(context: Context, period: Pair<Date, Date>, triggerWebhooks: Boolean) {
+    suspend fun export(
+        context: Context,
+        period: Pair<Date, Date>,
+        messageTypes: Set<IncomingMessageType>,
+        triggerWebhooks: Boolean
+    ) = withContext(Dispatchers.IO) {
         logsService.insert(
             LogEntry.Priority.DEBUG,
             MODULE_NAME,
             "ReceiverService::export - start",
-            mapOf("period" to period)
+            mapOf("period" to period, "messageTypes" to messageTypes)
         )
 
-        select(context, period)
+        select(context, period, messageTypes)
             .forEach {
                 process(context, it, triggerWebhooks)
             }
@@ -57,7 +65,7 @@ class ReceiverService : KoinComponent {
             LogEntry.Priority.DEBUG,
             MODULE_NAME,
             "ReceiverService::export - end",
-            mapOf("period" to period)
+            mapOf("period" to period, "messageTypes" to messageTypes)
         )
     }
 
@@ -156,14 +164,38 @@ class ReceiverService : KoinComponent {
     }
 
 
-    fun select(context: Context, period: Pair<Date, Date>): List<InboxMessage> {
+    fun select(
+        context: Context,
+        period: Pair<Date, Date>,
+        messageTypes: Set<IncomingMessageType>
+    ): List<InboxMessage> {
         logsService.insert(
             LogEntry.Priority.DEBUG,
             MODULE_NAME,
             "ReceiverService::select - start",
-            mapOf("period" to period)
+            mapOf("period" to period, "messageTypes" to messageTypes)
         )
 
+        val messages = buildList {
+            if (IncomingMessageType.SMS in messageTypes) {
+                addAll(selectSms(context, period))
+            }
+            if (IncomingMessageType.MMS in messageTypes) {
+                addAll(selectMms(context, period))
+            }
+        }.sortedBy { it.date.time }
+
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "ReceiverService::select - end",
+            mapOf("messages" to messages.size, "messageTypes" to messageTypes)
+        )
+
+        return messages
+    }
+
+    private fun selectSms(context: Context, period: Pair<Date, Date>): List<InboxMessage> {
         val projection = mutableListOf(
             Telephony.Sms._ID,
             Telephony.Sms.ADDRESS,
@@ -208,12 +240,53 @@ class ReceiverService : KoinComponent {
             }
         }
 
-        logsService.insert(
-            LogEntry.Priority.DEBUG,
-            MODULE_NAME,
-            "ReceiverService::select - end",
-            mapOf("messages" to messages.size)
-        )
+        return messages
+    }
+
+    private fun selectMms(context: Context, period: Pair<Date, Date>): List<InboxMessage> {
+        val startSeconds = period.first.time / 1000
+        val endSeconds = period.second.time / 1000
+
+        val projection = arrayOf(Telephony.Mms._ID)
+        // m_type 132 = retrieve-conf (fully downloaded MMS); date is in seconds
+        val selection = "${Telephony.Mms.MESSAGE_TYPE} = 132 AND " +
+                "${Telephony.Mms.DATE} >= ? AND ${Telephony.Mms.DATE} <= ?"
+        val selectionArgs = arrayOf(startSeconds.toString(), endSeconds.toString())
+
+        val cursor = context.contentResolver.query(
+            Telephony.Mms.Inbox.CONTENT_URI,
+            projection,
+            selection,
+            selectionArgs,
+            "${Telephony.Mms.DATE} ASC, ${Telephony.Mms._ID} ASC"
+        ) ?: return emptyList()
+
+        val messages = mutableListOf<InboxMessage>()
+        cursor.use { c ->
+            while (c.moveToNext()) {
+                val mmsId = c.getLong(0)
+                val message = MmsContentReader.read(context, mmsId) ?: continue
+                messages.add(
+                    InboxMessage.MMS(
+                        messageId = mmsId.toString(),
+                        body = message.body,
+                        subject = message.subject,
+                        attachments = message.attachments.map {
+                            InboxMessage.MMS.Attachment(
+                                partId = it.partId,
+                                contentType = it.contentType,
+                                name = it.name,
+                                size = it.size,
+                                data = it.data
+                            )
+                        },
+                        address = message.sender,
+                        date = message.date,
+                        subscriptionId = message.subscriptionId
+                    )
+                )
+            }
+        }
 
         return messages
     }
