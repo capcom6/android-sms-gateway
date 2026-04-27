@@ -748,6 +748,12 @@
             "example": "2020-01-01T00:00:00Z",
             "type": "string"
           },
+          "scheduleAt": {
+            "description": "Schedule message delivery at (must be in the future)",
+            "example": "2020-01-01T08:30:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
           "withDeliveryReport": {
             "description": "With delivery report",
             "example": true,
@@ -1394,7 +1400,7 @@
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
     },
     "title": "SMSGate API",
-    "version": "1.60.0"
+    "version": "1.61.0"
   },
   "openapi": "3.0.1",
   "paths": {
