@@ -20,6 +20,10 @@
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <permission
+        android:name="me.capcom.smsgateway.permission.SMS_STATUS"
+        android:protectionLevel="signature" />
+
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -52,7 +56,8 @@
         <receiver
             android:name=".receivers.EventsReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:permission="me.capcom.smsgateway.permission.SMS_STATUS">
             <intent-filter>
                 <action android:name="me.capcom.smsgateway.ACTION_SENT" />
                 <action android:name="me.capcom.smsgateway.ACTION_DELIVERED" />
@@ -77,6 +82,7 @@
         <service
             android:name=".modules.localserver.WebService"
             android:enabled="true"
+            android:exported="false"
             android:foregroundServiceType="connectedDevice" />
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
