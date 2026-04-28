@@ -39,6 +39,7 @@ import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.modules.messages.exceptions.ConflictException
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
+import me.capcom.smsgateway.modules.mms.MmsSender
 import me.capcom.smsgateway.receivers.EventsReceiver
 import java.util.Date
 import kotlin.coroutines.coroutineContext
@@ -51,6 +52,7 @@ class MessagesService(
     private val encryptionService: EncryptionService,
     private val events: EventBus,
     private val logsService: LogsService,
+    private val mmsSender: MmsSender,
 ) {
     val processingOrder
         get() = settings.processingOrder
@@ -170,6 +172,22 @@ class MessagesService(
                 "pdu" to intent.extras?.getByteArray("pdu")?.joinToString("") { "%02x".format(it) },
             )
         )
+
+        if (intent.action == EventsReceiver.ACTION_MMS_SENT) {
+            val id = intent.getStringExtra(EventsReceiver.EXTRA_MESSAGE_ID) ?: return
+            val (mmsState, mmsError) = if (resultCode == Activity.RESULT_OK) {
+                ProcessingState.Sent to null
+            } else {
+                ProcessingState.Failed to "MMS send result: ${mmsErrorToMessage(resultCode)}"
+            }
+            try {
+                updateState(id, null, mmsState, mmsError)
+            } finally {
+                MmsSender.cleanup(context, id)
+            }
+            return
+        }
+
         val (state, error) = when (intent.action) {
             EventsReceiver.ACTION_SENT -> when {
                 resultCode != Activity.RESULT_OK -> ProcessingState.Failed to "Send result: " + this.resultToErrorMessage(
@@ -281,7 +299,10 @@ class MessagesService(
         }
 
         try {
-            sendSMS(request)
+            when (request.message.content) {
+                is MessageContent.Mms -> sendMMS(request)
+                else -> sendSMS(request)
+            }
             return true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -294,6 +315,72 @@ class MessagesService(
         }
 
         return false
+    }
+
+    private suspend fun sendMMS(request: StoredSendRequest) {
+        val message = request.message
+        val id = message.id
+        val content = message.content as MessageContent.Mms
+
+        val simNumber = selectSimNumber(request.id, request.params)
+        if (request.params.simNumber == null && simNumber != null) {
+            dao.updateSimNumber(id, simNumber + 1)
+        }
+
+        // Resolve a subscription ID + MSISDN from the chosen SIM slot (if any).
+        // Verizon and some other US carriers silently drop MMS whose From
+        // header is the insert-address-token, so we pass an explicit MSISDN
+        // whenever the platform exposes one.
+        val subscriptionId = simNumber?.let { SubscriptionsHelper.getSubscriptionId(context, it) }
+        val fromMsisdn = simNumber?.let { SubscriptionsHelper.getPhoneNumber(context, it) }
+            ?: run {
+                // No SIM was explicitly selected; try the first active subscription.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1
+                    && SubscriptionsHelper.hasPhoneStatePermission(context)
+                ) {
+                    @Suppress("DEPRECATION")
+                    SubscriptionsHelper.getSubscriptionsManager(context)
+                        ?.activeSubscriptionInfoList
+                        ?.firstOrNull()
+                        ?.number
+                        ?.takeIf { it.isNotBlank() }
+                } else null
+            }
+
+        val decryptedContent = if (message.isEncrypted) {
+            MessageContent.Mms(
+                subject = content.subject?.let { encryptionService.decrypt(it) },
+                text = content.text?.let { encryptionService.decrypt(it) },
+                attachments = content.attachments.map {
+                    it.copy(
+                        data = it.data?.let { d -> encryptionService.decrypt(d) }
+                    )
+                }
+            )
+        } else content
+
+        val recipients = message.phoneNumbers.map { source ->
+            val phone = if (message.isEncrypted) encryptionService.decrypt(source) else source
+            if (request.params.skipPhoneValidation) {
+                phone.filter { it.isDigit() || it == '+' || it == '*' || it == '#' }
+            } else {
+                PhoneHelper.filterPhoneNumber(phone, countryCode ?: "US")
+            }
+        }
+
+        dao.updatePartsCount(id, 1 + decryptedContent.attachments.size)
+
+        // Don't set fromMsisdn — insert-address-token lets the MMSC fill
+        // the From field, which matches how Google Messages composes its
+        // PDUs and is what Verizon's MMSC expects.
+        mmsSender.send(id, recipients, decryptedContent, subscriptionId, null)
+
+        // Move all recipients out of Pending immediately so the worker loop
+        // does not re-pull this message while we wait for ACTION_MMS_SENT.
+        // State transitions to Sent/Failed are driven by processStateIntent.
+        message.phoneNumbers.forEach { src ->
+            updateState(id, src, ProcessingState.Processed)
+        }
     }
 
     private suspend fun updateState(
@@ -385,6 +472,9 @@ class MessagesService(
                         }
                     }
                 }
+
+                is MessageContent.Mms ->
+                    throw IllegalStateException("MMS content must be handled via sendMMS")
 
                 is MessageContent.Data -> {
                     val data = when (message.isEncrypted) {
@@ -509,6 +599,21 @@ class MessagesService(
             } else {
                 context.getSystemService(SmsManager::class.java)
             }
+        }
+    }
+
+    private fun mmsErrorToMessage(resultCode: Int): String {
+        return when (resultCode) {
+            Activity.RESULT_OK -> "OK"
+            SmsManager.MMS_ERROR_UNSPECIFIED -> "MMS_ERROR_UNSPECIFIED"
+            SmsManager.MMS_ERROR_INVALID_APN -> "MMS_ERROR_INVALID_APN"
+            SmsManager.MMS_ERROR_UNABLE_CONNECT_MMS -> "MMS_ERROR_UNABLE_CONNECT_MMS"
+            SmsManager.MMS_ERROR_HTTP_FAILURE -> "MMS_ERROR_HTTP_FAILURE"
+            SmsManager.MMS_ERROR_IO_ERROR -> "MMS_ERROR_IO_ERROR"
+            SmsManager.MMS_ERROR_RETRY -> "MMS_ERROR_RETRY"
+            SmsManager.MMS_ERROR_CONFIGURATION_ERROR -> "MMS_ERROR_CONFIGURATION_ERROR"
+            SmsManager.MMS_ERROR_NO_DATA_NETWORK -> "MMS_ERROR_NO_DATA_NETWORK"
+            else -> "Unknown MMS error: $resultCode"
         }
     }
 

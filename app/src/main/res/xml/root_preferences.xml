@@ -67,6 +67,11 @@
             android:key="app.language"
             android:title="@string/language"
             app:useSimpleSummaryProvider="true" />
+        <Preference
+            android:icon="@drawable/ic_sms"
+            app:key="system.default_sms_app"
+            app:summary="@string/default_sms_app_summary"
+            app:title="@string/default_sms_app_title" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/information">

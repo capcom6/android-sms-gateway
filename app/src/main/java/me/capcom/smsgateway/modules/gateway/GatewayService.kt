@@ -232,6 +232,18 @@ class GatewayService(
                         content.data,
                         content.port
                     )
+                    is GatewayApi.MessageContent.Mms -> MessageContent.Mms(
+                        subject = content.subject,
+                        text = content.text,
+                        attachments = content.attachments.map {
+                            MessageContent.Mms.Attachment(
+                                contentType = it.contentType,
+                                name = it.name,
+                                data = it.data,
+                                url = it.url,
+                            )
+                        }
+                    )
                 },
                 message.phoneNumbers,
                 message.isEncrypted ?: false,

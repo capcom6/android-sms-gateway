@@ -12,36 +12,27 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.Date
 
+/**
+ * Handles binary/data SMS on port 53739 (`DATA_SMS_RECEIVED_ACTION`). Regular
+ * text SMS ingest is driven by `SmsContentObserver` — the observer path works
+ * across all carriers, including those where a vendor CarrierMessagingService
+ * swallows `SMS_DELIVER` and `SMS_RECEIVED` (e.g. Verizon on Pixel).
+ */
 class MessagesReceiver : BroadcastReceiver(), KoinComponent {
     private val receiverSvc: ReceiverService by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intents.SMS_RECEIVED_ACTION
-            && intent.action != Intents.DATA_SMS_RECEIVED_ACTION
-        ) {
-            return
-        }
+        if (intent.action != Intents.DATA_SMS_RECEIVED_ACTION) return
 
         val messages = Intents.getMessagesFromIntent(intent) ?: return
-        val isDataMessage = intent.action == Intents.DATA_SMS_RECEIVED_ACTION
         val firstMessage = messages.first()
-//        val text = messages.joinToString(separator = "") { it.displayMessageBody }
 
-        val inboxMessage = when (isDataMessage) {
-            false -> InboxMessage.Text(
-                messages.joinToString(separator = "") { it.displayMessageBody },
-                firstMessage.displayOriginatingAddress,
-                Date(firstMessage.timestampMillis),
-                SubscriptionsHelper.extractSubscriptionId(context, intent)
-            )
-
-            true -> InboxMessage.Data(
-                firstMessage.userData,
-                firstMessage.displayOriginatingAddress,
-                Date(firstMessage.timestampMillis),
-                SubscriptionsHelper.extractSubscriptionId(context, intent)
-            )
-        }
+        val inboxMessage = InboxMessage.Data(
+            firstMessage.userData,
+            firstMessage.displayOriginatingAddress,
+            Date(firstMessage.timestampMillis),
+            SubscriptionsHelper.extractSubscriptionId(context, intent),
+        )
 
         receiverSvc.process(
             context,
@@ -57,14 +48,6 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
 
         fun register(context: Context) {
             unregister(context)
-
-            val textFilter = IntentFilter().apply {
-                addAction(Intents.SMS_RECEIVED_ACTION)
-            }
-            context.registerReceiver(
-                INSTANCE,
-                textFilter
-            )
 
             val dataFilter = IntentFilter().apply {
                 addAction(Intents.DATA_SMS_RECEIVED_ACTION)
