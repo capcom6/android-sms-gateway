@@ -22,7 +22,6 @@ import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
 import me.capcom.smsgateway.modules.mms.MmsAttachmentStorage
 import me.capcom.smsgateway.modules.receiver.ReceiverService
-import java.io.File
 import java.util.Date
 
 class InboxRoutes(
@@ -251,9 +250,7 @@ class InboxRoutes(
     )
 
     private fun listAttachmentRefs(messageId: String): List<AttachmentRef> {
-        val dir = File(File(context.filesDir, "mms-in"), sanitize(messageId))
-        if (!dir.isDirectory) return emptyList()
-        return dir.listFiles().orEmpty().mapNotNull { file ->
+        return attachmentStorage.list(messageId).mapNotNull { file ->
             val name = file.name
             val dashIdx = name.indexOf('-').takeIf { it > 0 } ?: return@mapNotNull null
             val partId = name.substring(0, dashIdx).toLongOrNull() ?: return@mapNotNull null
@@ -286,8 +283,6 @@ class InboxRoutes(
             else -> ContentType.Application.OctetStream
         }
     }
-
-    private fun sanitize(s: String): String = s.replace(Regex("[^A-Za-z0-9._-]"), "_")
 
     private fun IncomingMessage.toDomain() = InboxMessage(
         id = id,

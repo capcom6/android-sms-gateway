@@ -180,9 +180,11 @@ class MessagesService(
             } else {
                 ProcessingState.Failed to "MMS send result: ${mmsErrorToMessage(resultCode)}"
             }
-            updateState(id, null, mmsState, mmsError)
-            // Keep the PDU file around while debugging so it can be inspected
-            // via `adb shell run-as … cat files/mms-out/<id>.pdu`.
+            try {
+                updateState(id, null, mmsState, mmsError)
+            } finally {
+                MmsSender.cleanup(context, id)
+            }
             return
         }
 

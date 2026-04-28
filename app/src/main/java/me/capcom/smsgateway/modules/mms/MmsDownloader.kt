@@ -69,13 +69,18 @@ class MmsDownloader(private val context: Context) {
         )
 
         val manager = getSmsManager(subscriptionId)
-        manager.downloadMultimediaMessage(
-            context,
-            contentLocation,
-            uri,
-            null, // configOverrides
-            downloadedIntent
-        )
+        try {
+            manager.downloadMultimediaMessage(
+                context,
+                contentLocation,
+                uri,
+                null, // configOverrides
+                downloadedIntent
+            )
+        } catch (e: Exception) {
+            file.delete()
+            throw e
+        }
     }
 
     private fun prepareOutputFile(messageId: String): File {

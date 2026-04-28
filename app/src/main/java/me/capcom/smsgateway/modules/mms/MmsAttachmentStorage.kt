@@ -31,6 +31,12 @@ class MmsAttachmentStorage(private val context: Context) {
         return dir.listFiles()?.firstOrNull { it.name.startsWith(prefix) }
     }
 
+    fun list(messageId: String): List<File> {
+        val dir = messageDir(messageId)
+        if (!dir.isDirectory) return emptyList()
+        return dir.listFiles()?.toList().orEmpty()
+    }
+
     fun remove(messageId: String) {
         val dir = messageDir(messageId)
         if (!dir.exists()) return
