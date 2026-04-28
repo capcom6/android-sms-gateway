@@ -18,6 +18,7 @@ package me.capcom.smsgateway.modules.mms.pdu.aosp;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.Locale;
 
 public class CharacterSets {
     /**
@@ -126,7 +127,7 @@ public class CharacterSets {
         int count = MIBENUM_NUMBERS.length - 1;
         for(int i = 0; i <= count; i++) {
             MIBENUM_TO_NAME_MAP.put(MIBENUM_NUMBERS[i], MIME_NAMES[i]);
-            NAME_TO_MIBENUM_MAP.put(MIME_NAMES[i], MIBENUM_NUMBERS[i]);
+            NAME_TO_MIBENUM_MAP.put(MIME_NAMES[i].toLowerCase(Locale.ROOT), MIBENUM_NUMBERS[i]);
         }
     }
 
@@ -162,7 +163,7 @@ public class CharacterSets {
             return -1;
         }
 
-        Integer mibEnumValue = NAME_TO_MIBENUM_MAP.get(mimeName);
+        Integer mibEnumValue = NAME_TO_MIBENUM_MAP.get(mimeName.trim().toLowerCase(Locale.ROOT));
         if (mibEnumValue == null) {
             throw new UnsupportedEncodingException();
         }

@@ -2,6 +2,7 @@ package me.capcom.smsgateway.modules.receiver.parsers
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.charset.Charset
 import java.util.Date
 
 /**
@@ -200,11 +201,15 @@ object MMSRetrieveParser {
     }
 
     private fun readTextString(buf: ByteBuffer): String {
+        return readTextString(buf, Charsets.UTF_8)
+    }
+
+    private fun readTextString(buf: ByteBuffer, charset: Charset): String {
         if (!buf.hasRemaining()) return ""
         val mark = buf.position()
         val first = buf.get().toInt() and 0xFF
-        val start = if (first == 0x7F) buf.position() else {
-            buf.position(mark); buf.position()
+        if (first != 0x7F) {
+            buf.position(mark)
         }
         val bytes = ArrayList<Byte>()
         while (buf.hasRemaining()) {
@@ -212,7 +217,7 @@ object MMSRetrieveParser {
             if (b == 0x00.toByte()) break
             bytes.add(b)
         }
-        return String(bytes.toByteArray(), Charsets.UTF_8)
+        return String(bytes.toByteArray(), charset)
     }
 
     private fun readValueLength(buf: ByteBuffer): Int {
@@ -236,19 +241,41 @@ object MMSRetrieveParser {
             // Value-length + charset + text-string
             val len = readValueLength(buf)
             val bodyStart = buf.position()
-            // Read charset (short-integer or long-integer).
-            val charsetFirst = buf.get().toInt() and 0xFF
-            if (charsetFirst < 0x80) {
-                // long-integer: first byte is length
-                repeat(charsetFirst) { buf.get() }
+            require(len <= buf.remaining()) {
+                "Encoded-string length ($len) exceeds remaining PDU bytes (${buf.remaining()})"
             }
-            // Then text-string up to NUL.
-            val s = readTextString(buf)
-            val consumed = buf.position() - bodyStart
-            if (consumed < len) buf.position(bodyStart + len)
-            return s
+            val bodyEnd = bodyStart + len
+            val originalLimit = buf.limit()
+            try {
+                buf.limit(bodyEnd)
+                val charset = Charset.forName(charsetName(readIntegerValue(buf)))
+                return readTextString(buf, charset)
+            } catch (_: Exception) {
+                buf.position(bodyStart)
+                val fallbackCharset = runCatching {
+                    charsetName(readIntegerValue(buf))
+                }.getOrDefault("UTF-8")
+                return readTextString(
+                    buf,
+                    runCatching { Charset.forName(fallbackCharset) }.getOrDefault(Charsets.UTF_8),
+                )
+            } finally {
+                buf.limit(originalLimit)
+                buf.position(bodyEnd)
+            }
         }
         return readTextString(buf)
+    }
+
+    private fun readIntegerValue(buf: ByteBuffer): Int {
+        val first = buf.get().toInt() and 0xFF
+        if (first >= 0x80) return first and 0x7F
+
+        var value = 0
+        repeat(first.coerceAtMost(buf.remaining())) {
+            value = (value shl 8) or (buf.get().toInt() and 0xFF)
+        }
+        return value
     }
 
     private fun readFrom(buf: ByteBuffer): String {

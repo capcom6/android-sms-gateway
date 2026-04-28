@@ -147,6 +147,7 @@ class ReceiverService : KoinComponent {
                     Charsets.UTF_8
                 }
                 bodyParts += String(part.data, charset)
+                return@forEach
             }
 
             val name = part.name ?: part.contentLocation

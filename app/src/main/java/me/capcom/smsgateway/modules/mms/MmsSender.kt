@@ -77,13 +77,18 @@ class MmsSender(
         )
 
         val manager = getSmsManager(subscriptionId)
-        manager.sendMultimediaMessage(
-            context,
-            uri,
-            null,
-            null,
-            sentIntent
-        )
+        try {
+            manager.sendMultimediaMessage(
+                context,
+                uri,
+                null,
+                null,
+                sentIntent
+            )
+        } catch (e: Exception) {
+            file.delete()
+            throw e
+        }
     }
 
     private suspend fun buildSendReq(

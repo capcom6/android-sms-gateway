@@ -106,6 +106,7 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
                             subscriptionId = subscriptionId,
                         )
                     } catch (e: Throwable) {
+                        triggeredTxns.remove(notification.transactionId)
                         logsService.insert(
                             LogEntry.Priority.ERROR,
                             MODULE_NAME,
