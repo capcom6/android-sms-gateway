@@ -80,7 +80,7 @@ class MessagesService(
 
     //#region Lifecycle
     fun start(context: Context) {
-        SendMessagesWorker.start(context, false, SendMessagesWorker.IMMEDIATE)
+        SendMessagesWorker.start(context, true, SendMessagesWorker.IMMEDIATE)
         LogTruncateWorker.start(context)
     }
 
@@ -94,10 +94,7 @@ class MessagesService(
     fun enqueueMessage(request: SendRequest): MessageWithRecipients {
         val priority = request.params.priority ?: Message.PRIORITY_DEFAULT
         val scheduleAt = request.params.scheduleAt?.time
-        val earliest = request.params.scheduleAt?.let {
-            val nextScheduled = dao.nextScheduledTime() ?: 0
-            nextScheduled != 0L && it.time < nextScheduled
-        } ?: true
+        val nextScheduled = dao.nextScheduledTime()?.takeIf { it > 0 }
 
         val message = try {
             messages.enqueue(request)
@@ -105,12 +102,15 @@ class MessagesService(
             throw ConflictException()
         }
 
-        if (scheduleAt != null && scheduleAt > System.currentTimeMillis()) {
-            SendMessagesWorker.start(context, earliest, scheduleAt)
+        if (scheduleAt != null
+            && scheduleAt > System.currentTimeMillis()
+            && scheduleAt < (nextScheduled ?: 0)
+        ) {
+            SendMessagesWorker.start(context, true, scheduleAt)
         } else {
             SendMessagesWorker.start(
                 context,
-                priority >= Message.PRIORITY_EXPEDITED,
+                nextScheduled == null || priority >= Message.PRIORITY_EXPEDITED,
                 SendMessagesWorker.IMMEDIATE
             )
         }
