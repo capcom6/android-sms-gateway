@@ -96,11 +96,6 @@ class MessagesService(
         val scheduleAt = request.params.scheduleAt?.time
         val nextScheduled = dao.nextScheduledTime()?.takeIf { it > 0 }
 
-//        val earliest = request.params.scheduleAt?.let {
-//            val nextScheduled = dao.nextScheduledTime() ?: 0
-//            nextScheduled != 0L && it.time < nextScheduled
-//        } ?: true
-
         val message = try {
             messages.enqueue(request)
         } catch (_: android.database.sqlite.SQLiteConstraintException) {
