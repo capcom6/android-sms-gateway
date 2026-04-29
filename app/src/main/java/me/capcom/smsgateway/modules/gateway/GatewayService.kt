@@ -67,10 +67,15 @@ class GatewayService(
 
     //region Account
     suspend fun getLoginCode(): GatewayApi.GetUserCodeResponse {
-        val username = settings.username
-            ?: throw IllegalStateException("Username is not set")
         val password = settings.password
             ?: throw IllegalStateException("Password is not set")
+
+        return getLoginCodeWithPassword(password)
+    }
+
+    suspend fun getLoginCodeWithPassword(password: String): GatewayApi.GetUserCodeResponse {
+        val username = settings.username
+            ?: throw IllegalStateException("Username is not set")
 
         return api.getUserCode(username to password)
     }
@@ -96,7 +101,7 @@ class GatewayService(
     }
     //endregion
 
-     //region Device
+    //region Device
     internal suspend fun registerDevice(
         pushToken: String?,
         registerMode: RegistrationMode

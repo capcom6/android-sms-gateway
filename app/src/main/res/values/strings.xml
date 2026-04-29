@@ -30,6 +30,7 @@
     <string name="dots">…</string>
     <string name="enabled">Enabled</string>
     <string name="encryption">Encryption</string>
+    <string name="enter_current_password">Enter current password</string>
     <string name="failed_to_change_password">Failed to change password: %1$s</string>
     <string name="failed_to_get_login_code">Failed to get login code: %1$s</string>
     <string name="failed_to_register_device">Failed to register device: %1$s</string>
@@ -76,6 +77,7 @@
     <string name="password_must_be_at_least_14_characters">Password must be at least 14 characters</string>
     <string name="password_must_be_at_least_8_characters">Password must be at least 8 characters</string>
     <string name="password">Password</string>
+    <string name="password_hidden" translatable="false">••••••••</string>
     <string name="period">Period</string>
     <string name="ping_service_is_active">Ping service is active</string>
     <string name="ping">Ping</string>
@@ -114,6 +116,8 @@
     <string name="sms" translatable="false">sms</string>
     <string name="success_long_press_to_copy">Success, long press to copy</string>
     <string name="system">System</string>
+    <string name="clear_password">Clear password</string>
+    <string name="password_cleared">Password cleared</string>
     <string name="tab_text_home">Home</string>
     <string name="tab_text_messages">MESSAGES</string>
     <string name="tab_text_settings">SETTINGS</string>
@@ -171,4 +175,5 @@
     <string name="incoming_type_mms" translatable="false">MMS</string>
     <string name="language">Language</string>
     <string name="language_system">System default</string>
+    <string name="password_must_not_be_empty">Password must not be empty</string>
 </resources>
