@@ -32,6 +32,12 @@ class GatewaySettings(
         get() = registrationInfo?.login
     val password: String?
         get() = registrationInfo?.password
+    val hasPassword: Boolean
+        get() = registrationInfo?.password != null
+
+    fun clearPassword() {
+        registrationInfo = registrationInfo?.copy(password = null)
+    }
 
     val serverUrl: String
         get() = storage.get<String?>(CLOUD_URL) ?: PUBLIC_URL

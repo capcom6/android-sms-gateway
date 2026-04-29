@@ -169,4 +169,9 @@
     <string name="outgoing_messages">ИСХОДЯЩИЕ</string>
     <string name="language">Язык</string>
     <string name="language_system">Системный (по умолчанию)</string>
+    <string name="enter_current_password">Введите текущий пароль</string>
+    <string name="clear_password">Очистить пароль</string>
+    <string name="password_cleared">Пароль очищен</string>
+    <string name="password_must_not_be_empty">Пароль не может быть пустым</string>
+    <string name="password_hidden">Пароль скрыт</string>
 </resources>

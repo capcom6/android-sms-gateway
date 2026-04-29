@@ -1,16 +1,21 @@
 <resources>
     <string name="address_is">العنوان هو %1$s</string>
-    <string name="api_url_private_token_credentials_etc">رابط API، الرمز الخاص، بيانات الاعتماد، إلخ.</string>
+    <string name="api_url_private_token_credentials_etc">رابط API، الرمز الخاص، بيانات الاعتماد،
+        إلخ.</string>
     <string name="api_url">رابط API</string>
     <string name="app_version_build">إصدار التطبيق (البناء)</string>
     <string name="battery_optimization_already_disabled">تحسين البطارية معطل بالفعل</string>
-    <string name="battery_optimization_is_not_supported_on_this_device">تحسين البطارية غير مدعوم على هذا الجهاز</string>
+    <string name="battery_optimization_is_not_supported_on_this_device">تحسين البطارية غير مدعوم على
+        هذا الجهاز</string>
     <string name="battery_optimization">تحسين البطارية</string>
     <string name="btn_cancel">إلغاء</string>
     <string name="btn_continue">استمرار</string>
     <string name="by_code">بواسطة الكود</string>
     <string name="can_affect_battery_life">يمكن أن يؤثر على عمر البطارية</string>
-    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">انقر فوق استمرار لإنشاء حساب. لا يلزم تقديم معلومات شخصية.\nمن خلال الاستمرار، فإنك توافق على سياسة الخصوصية الخاصة بنا على https://docs.sms-gate.app/privacy/policy/</string>
+    <string
+        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">انقر
+        فوق استمرار لإنشاء حساب. لا يلزم تقديم معلومات شخصية.\nمن خلال الاستمرار، فإنك توافق على
+        سياسة الخصوصية الخاصة بنا على https://docs.sms-gate.app/privacy/policy/</string>
     <string name="cloud_server_dotdotdot">خادم السحاب…</string>
     <string name="cloud_server">خادم السحاب</string>
     <string name="cloud">سحابي</string>
@@ -36,7 +41,8 @@
     <string name="internet_connection_unavailable">اتصال الإنترنت: غير متوفر</string>
     <string name="interval_seconds">الفاصل الزمني (ثواني)</string>
     <string name="invalid_url">رابط غير صحيح</string>
-    <string name="is_not_a_valid_port_must_be_between_1024_and_65535">%1$s ليس منفذًا صالحًا. يجب أن يكون بين 1024 و 65535.</string>
+    <string name="is_not_a_valid_port_must_be_between_1024_and_65535">%1$s ليس منفذًا صالحًا. يجب أن
+        يكون بين 1024 و 65535.</string>
     <string name="label_password">كلمة المرور</string>
     <string name="label_username">اسم المستخدم</string>
     <string name="limits">الحدود</string>
@@ -63,16 +69,20 @@
     <string name="notification_title">SMSGate</string>
     <string name="notification_channel">قناة الإشعارات</string>
     <string name="notifications">الإشعارات</string>
-    <string name="online_status_at_the_cost_of_battery_life">حالة الاتصال بالإنترنت على حساب عمر البطارية</string>
+    <string name="online_status_at_the_cost_of_battery_life">حالة الاتصال بالإنترنت على حساب عمر
+        البطارية</string>
     <string name="passphrase">كلمة السر</string>
     <string name="password_changed_successfully">تم تغيير كلمة المرور بنجاح</string>
-    <string name="password_must_be_at_least_14_characters">يجب أن تتكون كلمة المرور من 14 حرفًا على الأقل</string>
-    <string name="password_must_be_at_least_8_characters">يجب أن تتكون كلمة المرور من 8 أحرف على الأقل</string>
+    <string name="password_must_be_at_least_14_characters">يجب أن تتكون كلمة المرور من 14 حرفًا على
+        الأقل</string>
+    <string name="password_must_be_at_least_8_characters">يجب أن تتكون كلمة المرور من 8 أحرف على
+        الأقل</string>
     <string name="password">كلمة المرور</string>
     <string name="period">الفترة</string>
     <string name="ping_service_is_active">خدمة البينج نشطة</string>
     <string name="ping">بينج (Ping)</string>
-    <string name="please_enter_one_time_code_displayed_on_already_registered_device">يرجى إدخال الكود لمرة واحدة المعروض على الجهاز المسجل مسبقًا</string>
+    <string name="please_enter_one_time_code_displayed_on_already_registered_device">يرجى إدخال
+        الكود لمرة واحدة المعروض على الجهاز المسجل مسبقًا</string>
     <string name="port_credentials_etc">المنفذ، بيانات الاعتماد، إلخ.</string>
     <string name="port">المنفذ</string>
     <string name="private_token">الرمز الخاص</string>
@@ -87,7 +97,8 @@
     <string name="server_address">عنوان الخادم</string>
     <string name="server">الخادم</string>
     <string name="set_maximum_value_to_activate">حدد القيمة القصوى للتفعيل</string>
-    <string name="settings_changed_via_api_restart_the_app_to_apply_changes">تم تغيير الإعدادات عبر API. أعد تشغيل التطبيق لتطبيق التغييرات.</string>
+    <string name="settings_changed_via_api_restart_the_app_to_apply_changes">تم تغيير الإعدادات عبر
+        API. أعد تشغيل التطبيق لتطبيق التغييرات.</string>
     <string name="settings_local_address_not_found">غير متاح</string>
     <string name="settings_local_server">الخادم المحلي</string>
     <string name="settings_offline">غير متصل</string>
@@ -104,12 +115,17 @@
     <string name="tab_text_home">الرئيسية</string>
     <string name="tab_text_messages">الرسائل</string>
     <string name="tab_text_settings">الإعدادات</string>
-    <string name="the_webhook_request_will_wait_for_an_internet_connection">سينتظر طلب الويب هوك اتصال الإنترنت</string>
-    <string name="to_add_a_device_to_an_existing_account_please_fill_in_the_credentials_below">لإضافة جهاز إلى حساب موجود، يرجى ملء بيانات الاعتماد أدناه.</string>
-    <string name="to_apply_the_changes_restart_the_app_using_the_button_below">لتطبيق التغييرات، أعد تشغيل التطبيق باستخدام الزر أدناه.</string>
+    <string name="the_webhook_request_will_wait_for_an_internet_connection">سينتظر طلب الويب هوك
+        اتصال الإنترنت</string>
+    <string name="to_add_a_device_to_an_existing_account_please_fill_in_the_credentials_below">لإضافة
+        جهاز إلى حساب موجود، يرجى ملء بيانات الاعتماد أدناه.</string>
+    <string name="to_apply_the_changes_restart_the_app_using_the_button_below">لتطبيق التغييرات، أعد
+        تشغيل التطبيق باستخدام الزر أدناه.</string>
     <string name="use_empty_to_disable">اتركه فارغاً للتعطيل</string>
-    <string name="use_this_code_to_sign_in_on_another_device">استخدم هذا الكود لتسجيل الدخول على جهاز آخر</string>
-    <string name="username_must_be_at_least_3_characters">يجب أن يتكون اسم المستخدم من 3 أحرف على الأقل</string>
+    <string name="use_this_code_to_sign_in_on_another_device">استخدم هذا الكود لتسجيل الدخول على
+        جهاز آخر</string>
+    <string name="username_must_be_at_least_3_characters">يجب أن يتكون اسم المستخدم من 3 أحرف على
+        الأقل</string>
     <string name="username">اسم المستخدم</string>
     <string name="view">عرض</string>
     <string name="webhook_list_summary">عرض الويب هوك المسجلة</string>
@@ -118,11 +134,16 @@
     <string name="webhooks">الويب هوك</string>
     <plurals name="review_incoming_sms_webhooks">
         <item quantity="zero">ليس لديك أي (%1$d) ويب هوك رسائل مستلمة مسجلة.</item>
-        <item quantity="one">لديك ويب هوك واحد للرسائل المستلمة مسجل. يرجى مراجعته لتجنب أي مخاطر أمنية.</item>
-        <item quantity="two">لديك ويب هوك (%1$d) رسائل مستلمة مسجلة. يرجى مراجعتهما لتجنب أي مخاطر أمنية.</item>
-        <item quantity="few">لديك %1$d ويب هوك رسائل مستلمة مسجلة. يرجى مراجعتها لتجنب أي مخاطر أمنية.</item>
-        <item quantity="many">لديك %1$d ويب هوك رسائل مستلمة مسجلة. يرجى مراجعتها لتجنب أي مخاطر أمنية.</item>
-        <item quantity="other">لديك %1$d ويب هوك رسائل مستلمة مسجلة. يرجى مراجعتها لتجنب أي مخاطر أمنية.</item>
+        <item quantity="one">لديك ويب هوك واحد للرسائل المستلمة مسجل. يرجى مراجعته لتجنب أي مخاطر
+            أمنية.</item>
+        <item quantity="two">لديك ويب هوك (%1$d) رسائل مستلمة مسجلة. يرجى مراجعتهما لتجنب أي مخاطر
+            أمنية.</item>
+        <item quantity="few">لديك %1$d ويب هوك رسائل مستلمة مسجلة. يرجى مراجعتها لتجنب أي مخاطر
+            أمنية.</item>
+        <item quantity="many">لديك %1$d ويب هوك رسائل مستلمة مسجلة. يرجى مراجعتها لتجنب أي مخاطر
+            أمنية.</item>
+        <item quantity="other">لديك %1$d ويب هوك رسائل مستلمة مسجلة. يرجى مراجعتها لتجنب أي مخاطر
+            أمنية.</item>
     </plurals>
     <string name="processing">معالجة</string>
     <string name="processing_order_title">ترتيب المعالجة</string>
@@ -139,14 +160,20 @@
     <string name="incoming_mms_messages">MMS: %1$d</string>
     <string name="jwt">JWT</string>
     <string name="jwt_default_ttl_seconds">TTL الافتراضي لـ JWT (بالثواني)</string>
-    <string name="jwt_ttl_must_be_between_1_second_and_365_days">يجب أن يكون TTL لـ JWT بين ثانية واحدة و 365 يومًا</string>
+    <string name="jwt_ttl_must_be_between_1_second_and_365_days">يجب أن يكون TTL لـ JWT بين ثانية
+        واحدة و 365 يومًا</string>
     <string name="jwt_regenerate_secret">تجديد سر JWT</string>
     <string name="jwt_regenerate_secret_summary">سيبطل جميع تواقيع JWT الحالية على الفور.</string>
     <string name="jwt_secret_regenerated">تم تجديد سر JWT</string>
-    <string name="confirm_regenerate_jwt_secret">هل أنت متأكد أنك تريد تجديد سر JWT؟ سيؤدي ذلك إلى إبطال جميع تواقيع JWT الحالية على الفور.</string>
+    <string name="confirm_regenerate_jwt_secret">هل أنت متأكد أنك تريد تجديد سر JWT؟ سيؤدي ذلك إلى
+        إبطال جميع تواقيع JWT الحالية على الفور.</string>
     <string name="confirm">تأكيد</string>
     <string name="cancel">إلغاء</string>
     <string name="outgoing_messages">الصادرة</string>
     <string name="language">اللغة</string>
     <string name="language_system">افتراضي النظام</string>
+    <string name="enter_current_password">أدخل كلمة المرور الحالية</string>
+    <string name="clear_password">مسح كلمة المرور</string>
+    <string name="password_cleared">تم مسح كلمة المرور</string>
+    <string name="password_must_not_be_empty">يجب أن لا تكون كلمة المرور فارغة</string>
 </resources>
