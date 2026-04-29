@@ -184,7 +184,7 @@ class HomeFragment : Fragment() {
                 )
 
                 binding.textRemotePassword.text = when (event.password) {
-                    null -> getString(R.string.n_a)
+                    null -> getString(R.string.password_hidden)
                     else -> makeCopyableLink(
                         Html
                             .fromHtml(
