@@ -6,6 +6,7 @@ import android.text.InputType
 import android.view.View
 import androidx.core.content.edit
 import androidx.core.view.isVisible
+import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
+import me.capcom.smsgateway.ui.dialogs.PasswordPromptDialogFragment
 import org.koin.android.ext.android.inject
 import java.net.URL
 import java.text.DateFormat
@@ -21,6 +23,9 @@ class CloudServerSettingsFragment : BasePreferenceFragment() {
 
     private val settings: GatewaySettings by inject()
     private val service: GatewayService by inject()
+
+    private var pendingPasswordChange: String? = null
+    private var pendingLoginCodeRequest = false
 
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -61,12 +66,12 @@ class CloudServerSettingsFragment : BasePreferenceFragment() {
             settings.username ?: getString(R.string.not_set)
         }
         findPreference<EditTextPreference>("gateway.password")?.apply {
-            isEnabled = settings.username != null && settings.password != null
+            isEnabled = settings.username != null
 
             setSummaryProvider {
                 when {
                     settings.username == null -> getString(R.string.not_registered)
-                    settings.username != null && settings.password == null -> "Can't be changed"
+                    !settings.hasPassword -> getString(R.string.password_hidden)
                     else -> settings.password
                 }
             }
@@ -78,48 +83,120 @@ class CloudServerSettingsFragment : BasePreferenceFragment() {
                     return@setOnPreferenceChangeListener false
                 }
 
-                this@CloudServerSettingsFragment.lifecycleScope.launch {
-                    try {
-                        requireActivity().findViewById<View>(R.id.progressBar).isVisible = true
-                        service.changePassword(settings.password ?: "", value)
-                        listView.adapter?.notifyDataSetChanged()
-                        showToast(getString(R.string.password_changed_successfully))
-                    } catch (e: Exception) {
-                        showToast(getString(R.string.failed_to_change_password, e.message))
-                    } finally {
-                        requireActivity().findViewById<View>(R.id.progressBar).isVisible = false
-                    }
+                if (settings.hasPassword) {
+                    changePasswordInternal(settings.password!!, value)
+                } else {
+                    pendingPasswordChange = value
+                    showPasswordPromptDialog(getString(R.string.enter_current_password))
                 }
 
                 true
             }
         }
 
-        findPreference<Preference>("gateway.login_code")?.apply {
-            isVisible = settings.username != null && settings.password != null
+        findPreference<Preference>("gateway.clear_password")?.apply {
+            isVisible = settings.hasPassword
 
             onPreferenceClickListener = Preference.OnPreferenceClickListener {
-                this@CloudServerSettingsFragment.lifecycleScope.launch {
-                    try {
-                        requireActivity().findViewById<View>(R.id.progressBar).isVisible = true
-
-                        val loginCode = service.getLoginCode()
-                        title = getString(
-                            R.string.login_code_expires,
-                            DateFormat.getDateTimeInstance().format(loginCode.validUntil)
-                        )
-                        summary = loginCode.code
-
-                        listView.adapter?.notifyDataSetChanged()
-                        showToast(getString(R.string.success_long_press_to_copy))
-                    } catch (e: Exception) {
-                        showToast(getString(R.string.failed_to_get_login_code, e.message))
-                    } finally {
-                        requireActivity().findViewById<View>(R.id.progressBar).isVisible = false
-                    }
-                }
-
+                settings.clearPassword()
+                listView.adapter?.notifyDataSetChanged()
+                showToast(R.string.password_cleared)
                 true
+            }
+        }
+
+        findPreference<Preference>("gateway.login_code")?.apply {
+            isVisible = settings.username != null
+
+            onPreferenceClickListener = Preference.OnPreferenceClickListener {
+                if (settings.hasPassword) {
+                    requestLoginCodeInternal()
+                } else {
+                    pendingLoginCodeRequest = true
+                    showPasswordPromptDialog(getString(R.string.enter_current_password))
+                }
+                true
+            }
+        }
+
+        setFragmentResultListener(PasswordPromptDialogFragment.REQUEST_KEY) { _, data ->
+            val password = PasswordPromptDialogFragment.getPassword(data)
+            if (password == null) {
+                pendingPasswordChange = null
+                pendingLoginCodeRequest = false
+                return@setFragmentResultListener
+            }
+
+            if (pendingPasswordChange != null) {
+                changePasswordInternal(password, pendingPasswordChange!!)
+                pendingPasswordChange = null
+            } else if (pendingLoginCodeRequest) {
+                requestLoginCodeWithPassword(password)
+                pendingLoginCodeRequest = false
+            }
+        }
+    }
+
+    private fun showPasswordPromptDialog(message: String) {
+        PasswordPromptDialogFragment.newInstance(message)
+            .show(parentFragmentManager, "password_prompt")
+    }
+
+    private fun changePasswordInternal(currentPassword: String, newPassword: String) {
+        this.lifecycleScope.launch {
+            try {
+                requireActivity().findViewById<View>(R.id.progressBar).isVisible = true
+                service.changePassword(currentPassword, newPassword)
+                listView.adapter?.notifyDataSetChanged()
+                showToast(R.string.password_changed_successfully)
+            } catch (e: Exception) {
+                showToast(getString(R.string.failed_to_change_password, e.message))
+            } finally {
+                requireActivity().findViewById<View>(R.id.progressBar).isVisible = false
+            }
+        }
+    }
+
+    private fun requestLoginCodeInternal() {
+        this.lifecycleScope.launch {
+            try {
+                requireActivity().findViewById<View>(R.id.progressBar).isVisible = true
+
+                val loginCode = service.getLoginCode()
+                findPreference<Preference>("gateway.login_code")?.title = getString(
+                    R.string.login_code_expires,
+                    DateFormat.getDateTimeInstance().format(loginCode.validUntil)
+                )
+                findPreference<Preference>("gateway.login_code")?.summary = loginCode.code
+
+                listView.adapter?.notifyDataSetChanged()
+                showToast(R.string.success_long_press_to_copy)
+            } catch (e: Exception) {
+                showToast(getString(R.string.failed_to_get_login_code, e.message))
+            } finally {
+                requireActivity().findViewById<View>(R.id.progressBar).isVisible = false
+            }
+        }
+    }
+
+    private fun requestLoginCodeWithPassword(password: String) {
+        this.lifecycleScope.launch {
+            try {
+                requireActivity().findViewById<View>(R.id.progressBar).isVisible = true
+
+                val loginCode = service.getLoginCodeWithPassword(password)
+                findPreference<Preference>("gateway.login_code")?.title = getString(
+                    R.string.login_code_expires,
+                    DateFormat.getDateTimeInstance().format(loginCode.validUntil)
+                )
+                findPreference<Preference>("gateway.login_code")?.summary = loginCode.code
+
+                listView.adapter?.notifyDataSetChanged()
+                showToast(R.string.success_long_press_to_copy)
+            } catch (e: Exception) {
+                showToast(getString(R.string.failed_to_get_login_code, e.message))
+            } finally {
+                requireActivity().findViewById<View>(R.id.progressBar).isVisible = false
             }
         }
     }

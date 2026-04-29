@@ -75,6 +75,13 @@ class GatewayService(
         return api.getUserCode(username to password)
     }
 
+    suspend fun getLoginCodeWithPassword(password: String): GatewayApi.GetUserCodeResponse {
+        val username = settings.username
+            ?: throw IllegalStateException("Username is not set")
+
+        return api.getUserCode(username to password)
+    }
+
     suspend fun changePassword(current: String, new: String) {
         val info = settings.registrationInfo
             ?: throw IllegalStateException("The device is not registered on the server")
