@@ -56,7 +56,7 @@ interface MessagesDao {
     @Query("SELECT *, `rowid` FROM message WHERE state = 'Pending' AND (scheduleAt IS NULL OR scheduleAt <= :now) ORDER BY priority DESC, createdAt DESC LIMIT 1")
     fun getPendingLifo(now: Date): MessageWithRecipients?
 
-    @Query("SELECT COALESCE(strftime('%s', MIN(`scheduleAt`)) * 1000, 0) FROM message WHERE state = 'Pending'")
+    @Query("SELECT strftime('%s', MIN(COALESCE(`scheduleAt`, '1970-01-01T00:00:00.000Z'))) * 1000 FROM Message WHERE state = 'Pending'")
     fun nextScheduledTime(): Long?
 
     @Transaction
