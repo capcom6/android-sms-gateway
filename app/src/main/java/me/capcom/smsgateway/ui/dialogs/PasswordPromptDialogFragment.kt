@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.ui.dialogs
 
 import android.app.Dialog
+import android.content.DialogInterface
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -33,16 +34,25 @@ class PasswordPromptDialogFragment : DialogFragment() {
                     )
                 }
                 setNegativeButton(R.string.btn_cancel) { _, _ ->
-                    setFragmentResult(
-                        REQUEST_KEY,
-                        Bundle().apply {
-                            putString(KEY_PASSWORD, "")
-                            putBoolean(KEY_CANCELED, true)
-                        }
-                    )
+                    sendCanceledResult()
                 }
             }
             .create()
+    }
+
+    private fun sendCanceledResult() {
+        setFragmentResult(
+            REQUEST_KEY,
+            Bundle().apply {
+                putString(KEY_PASSWORD, "")
+                putBoolean(KEY_CANCELED, true)
+            }
+        )
+    }
+
+    override fun onCancel(dialog: DialogInterface) {
+        sendCanceledResult()
+        super.onCancel(dialog)
     }
 
     override fun onDestroyView() {
