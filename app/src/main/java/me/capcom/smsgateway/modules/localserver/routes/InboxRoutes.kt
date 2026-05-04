@@ -22,6 +22,7 @@ import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
 import me.capcom.smsgateway.modules.mms.MmsAttachmentStorage
 import me.capcom.smsgateway.modules.receiver.ReceiverService
+import java.io.File
 import java.util.Date
 
 class InboxRoutes(

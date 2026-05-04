@@ -338,7 +338,7 @@ class MessagesService(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1
                     && SubscriptionsHelper.hasPhoneStatePermission(context)
                 ) {
-                    @Suppress("DEPRECATION")
+                    @Suppress("DEPRECATION", "MissingPermission")
                     SubscriptionsHelper.getSubscriptionsManager(context)
                         ?.activeSubscriptionInfoList
                         ?.firstOrNull()

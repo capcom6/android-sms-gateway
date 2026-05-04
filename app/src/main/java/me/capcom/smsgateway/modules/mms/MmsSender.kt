@@ -218,7 +218,10 @@ class MmsSender(
                 context.getSystemService(SmsManager::class.java)
                     .createForSubscriptionId(subscriptionId)
 
-            else -> SmsManager.getSmsManagerForSubscriptionId(subscriptionId)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 ->
+                SmsManager.getSmsManagerForSubscriptionId(subscriptionId)
+
+            else -> SmsManager.getDefault()
         }
     }
 
