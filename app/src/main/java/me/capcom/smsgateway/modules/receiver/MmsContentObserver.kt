@@ -1,10 +1,12 @@
 package me.capcom.smsgateway.modules.receiver
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
 import android.os.HandlerThread
+import androidx.core.content.ContextCompat
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
@@ -22,6 +24,15 @@ class MmsContentObserver : KoinComponent {
 
     fun start() {
         if (observer != null) {
+            return
+        }
+
+        if (!canReadSms()) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "MMS inbox observer not started because READ_SMS is not granted",
+            )
             return
         }
 
@@ -56,12 +67,24 @@ class MmsContentObserver : KoinComponent {
     }
 
     private fun queryMaxMmsId(): Long {
-        val cursor = context.contentResolver.query(
-            Uri.parse("content://mms"),
-            arrayOf("_id"),
-            null, null,
-            "_id DESC LIMIT 1"
-        ) ?: return 0
+        if (!canReadSms()) return 0
+
+        val cursor = try {
+            context.contentResolver.query(
+                Uri.parse("content://mms"),
+                arrayOf("_id"),
+                null, null,
+                "_id DESC LIMIT 1"
+            )
+        } catch (e: SecurityException) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Unable to initialize MMS inbox high-water mark because provider access was denied",
+                mapOf("error" to (e.message ?: e.toString())),
+            )
+            return 0
+        } ?: return 0
 
         return cursor.use { c ->
             if (c.moveToFirst()) c.getLong(0) else 0
@@ -69,15 +92,34 @@ class MmsContentObserver : KoinComponent {
     }
 
     private fun processNewMessages() {
+        if (!canReadSms()) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Skipping MMS inbox processing because READ_SMS is not granted",
+            )
+            return
+        }
+
         val mark = storage.mmsLastProcessedID
         // msg_type 132 = retrieve-conf (fully downloaded), msg_box 1 = inbox
-        val cursor = context.contentResolver.query(
-            Uri.parse("content://mms"),
-            arrayOf("_id"),
-            "_id > ? AND m_type = 132 AND msg_box = 1",
-            arrayOf(mark.toString()),
-            "_id ASC"
-        ) ?: return
+        val cursor = try {
+            context.contentResolver.query(
+                Uri.parse("content://mms"),
+                arrayOf("_id"),
+                "_id > ? AND m_type = 132 AND msg_box = 1",
+                arrayOf(mark.toString()),
+                "_id ASC"
+            )
+        } catch (e: SecurityException) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Skipping MMS inbox processing because provider access was denied",
+                mapOf("error" to (e.message ?: e.toString())),
+            )
+            return
+        } ?: return
 
         cursor.use { c ->
             while (c.moveToNext()) {
@@ -121,6 +163,11 @@ class MmsContentObserver : KoinComponent {
             true,
         )
     }
+
+    private fun canReadSms(): Boolean = ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.READ_SMS,
+    ) == PackageManager.PERMISSION_GRANTED
 
     companion object {
         private const val TAG = "MmsContentObserver"

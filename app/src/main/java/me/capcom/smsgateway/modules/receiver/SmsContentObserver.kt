@@ -1,12 +1,14 @@
 package me.capcom.smsgateway.modules.receiver
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.provider.Telephony
+import androidx.core.content.ContextCompat
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
@@ -37,6 +39,15 @@ class SmsContentObserver : KoinComponent {
 
     fun start() {
         if (observer != null) {
+            return
+        }
+
+        if (!canReadSms()) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "SMS inbox observer not started because READ_SMS is not granted",
+            )
             return
         }
 
@@ -75,12 +86,24 @@ class SmsContentObserver : KoinComponent {
     }
 
     private fun queryMaxSmsId(): Long {
-        val cursor = context.contentResolver.query(
-            Telephony.Sms.Inbox.CONTENT_URI,
-            arrayOf(Telephony.Sms._ID),
-            null, null,
-            Telephony.Sms._ID + " DESC LIMIT 1",
-        ) ?: return 0
+        if (!canReadSms()) return 0
+
+        val cursor = try {
+            context.contentResolver.query(
+                Telephony.Sms.Inbox.CONTENT_URI,
+                arrayOf(Telephony.Sms._ID),
+                null, null,
+                Telephony.Sms._ID + " DESC LIMIT 1",
+            )
+        } catch (e: SecurityException) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Unable to initialize SMS inbox high-water mark because provider access was denied",
+                mapOf("error" to (e.message ?: e.toString())),
+            )
+            return 0
+        } ?: return 0
 
         return cursor.use { c ->
             if (c.moveToFirst()) c.getLong(0) else 0
@@ -88,6 +111,15 @@ class SmsContentObserver : KoinComponent {
     }
 
     private fun processNewMessages() {
+        if (!canReadSms()) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Skipping SMS inbox processing because READ_SMS is not granted",
+            )
+            return
+        }
+
         val mark = storage.smsLastProcessedID
 
         val projection = mutableListOf(
@@ -100,13 +132,23 @@ class SmsContentObserver : KoinComponent {
             projection += Telephony.Sms.SUBSCRIPTION_ID
         }
 
-        val cursor = context.contentResolver.query(
-            Telephony.Sms.Inbox.CONTENT_URI,
-            projection.toTypedArray(),
-            Telephony.Sms._ID + " > ?",
-            arrayOf(mark.toString()),
-            Telephony.Sms._ID + " ASC",
-        ) ?: return
+        val cursor = try {
+            context.contentResolver.query(
+                Telephony.Sms.Inbox.CONTENT_URI,
+                projection.toTypedArray(),
+                Telephony.Sms._ID + " > ?",
+                arrayOf(mark.toString()),
+                Telephony.Sms._ID + " ASC",
+            )
+        } catch (e: SecurityException) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Skipping SMS inbox processing because provider access was denied",
+                mapOf("error" to (e.message ?: e.toString())),
+            )
+            return
+        } ?: return
 
         cursor.use { c ->
             while (c.moveToNext()) {
@@ -138,6 +180,11 @@ class SmsContentObserver : KoinComponent {
             }
         }
     }
+
+    private fun canReadSms(): Boolean = ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.READ_SMS,
+    ) == PackageManager.PERMISSION_GRANTED
 
     companion object {
         private const val TAG = "SmsContentObserver"
