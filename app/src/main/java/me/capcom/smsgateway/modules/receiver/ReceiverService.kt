@@ -3,6 +3,7 @@ package me.capcom.smsgateway.modules.receiver
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.provider.Telephony
 import android.util.Base64
@@ -153,7 +154,7 @@ class ReceiverService : KoinComponent {
             val name = part.name ?: part.contentLocation
             val base64 = Base64.encodeToString(part.data, Base64.NO_WRAP)
             try {
-                attachmentStorage.store(messageId, part.partId, name, part.data)
+                attachmentStorage.store(messageId, part.partId, name, part.contentType, part.data)
             } catch (e: Exception) {
                 logsService.insert(
                     LogEntry.Priority.WARN,
@@ -281,6 +282,7 @@ class ReceiverService : KoinComponent {
                     // Persist each attachment to our own private storage so
                     // consumers can fetch by URL even after the system MMS
                     // provider has been cleaned up.
+                    val storedPartIds = mutableSetOf<Long>()
                     message.attachments.forEach { att ->
                         val decoded = att.data?.let { runCatching {
                             android.util.Base64.decode(it, android.util.Base64.DEFAULT)
@@ -291,8 +293,10 @@ class ReceiverService : KoinComponent {
                                     message.messageId,
                                     att.partId,
                                     att.name,
+                                    att.contentType,
                                     decoded,
                                 )
+                                storedPartIds += att.partId
                             } catch (e: Exception) {
                                 logsService.insert(
                                     LogEntry.Priority.WARN,
@@ -322,7 +326,11 @@ class ReceiverService : KoinComponent {
                                 name = it.name,
                                 size = it.size,
                                 data = it.data,
-                                url = "/inbox/${message.messageId}/attachments/${it.partId}",
+                                url = if (it.partId in storedPartIds) {
+                                    "/inbox/${Uri.encode(message.messageId)}/attachments/${it.partId}"
+                                } else {
+                                    null
+                                },
                             )
                         },
                         receivedAt = message.date,

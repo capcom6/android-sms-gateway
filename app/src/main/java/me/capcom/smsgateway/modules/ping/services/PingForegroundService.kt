@@ -57,6 +57,11 @@ class PingForegroundService : Service() {
         stopRequested = false
         workingThread = thread(start = true, priority = Thread.MIN_PRIORITY) {
             val interval = settings.intervalSeconds ?: return@thread
+            if (interval <= 0) {
+                Log.e(this.javaClass.name, "Ping interval must be greater than 0 seconds")
+                stopSelf()
+                return@thread
+            }
             while (!stopRequested) {
                 try {
                     Log.d(this.javaClass.name, "Sending ping")
@@ -67,8 +72,9 @@ class PingForegroundService : Service() {
                     Thread.sleep(interval * 1000L)
                 } catch (_: InterruptedException) {
                     stopRequested = true
-                } catch (_: Throwable) {
-
+                } catch (t: Throwable) {
+                    Log.e(this.javaClass.name, "Ping loop failed", t)
+                    stopRequested = true
                 }
             }
         }

@@ -16,25 +16,37 @@ class MmsAttachmentStorage(private val context: Context) {
     private val root: File
         get() = File(context.filesDir, "mms-in").apply { mkdirs() }
 
-    fun store(messageId: String, partId: Long, name: String?, bytes: ByteArray): File {
+    fun store(
+        messageId: String,
+        partId: Long,
+        name: String?,
+        contentType: String,
+        bytes: ByteArray,
+    ): StoredAttachment {
         val dir = messageDir(messageId).apply { mkdirs() }
         val safeName = sanitize(name ?: "part")
         val file = File(dir, "$partId-$safeName")
         file.writeBytes(bytes)
-        return file
+        metadataFile(file).writeText(contentType.ifBlank { DEFAULT_CONTENT_TYPE })
+        return StoredAttachment(partId, safeName, storedContentType(file), file)
     }
 
-    fun find(messageId: String, partId: Long): File? {
+    fun find(messageId: String, partId: Long): StoredAttachment? {
         val dir = messageDir(messageId)
         if (!dir.isDirectory) return null
         val prefix = "$partId-"
-        return dir.listFiles()?.firstOrNull { it.name.startsWith(prefix) }
+        return dir.listFiles()
+            ?.firstOrNull { it.isAttachmentFile && it.name.startsWith(prefix) }
+            ?.toStoredAttachment()
     }
 
-    fun list(messageId: String): List<File> {
+    fun list(messageId: String): List<StoredAttachment> {
         val dir = messageDir(messageId)
         if (!dir.isDirectory) return emptyList()
-        return dir.listFiles()?.toList().orEmpty()
+        return dir.listFiles()
+            ?.filter { it.isAttachmentFile }
+            ?.mapNotNull { it.toStoredAttachment() }
+            .orEmpty()
     }
 
     fun remove(messageId: String) {
@@ -61,4 +73,37 @@ class MmsAttachmentStorage(private val context: Context) {
     }
 
     private fun sanitize(s: String): String = s.replace(Regex("[^A-Za-z0-9._-]"), "_")
+
+    private val File.isAttachmentFile: Boolean
+        get() = isFile && !name.endsWith(METADATA_SUFFIX)
+
+    private fun File.toStoredAttachment(): StoredAttachment? {
+        val dashIdx = name.indexOf('-').takeIf { it > 0 } ?: return null
+        val partId = name.substring(0, dashIdx).toLongOrNull() ?: return null
+        val displayName = name.substring(dashIdx + 1)
+        return StoredAttachment(partId, displayName, storedContentType(this), this)
+    }
+
+    private fun storedContentType(file: File): String {
+        return metadataFile(file)
+            .takeIf { it.isFile }
+            ?.readText()
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: DEFAULT_CONTENT_TYPE
+    }
+
+    private fun metadataFile(file: File): File = File(file.parentFile, file.name + METADATA_SUFFIX)
+
+    data class StoredAttachment(
+        val partId: Long,
+        val displayName: String,
+        val contentType: String,
+        val file: File,
+    )
+
+    companion object {
+        private const val DEFAULT_CONTENT_TYPE = "application/octet-stream"
+        private const val METADATA_SUFFIX = ".content-type"
+    }
 }

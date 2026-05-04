@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.modules.localserver.routes
 
 import android.content.Context
+import android.net.Uri
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
@@ -22,7 +23,6 @@ import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.PostMessagesInboxExportRequest
 import me.capcom.smsgateway.modules.mms.MmsAttachmentStorage
 import me.capcom.smsgateway.modules.receiver.ReceiverService
-import java.io.File
 import java.util.Date
 
 class InboxRoutes(
@@ -150,7 +150,9 @@ class InboxRoutes(
             val message = try {
                 incomingMessagesService.getById(id)
                     ?: return@get call.respond(HttpStatusCode.NotFound)
-            } catch (e: Throwable) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
                 return@get call.respond(
                     HttpStatusCode.InternalServerError,
                     mapOf("message" to e.message)
@@ -180,13 +182,14 @@ class InboxRoutes(
                     mapOf("message" to "partId must be a number")
                 )
 
-            val file = attachmentStorage.find(id, partId)
+            val attachment = attachmentStorage.find(id, partId)
                 ?: return@get call.respond(HttpStatusCode.NotFound)
+            val file = attachment.file
 
-            val contentType = guessContentType(file)
+            val contentType = parseContentType(attachment.contentType)
             call.response.header(
                 "Content-Disposition",
-                "attachment; filename=\"${file.name.substringAfter('-', file.name)}\""
+                "attachment; filename=\"${attachment.displayName}\""
             )
             call.respondBytes(file.readBytes(), contentType)
         }
@@ -251,38 +254,20 @@ class InboxRoutes(
     )
 
     private fun listAttachmentRefs(messageId: String): List<AttachmentRef> {
-        return attachmentStorage.list(messageId).mapNotNull { file ->
-            val name = file.name
-            val dashIdx = name.indexOf('-').takeIf { it > 0 } ?: return@mapNotNull null
-            val partId = name.substring(0, dashIdx).toLongOrNull() ?: return@mapNotNull null
-            val displayName = name.substring(dashIdx + 1)
+        return attachmentStorage.list(messageId).map { attachment ->
             AttachmentRef(
-                partId = partId,
-                name = displayName,
-                size = file.length(),
-                contentType = guessContentType(file).toString(),
-                url = "/inbox/$messageId/attachments/$partId",
+                partId = attachment.partId,
+                name = attachment.displayName,
+                size = attachment.file.length(),
+                contentType = attachment.contentType,
+                url = "/inbox/${Uri.encode(messageId)}/attachments/${attachment.partId}",
             )
         }.sortedBy { it.partId }
     }
 
-    private fun guessContentType(file: File): ContentType {
-        val name = file.name.lowercase()
-        return when {
-            name.endsWith(".jpg") || name.endsWith(".jpeg") -> ContentType.Image.JPEG
-            name.endsWith(".png") -> ContentType.Image.PNG
-            name.endsWith(".gif") -> ContentType.Image.GIF
-            name.endsWith(".webp") -> ContentType.parse("image/webp")
-            name.endsWith(".txt") -> ContentType.Text.Plain
-            name.endsWith(".mp4") -> ContentType.parse("video/mp4")
-            name.endsWith(".3gp") -> ContentType.parse("video/3gpp")
-            name.endsWith(".mp3") -> ContentType.parse("audio/mpeg")
-            name.endsWith(".amr") -> ContentType.parse("audio/amr")
-            name.endsWith(".wav") -> ContentType.parse("audio/wav")
-            name.endsWith(".ogg") -> ContentType.parse("audio/ogg")
-            name.endsWith(".pdf") -> ContentType.Application.Pdf
-            else -> ContentType.Application.OctetStream
-        }
+    private fun parseContentType(raw: String): ContentType {
+        return runCatching { ContentType.parse(raw) }
+            .getOrDefault(ContentType.Application.OctetStream)
     }
 
     private fun IncomingMessage.toDomain() = InboxMessage(
