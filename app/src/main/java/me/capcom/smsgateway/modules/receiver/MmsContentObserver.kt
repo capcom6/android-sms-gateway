@@ -43,8 +43,9 @@ class MmsContentObserver : KoinComponent {
 
         val thread = HandlerThread("MmsContentObserver").apply { start() }
         handlerThread = thread
+        val handler = Handler(thread.looper)
 
-        val obs = object : ContentObserver(Handler(thread.looper)) {
+        val obs = object : ContentObserver(handler) {
             override fun onChange(selfChange: Boolean) {
                 super.onChange(selfChange)
                 processNewMessages()
@@ -55,8 +56,13 @@ class MmsContentObserver : KoinComponent {
         context.contentResolver.registerContentObserver(
             Uri.parse("content://mms"),
             true,
-            obs
+            obs,
         )
+
+        // Catch up rows that arrived while the app process was stopped or before
+        // READ_SMS was granted. ContentObserver callbacks are edge-triggered, so
+        // already-inserted MMS rows would otherwise remain pending forever.
+        handler.post { processNewMessages() }
     }
 
     fun stop() {

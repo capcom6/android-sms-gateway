@@ -59,8 +59,9 @@ class SmsContentObserver : KoinComponent {
 
         val thread = HandlerThread("SmsContentObserver").apply { start() }
         handlerThread = thread
+        val handler = Handler(thread.looper)
 
-        val obs = object : ContentObserver(Handler(thread.looper)) {
+        val obs = object : ContentObserver(handler) {
             override fun onChange(selfChange: Boolean) {
                 super.onChange(selfChange)
                 processNewMessages()
@@ -76,6 +77,11 @@ class SmsContentObserver : KoinComponent {
             true,
             obs,
         )
+
+        // Catch up rows that arrived while the app process was stopped or before
+        // READ_SMS was granted. ContentObserver callbacks are edge-triggered, so
+        // already-inserted SMS rows would otherwise remain pending forever.
+        handler.post { processNewMessages() }
     }
 
     fun stop() {
