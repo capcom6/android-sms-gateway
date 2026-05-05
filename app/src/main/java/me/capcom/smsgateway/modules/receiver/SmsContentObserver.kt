@@ -4,16 +4,31 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
+import android.provider.Telephony
 import androidx.core.content.ContextCompat
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.util.Date
 
-class MmsContentObserver : KoinComponent {
+/**
+ * Fallback SMS ingest for carriers / device configurations where the
+ * `SMS_DELIVER` broadcast is intercepted upstream (e.g. Verizon on Pixel
+ * routes inbound SMS through a vendor CarrierMessagingService and
+ * `DefaultSmsReceiver.onReceive` is never invoked — but the row still lands
+ * in `content://sms/inbox`).
+ *
+ * Watches the inbox content provider, picks up rows with `_id` above a
+ * high-water mark, and feeds them through the same `ReceiverService.process`
+ * pipeline that `DefaultSmsReceiver` would normally drive. Mirrors
+ * `MmsContentObserver`.
+ */
+class SmsContentObserver : KoinComponent {
     private val context: Context by inject()
     private val storage: StateStorage by inject()
     private val receiverSvc: ReceiverService by inject()
@@ -31,17 +46,18 @@ class MmsContentObserver : KoinComponent {
             logsService.insert(
                 LogEntry.Priority.WARN,
                 MODULE_NAME,
-                "MMS inbox observer not started because READ_SMS is not granted",
+                "SMS inbox observer not started because READ_SMS is not granted",
             )
             return
         }
 
-        // Initialize high-water mark to current max ID if not set
-        if (storage.mmsLastProcessedID == 0L) {
-            storage.mmsLastProcessedID = queryMaxMmsId()
+        // Initialize high-water mark to current max ID so existing rows in
+        // the inbox are not re-processed on first start.
+        if (storage.smsLastProcessedID == 0L) {
+            storage.smsLastProcessedID = queryMaxSmsId()
         }
 
-        val thread = HandlerThread("MmsContentObserver").apply { start() }
+        val thread = HandlerThread("SmsContentObserver").apply { start() }
         handlerThread = thread
         val handler = Handler(thread.looper)
 
@@ -53,15 +69,18 @@ class MmsContentObserver : KoinComponent {
         }
         observer = obs
 
+        // Observe the parent sms:// URI with notifyForDescendants=true so
+        // we catch inserts into the inbox regardless of which internal URI
+        // the system provider notifies under.
         context.contentResolver.registerContentObserver(
-            Uri.parse("content://mms"),
+            Uri.parse("content://sms"),
             true,
             obs,
         )
 
         // Catch up rows that arrived while the app process was stopped or before
         // READ_SMS was granted. ContentObserver callbacks are edge-triggered, so
-        // already-inserted MMS rows would otherwise remain pending forever.
+        // already-inserted SMS rows would otherwise remain pending forever.
         handler.post { processNewMessages() }
     }
 
@@ -72,21 +91,21 @@ class MmsContentObserver : KoinComponent {
         handlerThread = null
     }
 
-    private fun queryMaxMmsId(): Long {
+    private fun queryMaxSmsId(): Long {
         if (!canReadSms()) return 0
 
         val cursor = try {
             context.contentResolver.query(
-                Uri.parse("content://mms"),
-                arrayOf("_id"),
+                Telephony.Sms.Inbox.CONTENT_URI,
+                arrayOf(Telephony.Sms._ID),
                 null, null,
-                "_id DESC LIMIT 1"
+                Telephony.Sms._ID + " DESC LIMIT 1",
             )
         } catch (e: SecurityException) {
             logsService.insert(
                 LogEntry.Priority.WARN,
                 MODULE_NAME,
-                "Unable to initialize MMS inbox high-water mark because provider access was denied",
+                "Unable to initialize SMS inbox high-water mark because provider access was denied",
                 mapOf("error" to (e.message ?: e.toString())),
             )
             return 0
@@ -102,26 +121,36 @@ class MmsContentObserver : KoinComponent {
             logsService.insert(
                 LogEntry.Priority.WARN,
                 MODULE_NAME,
-                "Skipping MMS inbox processing because READ_SMS is not granted",
+                "Skipping SMS inbox processing because READ_SMS is not granted",
             )
             return
         }
 
-        val mark = storage.mmsLastProcessedID
-        // msg_type 132 = retrieve-conf (fully downloaded), msg_box 1 = inbox
+        val mark = storage.smsLastProcessedID
+
+        val projection = mutableListOf(
+            Telephony.Sms._ID,
+            Telephony.Sms.ADDRESS,
+            Telephony.Sms.DATE,
+            Telephony.Sms.BODY,
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            projection += Telephony.Sms.SUBSCRIPTION_ID
+        }
+
         val cursor = try {
             context.contentResolver.query(
-                Uri.parse("content://mms"),
-                arrayOf("_id"),
-                "_id > ? AND m_type = 132 AND msg_box = 1",
+                Telephony.Sms.Inbox.CONTENT_URI,
+                projection.toTypedArray(),
+                Telephony.Sms._ID + " > ?",
                 arrayOf(mark.toString()),
-                "_id ASC"
+                Telephony.Sms._ID + " ASC",
             )
         } catch (e: SecurityException) {
             logsService.insert(
                 LogEntry.Priority.WARN,
                 MODULE_NAME,
-                "Skipping MMS inbox processing because provider access was denied",
+                "Skipping SMS inbox processing because provider access was denied",
                 mapOf("error" to (e.message ?: e.toString())),
             )
             return
@@ -129,45 +158,33 @@ class MmsContentObserver : KoinComponent {
 
         cursor.use { c ->
             while (c.moveToNext()) {
-                val mmsId = c.getLong(0)
+                val id = c.getLong(0)
+                val address = c.getString(1) ?: ""
+                val date = Date(c.getLong(2))
+                val body = c.getString(3) ?: ""
+                val subId = if (projection.size > 4) {
+                    c.getInt(4).takeIf { it >= 0 }
+                } else {
+                    null
+                }
+
                 try {
-                    processMmsDownloaded(mmsId)
-                    storage.mmsLastProcessedID = mmsId
+                    receiverSvc.process(
+                        context,
+                        InboxMessage.Text(body, address, date, subId),
+                        true,
+                    )
                 } catch (e: Exception) {
                     logsService.insert(
                         LogEntry.Priority.ERROR,
                         MODULE_NAME,
-                        "Failed processing downloaded MMS (id=$mmsId)",
-                        mapOf("mmsId" to mmsId)
+                        "Failed processing inbox SMS (id=$id)",
+                        mapOf("smsId" to id, "error" to (e.message ?: e.toString())),
                     )
                 }
+                storage.smsLastProcessedID = id
             }
         }
-    }
-
-    private fun processMmsDownloaded(mmsId: Long) {
-        val message = MmsContentReader.read(context, mmsId) ?: return
-        receiverSvc.process(
-            context,
-            InboxMessage.MMS(
-                mmsId.toString(),
-                message.body,
-                message.subject,
-                message.attachments.map {
-                    InboxMessage.MMS.Attachment(
-                        it.partId,
-                        it.contentType,
-                        it.name,
-                        it.size,
-                        it.data
-                    )
-                },
-                message.sender,
-                message.date,
-                message.subscriptionId
-            ),
-            true,
-        )
     }
 
     private fun canReadSms(): Boolean = ContextCompat.checkSelfPermission(
@@ -176,6 +193,6 @@ class MmsContentObserver : KoinComponent {
     ) == PackageManager.PERMISSION_GRANTED
 
     companion object {
-        private const val TAG = "MmsContentObserver"
+        private const val TAG = "SmsContentObserver"
     }
 }

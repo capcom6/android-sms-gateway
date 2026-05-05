@@ -27,12 +27,66 @@
             "description": "Size in bytes, 0 if unknown.",
             "nullable": true,
             "type": "integer"
+          },
+          "url": {
+            "description": "Relative URL path that serves these bytes on the same host as this API, e.g. /inbox/{messageId}/attachments/{partId}. Authenticate the same way as the rest of the API.",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
           "partId",
           "contentType"
         ],
+        "type": "object"
+      },
+      "smsgateway.MmsMessage": {
+        "description": "MMS payload for POST /message. Requires the app to be the default SMS app for reliable delivery on most carriers.",
+        "properties": {
+          "subject": {
+            "description": "Optional MMS subject line.",
+            "nullable": true,
+            "type": "string"
+          },
+          "text": {
+            "description": "Optional text/plain body to include alongside attachments.",
+            "nullable": true,
+            "type": "string"
+          },
+          "attachments": {
+            "description": "One or more media parts. Each attachment must provide exactly one of `data` (inline base64) or `url` (fetched by the device at send time).",
+            "items": {
+              "$ref": "#/components/schemas/smsgateway.MmsAttachment"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "smsgateway.MmsAttachment": {
+        "properties": {
+          "contentType": {
+            "description": "MIME type. Common values: image/jpeg, image/png, image/gif, video/mp4, audio/amr, audio/mpeg, text/plain.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Optional filename for the part (used as Content-Location).",
+            "nullable": true,
+            "type": "string"
+          },
+          "data": {
+            "description": "Base64-encoded bytes. Mutually exclusive with `url`.",
+            "format": "byte",
+            "nullable": true,
+            "type": "string"
+          },
+          "url": {
+            "description": "HTTP(S) URL the device will fetch immediately before sending. Mutually exclusive with `data`.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": ["contentType"],
         "type": "object"
       },
       "MmsDownloadedPayload": {
@@ -353,6 +407,15 @@
               }
             ],
             "description": "Present only when `includeContent=true` and the message type is data.",
+            "type": "object"
+          },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is MMS.",
             "type": "object"
           },
           "deviceId": {
@@ -676,6 +739,15 @@
             "description": "Data message",
             "type": "object"
           },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "MMS message (multimedia: images, audio, video, etc.)",
+            "type": "object"
+          },
           "deviceId": {
             "description": "Optional device ID for explicit selection",
             "example": "PyDmBQZZXYmyxMwED8Fzy",
@@ -836,6 +908,15 @@
               }
             ],
             "description": "Present only when `includeContent=true` and the message type is data.",
+            "type": "object"
+          },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is MMS.",
             "type": "object"
           },
           "deviceId": {

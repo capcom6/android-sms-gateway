@@ -49,18 +49,33 @@ class PingForegroundService : Service() {
     @Volatile
     private var stopRequested = false
 
-    private val workingThread = thread(start = false, priority = Thread.MIN_PRIORITY) {
-        val interval = settings.intervalSeconds ?: return@thread
-        while (!stopRequested) {
-            try {
-                Log.d(this.javaClass.name, "Sending ping")
-                scope.launch {
-                    eventBus.emit(PingEvent(HealthResponse(healthService.healthCheck())))
+    private var workingThread: Thread? = null
+
+    private fun startWorkingThread() {
+        if (workingThread?.isAlive == true) return
+
+        stopRequested = false
+        workingThread = thread(start = true, priority = Thread.MIN_PRIORITY) {
+            val interval = settings.intervalSeconds ?: return@thread
+            if (interval <= 0) {
+                Log.e(this.javaClass.name, "Ping interval must be greater than 0 seconds")
+                stopSelf()
+                return@thread
+            }
+            while (!stopRequested) {
+                try {
+                    Log.d(this.javaClass.name, "Sending ping")
+                    scope.launch {
+                        eventBus.emit(PingEvent(HealthResponse(healthService.healthCheck())))
+                    }
+
+                    Thread.sleep(interval * 1000L)
+                } catch (_: InterruptedException) {
+                    stopRequested = true
+                } catch (t: Throwable) {
+                    Log.e(this.javaClass.name, "Ping loop failed", t)
+                    stopRequested = true
                 }
-
-                Thread.sleep(interval * 1000L)
-            } catch (_: Throwable) {
-
             }
         }
     }
@@ -81,7 +96,7 @@ class PingForegroundService : Service() {
 
         startForeground(NotificationsService.NOTIFICATION_ID_PING_SERVICE, notification)
 
-        workingThread.start()
+        startWorkingThread()
 
         return super.onStartCommand(intent, flags, startId)
     }
@@ -93,10 +108,11 @@ class PingForegroundService : Service() {
     override fun onDestroy() {
         stopRequested = true
         scope.cancel()
-        workingThread.interrupt()
-        workingThread.join()
-        wifiLock.release()
-        wakeLock.release()
+        workingThread?.interrupt()
+        workingThread?.join()
+        workingThread = null
+        if (wifiLock.isHeld) wifiLock.release()
+        if (wakeLock.isHeld) wakeLock.release()
         stopForeground(true)
 
         super.onDestroy()

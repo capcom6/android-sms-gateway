@@ -8,6 +8,10 @@
     <string name="battery_optimization_is_not_supported_on_this_device">Оптимизация батареи не
         поддерживается на этом устройстве</string>
     <string name="battery_optimization">Оптимизация батареи</string>
+    <string name="default_sms_app_title">Приложение SMS по умолчанию</string>
+    <string name="default_sms_app_summary">Требуется для активной загрузки MMS и надёжной отправки MMS</string>
+    <string name="default_sms_app_already">Это приложение уже является приложением SMS по умолчанию</string>
+    <string name="default_sms_app_not_available">Роль приложения SMS по умолчанию недоступна на этом устройстве</string>
     <string name="btn_cancel">Отмена</string>
     <string name="btn_continue">Продолжить</string>
     <string name="by_code">По коду</string>

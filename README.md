@@ -95,6 +95,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 🔔 **Real-time incoming message notifications:** Receive instant SMS and MMS notifications via webhooks.
 - 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) via the same webhooks used for real-time notifications.
 - 📎 **MMS download notifications:** Receive webhook notifications when MMS messages are fully downloaded, including message body and attachments.
+- 🖼️ **Send and receive MMS with payloads:** Send images, audio, video, and other media as MMS with inline or URL-referenced attachments. Received attachments are persisted locally and exposed via the API. See [`docs/MMS.md`](docs/MMS.md).
 
 🔒 Security and Privacy:
 
@@ -158,6 +159,7 @@ To use the application, you need to grant the following permissions:
 - **READ_SMS**: This permission is optional. If you want to read previous SMS messages, you need to grant this permission.
 - **RECEIVE_SMS**: This permission is optional. If you want to receive webhooks on incoming SMS, you need to grant this permission.
 - **RECEIVE_MMS**, **RECEIVE_WAP_PUSH**: This permissions are optional. If you want to receive webhooks on incoming MMS messages, you need to grant these permissions.
+- **Default SMS app role** (optional but recommended): required to actively download inbound MMS and for reliable MMS sending on carriers such as Verizon. Grant from the app's Settings → Default SMS app. See [`docs/MMS.md`](docs/MMS.md) for details.
 
 ### Installation from APK
 
@@ -250,8 +252,8 @@ Use webhooks to receive notifications for messaging events (e.g., incoming SMS a
 | `sms:delivered`     | Triggered when an SMS message is delivered                                  |
 | `sms:failed`        | Triggered when an SMS message fails to send                                 |
 | `sms:data-received` | Triggered when a data SMS is received                                       |
-| `mms:received`      | Triggered when an MMS notification is received (before download)            |
-| `mms:downloaded`    | Triggered when an MMS message is fully downloaded with body and attachments |
+| `mms:received`      | Triggered when an MMS notification is received (before download). See [`docs/MMS.md`](docs/MMS.md). |
+| `mms:downloaded`    | Triggered when an MMS message is fully downloaded with body and attachments. Attachments are served both inline (base64) and at `/inbox/{id}/attachments/{partId}`. |
 | `system:ping`       | Periodic heartbeat event                                                    |
 
 #### Setting Up Webhooks
@@ -309,6 +311,7 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 - [ ] Implement region-based restrictions to prevent international SMS.
 - [ ] Provide an API endpoint to retrieve the list of available SIM cards on the device.
 - [x] Include detailed error messages in responses and logs.
+- [x] Send and receive MMS with attachments (images, audio, video, etc.) — see [`docs/MMS.md`](docs/MMS.md).
 
 See the [open issues](https://github.com/capcom6/android-sms-gateway/issues) for a full list of proposed features (and known issues).
 
