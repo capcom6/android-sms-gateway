@@ -59,7 +59,7 @@ class WebService : Service() {
     private val settings: LocalServerSettings by inject()
     private val notificationsService: NotificationsService by inject()
     private val healthService: HealthService by inject()
-    private val jwtService: JwtService by lazy { JwtService(get(), get(), get()) }
+    private val jwtService: JwtService by lazy { JwtService(get(), get(), get(), get()) }
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -203,7 +203,7 @@ class WebService : Service() {
                         DocsRoutes(get()).register(this)
                     }
                     route("/auth") {
-                        AuthRoutes(jwtService).register(this)
+                        AuthRoutes(jwtService, get()).register(this)
                     }
                 }
             }
