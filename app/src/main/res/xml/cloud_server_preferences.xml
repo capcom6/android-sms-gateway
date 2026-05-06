@@ -36,6 +36,11 @@
             app:persistent="false"
             app:title="@string/password" />
         <Preference
+            android:icon="@drawable/ic_clear"
+            android:key="gateway.clear_password"
+            android:persistent="false"
+            android:title="@string/clear_password" />
+        <Preference
             android:icon="@drawable/ic_code"
             android:key="gateway.login_code"
             android:persistent="false"

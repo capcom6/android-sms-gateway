@@ -23,4 +23,8 @@ abstract class BasePreferenceFragment : PreferenceFragmentCompat() {
     protected fun showToast(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
+
+    protected fun showToast(messageRes: Int) {
+        Toast.makeText(requireContext(), messageRes, Toast.LENGTH_SHORT).show()
+    }
 }
