@@ -49,6 +49,7 @@ import me.capcom.smsgateway.modules.localserver.routes.LogsRoutes
 import me.capcom.smsgateway.modules.localserver.routes.MessagesRoutes
 import me.capcom.smsgateway.modules.localserver.routes.WebhooksRoutes
 import me.capcom.smsgateway.modules.notifications.NotificationsService
+import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import java.util.Date
@@ -159,12 +160,14 @@ class WebService : Service() {
                                 0
                             ).firstInstallTime
                             val deviceName = "${Build.MANUFACTURER}/${Build.PRODUCT}"
+                            val simCards = SubscriptionsHelper.getActiveSimCards(applicationContext)
                             val device = Device(
                                 requireNotNull(settings.deviceId),
                                 deviceName,
                                 Date(firstInstallTime),
                                 Date(),
-                                Date()
+                                Date(),
+                                simCards
                             )
 
                             call.respond(listOf(device))

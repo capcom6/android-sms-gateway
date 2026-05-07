@@ -31,8 +31,9 @@ class RegistrationWorker(
             val isUpdate = inputData.getBoolean(DATA_IS_UPDATE, false)
 
             when (isUpdate) {
-                true -> App.instance.gatewayService.updateDevice(token ?: return Result.success())
+                true -> App.instance.gatewayService.updateDevice(applicationContext, token ?: return Result.success())
                 false -> App.instance.gatewayService.registerDevice(
+                    applicationContext,
                     token,
                     GatewayService.RegistrationMode.Anonymous
                 )
