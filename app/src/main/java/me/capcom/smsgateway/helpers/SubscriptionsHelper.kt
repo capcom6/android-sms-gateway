@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.telephony.SubscriptionManager
 import androidx.core.app.ActivityCompat
+import me.capcom.smsgateway.modules.localserver.domain.SimCard
 
 object SubscriptionsHelper {
     @Suppress("DEPRECATION")
@@ -100,6 +101,47 @@ object SubscriptionsHelper {
             }?.number?.takeIf { it.isNotBlank() }
         } else {
             null
+        }
+    }
+
+    /**
+     * Retrieves information about all active SIM cards in the device.
+     *
+     * Returns a list of SimCard objects for each active subscription.
+     * Phone numbers will be null if READ_PHONE_STATE permission is not granted.
+     * Returns empty list on API levels below LOLLIPOP_MR1 (22).
+     *
+     * @param context Android context for accessing system services
+     * @return List of active SIM cards, empty if none available or API level too low
+     */
+    @SuppressLint("MissingPermission")
+    fun getActiveSimCards(context: Context): List<SimCard> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) {
+            return emptyList()
+        }
+
+        val subscriptionManager = getSubscriptionsManager(context) ?: return emptyList()
+
+        val activeSubscriptions = try {
+            subscriptionManager.activeSubscriptionInfoList ?: return emptyList()
+        } catch (_: SecurityException) {
+            return emptyList()
+        }
+
+        val hasPermission = hasPhoneStatePermission(context)
+
+        return activeSubscriptions.map { info ->
+            SimCard(
+                slotIndex = info.simSlotIndex,
+                simNumber = info.simSlotIndex + 1,
+                phoneNumber = if (hasPermission) {
+                    info.number?.takeIf { it.isNotBlank() }
+                } else {
+                    null
+                },
+                carrierName = info.carrierName?.toString()?.takeIf { it.isNotBlank() },
+                iccid = info.iccId?.takeIf { it.isNotBlank() },
+            )
         }
     }
 }

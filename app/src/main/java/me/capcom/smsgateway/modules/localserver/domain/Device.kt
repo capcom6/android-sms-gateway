@@ -7,5 +7,6 @@ data class Device(
     val name: String,
     val createdAt: Date,
     val updatedAt: Date,
-    val lastSeen: Date
+    val lastSeen: Date,
+    val simCards: List<SimCard> = emptyList()
 )

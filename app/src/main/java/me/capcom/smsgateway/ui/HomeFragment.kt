@@ -84,6 +84,7 @@ class HomeFragment : Fragment() {
                     lifecycleScope.launch {
                         try {
                             gatewaySvc.registerDevice(
+                                requireContext(),
                                 null,
                                 GatewayService.RegistrationMode.WithCredentials(username, password)
                             )
@@ -103,6 +104,7 @@ class HomeFragment : Fragment() {
                     lifecycleScope.launch {
                         try {
                             gatewaySvc.registerDevice(
+                                requireContext(),
                                 null,
                                 GatewayService.RegistrationMode.WithCode(code)
                             )
