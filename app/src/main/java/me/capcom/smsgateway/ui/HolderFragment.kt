@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.databinding.FragmentHolderBinding
@@ -73,6 +74,7 @@ class HolderFragment : Fragment() {
         isOutgoingSelected = true
 
         updateButtonStates()
+        childFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         val outgoing = childFragmentManager.findFragmentByTag(TAG_OUTGOING)
             ?: MessagesListFragment.newInstance()
         val incoming = childFragmentManager.findFragmentByTag(TAG_INCOMING)
@@ -88,6 +90,7 @@ class HolderFragment : Fragment() {
         isOutgoingSelected = false
 
         updateButtonStates()
+        childFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         val incoming = childFragmentManager.findFragmentByTag(TAG_INCOMING)
             ?: IncomingMessagesListFragment.newInstance()
         val outgoing = childFragmentManager.findFragmentByTag(TAG_OUTGOING)
