@@ -183,6 +183,26 @@ class GatewayApi(
             val data: String,
             val port: UShort,
         ) : MessageContent()
+
+        class Mms(
+            val subject: String?,
+            val text: String?,
+            // Gson can leave this null when the field is omitted (text-only
+            // MMS), despite the non-null Kotlin type. Normalize via the
+            // public accessor below so callers never see null.
+            @SerializedName("attachments")
+            private val _attachments: List<Attachment>?,
+        ) : MessageContent() {
+            val attachments: List<Attachment>
+                get() = _attachments.orEmpty()
+
+            class Attachment(
+                val contentType: String,
+                val name: String?,
+                val data: String?,
+                val url: String?,
+            )
+        }
     }
 
     data class Message(
@@ -191,6 +211,8 @@ class GatewayApi(
         val _textMessage: MessageContent.Text?,
         @SerializedName("dataMessage")
         val _dataMessage: MessageContent.Data?,
+        @SerializedName("mmsMessage")
+        val _mmsMessage: MessageContent.Mms?,
         val phoneNumbers: List<String>,
         val simNumber: Int?,
         val withDeliveryReport: Boolean?,
@@ -206,6 +228,7 @@ class GatewayApi(
         val content: MessageContent
             get() = this._dataMessage
                 ?: this._textMessage
+                ?: this._mmsMessage
                 ?: _message?.let { MessageContent.Text(it) }
                 ?: throw RuntimeException("Invalid message content")
     }

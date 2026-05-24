@@ -178,7 +178,7 @@ class WebService : Service() {
                             it.register(this)
                         }
                     }
-                    InboxRoutes(applicationContext, get(), get(), get()).let {
+                    InboxRoutes(applicationContext, get(), get(), get(), get()).let {
                         route("/inbox") {
                             it.register(this)
                         }

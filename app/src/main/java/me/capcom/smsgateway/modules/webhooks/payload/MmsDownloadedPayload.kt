@@ -18,5 +18,12 @@ class MmsDownloadedPayload(
         val name: String?,
         val size: Long?,
         val data: String?,
+        /**
+         * Relative path on the local HTTP server that serves these bytes,
+         * e.g. `/inbox/<messageId>/attachments/<partId>`. Consumers that
+         * prefer not to receive base64-encoded payloads can fetch this URL
+         * with the same credentials as the rest of the API.
+         */
+        val url: String?,
     )
 }

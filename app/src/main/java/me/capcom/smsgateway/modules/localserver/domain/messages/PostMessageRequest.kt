@@ -16,6 +16,7 @@ data class PostMessageRequest(
 
     val textMessage: TextMessage? = null,
     val dataMessage: DataMessage? = null,
+    val mmsMessage: MmsMessage? = null,
 
     val deviceId: String? = null,
 
@@ -43,9 +44,9 @@ data class PostMessageRequest(
 
     fun validate(): PostMessageRequest {
         val messageTypes =
-            listOfNotNull(textMessage, dataMessage, message)
+            listOfNotNull(textMessage, dataMessage, mmsMessage, message)
         when {
-            messageTypes.isEmpty() -> throw IllegalArgumentException("Must specify exactly one of: textMessage, dataMessage, or message")
+            messageTypes.isEmpty() -> throw IllegalArgumentException("Must specify exactly one of: textMessage, dataMessage, mmsMessage, or message")
             messageTypes.size > 1 -> throw IllegalArgumentException("Cannot specify multiple message types simultaneously")
         }
 
@@ -70,6 +71,25 @@ data class PostMessageRequest(
         // Validate text message parameters
         if (textMessage?.text?.isEmpty() == true) {
             throw IllegalArgumentException("Text message is empty")
+        }
+
+        mmsMessage?.let { mms ->
+            val hasBody = !mms.text.isNullOrBlank()
+            if (!hasBody && mms.attachments.isEmpty()) {
+                throw IllegalArgumentException("MMS must have text or at least one attachment")
+            }
+
+            mms.attachments.forEachIndexed { i, att ->
+                if (att.contentType.isBlank()) {
+                    throw IllegalArgumentException("Attachment $i: contentType is required")
+                }
+                if (att.data.isNullOrBlank() && att.url.isNullOrBlank()) {
+                    throw IllegalArgumentException("Attachment $i: must provide data or url")
+                }
+                if (!att.data.isNullOrBlank() && !att.url.isNullOrBlank()) {
+                    throw IllegalArgumentException("Attachment $i: data and url are mutually exclusive")
+                }
+            }
         }
 
         if (phoneNumbers.isEmpty()) {
