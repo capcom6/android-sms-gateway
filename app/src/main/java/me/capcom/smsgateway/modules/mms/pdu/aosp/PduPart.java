@@ -134,9 +134,11 @@ public class PduPart {
       */
      public void setData(byte[] data) {
          if(data == null) {
+            mPartData = null;
             return;
         }
 
+         mUri = null;
          mPartData = new byte[data.length];
          System.arraycopy(data, 0, mPartData, 0, data.length);
      }
@@ -175,6 +177,9 @@ public class PduPart {
       */
      public void setDataUri(Uri uri) {
          mUri = uri;
+         if (uri != null) {
+             mPartData = null;
+         }
      }
 
      /**

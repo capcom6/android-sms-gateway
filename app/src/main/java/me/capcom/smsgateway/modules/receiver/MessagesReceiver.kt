@@ -36,12 +36,26 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
                 SubscriptionsHelper.extractSubscriptionId(context, intent)
             )
 
-            true -> InboxMessage.Data(
-                firstMessage.userData,
-                firstMessage.displayOriginatingAddress,
-                Date(firstMessage.timestampMillis),
-                SubscriptionsHelper.extractSubscriptionId(context, intent)
-            )
+            true -> {
+                val userData = messages
+                    .mapNotNull { it.userData }
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { parts ->
+                        ByteArray(parts.sumOf { it.size }).also { output ->
+                            var offset = 0
+                            for (part in parts) {
+                                part.copyInto(output, destinationOffset = offset)
+                                offset += part.size
+                            }
+                        }
+                    }
+                InboxMessage.Data(
+                    userData,
+                    firstMessage.displayOriginatingAddress,
+                    Date(firstMessage.timestampMillis),
+                    SubscriptionsHelper.extractSubscriptionId(context, intent)
+                )
+            }
         }
 
         receiverSvc.process(

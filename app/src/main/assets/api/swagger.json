@@ -2212,6 +2212,81 @@
         ]
       }
     },
+    "/inbox/{id}/attachments/{partId}": {
+      "get": {
+        "summary": "Download MMS attachment",
+        "description": "Downloads a stored MMS attachment by message ID and part ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Inbox message ID"
+          },
+          {
+            "name": "partId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Attachment part ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment bytes",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Attachment not found"
+          }
+        },
+        "security": [
+          {
+            "ApiAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ],
+        "tags": [
+          "User",
+          "Inbox"
+        ]
+      }
+    },
     "/inbox/refresh": {
       "post": {
         "description": "Refreshes inbox messages. Webhooks are triggered when triggerWebhooks is true.",

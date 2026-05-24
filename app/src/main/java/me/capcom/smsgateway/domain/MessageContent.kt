@@ -26,7 +26,7 @@ sealed class MessageContent {
         )
 
         override fun toString(): String {
-            return "mms(subject=$subject, text.len=${text?.length ?: 0}, attachments=${attachments.size})"
+            return "mms(subject.len=${subject?.length ?: 0}, text.len=${text?.length ?: 0}, attachments=${attachments.size})"
         }
     }
 }

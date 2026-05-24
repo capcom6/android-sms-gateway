@@ -69,6 +69,20 @@ public class PduBody {
         }
     }
 
+    private void clearPartMaps() {
+        mPartMapByContentId.clear();
+        mPartMapByContentLocation.clear();
+        mPartMapByName.clear();
+        mPartMapByFileName.clear();
+    }
+
+    private void rebuildPartMaps() {
+        clearPartMaps();
+        for (PduPart part : mParts) {
+            putPartToMaps(part);
+        }
+    }
+
     /**
      * Appends the specified part to the end of this body.
      *
@@ -97,8 +111,8 @@ public class PduBody {
             throw new NullPointerException();
         }
 
-        putPartToMaps(part);
         mParts.add(index, part);
+        putPartToMaps(part);
     }
 
     /**
@@ -108,7 +122,9 @@ public class PduBody {
      * @return part at the specified index
      */
     public PduPart removePart(int index) {
-        return mParts.remove(index);
+        PduPart removed = mParts.remove(index);
+        rebuildPartMaps();
+        return removed;
     }
 
     /**
@@ -116,6 +132,7 @@ public class PduBody {
      */
     public void removeAll() {
         mParts.clear();
+        clearPartMaps();
     }
 
     /**
