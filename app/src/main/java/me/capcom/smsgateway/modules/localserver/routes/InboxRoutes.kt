@@ -142,36 +142,6 @@ class InboxRoutes(
             call.respond(messages.map { it.toDomain() } as GetIncomingMessagesResponse)
         }
 
-        get("{id}") {
-            if (!requireScope(AuthScopes.InboxRead)) return@get
-            val id = call.parameters["id"]
-                ?: return@get call.respond(HttpStatusCode.BadRequest)
-
-            val message = try {
-                incomingMessagesService.getById(id)
-                    ?: return@get call.respond(HttpStatusCode.NotFound)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                return@get call.respond(
-                    HttpStatusCode.InternalServerError,
-                    mapOf("message" to e.message)
-                )
-            }
-
-            val detail = InboxMessageDetail(
-                id = message.id,
-                type = message.type,
-                sender = message.sender,
-                recipient = message.recipient,
-                simNumber = message.simNumber,
-                contentPreview = message.contentPreview,
-                createdAt = Date(message.createdAt),
-                attachments = listAttachmentRefs(id),
-            )
-            call.respond(detail)
-        }
-
         get("{id}/attachments/{partId}") {
             if (!requireScope(AuthScopes.InboxRead)) return@get
             val id = call.parameters["id"]
@@ -237,17 +207,7 @@ class InboxRoutes(
         val simNumber: Int?,
         val contentPreview: String,
         val createdAt: Date,
-    )
-
-    data class InboxMessageDetail(
-        val id: String,
-        val type: IncomingMessageType,
-        val sender: String,
-        val recipient: String?,
-        val simNumber: Int?,
-        val contentPreview: String,
-        val createdAt: Date,
-        val attachments: List<AttachmentRef>,
+        val attachments: List<AttachmentRef> = emptyList(),
     )
 
     data class AttachmentRef(
@@ -255,7 +215,6 @@ class InboxRoutes(
         val name: String,
         val size: Long,
         val contentType: String,
-        val url: String,
     )
 
     private fun listAttachmentRefs(messageId: String): List<AttachmentRef> {
@@ -265,7 +224,6 @@ class InboxRoutes(
                 name = attachment.displayName,
                 size = attachment.file.length(),
                 contentType = attachment.contentType,
-                url = "/inbox/${Uri.encode(messageId)}/attachments/${attachment.partId}",
             )
         }.sortedBy { it.partId }
     }
@@ -283,6 +241,7 @@ class InboxRoutes(
         simNumber = simNumber,
         contentPreview = contentPreview,
         createdAt = Date(createdAt),
+        attachments = listAttachmentRefs(id),
     )
 }
 

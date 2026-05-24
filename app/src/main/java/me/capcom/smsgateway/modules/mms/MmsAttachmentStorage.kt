@@ -1,17 +1,21 @@
 package me.capcom.smsgateway.modules.mms
 
 import android.content.Context
+import com.google.gson.Gson
 import java.io.File
 import java.security.MessageDigest
 
 /**
  * Persists MMS attachment bytes under the app's private files directory so
- * they can be served back to webhook consumers by URL and survive beyond
+ * they can be served back to webhook consumers and survive beyond
  * the lifetime of the Android MMS provider entry.
  *
- * Layout: `<filesDir>/mms-in/<sha256(messageId)>/<partId>-<safeName>`
+ * Layout: `<filesDir>/mms-in/<sha256(messageId)>/<partId>`
+ * Metadata: `<filesDir>/mms-in/<sha256(messageId)>/<partId>.metadata` (JSON)
  */
 class MmsAttachmentStorage(private val context: Context) {
+
+    private val gson = Gson()
 
     private val root: File
         get() = File(context.filesDir, "mms-in").apply { mkdirs() }
@@ -24,28 +28,35 @@ class MmsAttachmentStorage(private val context: Context) {
         bytes: ByteArray,
     ): StoredAttachment {
         val dir = messageDir(messageId).apply { mkdirs() }
-        val safeName = sanitize(name ?: "part")
-        val file = File(dir, "$partId-$safeName")
+        val file = File(dir, "$partId")
         file.writeBytes(bytes)
-        metadataFile(file).writeText(contentType.ifBlank { DEFAULT_CONTENT_TYPE })
-        return StoredAttachment(partId, safeName, storedContentType(file), file)
+        val meta = AttachmentMetadata(
+            name = name,
+            contentType = contentType.ifBlank { DEFAULT_CONTENT_TYPE },
+        )
+        metadataFile(file).writeText(gson.toJson(meta))
+        return StoredAttachment(partId, meta.displayName, meta.contentType, file)
     }
 
     fun find(messageId: String, partId: Long): StoredAttachment? {
         val dir = messageDir(messageId)
         if (!dir.isDirectory) return null
-        val prefix = "$partId-"
-        return dir.listFiles()
-            ?.firstOrNull { it.isAttachmentFile && it.name.startsWith(prefix) }
-            ?.toStoredAttachment()
+        val file = File(dir, "$partId")
+        if (!file.isFile) return null
+        val meta = readMetadata(file)
+        return StoredAttachment(partId, meta.displayName, meta.contentType, file)
     }
 
     fun list(messageId: String): List<StoredAttachment> {
         val dir = messageDir(messageId)
         if (!dir.isDirectory) return emptyList()
         return dir.listFiles()
-            ?.filter { it.isAttachmentFile }
-            ?.mapNotNull { it.toStoredAttachment() }
+            ?.filter { it.isFile && !it.name.endsWith(METADATA_SUFFIX) }
+            ?.mapNotNull { file ->
+                val partId = file.name.toLongOrNull() ?: return@mapNotNull null
+                val meta = readMetadata(file)
+                StoredAttachment(partId, meta.displayName, meta.contentType, file)
+            }
             .orEmpty()
     }
 
@@ -56,12 +67,6 @@ class MmsAttachmentStorage(private val context: Context) {
         dir.delete()
     }
 
-    /**
-     * sha256 of the messageId keeps the mapping one-to-one — distinct ids
-     * like `a/b` and `a?b` no longer collapse to the same directory and
-     * overwrite each other's attachments. The hex output is also
-     * traversal-safe by construction.
-     */
     private fun messageDir(messageId: String): File = File(root, digest(messageId))
 
     private fun digest(s: String): String {
@@ -72,28 +77,26 @@ class MmsAttachmentStorage(private val context: Context) {
         return sb.toString()
     }
 
-    private fun sanitize(s: String): String = s.replace(Regex("[^A-Za-z0-9._-]"), "_")
-
-    private val File.isAttachmentFile: Boolean
-        get() = isFile && !name.endsWith(METADATA_SUFFIX)
-
-    private fun File.toStoredAttachment(): StoredAttachment? {
-        val dashIdx = name.indexOf('-').takeIf { it > 0 } ?: return null
-        val partId = name.substring(0, dashIdx).toLongOrNull() ?: return null
-        val displayName = name.substring(dashIdx + 1)
-        return StoredAttachment(partId, displayName, storedContentType(this), this)
-    }
-
-    private fun storedContentType(file: File): String {
-        return metadataFile(file)
-            .takeIf { it.isFile }
-            ?.readText()
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-            ?: DEFAULT_CONTENT_TYPE
+    private fun readMetadata(file: File): AttachmentMetadata {
+        val metaFile = metadataFile(file)
+        if (!metaFile.isFile) return AttachmentMetadata()
+        return try {
+            gson.fromJson(metaFile.readText(), AttachmentMetadata::class.java)
+                ?: AttachmentMetadata()
+        } catch (_: Exception) {
+            AttachmentMetadata()
+        }
     }
 
     private fun metadataFile(file: File): File = File(file.parentFile, file.name + METADATA_SUFFIX)
+
+    private data class AttachmentMetadata(
+        val name: String? = null,
+        val contentType: String = DEFAULT_CONTENT_TYPE,
+    ) {
+        val displayName: String
+            get() = name?.takeIf { it.isNotBlank() } ?: "attachment"
+    }
 
     data class StoredAttachment(
         val partId: Long,
@@ -104,6 +107,6 @@ class MmsAttachmentStorage(private val context: Context) {
 
     companion object {
         private const val DEFAULT_CONTENT_TYPE = "application/octet-stream"
-        private const val METADATA_SUFFIX = ".content-type"
+        private const val METADATA_SUFFIX = ".metadata"
     }
 }

@@ -5,6 +5,5 @@ import org.koin.dsl.module
 
 val mmsModule = module {
     single { MmsSender(androidContext()) }
-    single { MmsDownloader(androidContext()) }
     single { MmsAttachmentStorage(androidContext()) }
 }

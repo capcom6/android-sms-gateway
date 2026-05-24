@@ -360,12 +360,7 @@ class MessagesService(
         } else content
 
         val recipients = message.phoneNumbers.map { source ->
-            val phone = if (message.isEncrypted) encryptionService.decrypt(source) else source
-            if (request.params.skipPhoneValidation) {
-                phone.filter { it.isDigit() || it == '+' || it == '*' || it == '#' }
-            } else {
-                PhoneHelper.filterPhoneNumber(phone, countryCode ?: "US")
-            }
+            decryptAndNormalizePhone(source, message.isEncrypted, request.params.skipPhoneValidation)
         }
 
         dao.updatePartsCount(id, 1 + decryptedContent.attachments.size)
@@ -535,14 +530,9 @@ class MessagesService(
                 }
 
                 try {
-                    val phoneNumber = when (message.isEncrypted) {
-                        true -> encryptionService.decrypt(sourcePhoneNumber)
-                        false -> sourcePhoneNumber
-                    }
-                    val normalizedPhoneNumber = when (request.params.skipPhoneValidation) {
-                        true -> phoneNumber.filter { it.isDigit() || it == '+' || it == '*' || it == '#' }
-                        false -> PhoneHelper.filterPhoneNumber(phoneNumber, countryCode ?: "RU")
-                    }
+                    val normalizedPhoneNumber = decryptAndNormalizePhone(
+                        sourcePhoneNumber, message.isEncrypted, request.params.skipPhoneValidation,
+                    )
 
                     sendFn(normalizedPhoneNumber, sentIntent, deliveredIntent)
 
@@ -605,15 +595,28 @@ class MessagesService(
     private fun mmsErrorToMessage(resultCode: Int): String {
         return when (resultCode) {
             Activity.RESULT_OK -> "OK"
-            SmsManager.MMS_ERROR_UNSPECIFIED -> "MMS_ERROR_UNSPECIFIED"
-            SmsManager.MMS_ERROR_INVALID_APN -> "MMS_ERROR_INVALID_APN"
-            SmsManager.MMS_ERROR_UNABLE_CONNECT_MMS -> "MMS_ERROR_UNABLE_CONNECT_MMS"
-            SmsManager.MMS_ERROR_HTTP_FAILURE -> "MMS_ERROR_HTTP_FAILURE"
-            SmsManager.MMS_ERROR_IO_ERROR -> "MMS_ERROR_IO_ERROR"
-            SmsManager.MMS_ERROR_RETRY -> "MMS_ERROR_RETRY"
-            SmsManager.MMS_ERROR_CONFIGURATION_ERROR -> "MMS_ERROR_CONFIGURATION_ERROR"
-            SmsManager.MMS_ERROR_NO_DATA_NETWORK -> "MMS_ERROR_NO_DATA_NETWORK"
+            SmsManager.MMS_ERROR_UNSPECIFIED -> "MMS_ERROR_UNSPECIFIED (An unspecified error occurred)"
+            SmsManager.MMS_ERROR_INVALID_APN -> "MMS_ERROR_INVALID_APN (The APN is invalid)"
+            SmsManager.MMS_ERROR_UNABLE_CONNECT_MMS -> "MMS_ERROR_UNABLE_CONNECT_MMS (Unable to connect to the MMS service)"
+            SmsManager.MMS_ERROR_HTTP_FAILURE -> "MMS_ERROR_HTTP_FAILURE (HTTP failure during MMS transfer)"
+            SmsManager.MMS_ERROR_IO_ERROR -> "MMS_ERROR_IO_ERROR (An I/O error occurred)"
+            SmsManager.MMS_ERROR_RETRY -> "MMS_ERROR_RETRY (The carrier indicated a retry is needed)"
+            SmsManager.MMS_ERROR_CONFIGURATION_ERROR -> "MMS_ERROR_CONFIGURATION_ERROR (MMS configuration error)"
+            SmsManager.MMS_ERROR_NO_DATA_NETWORK -> "MMS_ERROR_NO_DATA_NETWORK (No data network available)"
             else -> "Unknown MMS error: $resultCode"
+        }
+    }
+
+    private fun decryptAndNormalizePhone(
+        source: String,
+        isEncrypted: Boolean,
+        skipValidation: Boolean,
+    ): String {
+        val phone = if (isEncrypted) encryptionService.decrypt(source) else source
+        return if (skipValidation) {
+            phone.filter { it.isDigit() || it == '+' || it == '*' || it == '#' }
+        } else {
+            PhoneHelper.filterPhoneNumber(phone, countryCode ?: "RU")
         }
     }
 

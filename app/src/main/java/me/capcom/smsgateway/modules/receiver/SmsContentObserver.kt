@@ -18,15 +18,14 @@ import java.util.Date
 
 /**
  * Fallback SMS ingest for carriers / device configurations where the
- * `SMS_DELIVER` broadcast is intercepted upstream (e.g. Verizon on Pixel
- * routes inbound SMS through a vendor CarrierMessagingService and
- * `DefaultSmsReceiver.onReceive` is never invoked — but the row still lands
- * in `content://sms/inbox`).
+ * `SMS_RECEIVED` broadcast is intercepted upstream (e.g. Verizon on Pixel
+ * routes inbound SMS through a vendor CarrierMessagingService and the
+ * broadcast is never delivered — but the row still lands in
+ * `content://sms/inbox`).
  *
  * Watches the inbox content provider, picks up rows with `_id` above a
- * high-water mark, and feeds them through the same `ReceiverService.process`
- * pipeline that `DefaultSmsReceiver` would normally drive. Mirrors
- * `MmsContentObserver`.
+ * high-water mark, and feeds them through `ReceiverService.process`.
+ * Mirrors `MmsContentObserver`.
  */
 class SmsContentObserver : KoinComponent {
     private val context: Context by inject()

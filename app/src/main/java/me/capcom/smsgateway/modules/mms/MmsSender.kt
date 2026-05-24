@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.telephony.SmsManager
+import android.webkit.MimeTypeMap
 import android.util.Base64
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
@@ -170,21 +171,9 @@ class MmsSender(
     }
 
     private fun extensionFor(contentType: String): String {
-        return when (contentType.substringBefore(';').trim().lowercase()) {
-            "image/jpeg", "image/jpg" -> ".jpg"
-            "image/png" -> ".png"
-            "image/gif" -> ".gif"
-            "image/webp" -> ".webp"
-            "video/mp4" -> ".mp4"
-            "video/3gpp" -> ".3gp"
-            "audio/mpeg", "audio/mp3" -> ".mp3"
-            "audio/amr" -> ".amr"
-            "audio/ogg" -> ".ogg"
-            "audio/wav", "audio/x-wav" -> ".wav"
-            "text/plain" -> ".txt"
-            "application/pdf" -> ".pdf"
-            else -> ".bin"
-        }
+        val mime = contentType.substringBefore(';').trim().lowercase()
+        val ext = MimeTypeMap.getSingleton().getExtensionFromMimeType(mime)
+        return if (ext != null) ".$ext" else ".bin"
     }
 
     private fun writePduFile(messageId: String, bytes: ByteArray): File {

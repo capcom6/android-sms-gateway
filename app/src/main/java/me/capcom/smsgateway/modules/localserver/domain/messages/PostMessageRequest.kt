@@ -79,17 +79,7 @@ data class PostMessageRequest(
                 throw IllegalArgumentException("MMS must have text or at least one attachment")
             }
 
-            mms.attachments.forEachIndexed { i, att ->
-                if (att.contentType.isBlank()) {
-                    throw IllegalArgumentException("Attachment $i: contentType is required")
-                }
-                if (att.data.isNullOrBlank() && att.url.isNullOrBlank()) {
-                    throw IllegalArgumentException("Attachment $i: must provide data or url")
-                }
-                if (!att.data.isNullOrBlank() && !att.url.isNullOrBlank()) {
-                    throw IllegalArgumentException("Attachment $i: data and url are mutually exclusive")
-                }
-            }
+            mms.attachments.forEachIndexed { i, att -> att.validate(i) }
         }
 
         if (phoneNumbers.isEmpty()) {
