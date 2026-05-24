@@ -23,6 +23,7 @@ import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
 import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.InboxRefreshRequest
 import me.capcom.smsgateway.modules.localserver.domain.messages.DataMessage
+import me.capcom.smsgateway.modules.localserver.domain.messages.MmsMessage
 import me.capcom.smsgateway.modules.localserver.domain.messages.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.messages.TextMessage
 import me.capcom.smsgateway.modules.messages.MessagesService
@@ -153,6 +154,20 @@ class MessagesRoutes(
                     MessageContent.Data(
                         request.dataMessage.data,
                         request.dataMessage.port.toUShort()
+                    )
+                }
+
+                request.mmsMessage != null -> {
+                    MessageContent.Mms(
+                        subject = request.mmsMessage.subject,
+                        text = request.mmsMessage.text,
+                        attachments = request.mmsMessage.attachments.map {
+                            MessageContent.Mms.Attachment(
+                                contentType = it.contentType,
+                                name = it.name,
+                                data = it.data,
+                            )
+                        }
                     )
                 }
 
@@ -293,6 +308,23 @@ class MessagesRoutes(
                     DataMessage(
                         data = it.data,
                         port = it.port.toInt()
+                    )
+                }
+
+                else -> null
+            },
+            mmsMessage = when (includeContent) {
+                true -> message.mmsContent?.let { mms ->
+                    MmsMessage(
+                        subject = mms.subject,
+                        text = mms.text,
+                        attachments = mms.attachments.map {
+                            MmsMessage.Attachment(
+                                contentType = it.contentType,
+                                name = it.name,
+                                data = it.data,
+                            )
+                        }
                     )
                 }
 

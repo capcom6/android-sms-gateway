@@ -26,10 +26,10 @@ class ReceiverService : KoinComponent {
     private val logsService: LogsService by inject()
     private val incomingMessagesService: IncomingMessagesService by inject()
     private val receiverSettings: ReceiverSettings by inject()
+    private val attachmentStorage: MmsAttachmentStorage by inject()
 
     private val eventsReceiver by lazy { EventsReceiver() }
     private val mmsContentObserver by lazy { MmsContentObserver() }
-    private val smsContentObserver by lazy { SmsContentObserver() }
 
     fun start(context: Context) {
         MessagesReceiver.register(context)
@@ -42,7 +42,6 @@ class ReceiverService : KoinComponent {
     }
 
     fun stop(context: Context) {
-        smsContentObserver.stop()
         mmsContentObserver.stop()
         eventsReceiver.stop()
         MmsReceiver.unregister(context)
@@ -74,7 +73,6 @@ class ReceiverService : KoinComponent {
             mapOf("period" to period, "messageTypes" to messageTypes)
         )
     }
-
 
     fun process(context: Context, message: InboxMessage, triggerWebhooks: Boolean) {
         logsService.insert(
@@ -145,24 +143,26 @@ class ReceiverService : KoinComponent {
                     recipient = recipient,
                 )
 
-                is InboxMessage.MMS -> WebHookEvent.MmsDownloaded to MmsDownloadedPayload(
-                    messageId = message.messageId,
-                    sender = incoming.sender,
-                    recipient = recipient,
-                    simNumber = simNumber,
-                    body = message.body,
-                    subject = message.subject,
-                    attachments = message.attachments.map {
-                        MmsDownloadedPayload.Attachment(
-                            partId = it.partId,
-                            contentType = it.contentType,
-                            name = it.name,
-                            size = it.size,
-                            data = it.data,
-                        )
-                    },
-                    receivedAt = message.date,
-                )
+                is InboxMessage.MMS -> {
+                    WebHookEvent.MmsDownloaded to MmsDownloadedPayload(
+                        messageId = message.messageId,
+                        sender = incoming.sender,
+                        recipient = recipient,
+                        simNumber = simNumber,
+                        body = message.body,
+                        subject = message.subject,
+                        attachments = message.attachments.map {
+                            MmsDownloadedPayload.Attachment(
+                                partId = it.partId,
+                                contentType = it.contentType,
+                                name = it.name,
+                                size = it.size,
+                                data = it.data,
+                            )
+                        },
+                        receivedAt = message.date,
+                    )
+                }
             }
 
             webHooksService.emit(context, type, payload)

@@ -132,6 +132,7 @@ class MmsContentObserver : KoinComponent {
                 val mmsId = c.getLong(0)
                 try {
                     processMmsDownloaded(mmsId)
+                    storage.mmsLastProcessedID = mmsId
                 } catch (e: Exception) {
                     logsService.insert(
                         LogEntry.Priority.ERROR,

@@ -5,6 +5,5 @@ import org.koin.dsl.module
 
 val mmsModule = module {
     singleOf(::MmsAttachmentStorage)
+    singleOf(::MmsAttachmentStorage)
 }
-
-val MODULE_NAME = "mms"
