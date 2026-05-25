@@ -36,7 +36,7 @@ public class PduContentTypes {
         "multipart/*",                                /* 0x0B */
         "multipart/mixed",                            /* 0x0C */
         "multipart/form-data",                        /* 0x0D */
-        "multipart/byterantes",                       /* 0x0E */
+        "multipart/byteranges",                       /* 0x0E */
         "multipart/alternative",                      /* 0x0F */
         "application/*",                              /* 0x10 */
         "application/java-vm",                        /* 0x11 */
