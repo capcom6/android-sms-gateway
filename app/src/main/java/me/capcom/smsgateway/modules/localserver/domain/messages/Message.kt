@@ -11,6 +11,7 @@ open class Message(
     val isEncrypted: Boolean,
     val scheduleAt: Date?,
     val textMessage: TextMessage?,
+    val flashMessage: FlashMessage?,
     val dataMessage: DataMessage?,
     val hashedMessage: HashedMessage?,
     val recipients: List<Recipient>,

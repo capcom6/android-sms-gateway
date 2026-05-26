@@ -179,6 +179,10 @@ class GatewayApi(
             val text: String,
         ) : MessageContent()
 
+        class Flash(
+            val text: String,
+        ) : MessageContent()
+
         class Data(
             val data: String,
             val port: UShort,
@@ -189,6 +193,8 @@ class GatewayApi(
         val id: String,
         @SerializedName("textMessage")
         val _textMessage: MessageContent.Text?,
+        @SerializedName("flashMessage")
+        val _flashMessage: MessageContent.Flash?,
         @SerializedName("dataMessage")
         val _dataMessage: MessageContent.Data?,
         val phoneNumbers: List<String>,
@@ -204,7 +210,8 @@ class GatewayApi(
         val _message: String?,
     ) {
         val content: MessageContent
-            get() = this._dataMessage
+            get() = this._flashMessage
+                ?: this._dataMessage
                 ?: this._textMessage
                 ?: _message?.let { MessageContent.Text(it) }
                 ?: throw RuntimeException("Invalid message content")

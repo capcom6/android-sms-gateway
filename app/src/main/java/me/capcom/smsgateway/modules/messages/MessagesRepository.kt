@@ -92,6 +92,11 @@ class MessagesRepository(private val dao: MessagesDao) {
                         MessageContent.Text::class.java
                     )
 
+                    MessageType.Flash -> gson.fromJson(
+                        message.message.content,
+                        MessageContent.Flash::class.java
+                    )
+
                     MessageType.Data -> gson.fromJson(
                         message.message.content,
                         MessageContent.Data::class.java

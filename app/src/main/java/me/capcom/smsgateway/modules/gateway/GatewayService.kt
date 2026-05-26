@@ -233,6 +233,7 @@ class GatewayService(
                 message.id,
                 when (val content = message.content) {
                     is GatewayApi.MessageContent.Text -> MessageContent.Text(content.text)
+                    is GatewayApi.MessageContent.Flash -> MessageContent.Flash(content.text)
                     is GatewayApi.MessageContent.Data -> MessageContent.Data(
                         content.data,
                         content.port

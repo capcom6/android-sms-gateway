@@ -15,6 +15,7 @@ data class PostMessageRequest(
     val priority: Byte = 0,
 
     val textMessage: TextMessage? = null,
+    val flashMessage: FlashMessage? = null,
     val dataMessage: DataMessage? = null,
 
     val deviceId: String? = null,
@@ -43,9 +44,9 @@ data class PostMessageRequest(
 
     fun validate(): PostMessageRequest {
         val messageTypes =
-            listOfNotNull(textMessage, dataMessage, message)
+            listOfNotNull(textMessage, flashMessage, dataMessage, message)
         when {
-            messageTypes.isEmpty() -> throw IllegalArgumentException("Must specify exactly one of: textMessage, dataMessage, or message")
+            messageTypes.isEmpty() -> throw IllegalArgumentException("Must specify exactly one of: textMessage, flashMessage, dataMessage, or message")
             messageTypes.size > 1 -> throw IllegalArgumentException("Cannot specify multiple message types simultaneously")
         }
 
@@ -70,6 +71,11 @@ data class PostMessageRequest(
         // Validate text message parameters
         if (textMessage?.text?.isEmpty() == true) {
             throw IllegalArgumentException("Text message is empty")
+        }
+
+        // Validate flash message parameters
+        if (flashMessage?.text?.isEmpty() == true) {
+            throw IllegalArgumentException("Flash message is empty")
         }
 
         if (phoneNumbers.isEmpty()) {

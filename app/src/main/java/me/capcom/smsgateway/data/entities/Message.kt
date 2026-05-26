@@ -11,6 +11,7 @@ import java.util.Date
 
 enum class MessageType {
     Text,
+    Flash,
     Data,
 }
 
@@ -79,6 +80,7 @@ data class Message constructor(
         content = gson.toJson(content),
         type = when (content) {
             is MessageContent.Text -> MessageType.Text
+            is MessageContent.Flash -> MessageType.Flash
             is MessageContent.Data -> MessageType.Data
         },
         createdAt = createdAt,
@@ -87,6 +89,12 @@ data class Message constructor(
     val textContent: MessageContent.Text?
         get() = when (type) {
             MessageType.Text -> gson.fromJson(content, MessageContent.Text::class.java)
+            else -> null
+        }
+
+    val flashContent: MessageContent.Flash?
+        get() = when (type) {
+            MessageType.Flash -> gson.fromJson(content, MessageContent.Flash::class.java)
             else -> null
         }
 

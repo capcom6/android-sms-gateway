@@ -40,6 +40,7 @@ import me.capcom.smsgateway.modules.messages.exceptions.ConflictException
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.receivers.EventsReceiver
+import java.lang.reflect.Method
 import java.util.Date
 import kotlin.coroutines.coroutineContext
 
@@ -386,6 +387,69 @@ class MessagesService(
                     }
                 }
 
+                is MessageContent.Flash -> {
+                    // Handle Flash SMS (Class 0) — modify DCS byte in PDU
+                    val text = when (message.isEncrypted) {
+                        true -> encryptionService.decrypt(content.text)
+                        false -> content.text
+                    }
+
+                    val parts = smsManager.divideMessage(text)
+                    dao.updatePartsCount(id, parts.size)
+
+                    if (parts.size > 1) {
+                        // Multi-part Flash SMS — send as regular text (concatenated Class 0 is unreliable)
+                        logsService.insert(
+                            LogEntry.Priority.WARN,
+                            MODULE_NAME,
+                            "Multi-part Flash SMS not supported, sending as regular text",
+                            mapOf("message_id" to id, "parts" to parts.size.toString())
+                        );
+                        { phoneNumber: String, sentIntent: PendingIntent, deliveredIntent: PendingIntent? ->
+                            smsManager.sendMultipartTextMessage(
+                                phoneNumber,
+                                null,
+                                parts,
+                                ArrayList(List(parts.size) { sentIntent }),
+                                deliveredIntent?.let { intent -> ArrayList(List(parts.size) { intent }) }
+                            )
+                        }
+                    } else {
+                        { phoneNumber: String, sentIntent: PendingIntent, deliveredIntent: PendingIntent? ->
+                            val submitPdu = SmsMessage.getSubmitPdu(
+                                null,
+                                phoneNumber,
+                                text,
+                                deliveredIntent != null
+                            )
+                            modifyDcsForFlash(submitPdu.encodedMessage)
+
+                            val sendRawPduMethod: Method = SmsManager::class.java.getDeclaredMethod(
+                                "sendRawPdu",
+                                ByteArray::class.java,      // smsc
+                                ByteArray::class.java,      // pdu
+                                PendingIntent::class.java,  // sentIntent
+                                PendingIntent::class.java   // deliveryIntent
+                            )
+                            sendRawPduMethod.isAccessible = true
+
+                            sendRawPduMethod.invoke(
+                                smsManager,
+                                submitPdu.encodedScAddress,
+                                submitPdu.encodedMessage,
+                                sentIntent,
+                                deliveredIntent,
+                            )
+//                            smsManager.sendRawPdu(
+//                                submitPdu.encodedScAddress,
+//                                submitPdu.encodedMessage,
+//                                sentIntent,
+//                                deliveredIntent
+//                            )
+                        }
+                    }
+                }
+
                 is MessageContent.Data -> {
                     val data = when (message.isEncrypted) {
                         true -> encryptionService.decrypt(content.data)
@@ -509,6 +573,16 @@ class MessagesService(
             } else {
                 context.getSystemService(SmsManager::class.java)
             }
+        }
+    }
+
+    private fun modifyDcsForFlash(pdu: ByteArray) {
+        val addrLen = pdu[2].toInt() and 0xFF
+        val addrOctets = (addrLen + 1) / 2
+        val dcsOffset = 5 + addrOctets
+        if (dcsOffset < pdu.size) {
+            val dcs = pdu[dcsOffset].toInt() and 0xFF
+            pdu[dcsOffset] = ((dcs and 0x0C) or 0x10).toByte()
         }
     }
 

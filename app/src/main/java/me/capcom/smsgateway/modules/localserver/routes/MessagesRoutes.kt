@@ -21,6 +21,7 @@ import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
 import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.InboxRefreshRequest
 import me.capcom.smsgateway.modules.localserver.domain.messages.DataMessage
+import me.capcom.smsgateway.modules.localserver.domain.messages.FlashMessage
 import me.capcom.smsgateway.modules.localserver.domain.messages.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.messages.TextMessage
 import me.capcom.smsgateway.modules.messages.MessagesService
@@ -147,6 +148,10 @@ class MessagesRoutes(
                     MessageContent.Text(request.textMessage.text)
                 }
 
+                request.flashMessage != null -> {
+                    MessageContent.Flash(request.flashMessage.text)
+                }
+
                 request.dataMessage != null -> {
                     MessageContent.Data(
                         request.dataMessage.data,
@@ -253,6 +258,13 @@ class MessagesRoutes(
             textMessage = when (includeContent) {
                 true -> message.textContent?.let {
                     TextMessage(it.text)
+                }
+
+                else -> null
+            },
+            flashMessage = when (includeContent) {
+                true -> message.flashContent?.let {
+                    FlashMessage(it.text)
                 }
 
                 else -> null
