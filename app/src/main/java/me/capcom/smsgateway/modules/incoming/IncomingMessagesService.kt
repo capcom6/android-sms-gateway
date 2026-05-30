@@ -74,6 +74,10 @@ class IncomingMessagesService(
         return repository.selectById(id)
     }
 
+    fun isMessageProcessed(message: InboxMessage): Boolean {
+        return getById(buildId(message)) != null
+    }
+
     private fun buildId(message: InboxMessage): String {
         val prefix = when (message) {
             is InboxMessage.Data -> "data:"

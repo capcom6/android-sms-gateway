@@ -358,7 +358,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun start() {
-        orchestratorSvc.start(requireContext(), false)
+        orchestratorSvc.start(requireContext().applicationContext, false)
     }
 
     private fun requestPermissionsAndStart() {
