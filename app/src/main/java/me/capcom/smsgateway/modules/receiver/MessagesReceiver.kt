@@ -57,12 +57,13 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
         private val INSTANCE: MessagesReceiver by lazy { MessagesReceiver() }
 
         fun register(context: Context) {
-            unregister(context)
+            val appContext = context.applicationContext
+            unregister(appContext)
 
             val textFilter = IntentFilter().apply {
                 addAction(Intents.SMS_RECEIVED_ACTION)
             }
-            context.registerReceiver(
+            appContext.registerReceiver(
                 INSTANCE,
                 textFilter
             )
@@ -72,7 +73,7 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
                 addDataScheme("sms")
                 addDataAuthority("*", "53739")
             }
-            context.registerReceiver(
+            appContext.registerReceiver(
                 INSTANCE,
                 dataFilter
             )
@@ -80,7 +81,7 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
 
         fun unregister(context: Context) {
             try {
-                context.unregisterReceiver(INSTANCE)
+                context.applicationContext.unregisterReceiver(INSTANCE)
             } catch (e: IllegalArgumentException) {
                 Log.w(TAG, "Receiver was not registered", e)
             }

@@ -77,6 +77,17 @@ class ReceiverService : KoinComponent {
             mapOf("message" to message)
         )
 
+        // Dedup safety net: skip if this exact message was already processed
+        if (incomingMessagesService.isMessageProcessed(message)) {
+            logsService.insert(
+                LogEntry.Priority.DEBUG,
+                MODULE_NAME,
+                "ReceiverService::process - duplicate message, skipping",
+                mapOf("message" to message)
+            )
+            return
+        }
+
         val simSlotIndex = message.subscriptionId?.let {
             SubscriptionsHelper.getSimSlotIndex(context, it)
         }

@@ -34,7 +34,6 @@ class OrchestratorService(
         try {
             localServerSvc.start(context)
             pingSvc.start(context)
-            receiverService.start(context)
         } catch (e: Throwable) {
             logsSvc.insert(
                 LogEntry.Priority.WARN,

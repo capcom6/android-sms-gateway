@@ -90,11 +90,14 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
         private val INSTANCE: MmsReceiver by lazy { MmsReceiver() }
 
         fun register(context: Context) {
+            val appContext = context.applicationContext
+            unregister(appContext)
+
             val filter = IntentFilter().apply {
                 addAction(Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION)
                 addDataType("application/vnd.wap.mms-message")
             }
-            context.registerReceiver(
+            appContext.registerReceiver(
                 INSTANCE,
                 filter
             )
@@ -102,7 +105,7 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
         fun unregister(context: Context) {
             try {
-                context.unregisterReceiver(INSTANCE)
+                context.applicationContext.unregisterReceiver(INSTANCE)
             } catch (e: IllegalArgumentException) {
                 Log.w(TAG, "Receiver was not registered", e)
             }
