@@ -70,6 +70,7 @@ class PingForegroundService : Service() {
 
         wakeLock.acquire()
         wifiLock.acquire()
+        workingThread.start()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -80,8 +81,6 @@ class PingForegroundService : Service() {
         )
 
         startForeground(NotificationsService.NOTIFICATION_ID_PING_SERVICE, notification)
-
-        workingThread.start()
 
         return super.onStartCommand(intent, flags, startId)
     }
