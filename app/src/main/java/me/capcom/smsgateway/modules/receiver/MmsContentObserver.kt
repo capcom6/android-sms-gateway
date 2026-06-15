@@ -138,9 +138,11 @@ class MmsContentObserver : KoinComponent {
                         LogEntry.Priority.ERROR,
                         MODULE_NAME,
                         "Failed processing downloaded MMS (id=$mmsId)",
-                        mapOf("mmsId" to mmsId)
+                        mapOf("mmsId" to mmsId, "error" to (e.message ?: e.toString())),
                     )
                 }
+                // Always advance mark to prevent one corrupt MMS from blocking the pipeline
+                storage.mmsLastProcessedID = mmsId
             }
         }
     }

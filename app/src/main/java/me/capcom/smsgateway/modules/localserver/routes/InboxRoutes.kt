@@ -1,14 +1,13 @@
 package me.capcom.smsgateway.modules.localserver.routes
 
 import android.content.Context
-import android.net.Uri
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
+import io.ktor.server.http.content.LocalFileContent
 import io.ktor.server.request.receive
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -50,6 +49,15 @@ class InboxRoutes(
                 )
                 return@get
             }
+            val includeAttachments = call.request.queryParameters["includeAttachments"]?.let {
+                it.toBooleanStrictOrNull() ?: run {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "includeAttachments must be true or false")
+                    )
+                    return@get
+                }
+            } ?: false
             val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
             val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
 
@@ -139,7 +147,7 @@ class InboxRoutes(
 
             call.response.headers.append("X-Total-Count", total.toString())
 
-            call.respond(messages.map { it.toDomain() } as GetIncomingMessagesResponse)
+            call.respond(messages.map { it.toDomain(includeAttachments) } as GetIncomingMessagesResponse)
         }
 
         get("{id}/attachments/{partId}") {
@@ -155,13 +163,17 @@ class InboxRoutes(
             val attachment = attachmentStorage.find(id, partId)
                 ?: return@get call.respond(HttpStatusCode.NotFound)
             val file = attachment.file
+            if (!file.exists()) {
+                return@get call.respond(HttpStatusCode.NotFound)
+            }
 
-            val contentType = parseContentType(attachment.contentType)
+            val safeName = attachment.displayName
+                .replace(Regex("[\\r\\n\"\\\\]"), "_")
             call.response.header(
                 "Content-Disposition",
-                "attachment; filename=\"${attachment.displayName}\""
+                "attachment; filename=\"${safeName}\""
             )
-            call.respondBytes(file.readBytes(), contentType)
+            call.respond(LocalFileContent(file, parseContentType(attachment.contentType)))
         }
 
         post("refresh") {
@@ -233,7 +245,7 @@ class InboxRoutes(
             .getOrDefault(ContentType.Application.OctetStream)
     }
 
-    private fun IncomingMessage.toDomain() = InboxMessage(
+    private fun IncomingMessage.toDomain(includeAttachments: Boolean = false) = InboxMessage(
         id = id,
         type = type,
         sender = sender,
@@ -241,7 +253,7 @@ class InboxRoutes(
         simNumber = simNumber,
         contentPreview = contentPreview,
         createdAt = Date(createdAt),
-        attachments = listAttachmentRefs(id),
+        attachments = if (includeAttachments) listAttachmentRefs(id) else emptyList(),
     )
 }
 

@@ -6,36 +6,24 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.telephony.SmsManager
-import android.webkit.MimeTypeMap
 import android.util.Base64
+import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.modules.mms.pdu.aosp.CharacterSets
 import me.capcom.smsgateway.modules.mms.pdu.aosp.EncodedStringValue
 import me.capcom.smsgateway.modules.mms.pdu.aosp.PduBody
-import me.capcom.smsgateway.modules.mms.pdu.aosp.PduComposer as AospPduComposer
 import me.capcom.smsgateway.modules.mms.pdu.aosp.PduPart
 import me.capcom.smsgateway.modules.mms.pdu.aosp.SendReq
 import me.capcom.smsgateway.receivers.EventsReceiver
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.File
-import java.util.concurrent.TimeUnit
+import java.security.MessageDigest
+import me.capcom.smsgateway.modules.mms.pdu.aosp.PduComposer as AospPduComposer
 
 class MmsSender(
     private val context: Context,
 ) {
-
-    private val httpClient by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(20, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
-            .build()
-    }
-
     suspend fun send(
         messageId: String,
         phoneNumbers: List<String>,
@@ -92,7 +80,7 @@ class MmsSender(
         }
     }
 
-    private suspend fun buildSendReq(
+    private fun buildSendReq(
         phoneNumbers: List<String>,
         mms: MessageContent.Mms,
         fromMsisdn: String?,
@@ -149,24 +137,11 @@ class MmsSender(
         return req
     }
 
-    private suspend fun attachmentBytes(att: MessageContent.Mms.Attachment): ByteArray {
-        att.data?.let {
-            return try {
-                Base64.decode(it, Base64.DEFAULT)
-            } catch (e: IllegalArgumentException) {
-                throw IllegalArgumentException("Invalid base64 data for attachment", e)
-            }
-        }
-        val url = att.url
-            ?: throw IllegalArgumentException("Attachment must have data or url")
-        return withContext(Dispatchers.IO) {
-            val resp = httpClient.newCall(Request.Builder().url(url).build()).execute()
-            resp.use {
-                if (!it.isSuccessful) {
-                    throw RuntimeException("Failed to fetch attachment $url: HTTP ${it.code}")
-                }
-                it.body?.bytes() ?: throw RuntimeException("Empty body from $url")
-            }
+    private fun attachmentBytes(att: MessageContent.Mms.Attachment): ByteArray {
+        return try {
+            Base64.decode(att.data, Base64.DEFAULT)
+        } catch (e: IllegalArgumentException) {
+            throw IllegalArgumentException("Invalid base64 data for attachment", e)
         }
     }
 
@@ -178,8 +153,7 @@ class MmsSender(
 
     private fun writePduFile(messageId: String, bytes: ByteArray): File {
         val dir = File(context.filesDir, "mms-out").apply { mkdirs() }
-        val safeId = messageId.replace(Regex("[^A-Za-z0-9_.-]"), "_")
-        val file = File(dir, "$safeId.pdu")
+        val file = File(dir, "${pduFileName(messageId)}.pdu")
         file.writeBytes(bytes)
         return file
     }
@@ -217,8 +191,12 @@ class MmsSender(
     companion object {
         /** Clean up any stale PDU files for the given message. */
         fun cleanup(context: Context, messageId: String) {
-            val safeId = messageId.replace(Regex("[^A-Za-z0-9_.-]"), "_")
-            File(File(context.filesDir, "mms-out"), "$safeId.pdu").delete()
+            File(File(context.filesDir, "mms-out"), "${pduFileName(messageId)}.pdu").delete()
         }
+
+        private fun pduFileName(messageId: String): String =
+            MessageDigest.getInstance("SHA-256")
+                .digest(messageId.toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it) }
     }
 }

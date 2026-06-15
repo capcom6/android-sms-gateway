@@ -164,7 +164,6 @@ class MessagesRoutes(
                                 contentType = it.contentType,
                                 name = it.name,
                                 data = it.data,
-                                url = it.url,
                             )
                         }
                     )
@@ -293,7 +292,6 @@ class MessagesRoutes(
                                 contentType = it.contentType,
                                 name = it.name,
                                 data = it.data,
-                                url = it.url,
                             )
                         }
                     )

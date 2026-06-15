@@ -201,8 +201,7 @@ class GatewayApi(
             class Attachment(
                 val contentType: String,
                 val name: String?,
-                val data: String?,
-                val url: String?,
+                val data: String,
             )
         }
     }

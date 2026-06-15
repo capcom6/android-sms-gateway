@@ -13,24 +13,24 @@ This document covers:
 
 ## Contents
 
-- [Requirements](#requirements)
-- [Setup](#setup)
-  - [Grant the default SMS app role](#grant-the-default-sms-app-role)
-- [Sending MMS](#sending-mms)
-  - [API](#api)
-  - [Attachment sources](#attachment-sources)
-  - [Example: send an image](#example-send-an-image)
-  - [Example: send multiple attachments with subject](#example-send-multiple-attachments-with-subject)
-  - [Example: pull attachments from a URL](#example-pull-attachments-from-a-url)
-- [Receiving MMS](#receiving-mms)
-  - [Flow](#flow)
-  - [Webhook: `mms:received`](#webhook-mmsreceived)
-  - [Webhook: `mms:downloaded`](#webhook-mmsdownloaded)
-  - [Fetching attachment bytes](#fetching-attachment-bytes)
-- [Inbox API](#inbox-api)
-- [Cloud mode](#cloud-mode)
-- [Limits and carrier behavior](#limits-and-carrier-behavior)
-- [Troubleshooting](#troubleshooting)
+- [MMS support](#mms-support)
+  - [Contents](#contents)
+  - [Requirements](#requirements)
+  - [Setup](#setup)
+    - [Grant the default SMS app role](#grant-the-default-sms-app-role)
+  - [Sending MMS](#sending-mms)
+    - [API](#api)
+    - [Attachment sources](#attachment-sources)
+    - [Example: send an image](#example-send-an-image)
+  - [Receiving MMS](#receiving-mms)
+    - [Flow](#flow)
+    - [Webhook: `mms:received`](#webhook-mmsreceived)
+    - [Webhook: `mms:downloaded`](#webhook-mmsdownloaded)
+    - [Fetching attachment bytes](#fetching-attachment-bytes)
+  - [Inbox API](#inbox-api)
+  - [Cloud mode](#cloud-mode)
+  - [Limits and carrier behavior](#limits-and-carrier-behavior)
+  - [Troubleshooting](#troubleshooting)
 
 ## Requirements
 
@@ -83,10 +83,6 @@ content field, `mmsMessage`. Exactly one of `textMessage`, `dataMessage`,
         "contentType": "image/jpeg",
         "name": "photo.jpg",
         "data": "<base64-encoded bytes>"
-      },
-      {
-        "contentType": "audio/amr",
-        "url": "https://media.example.com/clip.amr"
       }
     ]
   },
@@ -98,16 +94,15 @@ content field, `mmsMessage`. Exactly one of `textMessage`, `dataMessage`,
 
 Field reference:
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `phoneNumbers` | `string[]` | yes | Recipient MSISDNs. E.164 format strongly recommended. |
-| `mmsMessage.subject` | `string` | no | Optional MMS subject. |
-| `mmsMessage.text` | `string` | no | Optional text/plain body part. Can coexist with attachments. |
-| `mmsMessage.attachments[]` | `Attachment[]` | conditional | At least one of `text` or `attachments` must be present. |
-| `attachments[].contentType` | `string` | yes | e.g. `image/jpeg`, `image/png`, `audio/amr`, `video/mp4`. |
-| `attachments[].name` | `string` | no | Suggested filename, forwarded as Content-Location + Content-Type `name`. |
-| `attachments[].data` | `string` | one of | Base64-encoded bytes. |
-| `attachments[].url` | `string` | one of | URL the device fetches over HTTP(S) at send time. |
+| Field                       | Type           | Required    | Notes                                                                    |
+| --------------------------- | -------------- | ----------- | ------------------------------------------------------------------------ |
+| `phoneNumbers`              | `string[]`     | yes         | Recipient MSISDNs. E.164 format strongly recommended.                    |
+| `mmsMessage.subject`        | `string`       | no          | Optional MMS subject.                                                    |
+| `mmsMessage.text`           | `string`       | no          | Optional text/plain body part. Can coexist with attachments.             |
+| `mmsMessage.attachments[]`  | `Attachment[]` | conditional | At least one of `text` or `attachments` must be present.                 |
+| `attachments[].contentType` | `string`       | yes         | e.g. `image/jpeg`, `image/png`, `audio/amr`, `video/mp4`.                |
+| `attachments[].name`        | `string`       | no          | Suggested filename, forwarded as Content-Location + Content-Type `name`. |
+| `attachments[].data`        | `string`       | yes         | Base64-encoded bytes.                                                    |
 
 Other top-level message fields (`simNumber`, `withDeliveryReport`,
 `priority`, `ttl`/`validUntil`, `isEncrypted`, `id`) behave the same way
@@ -158,37 +153,6 @@ curl -u "<user>:<pass>" -H 'Content-Type: application/json' \
     }
   }" \
   http://<device_ip>:8080/message
-```
-
-### Example: send multiple attachments with subject
-
-```sh
-curl -u "<user>:<pass>" -H 'Content-Type: application/json' -d '{
-  "phoneNumbers":["+15551234567"],
-  "mmsMessage":{
-    "subject":"Weekly report",
-    "text":"See attached.",
-    "attachments":[
-      {"contentType":"image/png","url":"https://cdn.example.com/chart.png"},
-      {"contentType":"application/pdf","url":"https://cdn.example.com/report.pdf"}
-    ]
-  }
-}' http://<device_ip>:8080/message
-```
-
-### Example: pull attachments from a URL
-
-```sh
-curl -u "<user>:<pass>" -H 'Content-Type: application/json' -d '{
-  "phoneNumbers":["+15551234567"],
-  "mmsMessage":{
-    "attachments":[{
-      "contentType":"video/mp4",
-      "name":"intro.mp4",
-      "url":"https://cdn.example.com/intro.mp4"
-    }]
-  }
-}' http://<device_ip>:8080/message
 ```
 
 ## Receiving MMS
@@ -285,34 +249,68 @@ Required auth scope: `inbox:read`.
 
 ## Inbox API
 
-- `GET /inbox?type=MMS_DOWNLOADED` — list received MMS metadata.
-- `GET /inbox/{messageId}` — full message detail, including a list of
-  attachment references:
+`GET /inbox` — list received messages with optional attachment metadata.
+
+Query parameters:
+
+| Parameter            | Type      | Default | Description                                                      |
+|----------------------|-----------|---------|------------------------------------------------------------------|
+| `type`               | `string`  | —       | Filter by message type (`SMS`, `MMS`, `MMS_DOWNLOADED`, etc.).   |
+| `limit`              | `integer` | `50`    | Max results (1–500).                                             |
+| `offset`             | `integer` | `0`     | Result offset for pagination.                                    |
+| `from`               | `string`  | epoch   | ISO-8601 start of date range.                                    |
+| `to`                 | `string`  | now     | ISO-8601 end of date range.                                      |
+| `deviceId`           | `string`  | —       | Must match the device's own ID if provided.                      |
+| `includeAttachments` | `boolean` | `false` | When `true`, includes per-message attachment metadata (partId, name, size, contentType). |
+
+By default attachment metadata is omitted to avoid unnecessary I/O on large
+result sets. Attachments are always available individually via the
+dedicated endpoint below.
+
+Default response (attachments excluded):
 
 ```json
-{
-  "id": "hex-derived-id",
-  "type": "MMS_DOWNLOADED",
-  "sender": "+15550009999",
-  "recipient": "+15551234567",
-  "simNumber": 1,
-  "contentPreview": "Hi! Here's the photo.",
-  "createdAt": "2026-04-20T17:31:14.000+00:00",
-  "attachments": [
-    {
-      "partId": 3,
-      "name": "photo.jpg",
-      "size": 38421,
-      "contentType": "image/jpeg",
-      "url": "/inbox/hex-derived-id/attachments/3"
-    }
-  ]
-}
+[
+  {
+    "id": "hex-derived-id",
+    "type": "MMS_DOWNLOADED",
+    "sender": "+15550009999",
+    "recipient": "+15551234567",
+    "simNumber": 1,
+    "contentPreview": "Hi! Here's the photo.",
+    "createdAt": "2026-04-20T17:31:14.000+00:00",
+    "attachments": []
+  }
+]
+```
+
+Pass `?includeAttachments=true` to include attachment metadata:
+
+```json
+[
+  {
+    "id": "hex-derived-id",
+    "type": "MMS_DOWNLOADED",
+    "sender": "+15550009999",
+    "recipient": "+15551234567",
+    "simNumber": 1,
+    "contentPreview": "Hi! Here's the photo.",
+    "createdAt": "2026-04-20T17:31:14.000+00:00",
+    "attachments": [
+      {
+        "partId": 3,
+        "name": "photo.jpg",
+        "size": 38421,
+        "contentType": "image/jpeg"
+      }
+    ]
+  }
+]
 ```
 
 - `GET /inbox/{messageId}/attachments/{partId}` — raw attachment bytes.
 
-All three are available in both Local and Cloud modes.
+All endpoints are available in both Local and Cloud modes.
 
 ## Cloud mode
 
