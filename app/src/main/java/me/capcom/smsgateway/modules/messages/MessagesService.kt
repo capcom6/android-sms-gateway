@@ -353,7 +353,7 @@ class MessagesService(
                 text = content.text?.let { encryptionService.decrypt(it) },
                 attachments = content.attachments.map {
                     it.copy(
-                        data = it.data?.let { d -> encryptionService.decrypt(d) }
+                        data = encryptionService.decrypt(it.data)
                     )
                 }
             )
@@ -368,7 +368,7 @@ class MessagesService(
         // Don't set fromMsisdn — insert-address-token lets the MMSC fill
         // the From field, which matches how Google Messages composes its
         // PDUs and is what Verizon's MMSC expects.
-        mmsSender.send(id, recipients, decryptedContent, subscriptionId, null)
+        mmsSender.send(id, recipients, decryptedContent, subscriptionId, fromMsisdn)
 
         // Move all recipients out of Pending immediately so the worker loop
         // does not re-pull this message while we wait for ACTION_MMS_SENT.

@@ -63,8 +63,8 @@ class MmsAttachmentStorage(private val context: Context) {
     fun remove(messageId: String) {
         val dir = messageDir(messageId)
         if (!dir.exists()) return
-        dir.listFiles()?.forEach { it.delete() }
-        dir.delete()
+        val removed = dir.deleteRecursively()
+        check(removed) { "Failed to remove MMS attachments directory: ${dir.absolutePath}" }
     }
 
     private fun messageDir(messageId: String): File = File(root, digest(messageId))
