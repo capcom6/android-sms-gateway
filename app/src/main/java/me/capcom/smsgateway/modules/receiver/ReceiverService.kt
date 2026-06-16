@@ -28,15 +28,18 @@ class ReceiverService : KoinComponent {
 
     private val eventsReceiver by lazy { EventsReceiver() }
     private val mmsContentObserver by lazy { MmsContentObserver() }
+    private val smsContentObserver by lazy { SmsContentObserver() }
 
     fun start(context: Context) {
         MessagesReceiver.register(context)
         MmsReceiver.register(context)
         eventsReceiver.start()
         mmsContentObserver.start()
+        smsContentObserver.start()
     }
 
     fun stop(context: Context) {
+        smsContentObserver.stop()
         mmsContentObserver.stop()
         eventsReceiver.stop()
         MmsReceiver.unregister(context)
@@ -68,6 +71,7 @@ class ReceiverService : KoinComponent {
             mapOf("period" to period, "messageTypes" to messageTypes)
         )
     }
+
 
     fun process(context: Context, message: InboxMessage, triggerWebhooks: Boolean) {
         logsService.insert(
@@ -143,7 +147,7 @@ class ReceiverService : KoinComponent {
                             contentType = it.contentType,
                             name = it.name,
                             size = it.size,
-                            data = it.data
+                            data = it.data,
                         )
                     },
                     receivedAt = message.date,
