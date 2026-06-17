@@ -200,6 +200,7 @@ class GatewayApi(
         val validUntil: Date?,
         val scheduleAt: Date?,
         val priority: Byte?,
+        val state: ProcessingState?,
         val createdAt: Date?,
 
         @SerializedName("message")

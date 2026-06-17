@@ -7,6 +7,7 @@ import io.ktor.http.HttpStatusCode
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageContent
+import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
@@ -237,7 +238,27 @@ class GatewayService(
         }
     }
 
-    private fun processMessage(context: Context, message: GatewayApi.Message) {
+    private suspend fun processMessage(context: Context, message: GatewayApi.Message) {
+        when (message.state) {
+            ProcessingState.Pending, null -> {}
+            ProcessingState.Cancelling -> {
+                try {
+                    messagesService.cancelMessage(message.id)
+                } catch (_: IllegalArgumentException) {
+                    // message not found locally — nothing to cancel
+                } catch (_: IllegalStateException) {
+                    // message not in Pending state — already sent/cancelled
+                }
+                return
+            }
+
+            ProcessingState.Cancelled,
+            ProcessingState.Processed,
+            ProcessingState.Sent,
+            ProcessingState.Delivered,
+            ProcessingState.Failed -> return
+        }
+
         val messageState = messagesService.getMessage(message.id)
         if (messageState != null) {
             SendStateWorker.start(context, message.id)

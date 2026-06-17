@@ -7,6 +7,7 @@ import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -214,6 +215,34 @@ class MessagesRoutes(
                 message.toDomain(
                     requireNotNull(settings.deviceId),
                     includeContent = true
+                )
+            )
+        }
+        delete("{id}") {
+            if (!requireScope(AuthScopes.MessagesCancel)) return@delete
+            val id = call.parameters["id"]
+                ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+            val message = try {
+                messagesService.cancelMessage(id)
+            } catch (e: IllegalArgumentException) {
+                return@delete call.respond(HttpStatusCode.NotFound)
+            } catch (e: IllegalStateException) {
+                return@delete call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to e.message)
+                )
+            } catch (e: Throwable) {
+                return@delete call.respond(
+                    HttpStatusCode.InternalServerError,
+                    mapOf("message" to e.message)
+                )
+            }
+
+            call.respond(
+                message.toDomain(
+                    requireNotNull(settings.deviceId),
+                    includeContent = false
                 )
             )
         }
