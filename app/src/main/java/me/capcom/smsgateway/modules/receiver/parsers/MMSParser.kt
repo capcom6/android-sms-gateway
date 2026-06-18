@@ -62,7 +62,8 @@ object MMSParser {
         val from: String,
         val subject: String?,
         val messageSize: Long,
-        val contentClass: ContentClass?
+        val contentClass: ContentClass?,
+        val contentLocation: String?,
     )
 
     fun parseMNotificationInd(pdu: ByteArray): MNotificationInd {
@@ -119,7 +120,8 @@ object MMSParser {
             from = headers[HEADER_FROM] as String,
             subject = headers[HEADER_SUBJECT] as String?,
             messageSize = headers[HEADER_MESSAGE_SIZE] as Long,
-            contentClass = headers[HEADER_CONTENT_CLASS] as ContentClass?
+            contentClass = headers[HEADER_CONTENT_CLASS] as ContentClass?,
+            contentLocation = headers[HEADER_CONTENT_LOCATION] as String?,
         )
     }
 

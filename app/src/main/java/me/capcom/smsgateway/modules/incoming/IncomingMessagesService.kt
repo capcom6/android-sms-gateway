@@ -1,17 +1,20 @@
 package me.capcom.smsgateway.modules.incoming
 
 import android.content.Context
+import android.util.Base64
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessage
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessageType
 import me.capcom.smsgateway.modules.incoming.repositories.IncomingMessagesRepository
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
+import me.capcom.smsgateway.modules.mms.MmsAttachmentStorage
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 
 class IncomingMessagesService(
     private val context: Context,
     private val repository: IncomingMessagesRepository,
+    private val attachmentStorage: MmsAttachmentStorage,
     private val logsService: LogsService,
 ) {
     fun save(message: InboxMessage): IncomingMessage {
@@ -42,6 +45,9 @@ class IncomingMessagesService(
         ).also {
             try {
                 repository.insert(it)
+                if (message is InboxMessage.MMS) {
+                    persistMmsAttachments(message)
+                }
             } catch (e: Exception) {
                 logsService.insert(
                     LogEntry.Priority.ERROR,
@@ -52,6 +58,50 @@ class IncomingMessagesService(
                         "exception" to e.stackTraceToString(),
                     )
                 )
+            }
+        }
+    }
+
+    private fun persistMmsAttachments(message: InboxMessage.MMS) {
+        message.attachments.forEach { att ->
+            val decoded = att.data?.let {
+                runCatching {
+                    Base64.decode(it, Base64.DEFAULT)
+                }.onFailure { e ->
+                    logsService.insert(
+                        LogEntry.Priority.WARN,
+                        MODULE_NAME,
+                        "Failed to decode MMS attachment data",
+                        mapOf(
+                            "messageId" to message.messageId,
+                            "partId" to att.partId,
+                            "name" to (att.name ?: ""),
+                            "error" to (e.message ?: e.toString()),
+                        )
+                    )
+                }.getOrNull()
+            }
+            if (decoded != null) {
+                try {
+                    attachmentStorage.store(
+                        message.messageId,
+                        att.partId,
+                        att.name,
+                        att.contentType,
+                        decoded,
+                    )
+                } catch (e: Exception) {
+                    logsService.insert(
+                        LogEntry.Priority.WARN,
+                        MODULE_NAME,
+                        "Failed to persist MMS attachment",
+                        mapOf(
+                            "messageId" to message.messageId,
+                            "partId" to att.partId,
+                            "error" to (e.message ?: e.toString()),
+                        )
+                    )
+                }
             }
         }
     }
