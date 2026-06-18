@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <files-path
+        name="mms_out"
+        path="mms-out/" />
+    <cache-path
+        name="mms_cache"
+        path="mms-cache/" />
+</paths>
