@@ -29,4 +29,7 @@ enum class WebHookEvent(val value: String) {
 
     @SerializedName("app:started")
     AppStarted("app:started"),
+
+    @SerializedName("sms:cancelled")
+    SmsCancelled("sms:cancelled"),
 }

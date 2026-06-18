@@ -37,6 +37,7 @@ class EventsReceiver : EventsReceiver() {
                         ProcessingState.Sent -> WebHookEvent.SmsSent
                         ProcessingState.Delivered -> WebHookEvent.SmsDelivered
                         ProcessingState.Failed -> WebHookEvent.SmsFailed
+                        ProcessingState.Cancelled -> WebHookEvent.SmsCancelled
                         else -> return@collect
                     }
 
@@ -70,6 +71,14 @@ class EventsReceiver : EventsReceiver() {
                                 simNumber = event.simNumber,
                                 failedAt = Date(),
                                 reason = event.error ?: "Unknown",
+                                sender = sender,
+                                recipient = destination,
+                            )
+
+                            WebHookEvent.SmsCancelled -> SmsEventPayload.SmsCancelled(
+                                messageId = event.id,
+                                simNumber = event.simNumber,
+                                cancelledAt = Date(),
                                 sender = sender,
                                 recipient = destination,
                             )
