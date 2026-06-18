@@ -81,7 +81,11 @@ class ReceiverService : KoinComponent {
             LogEntry.Priority.DEBUG,
             MODULE_NAME,
             "ReceiverService::process - message received",
-            mapOf("message" to message)
+            mapOf(
+                "messageType" to message.javaClass.simpleName,
+                "date" to message.date,
+                "subscriptionId" to message.subscriptionId,
+            )
         )
 
         // Dedup safety net: skip if this exact message was already processed
@@ -90,7 +94,11 @@ class ReceiverService : KoinComponent {
                 LogEntry.Priority.DEBUG,
                 MODULE_NAME,
                 "ReceiverService::process - duplicate message, skipping",
-                mapOf("message" to message)
+                mapOf(
+                    "messageType" to message.javaClass.simpleName,
+                    "date" to message.date,
+                    "subscriptionId" to message.subscriptionId,
+                )
             )
             return
         }

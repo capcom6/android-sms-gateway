@@ -14,6 +14,7 @@ import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.modules.receiver.parsers.MMSParser
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.security.MessageDigest
 import java.util.Date
 
 class MmsReceiver : BroadcastReceiver(), KoinComponent {
@@ -56,7 +57,10 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
                     "uri" to intent.extras?.getString("uri"),
                     "header" to intent.extras?.getByteArray("header")
                         ?.joinToString("") { "%02x".format(it) },
-                    "pdu" to pdu.joinToString("") { "%02x".format(it) },
+                    "pduSizeBytes" to pdu.size,
+                    "pduSha256" to MessageDigest.getInstance("SHA-256")
+                        .digest(pdu)
+                        .joinToString("") { "%02x".format(it) },
                 )
             )
 
