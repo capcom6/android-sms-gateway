@@ -5,12 +5,14 @@ import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessage
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessageType
 import me.capcom.smsgateway.modules.incoming.repositories.IncomingMessagesRepository
+import me.capcom.smsgateway.modules.incoming.workers.IncomingLogTruncateWorker
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 
 class IncomingMessagesService(
     private val context: Context,
+    private val settings: IncomingMessagesSettings,
     private val repository: IncomingMessagesRepository,
     private val logsService: LogsService,
 ) {
@@ -76,6 +78,19 @@ class IncomingMessagesService(
 
     fun isMessageProcessed(message: InboxMessage): Boolean {
         return getById(buildId(message)) != null
+    }
+
+    fun start(context: Context) {
+        IncomingLogTruncateWorker.start(context)
+    }
+
+    fun stop(context: Context) {
+        IncomingLogTruncateWorker.stop(context)
+    }
+
+    suspend fun truncateLog() {
+        val lifetime = settings.lifetimeDays ?: return
+        repository.truncate(System.currentTimeMillis() - lifetime * 86400000L)
     }
 
     private fun buildId(message: InboxMessage): String {

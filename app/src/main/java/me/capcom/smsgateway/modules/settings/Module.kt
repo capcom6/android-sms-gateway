@@ -4,6 +4,7 @@ import androidx.preference.PreferenceManager
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.modules.encryption.EncryptionSettings
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
+import me.capcom.smsgateway.modules.incoming.IncomingMessagesSettings
 import me.capcom.smsgateway.modules.localserver.LocalServerSettings
 import me.capcom.smsgateway.modules.logs.LogsSettings
 import me.capcom.smsgateway.modules.messages.MessagesSettings
@@ -44,6 +45,11 @@ val settingsModule = module {
     factory {
         PingSettings(
             PreferencesStorage(get(), "ping")
+        )
+    }
+    factory {
+        IncomingMessagesSettings(
+            PreferencesStorage(get(), "incoming")
         )
     }
     factory {
