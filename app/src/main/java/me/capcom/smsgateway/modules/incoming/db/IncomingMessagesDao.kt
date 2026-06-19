@@ -66,5 +66,5 @@ interface IncomingMessagesDao {
     fun delete(from: Long, to: Long, types: Set<IncomingMessageType>)
 
     @Query("DELETE FROM incoming_messages WHERE createdAt < :until")
-    fun truncate(until: Long)
+    suspend fun truncate(until: Long)
 }

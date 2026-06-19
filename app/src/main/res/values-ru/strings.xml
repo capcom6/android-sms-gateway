@@ -12,8 +12,7 @@
     <string name="btn_continue">Продолжить</string>
     <string name="by_code">По коду</string>
     <string name="can_affect_battery_life">может влиять на время работы батареи</string>
-    <string
-        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Нажмите
+    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Нажмите
         \"Продолжить\", чтобы создать аккаунт. Личная информация не требуется.\nПродолжая, вы
         соглашаетесь с Политикой конфиденциальности по адресу
         https://docs.sms-gate.app/privacy/policy/</string>
@@ -61,7 +60,6 @@
     <string name="messages_header">Сообщения</string>
     <string name="messages">Сообщения…</string>
     <string name="minimum">Минимум</string>
-    <string name="more_settings">Другие настройки…</string>
     <string name="n_a">н/д</string>
     <string name="new_sms_received_webhooks_registered">Зарегистрирован новый вебхук для входящих
         сообщений</string>
@@ -70,7 +68,6 @@
     <string name="not_set">Не задано</string>
     <string name="notification_title">SMSGate</string>
     <string name="notification_channel">Канал уведомлений</string>
-    <string name="notifications">Уведомления</string>
     <string name="online_status_at_the_cost_of_battery_life">Время автономной работы может быть
         снижено</string>
     <string name="passphrase">Ключ шифрования</string>

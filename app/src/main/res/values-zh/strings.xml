@@ -10,8 +10,7 @@
     <string name="btn_continue">继续</string>
     <string name="by_code">通过验证码</string>
     <string name="can_affect_battery_life">可能影响电池寿命</string>
-    <string
-        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">点击"继续"创建账户，无需提供个人信息。\n继续即表示您同意我们的隐私政策，详情见
+    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">点击"继续"创建账户，无需提供个人信息。\n继续即表示您同意我们的隐私政策，详情见
         https://docs.sms-gate.app/privacy/policy/</string>
     <string name="cloud_server_dotdotdot">云服务器…</string>
     <string name="cloud_server">云服务器</string>
@@ -56,7 +55,6 @@
     <string name="messages_header">消息</string>
     <string name="messages">消息…</string>
     <string name="minimum">最小值</string>
-    <string name="more_settings">更多设置…</string>
     <string name="n_a">无数据</string>
     <string name="new_sms_received_webhooks_registered">已注册新短信接收 Webhook</string>
     <string name="no_webhooks_found">未配置 Webhook</string>
@@ -64,7 +62,6 @@
     <string name="not_set">未设置</string>
     <string name="notification_title">短信网关</string>
     <string name="notification_channel">通知渠道</string>
-    <string name="notifications">通知</string>
     <string name="online_status_at_the_cost_of_battery_life">保持在线状态（可能消耗更多电量）</string>
     <string name="passphrase">密码短语</string>
     <string name="password_changed_successfully">密码修改成功</string>

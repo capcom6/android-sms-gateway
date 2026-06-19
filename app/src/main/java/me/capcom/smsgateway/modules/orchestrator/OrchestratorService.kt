@@ -4,6 +4,7 @@ import android.content.Context
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.gateway.GatewayService
+import me.capcom.smsgateway.modules.incoming.IncomingMessagesService
 import me.capcom.smsgateway.modules.localserver.LocalServerService
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
@@ -16,6 +17,7 @@ import me.capcom.smsgateway.modules.webhooks.payload.AppStartedPayload
 
 class OrchestratorService(
     private val messagesSvc: MessagesService,
+    private val incomingSvc: IncomingMessagesService,
     private val gatewaySvc: GatewayService,
     private val localServerSvc: LocalServerService,
     private val webHooksSvc: WebHooksService,
@@ -31,6 +33,7 @@ class OrchestratorService(
 
         logsSvc.start(context)
         messagesSvc.start(context)
+        incomingSvc.start(context)
         webHooksSvc.start(context)
         gatewaySvc.start(context)
 
@@ -71,6 +74,7 @@ class OrchestratorService(
         gatewaySvc.stop(context)
         webHooksSvc.stop(context)
         messagesSvc.stop(context)
+        incomingSvc.stop(context)
         logsSvc.stop(context)
     }
 }
