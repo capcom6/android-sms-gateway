@@ -2,15 +2,10 @@ package me.capcom.smsgateway.modules.mms
 
 import android.content.Context
 import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import java.io.File
 import java.security.MessageDigest
-import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Persists MMS attachment bytes under the app's private files directory so
@@ -26,10 +21,6 @@ class MmsAttachmentStorage(
 ) {
 
     private val gson = Gson()
-
-    private val lastCleanupMs = AtomicLong(0L)
-
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private val root: File
         get() = File(context.filesDir, "mms-in").apply { mkdirs() }
@@ -49,7 +40,6 @@ class MmsAttachmentStorage(
             contentType = contentType.ifBlank { DEFAULT_CONTENT_TYPE },
         )
         metadataFile(file).writeText(gson.toJson(meta))
-        scope.launch { cleanupIfNeeded() }
         return StoredAttachment(partId, meta.displayName, meta.contentType, file)
     }
 
@@ -107,16 +97,6 @@ class MmsAttachmentStorage(
         }
     }
 
-    private fun cleanupIfNeeded() {
-        val now = System.currentTimeMillis()
-        val prev = lastCleanupMs.get()
-        if (now - prev >= CLEANUP_INTERVAL_MS) {
-            if (lastCleanupMs.compareAndSet(prev, now)) {
-                cleanup()
-            }
-        }
-    }
-
     private fun messageDir(messageId: String): File = File(root, digest(messageId))
 
     private fun digest(s: String): String {
@@ -158,7 +138,6 @@ class MmsAttachmentStorage(
     companion object {
         private const val DEFAULT_CONTENT_TYPE = "application/octet-stream"
         private const val METADATA_SUFFIX = ".metadata"
-        private const val CLEANUP_INTERVAL_MS = 3_600_000L
         private const val MILLIS_PER_DAY = 86_400_000L
     }
 }

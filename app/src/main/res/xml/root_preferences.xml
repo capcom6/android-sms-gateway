@@ -18,10 +18,10 @@
         app:summary="@string/delays_limits_etc" />
 
     <Preference
-        android:icon="@drawable/ic_sms"
-        app:fragment="me.capcom.smsgateway.ui.settings.ReceiverSettingsFragment"
-        app:summary="@string/receiver_summary"
-        app:title="@string/receiver" />
+        android:icon="@drawable/ic_inbox"
+        app:fragment="me.capcom.smsgateway.ui.settings.InboxSettingsFragment"
+        app:summary="@string/inbox_settings_summary"
+        app:title="@string/inbox_dotdotdot" />
 
     <Preference
         android:icon="@drawable/ic_webhook"

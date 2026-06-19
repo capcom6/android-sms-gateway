@@ -61,7 +61,6 @@
     <string name="messages_header">Messages</string>
     <string name="messages">Messages…</string>
     <string name="minimum">Minimum</string>
-    <string name="more_settings">More settings…</string>
     <string name="n_a">n/a</string>
     <string name="new_sms_received_webhooks_registered">New SMS Received Webhooks registered</string>
     <string name="no_webhooks_found">No webhooks configured</string>
@@ -69,7 +68,6 @@
     <string name="not_set">Not set</string>
     <string name="notification_title">SMSGate</string>
     <string name="notification_channel">Notification channel</string>
-    <string name="notifications">Notifications</string>
     <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery
         life</string>
     <string name="passphrase">Passphrase</string>
@@ -146,8 +144,6 @@
     </plurals>
     <string name="processing">Processing</string>
     <string name="processing_order_title">Processing order</string>
-    <string name="receiver">Receiver</string>
-    <string name="receiver_summary">Content provider monitoring, fallback, etc.</string>
     <string name="receiver_content_provider_monitoring">Content Provider Monitoring</string>
     <string name="receiver_content_provider_monitoring_summary">Also detect incoming SMS via content
         provider</string>
@@ -186,4 +182,7 @@
     <string name="working_hours_summary">Only send messages within the defined time window</string>
     <string name="working_hours_start">Start time</string>
     <string name="working_hours_end">End time</string>
+    <string name="inbox_dotdotdot">Inbox…</string>
+    <string name="inbox_settings_summary">Content provider monitoring, retention, etc.</string>
+    <string name="inbox">Inbox</string>
 </resources>
