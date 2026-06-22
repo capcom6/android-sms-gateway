@@ -61,6 +61,76 @@ class MessagesSettings(
     val processingOrder: ProcessingOrder
         get() = storage.get<ProcessingOrder>(PROCESSING_ORDER) ?: ProcessingOrder.LIFO
 
+    val workHoursEnabled: Boolean
+        get() = storage.get<Boolean>(WORK_HOURS_ENABLED) ?: false
+    val workHoursStart: String
+        get() = storage.get(WORK_HOURS_START) ?: "09:00"
+    val workHoursEnd: String
+        get() = storage.get(WORK_HOURS_END) ?: "19:00"
+
+    private fun isInWorkHours(): Boolean {
+        if (!workHoursEnabled) return true
+
+        val now = java.util.Calendar.getInstance()
+        val nowMinutes =
+            now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE)
+        val startMinutes = parseTimeMinutes(workHoursStart)
+        val endMinutes = parseTimeMinutes(workHoursEnd)
+
+        if (startMinutes == endMinutes) return true
+
+        return if (startMinutes < endMinutes) {
+            nowMinutes in startMinutes until endMinutes
+        } else {
+            nowMinutes >= startMinutes || nowMinutes < endMinutes
+        }
+    }
+
+    fun nextWorkHoursStart(): Long? {
+        if (!workHoursEnabled) return null
+        if (isInWorkHours()) return null
+
+        val now = java.util.Calendar.getInstance()
+        val nowMinutes =
+            now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE)
+        val startMinutes = parseTimeMinutes(workHoursStart)
+        val endMinutes = parseTimeMinutes(workHoursEnd)
+
+        val todayStart = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, startMinutes / 60)
+            set(java.util.Calendar.MINUTE, startMinutes % 60)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+
+        return if (startMinutes <= endMinutes) {
+            if (nowMinutes < startMinutes) {
+                todayStart.timeInMillis
+            } else {
+                todayStart.add(java.util.Calendar.DAY_OF_MONTH, 1)
+                todayStart.timeInMillis
+            }
+        } else {
+            todayStart.timeInMillis
+        }
+    }
+
+    private fun parseTimeMinutes(value: String): Int {
+        val parts = value.split(":")
+        return parts.getOrNull(0)?.toIntOrNull()?.let { h ->
+            h * 60 + (parts.getOrNull(1)?.toIntOrNull() ?: 0)
+        } ?: 0
+    }
+
+    private fun isValidTimeFormat(value: String): Boolean {
+        val regex = Regex("^\\d{2}:\\d{2}$")
+        if (!regex.matches(value)) return false
+        val parts = value.split(":")
+        val h = parts.getOrNull(0)?.toIntOrNull() ?: return false
+        val m = parts.getOrNull(1)?.toIntOrNull() ?: return false
+        return h in 0..23 && m in 0..59
+    }
+
     init {
         migrate()
     }
@@ -94,6 +164,10 @@ class MessagesSettings(
         private const val LOG_LIFETIME_DAYS = "log_lifetime_days"
 
         private const val PROCESSING_ORDER = "processing_order"
+
+        private const val WORK_HOURS_ENABLED = "work_hours_enabled"
+        private const val WORK_HOURS_START = "work_hours_start"
+        private const val WORK_HOURS_END = "work_hours_end"
     }
 
     override fun export(): Map<String, *> {
@@ -105,6 +179,9 @@ class MessagesSettings(
             SIM_SELECTION_MODE to simSelectionMode.name,
             LOG_LIFETIME_DAYS to logLifetimeDays,
             PROCESSING_ORDER to processingOrder.name,
+            WORK_HOURS_ENABLED to workHoursEnabled,
+            WORK_HOURS_START to workHoursStart,
+            WORK_HOURS_END to workHoursEnd,
         )
     }
 
@@ -188,6 +265,41 @@ class MessagesSettings(
 
                     val changed = this.logLifetimeDays != logLifetimeDays
                     storage.set(key, logLifetimeDays?.toString())
+
+                    changed
+                }
+
+                WORK_HOURS_ENABLED -> {
+                    val newValue = value?.toString()?.toBooleanStrictOrNull() ?: false
+                    val changed = this.workHoursEnabled != newValue
+
+                    storage.set(key, newValue.toString())
+
+                    changed
+                }
+
+                WORK_HOURS_START -> {
+                    val raw = value?.toString()
+                    val newValue = if (raw != null && isValidTimeFormat(raw)) raw else "09:00"
+                    if (raw != null && !isValidTimeFormat(raw)) {
+                        throw IllegalArgumentException("Invalid time format: $raw")
+                    }
+                    val changed = this.workHoursStart != newValue
+
+                    storage.set(key, newValue)
+
+                    changed
+                }
+
+                WORK_HOURS_END -> {
+                    val raw = value?.toString()
+                    val newValue = if (raw != null && isValidTimeFormat(raw)) raw else "19:00"
+                    if (raw != null && !isValidTimeFormat(raw)) {
+                        throw IllegalArgumentException("Invalid time format: $raw")
+                    }
+                    val changed = this.workHoursEnd != newValue
+
+                    storage.set(key, newValue)
 
                     changed
                 }
