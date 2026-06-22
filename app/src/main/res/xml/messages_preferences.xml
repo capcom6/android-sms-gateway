@@ -59,4 +59,27 @@
             app:title="@string/messages_count"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/working_hours">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="messages.work_hours_enabled"
+            app:icon="@drawable/ic_timer"
+            app:title="@string/working_hours_enable"
+            app:summary="@string/working_hours_summary" />
+        <EditTextPreference
+            android:defaultValue="09:00"
+            android:key="messages.work_hours_start"
+            app:icon="@drawable/ic_timer"
+            app:title="@string/working_hours_start"
+            app:useSimpleSummaryProvider="true"
+            android:dependency="messages.work_hours_enabled" />
+        <EditTextPreference
+            android:defaultValue="19:00"
+            android:key="messages.work_hours_end"
+            app:icon="@drawable/ic_timer"
+            app:title="@string/working_hours_end"
+            app:useSimpleSummaryProvider="true"
+            android:dependency="messages.work_hours_enabled" />
+    </PreferenceCategory>
 </PreferenceScreen>
