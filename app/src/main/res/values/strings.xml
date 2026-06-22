@@ -103,6 +103,8 @@
     <string name="settings_local_address_is" translatable="false">&lt;a href>%1$s:%2$d&lt;/a></string>
     <string name="settings_local_address_not_found">Not available</string>
     <string name="settings_local_server">Local server</string>
+    <string name="button_start_service">Start Service</string>
+    <string name="button_stop_service">Stop Service</string>
     <string name="settings_offline">Offline</string>
     <string name="settings_online">Online</string>
     <string name="settings_public_address_is" translatable="false">&lt;a href>%1$s:%2$d&lt;/a></string>
