@@ -11,6 +11,7 @@ class MessagesSettings(
     enum class Period(val duration: Long) {
         Disabled(0L),
         PerMinute(60000L),
+        Per30Minutes(1800000L),
         PerHour(3600000L),
         PerDay(86400000L),
     }

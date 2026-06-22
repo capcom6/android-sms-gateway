@@ -2,12 +2,14 @@
     <string-array name="limit_periods_titles">
         <item>disabled</item>
         <item>minute</item>
+        <item>30 minutes</item>
         <item>hour</item>
         <item>day</item>
     </string-array>
     <string-array name="limit_periods_values">
         <item>Disabled</item>
         <item>PerMinute</item>
+        <item>Per30Minutes</item>
         <item>PerHour</item>
         <item>PerDay</item>
     </string-array>
