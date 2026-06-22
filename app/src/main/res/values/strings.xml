@@ -181,4 +181,9 @@
     <string name="language">Language</string>
     <string name="language_system">System default</string>
     <string name="password_must_not_be_empty">Password must not be empty</string>
+    <string name="working_hours">Working Hours</string>
+    <string name="working_hours_enable">Enable working hours</string>
+    <string name="working_hours_summary">Only send messages within the defined time window</string>
+    <string name="working_hours_start">Start time</string>
+    <string name="working_hours_end">End time</string>
 </resources>
