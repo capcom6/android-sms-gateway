@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path name="mms_out" path="mms-out/" />
+    <files-path name="mms_in" path="mms-in/" />
+    <cache-path name="mms_cache" path="mms-cache/" />
+</paths>
