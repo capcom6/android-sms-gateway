@@ -80,10 +80,14 @@ sealed class InboxMessage(
         if (other !is InboxMessage) return false
 
         if (address != other.address) return false
+        if (date != other.date) return false
         return subscriptionId == other.subscriptionId
     }
 
     override fun hashCode(): Int {
-        return 31 * address.hashCode() + subscriptionId.hashCode()
+        var result = address.hashCode()
+        result = 31 * result + date.hashCode()
+        result = 31 * result + (subscriptionId ?: 0)
+        return result
     }
 }
