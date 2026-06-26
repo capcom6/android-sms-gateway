@@ -130,7 +130,7 @@ class SmsContentObserver : KoinComponent {
         val projection = mutableListOf(
             Telephony.Sms._ID,
             Telephony.Sms.ADDRESS,
-            Telephony.Sms.DATE,
+            Telephony.Sms.DATE_SENT,
             Telephony.Sms.BODY,
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
