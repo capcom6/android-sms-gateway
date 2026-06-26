@@ -8,10 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-
-### Changed
+- SMS Receiver settings section with Content Provider Monitoring toggle to disable fallback content observer
 
 ### Fixed
+- Duplicate SMS detection when a message arrives via both broadcast receiver and content observer — use `DATE_SENT` instead of `DATE` in both paths so timestamps match consistently
+- Export (`POST /messages/inbox/export`) no longer produces duplicates of messages already received via broadcast
 
 ## [v1.66.1] - 2026-06-24
 
