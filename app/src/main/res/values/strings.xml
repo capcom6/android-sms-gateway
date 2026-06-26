@@ -146,6 +146,11 @@
     </plurals>
     <string name="processing">Processing</string>
     <string name="processing_order_title">Processing order</string>
+    <string name="receiver">Receiver</string>
+    <string name="receiver_summary">Content provider monitoring, fallback, etc.</string>
+    <string name="receiver_content_provider_monitoring">Content Provider Monitoring</string>
+    <string name="receiver_content_provider_monitoring_summary">Also detect incoming SMS via content
+        provider</string>
     <string name="queue_status">📊 Queue Status</string>
     <string name="total_messages">Total: %1$d</string>
     <string name="pending_messages">Pending: %1$d</string>

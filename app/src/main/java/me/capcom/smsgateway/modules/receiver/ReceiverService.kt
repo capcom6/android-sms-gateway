@@ -25,6 +25,7 @@ class ReceiverService : KoinComponent {
     private val webHooksService: WebHooksService by inject()
     private val logsService: LogsService by inject()
     private val incomingMessagesService: IncomingMessagesService by inject()
+    private val receiverSettings: ReceiverSettings by inject()
 
     private val eventsReceiver by lazy { EventsReceiver() }
     private val mmsContentObserver by lazy { MmsContentObserver() }
@@ -35,7 +36,9 @@ class ReceiverService : KoinComponent {
         MmsReceiver.register(context)
         eventsReceiver.start()
         mmsContentObserver.start()
-        smsContentObserver.start()
+        if (receiverSettings.contentProviderEnabled) {
+            smsContentObserver.start()
+        }
     }
 
     fun stop(context: Context) {

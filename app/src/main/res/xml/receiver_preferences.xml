@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="@string/receiver">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:icon="@drawable/ic_advanced"
+            android:key="receiver.content_provider_enabled"
+            app:summary="@string/receiver_content_provider_monitoring_summary"
+            app:title="@string/receiver_content_provider_monitoring" />
+    </PreferenceCategory>
+</androidx.preference.PreferenceScreen>

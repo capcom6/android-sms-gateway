@@ -18,6 +18,12 @@
         app:summary="@string/delays_limits_etc" />
 
     <Preference
+        android:icon="@drawable/ic_sms"
+        app:fragment="me.capcom.smsgateway.ui.settings.ReceiverSettingsFragment"
+        app:summary="@string/receiver_summary"
+        app:title="@string/receiver" />
+
+    <Preference
         android:icon="@drawable/ic_webhook"
         app:fragment="me.capcom.smsgateway.ui.settings.WebhooksSettingsFragment"
         app:summary="@string/retries_signing_etc"
