@@ -23,7 +23,7 @@ class EventsReceiver : EventsReceiver() {
                         context = get(),
                         period = event.since to event.until,
                         messageTypes = event.messageTypes,
-                        triggerWebhooks = event.triggerWebhooks,
+                        webhookDelivery = event.webhookDelivery
                     )
                 }
             }
