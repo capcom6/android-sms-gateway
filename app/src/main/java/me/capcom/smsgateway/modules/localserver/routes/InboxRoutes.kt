@@ -9,6 +9,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import kotlinx.coroutines.CancellationException
+import me.capcom.smsgateway.domain.WebhookDelivery
 import me.capcom.smsgateway.helpers.DateTimeParser
 import me.capcom.smsgateway.modules.incoming.IncomingMessagesService
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessage
@@ -175,7 +176,9 @@ class InboxRoutes(
                     context,
                     request.period,
                     request.messageTypes ?: setOf(IncomingMessageType.SMS),
-                    request.triggerWebhooks ?: false,
+                    request.webhookDelivery
+                        ?: (if (request.triggerWebhooks == true) WebhookDelivery.Individual else null)
+                        ?: WebhookDelivery.Disabled,
                 )
                 call.respond(HttpStatusCode.Accepted)
             } catch (e: CancellationException) {
