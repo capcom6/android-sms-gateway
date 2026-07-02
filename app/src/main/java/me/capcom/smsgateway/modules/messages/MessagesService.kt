@@ -90,6 +90,35 @@ class MessagesService(
     }
     //#endregion
 
+    //#region Cancel
+    suspend fun cancelMessage(id: String): MessageWithRecipients {
+        val existing = dao.get(id)
+            ?: throw IllegalArgumentException("Message with id $id not found")
+
+        if (existing.message.state != ProcessingState.Pending) {
+            throw IllegalStateException("Message $id is not in Pending state")
+        }
+
+        dao.cancelMessage(id)
+
+        val message = requireNotNull(dao.get(id))
+
+        events.emit(
+            MessageStateChangedEvent(
+                id,
+                message.message.source,
+                message.recipients.map { it.phoneNumber }.toSet(),
+                message.message.state,
+                message.message.simNumber,
+                message.message.partsCount,
+                null
+            )
+        )
+
+        return message
+    }
+    //#endregion
+
     //#region Send
     fun enqueueMessage(request: SendRequest): MessageWithRecipients {
         val priority = request.params.priority ?: Message.PRIORITY_DEFAULT
@@ -196,6 +225,7 @@ class MessagesService(
 
                 else -> ProcessingState.Failed to "Delivery result: $resultCode"
             }
+
             else -> return
         }
 
@@ -277,6 +307,17 @@ class MessagesService(
     private suspend fun sendMessage(request: StoredSendRequest): Boolean {
         if (request.params.validUntil?.before(Date()) == true) {
             updateState(request.message.id, null, ProcessingState.Failed, "TTL expired")
+            return false
+        }
+
+        // Re-check state: message might have been cancelled while in queue
+        val currentState = dao.get(request.message.id)?.message?.state
+        if (currentState == ProcessingState.Cancelling || currentState == ProcessingState.Cancelled) {
+            logsService.insert(
+                LogEntry.Priority.INFO,
+                MODULE_NAME,
+                "Skipping cancelled message ${request.message.id}",
+            )
             return false
         }
 

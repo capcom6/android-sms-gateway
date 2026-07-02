@@ -22,6 +22,8 @@ data class MessageWithRecipients(
     val state: me.capcom.smsgateway.domain.ProcessingState
         get() = when {
             recipients.any { it.state == me.capcom.smsgateway.domain.ProcessingState.Pending } -> me.capcom.smsgateway.domain.ProcessingState.Pending
+            recipients.any { it.state == me.capcom.smsgateway.domain.ProcessingState.Cancelling } -> me.capcom.smsgateway.domain.ProcessingState.Cancelling
+            recipients.any { it.state == me.capcom.smsgateway.domain.ProcessingState.Cancelled } -> me.capcom.smsgateway.domain.ProcessingState.Cancelled
             recipients.any { it.state == me.capcom.smsgateway.domain.ProcessingState.Processed } -> me.capcom.smsgateway.domain.ProcessingState.Processed
 
             recipients.all { it.state == me.capcom.smsgateway.domain.ProcessingState.Failed } -> me.capcom.smsgateway.domain.ProcessingState.Failed
