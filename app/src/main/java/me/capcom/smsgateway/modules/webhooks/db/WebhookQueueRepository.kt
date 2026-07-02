@@ -47,7 +47,7 @@ class WebhookQueueRepository(
      * Check if there are any due webhook events (where next_attempt has passed).
      */
     suspend fun hasDueWebhooks(): Boolean {
-        return dao.dueWebhooksCount() > 0
+        return dao.dueWebhooksCount(System.currentTimeMillis() + 60_000L) > 0
     }
 
     /**
