@@ -34,7 +34,7 @@ class WebhookQueueRepository(
                     createdAt = System.currentTimeMillis(),
                     nextAttempt = System.currentTimeMillis()
                 )
-             )
+            )
         } catch (e: Exception) {
             payloadStorage.delete(id)
             throw e
@@ -44,10 +44,17 @@ class WebhookQueueRepository(
     }
 
     /**
-     * Check if there are any scheduled webhook events.
+     * Check if there are any due webhook events (where next_attempt has passed).
      */
-    suspend fun hasScheduledWebhooks(): Boolean {
-        return dao.scheduledWebhooksCount() > 0
+    suspend fun hasDueWebhooks(): Boolean {
+        return dao.dueWebhooksCount() > 0
+    }
+
+    /**
+     * Get the minimum next_attempt time for all pending/failed webhooks.
+     */
+    suspend fun getNextAttemptTime(): Long? {
+        return dao.getNextAttemptTime()
     }
 
     /**

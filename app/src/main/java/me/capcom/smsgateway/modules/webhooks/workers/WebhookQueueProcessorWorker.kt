@@ -66,16 +66,22 @@ class WebhookQueueProcessorWorker(
         private const val PROCESSING_TIMEOUT_MS = 30000L
         private const val MIN_BACKOFF_DELAY_MS = 5000L
 
+        // If next retry is within this threshold, keep foreground worker looping
+        // instead of scheduling via WorkManager. This avoids frequent foreground
+        // service start/stop cycles for short delays.
+        private const val MAX_FOREGROUND_DELAY_MS = 60_000L
+
         // Work name for this worker
         private const val WORK_NAME = "webhook_queue_processor"
 
         /**
          * Start the queue processor worker.
-         * This will schedule the worker to run periodically.
+         * @param initialDelayMs delay before the worker runs (0 for immediate).
          */
         fun start(
             context: Context,
-            internetRequired: Boolean = false
+            internetRequired: Boolean = false,
+            initialDelayMs: Long = 0
         ) {
             val workRequest = OneTimeWorkRequestBuilder<WebhookQueueProcessorWorker>()
                 .setBackoffCriteria(
@@ -91,12 +97,15 @@ class WebhookQueueProcessorWorker(
                                 .build()
                         )
                     }
+                    if (initialDelayMs > 0) {
+                        setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
+                    }
                 }
                 .build()
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME,
-                ExistingWorkPolicy.KEEP,
+                ExistingWorkPolicy.REPLACE,
                 workRequest
             )
         }
@@ -133,7 +142,6 @@ class WebhookQueueProcessorWorker(
             }
 
             do {
-                // Process the queue with priority handling
                 val processedCount = withContext(NonCancellable) {
                     processWebhookQueue()
                 }
@@ -150,10 +158,32 @@ class WebhookQueueProcessorWorker(
                 if (processedCount == 0) {
                     delay(MIN_BACKOFF_DELAY_MS)
                 }
-            } while (webhookRepository.hasScheduledWebhooks() && isActive)
+            } while (webhookRepository.hasDueWebhooks() && isActive)
 
             if (isActive) {
                 webhookRepository.cleanupOldEntries()
+
+                val nextAttempt = webhookRepository.getNextAttemptTime()
+                if (nextAttempt != null) {
+                    val delayMs = nextAttempt - System.currentTimeMillis()
+                    if (delayMs > MAX_FOREGROUND_DELAY_MS) {
+                        logsSvc.insert(
+                            priority = LogEntry.Priority.DEBUG,
+                            module = NAME,
+                            message = "Scheduling next webhook queue processing",
+                            context = mapOf(
+                                "delayMs" to delayMs,
+                                "nextAttempt" to nextAttempt
+                            )
+                        )
+
+                        start(
+                            context = applicationContext,
+                            internetRequired = settings.internetRequired,
+                            initialDelayMs = delayMs
+                        )
+                    }
+                }
             }
 
             logsSvc.insert(

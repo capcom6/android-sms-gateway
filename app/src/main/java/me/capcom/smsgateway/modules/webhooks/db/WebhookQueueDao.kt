@@ -27,6 +27,18 @@ interface WebhookQueueDao {
     suspend fun scheduledWebhooksCount(): Long
 
     /**
+     * Check if there are any due webhook events (where next_attempt has passed).
+     */
+    @Query("SELECT COUNT(*) FROM webhook_queue WHERE status IN ('pending', 'failed') AND next_attempt <= :currentTime")
+    suspend fun dueWebhooksCount(currentTime: Long = System.currentTimeMillis()): Long
+
+    /**
+     * Get the minimum next_attempt time for all pending/failed webhooks.
+     */
+    @Query("SELECT MIN(next_attempt) FROM webhook_queue WHERE status IN ('pending', 'failed')")
+    suspend fun getNextAttemptTime(): Long?
+
+    /**
      * Get all pending webhook events ordered by next attempt time.
      */
     @Query(
