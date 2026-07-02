@@ -6,6 +6,7 @@ import android.provider.Telephony
 import android.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import me.capcom.smsgateway.domain.WebhookDelivery
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.incoming.IncomingMessagesService
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessageType
@@ -14,8 +15,12 @@ import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
+import me.capcom.smsgateway.modules.webhooks.payload.MmsBatchDownloadedPayload
+import me.capcom.smsgateway.modules.webhooks.payload.MmsBatchReceivedPayload
 import me.capcom.smsgateway.modules.webhooks.payload.MmsDownloadedPayload
 import me.capcom.smsgateway.modules.webhooks.payload.MmsReceivedPayload
+import me.capcom.smsgateway.modules.webhooks.payload.SmsBatchReceivedPayload
+import me.capcom.smsgateway.modules.webhooks.payload.SmsDataBatchReceivedPayload
 import me.capcom.smsgateway.modules.webhooks.payload.SmsEventPayload
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -53,19 +58,35 @@ class ReceiverService : KoinComponent {
         context: Context,
         period: Pair<Date, Date>,
         messageTypes: Set<IncomingMessageType>,
-        triggerWebhooks: Boolean
+        webhookDelivery: WebhookDelivery,
     ) = withContext(Dispatchers.IO) {
         logsService.insert(
             LogEntry.Priority.DEBUG,
             MODULE_NAME,
             "ReceiverService::export - start",
-            mapOf("period" to period, "messageTypes" to messageTypes)
+            mapOf(
+                "period" to period,
+                "messageTypes" to messageTypes,
+                "webhookDelivery" to webhookDelivery.name
+            )
         )
 
-        select(context, period, messageTypes)
-            .forEach {
-                process(context, it, triggerWebhooks)
+        val messages = select(context, period, messageTypes)
+
+        when (webhookDelivery) {
+            WebhookDelivery.Batch -> {
+                val payloads = messages.mapNotNull { saveAndBuildPayload(context, it) }
+                emitBatchWebhooks(context, payloads)
             }
+
+            WebhookDelivery.Individual -> {
+                messages.forEach { process(context, it, triggerWebhooks = true) }
+            }
+
+            WebhookDelivery.Disabled -> {
+                messages.forEach { process(context, it, triggerWebhooks = false) }
+            }
+        }
 
         logsService.insert(
             LogEntry.Priority.DEBUG,
@@ -84,7 +105,25 @@ class ReceiverService : KoinComponent {
             mapOf("message" to message)
         )
 
-        // Dedup safety net: skip if this exact message was already processed
+        val payload = saveAndBuildPayload(context, message)
+
+        if (payload != null && triggerWebhooks) {
+            webHooksService.emit(context, payload.first, payload.second)
+        }
+
+        if (payload != null) {
+            logsService.insert(
+                LogEntry.Priority.DEBUG,
+                MODULE_NAME,
+                "ReceiverService::process - message processed",
+            )
+        }
+    }
+
+    private fun saveAndBuildPayload(
+        context: Context,
+        message: InboxMessage
+    ): Pair<WebHookEvent, Any>? {
         if (incomingMessagesService.isMessageProcessed(message)) {
             logsService.insert(
                 LogEntry.Priority.DEBUG,
@@ -92,7 +131,7 @@ class ReceiverService : KoinComponent {
                 "ReceiverService::process - duplicate message, skipping",
                 mapOf("message" to message)
             )
-            return
+            return null
         }
 
         val simSlotIndex = message.subscriptionId?.let {
@@ -105,66 +144,116 @@ class ReceiverService : KoinComponent {
 
         val incoming = incomingMessagesService.save(message)
 
-        if (triggerWebhooks) {
-            val (type, payload) = when (message) {
-                is InboxMessage.Text -> WebHookEvent.SmsReceived to SmsEventPayload.SmsReceived(
-                    messageId = message.hashCode().toUInt().toString(16),
-                    message = message.text,
-                    sender = incoming.sender,
-                    simNumber = simNumber,
-                    receivedAt = message.date,
-                    recipient = recipient,
-                )
+        return when (message) {
+            is InboxMessage.Text -> WebHookEvent.SmsReceived to SmsEventPayload.SmsReceived(
+                messageId = message.hashCode().toUInt().toString(16),
+                message = message.text,
+                sender = incoming.sender,
+                simNumber = simNumber,
+                receivedAt = message.date,
+                recipient = recipient,
+            )
 
-                is InboxMessage.Data -> WebHookEvent.SmsDataReceived to SmsEventPayload.SmsDataReceived(
-                    messageId = message.hashCode().toUInt().toString(16),
-                    data = Base64.encodeToString(message.data, Base64.NO_WRAP),
-                    simNumber = simNumber,
-                    receivedAt = message.date,
-                    sender = incoming.sender,
-                    recipient = recipient,
-                )
+            is InboxMessage.Data -> WebHookEvent.SmsDataReceived to SmsEventPayload.SmsDataReceived(
+                messageId = message.hashCode().toUInt().toString(16),
+                data = Base64.encodeToString(message.data, Base64.NO_WRAP),
+                simNumber = simNumber,
+                receivedAt = message.date,
+                sender = incoming.sender,
+                recipient = recipient,
+            )
 
-                is InboxMessage.MmsHeaders -> WebHookEvent.MmsReceived to MmsReceivedPayload(
-                    messageId = message.messageId ?: message.transactionId,
-                    simNumber = simNumber,
-                    transactionId = message.transactionId,
-                    subject = message.subject,
-                    size = message.size,
-                    contentClass = message.contentClass,
-                    receivedAt = message.date,
-                    sender = incoming.sender,
-                    recipient = recipient,
-                )
+            is InboxMessage.MmsHeaders -> WebHookEvent.MmsReceived to MmsReceivedPayload(
+                messageId = message.messageId ?: message.transactionId,
+                simNumber = simNumber,
+                transactionId = message.transactionId,
+                subject = message.subject,
+                size = message.size,
+                contentClass = message.contentClass,
+                receivedAt = message.date,
+                sender = incoming.sender,
+                recipient = recipient,
+            )
 
-                is InboxMessage.MMS -> WebHookEvent.MmsDownloaded to MmsDownloadedPayload(
-                    messageId = message.messageId,
-                    sender = incoming.sender,
-                    recipient = recipient,
-                    simNumber = simNumber,
-                    body = message.body,
-                    subject = message.subject,
-                    attachments = message.attachments.map {
-                        MmsDownloadedPayload.Attachment(
-                            partId = it.partId,
-                            contentType = it.contentType,
-                            name = it.name,
-                            size = it.size,
-                            data = it.data,
-                        )
-                    },
-                    receivedAt = message.date,
-                )
+            is InboxMessage.MMS -> WebHookEvent.MmsDownloaded to MmsDownloadedPayload(
+                messageId = message.messageId,
+                sender = incoming.sender,
+                recipient = recipient,
+                simNumber = simNumber,
+                body = message.body,
+                subject = message.subject,
+                attachments = message.attachments.map {
+                    MmsDownloadedPayload.Attachment(
+                        partId = it.partId,
+                        contentType = it.contentType,
+                        name = it.name,
+                        size = it.size,
+                        data = it.data,
+                    )
+                },
+                receivedAt = message.date,
+            )
+        }
+    }
+
+    private fun emitBatchWebhooks(
+        context: Context,
+        payloads: List<Pair<WebHookEvent, Any>>,
+    ) {
+        val grouped = payloads.groupBy { it.first }
+
+        grouped.forEach { (eventType, items) ->
+            val batchEvent = when (eventType) {
+                WebHookEvent.SmsReceived -> WebHookEvent.SmsBatchReceived
+                WebHookEvent.SmsDataReceived -> WebHookEvent.SmsBatchDataReceived
+                WebHookEvent.MmsReceived -> WebHookEvent.MmsBatchReceived
+                WebHookEvent.MmsDownloaded -> WebHookEvent.MmsBatchDownloaded
+                else -> {
+                    logsService.insert(
+                        LogEntry.Priority.WARN,
+                        MODULE_NAME,
+                        "ReceiverService::emitBatchWebhooks - unsupported event type for batching",
+                        mapOf("eventType" to eventType.name)
+                    )
+                    return@forEach
+                }
             }
 
-            webHooksService.emit(context, type, payload)
-        }
+            val batchPayloads = items.map { it.second }
 
-        logsService.insert(
-            LogEntry.Priority.DEBUG,
-            MODULE_NAME,
-            "ReceiverService::process - message processed",
-        )
+            batchPayloads.chunked(BATCH_SIZE).forEachIndexed { _, chunk ->
+                @Suppress("UNCHECKED_CAST")
+                val batchPayload = when (batchEvent) {
+                    WebHookEvent.SmsBatchReceived -> SmsBatchReceivedPayload(
+                        messages = chunk as List<SmsEventPayload.SmsReceived>,
+                    )
+
+                    WebHookEvent.SmsBatchDataReceived -> SmsDataBatchReceivedPayload(
+                        messages = chunk as List<SmsEventPayload.SmsDataReceived>,
+                    )
+
+                    WebHookEvent.MmsBatchReceived -> MmsBatchReceivedPayload(
+                        messages = chunk as List<MmsReceivedPayload>,
+                    )
+
+                    WebHookEvent.MmsBatchDownloaded -> MmsBatchDownloadedPayload(
+                        messages = chunk as List<MmsDownloadedPayload>,
+                    )
+
+                    else -> {
+                        logsService.insert(
+                            LogEntry.Priority.WARN,
+                            MODULE_NAME,
+                            "ReceiverService::emitBatchWebhooks - unsupported batch event for payload construction",
+                            mapOf("batchEvent" to batchEvent.name)
+                        )
+                        return@forEachIndexed
+                    }
+                }
+
+                webHooksService.emit(context, batchEvent, batchPayload)
+            }
+        }
     }
 
 
@@ -293,5 +382,9 @@ class ReceiverService : KoinComponent {
         }
 
         return messages
+    }
+
+    companion object {
+        private const val BATCH_SIZE = 100
     }
 }
