@@ -106,6 +106,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 💳 **Multiple SIM card support:** Supports devices with [multiple SIM cards](https://docs.sms-gate.app/features/multi-sim/).
 - 📱📱 **Multiple device support:** Connect [multiple devices](https://docs.sms-gate.app/features/multi-device/) to the same account with Cloud or Private server. Messages sent via the server are distributed across all connected devices.
 - 💾 **Data SMS support:** Send and receive binary [data payloads](https://docs.sms-gate.app/features/data-sms.md) via SMS for IoT commands, encrypted messages, and other specialized use cases.
+- 🕐 **Working hours scheduling:** Restrict message delivery to configurable time windows, automatically pausing the queue outside of them
 
 🔌 Integration:
 

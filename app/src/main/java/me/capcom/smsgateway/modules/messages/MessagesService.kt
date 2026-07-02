@@ -102,17 +102,27 @@ class MessagesService(
             throw ConflictException()
         }
 
-        if (scheduleAt != null
-            && scheduleAt > System.currentTimeMillis()
-            && scheduleAt < (nextScheduled ?: 0)
-        ) {
-            SendMessagesWorker.start(context, true, scheduleAt)
+        val workHoursStart = if (priority < Message.PRIORITY_EXPEDITED) {
+            settings.nextWorkHoursStart()
         } else {
+            null
+        }
+        val startTime = when {
+            workHoursStart != null -> workHoursStart
+            scheduleAt != null
+                && scheduleAt > System.currentTimeMillis()
+                && scheduleAt < (nextScheduled ?: 0) -> scheduleAt
+            else -> SendMessagesWorker.IMMEDIATE
+        }
+
+        if (startTime == SendMessagesWorker.IMMEDIATE) {
             SendMessagesWorker.start(
                 context,
                 nextScheduled == null || priority >= Message.PRIORITY_EXPEDITED,
                 SendMessagesWorker.IMMEDIATE
             )
+        } else {
+            SendMessagesWorker.start(context, true, startTime)
         }
 
         return message
@@ -220,13 +230,18 @@ class MessagesService(
 
                 val priority = message.params.priority ?: Message.PRIORITY_DEFAULT
 
-                // apply limits if:
+                // apply rate limit if:
                 // - message is not expedited
                 // - message is expedited and previous message had higher or equal priority
                 if (priority < Message.PRIORITY_EXPEDITED
                     || previousPriority >= priority
                 ) {
                     applyLimit()
+                }
+
+                // skip work hours for expedited messages
+                if (priority < Message.PRIORITY_EXPEDITED) {
+                    applyWorkHoursLimit()
                 }
 
                 if (!withContext(NonCancellable) { sendMessage(message) }) {
@@ -269,6 +284,16 @@ class MessagesService(
         }
 
         delay(settings.limitPeriod.duration - (System.currentTimeMillis() - processedStats.lastTimestamp) + 1000L)
+    }
+
+    private suspend fun applyWorkHoursLimit() {
+        val nextStart = settings.nextWorkHoursStart() ?: return
+
+        val delayMs = nextStart - System.currentTimeMillis()
+        if (delayMs > 0) {
+            SendMessagesWorker.start(context, true, nextStart)
+            delay(delayMs)
+        }
     }
 
     /**
