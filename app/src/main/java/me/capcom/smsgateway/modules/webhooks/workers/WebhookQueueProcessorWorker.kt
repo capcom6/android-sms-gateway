@@ -71,11 +71,12 @@ class WebhookQueueProcessorWorker(
 
         /**
          * Start the queue processor worker.
-         * This will schedule the worker to run periodically.
+         * @param initialDelayMs delay before the worker runs (0 for immediate).
          */
         fun start(
             context: Context,
-            internetRequired: Boolean = false
+            internetRequired: Boolean = false,
+            initialDelayMs: Long = 0
         ) {
             val workRequest = OneTimeWorkRequestBuilder<WebhookQueueProcessorWorker>()
                 .setBackoffCriteria(
@@ -91,12 +92,15 @@ class WebhookQueueProcessorWorker(
                                 .build()
                         )
                     }
+                    if (initialDelayMs > 0) {
+                        setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
+                    }
                 }
                 .build()
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME,
-                ExistingWorkPolicy.KEEP,
+                ExistingWorkPolicy.REPLACE,
                 workRequest
             )
         }
@@ -133,7 +137,6 @@ class WebhookQueueProcessorWorker(
             }
 
             do {
-                // Process the queue with priority handling
                 val processedCount = withContext(NonCancellable) {
                     processWebhookQueue()
                 }
@@ -150,10 +153,30 @@ class WebhookQueueProcessorWorker(
                 if (processedCount == 0) {
                     delay(MIN_BACKOFF_DELAY_MS)
                 }
-            } while (webhookRepository.hasScheduledWebhooks() && isActive)
+            } while (webhookRepository.hasDueWebhooks() && isActive)
 
             if (isActive) {
                 webhookRepository.cleanupOldEntries()
+
+                val nextAttempt = webhookRepository.getNextAttemptTime()
+                if (nextAttempt != null) {
+                    val delayMs = nextAttempt - System.currentTimeMillis()
+                    logsSvc.insert(
+                        priority = LogEntry.Priority.DEBUG,
+                        module = NAME,
+                        message = "Scheduling next webhook queue processing",
+                        context = mapOf(
+                            "delayMs" to delayMs,
+                            "nextAttempt" to nextAttempt
+                        )
+                    )
+
+                    start(
+                        context = applicationContext,
+                        internetRequired = settings.internetRequired,
+                        initialDelayMs = delayMs
+                    )
+                }
             }
 
             logsSvc.insert(
@@ -236,34 +259,36 @@ class WebhookQueueProcessorWorker(
                 var failedCount = 0
 
                 for (webhook in webhooks) {
-                    try {
-                        // Start processing this webhook
-                        webhookRepository.startProcessing(webhook.id)
+                    withContext(NonCancellable) {
+                        try {
+                            // Start processing this webhook
+                            webhookRepository.startProcessing(webhook.id)
 
-                        // Send the webhook
-                        val success = sendWebhook(webhook)
+                            // Send the webhook
+                            val success = sendWebhook(webhook)
 
-                        if (success) {
-                            // Mark as completed
-                            webhookRepository.completeWebhook(webhook.id)
-                            processedCount++
-                        } else {
-                            // Schedule retry
-                            handleWebhookFailure(webhook.id, "Processing failed")
+                            if (success) {
+                                // Mark as completed
+                                webhookRepository.completeWebhook(webhook.id)
+                                processedCount++
+                            } else {
+                                // Schedule retry
+                                handleWebhookFailure(webhook.id, "Processing failed")
+                                failedCount++
+                            }
+                        } catch (e: Exception) {
+                            logsSvc.insert(
+                                priority = LogEntry.Priority.ERROR,
+                                module = NAME,
+                                message = "Error processing webhook ${webhook.id}: ${e.message}",
+                                context = mapOf(
+                                    "webhookId" to webhook.id,
+                                    "error" to e.toString()
+                                )
+                            )
+                            handleWebhookFailure(webhook.id, e.message)
                             failedCount++
                         }
-                    } catch (e: Exception) {
-                        logsSvc.insert(
-                            priority = LogEntry.Priority.ERROR,
-                            module = NAME,
-                            message = "Error processing webhook ${webhook.id}: ${e.message}",
-                            context = mapOf(
-                                "webhookId" to webhook.id,
-                                "error" to e.toString()
-                            )
-                        )
-                        handleWebhookFailure(webhook.id, e.message)
-                        failedCount++
                     }
                 }
 
