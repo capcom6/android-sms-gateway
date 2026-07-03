@@ -2,13 +2,15 @@ package me.capcom.smsgateway.modules.mms
 
 import android.content.Context
 import com.google.gson.Gson
-import java.io.File
-import java.security.MessageDigest
-import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.db.LogEntry
+import java.io.File
+import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Persists MMS attachment bytes under the app's private files directory so
@@ -18,7 +20,10 @@ import kotlinx.coroutines.launch
  * Layout: `<filesDir>/mms-in/<sha256(messageId)>/<partId>`
  * Metadata: `<filesDir>/mms-in/<sha256(messageId)>/<partId>.metadata` (JSON)
  */
-class MmsAttachmentStorage(private val context: Context) {
+class MmsAttachmentStorage(
+    private val context: Context,
+    private val logsSvc: LogsService,
+) {
 
     private val gson = Gson()
 
@@ -78,19 +83,28 @@ class MmsAttachmentStorage(private val context: Context) {
     }
 
     fun cleanup(retentionDays: Int = 30) {
-        val dir = root
-        if (!dir.isDirectory) return
-        val deadline = System.currentTimeMillis() - retentionDays * MILLIS_PER_DAY
-        dir.listFiles()
-            ?.filter { it.isDirectory }
-            ?.forEach { msgDir ->
-                val mostRecent = msgDir.walkTopDown()
-                    .filter { it.isFile }
-                    .maxOfOrNull { it.lastModified() } ?: 0L
-                if (mostRecent < deadline) {
-                    msgDir.deleteRecursively()
+        try {
+            val dir = root
+            if (!dir.isDirectory) return
+            val deadline = System.currentTimeMillis() - retentionDays * MILLIS_PER_DAY
+            dir.listFiles()
+                ?.filter { it.isDirectory }
+                ?.forEach { msgDir ->
+                    val mostRecent = msgDir.walkTopDown()
+                        .filter { it.isFile }
+                        .maxOfOrNull { it.lastModified() } ?: 0L
+                    if (mostRecent < deadline) {
+                        msgDir.deleteRecursively()
+                    }
                 }
-            }
+        } catch (e: Exception) {
+            logsSvc.insert(
+                priority = LogEntry.Priority.ERROR,
+                module = MODULE_NAME,
+                message = "Failed to cleanup MMS attachments: ${e.message}",
+                context = mapOf("error" to e.toString())
+            )
+        }
     }
 
     private fun cleanupIfNeeded() {
