@@ -559,6 +559,13 @@
       },
       "smsgateway.IncomingMessage": {
         "properties": {
+          "attachments": {
+            "description": "List of MMS attachments (only present for MMS_DOWNLOADED messages).",
+            "items": {
+              "$ref": "#/components/schemas/smsgateway.IncomingMessageAttachment"
+            },
+            "type": "array"
+          },
           "contentPreview": {
             "description": "Message body preview or metadata",
             "example": "Hello World!",
@@ -610,6 +617,33 @@
         ],
         "type": "object"
       },
+      "smsgateway.IncomingMessageAttachment": {
+        "properties": {
+          "contentType": {
+            "description": "MIME type of the attachment (e.g. image/jpeg).",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name of the attachment file.",
+            "type": "string"
+          },
+          "partId": {
+            "description": "Part ID of the attachment, corresponding to the _id in content://mms/part.",
+            "type": "integer"
+          },
+          "size": {
+            "description": "Size of the attachment in bytes.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "partId",
+          "name",
+          "size",
+          "contentType"
+        ],
+        "type": "object"
+      },
       "smsgateway.IncomingMessageType": {
         "enum": [
           "SMS",
@@ -642,6 +676,7 @@
           "devices:list",
           "devices:delete",
           "inbox:list",
+          "inbox:read",
           "inbox:refresh",
           "logs:read",
           "messages:send",
@@ -660,6 +695,7 @@
           "ScopeDevicesList",
           "ScopeDevicesDelete",
           "ScopeInboxList",
+          "ScopeInboxRead",
           "ScopeInboxRefresh",
           "ScopeLogsRead",
           "ScopeMessagesSend",
@@ -2040,6 +2076,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Include attachment metadata in response (for MMS messages)",
+            "in": "query",
+            "name": "includeAttachments",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -2125,6 +2170,102 @@
           }
         ],
         "summary": "Get incoming messages",
+        "tags": [
+          "User",
+          "Inbox"
+        ]
+      }
+    },
+    "/inbox/{id}/attachments/{partId}": {
+      "get": {
+        "description": "Download a specific MMS attachment by message ID and part ID.",
+        "parameters": [
+          {
+            "description": "Incoming message ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Attachment part ID",
+            "in": "path",
+            "name": "partId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/octet-stream": {}
+            },
+            "description": "The attachment file"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Attachment not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "ApiAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "Download MMS attachment",
         "tags": [
           "User",
           "Inbox"
