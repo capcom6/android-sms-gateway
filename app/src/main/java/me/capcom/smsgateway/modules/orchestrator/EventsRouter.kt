@@ -7,13 +7,14 @@ import kotlinx.coroutines.launch
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.events.ExternalEvent
 import me.capcom.smsgateway.modules.events.ExternalEventType
+import me.capcom.smsgateway.modules.gateway.events.MessageCancelledEvent
 import me.capcom.smsgateway.modules.gateway.events.MessageEnqueuedEvent
 import me.capcom.smsgateway.modules.gateway.events.SettingsUpdatedEvent
 import me.capcom.smsgateway.modules.gateway.events.WebhooksUpdatedEvent
 import me.capcom.smsgateway.modules.receiver.events.MessagesExportRequestedEvent
 
 class EventsRouter(
-    private val eventBus: EventBus
+    private val eventBus: EventBus,
 ) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -41,6 +42,14 @@ class EventsRouter(
                     eventBus.emit(
                         SettingsUpdatedEvent()
                     )
+
+                ExternalEventType.MessageCancelled -> {
+                    eventBus.emit(
+                        MessageCancelledEvent.withPayload(
+                            requireNotNull(event.data)
+                        )
+                    )
+                }
             }
         }
     }
