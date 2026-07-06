@@ -12,10 +12,12 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import me.capcom.smsgateway.modules.gateway.GatewayApi
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.messages.MessagesService
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 class SendStateWorker(appContext: Context, params: WorkerParameters) :
@@ -28,7 +30,20 @@ class SendStateWorker(appContext: Context, params: WorkerParameters) :
             val message = messagesService.getMessage(messageId) ?: return Result.failure()
 
             withContext(Dispatchers.IO) {
-                gatewayService.sendState(message)
+                gatewayService.sendState(
+                    GatewayApi.MessagePatchRequest(
+                        message.message.id,
+                        message.message.state,
+                        message.recipients.map {
+                            GatewayApi.RecipientState(
+                                it.phoneNumber,
+                                it.state,
+                                it.error
+                            )
+                        },
+                        message.states.associate { it.state to Date(it.updatedAt) },
+                    )
+                )
             }
             return Result.success()
         } catch (th: Throwable) {

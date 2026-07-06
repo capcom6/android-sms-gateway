@@ -20,7 +20,7 @@ import java.util.Date
 @Dao
 interface MessagesDao {
     //#region Read
-    @Query("SELECT COUNT(*) as count, MAX(processedAt) as lastTimestamp FROM message WHERE state <> 'Pending' AND state <> 'Failed' AND processedAt >= :timestamp")
+    @Query("SELECT COUNT(*) as count, MAX(processedAt) as lastTimestamp FROM message WHERE state NOT IN ('Pending', 'Cancelling', 'Cancelled', 'Failed') AND processedAt >= :timestamp")
     fun countProcessedFrom(timestamp: Long): MessagesStats
 
     @Query("SELECT COUNT(*) as count, MAX(processedAt) as lastTimestamp FROM message WHERE state = 'Failed' AND processedAt >= :timestamp")
@@ -31,6 +31,8 @@ interface MessagesDao {
         SELECT
             COUNT(*) as total,
             COALESCE(SUM(CASE WHEN state = 'Pending' THEN 1 ELSE 0 END), 0) as pending,
+            COALESCE(SUM(CASE WHEN state = 'Cancelling' THEN 1 ELSE 0 END), 0) as cancelling,
+            COALESCE(SUM(CASE WHEN state = 'Cancelled' THEN 1 ELSE 0 END), 0) as cancelled,
             COALESCE(SUM(CASE WHEN state = 'Sent' THEN 1 ELSE 0 END), 0) as sent,
             COALESCE(SUM(CASE WHEN state = 'Delivered' THEN 1 ELSE 0 END), 0) as delivered,
             COALESCE(SUM(CASE WHEN state = 'Failed' THEN 1 ELSE 0 END), 0) as failed
@@ -104,7 +106,7 @@ interface MessagesDao {
     )
     fun _insertRecipientStatesByMessage(
         messageId: String,
-        state: me.capcom.smsgateway.domain.ProcessingState
+        state: ProcessingState
     )
 
     @Transaction
@@ -129,9 +131,9 @@ interface MessagesDao {
     }
 
     @Query("UPDATE message SET state = :state WHERE id = :id AND state <> 'Failed'")
-    fun _updateMessageState(id: String, state: me.capcom.smsgateway.domain.ProcessingState)
+    fun _updateMessageState(id: String, state: ProcessingState)
 
-    fun updateMessageState(id: String, state: me.capcom.smsgateway.domain.ProcessingState) {
+    fun updateMessageState(id: String, state: ProcessingState) {
         _updateMessageState(id, state)
         _insertMessageState(
             MessageState(
@@ -142,6 +144,20 @@ interface MessagesDao {
         )
     }
 
+    @Query("UPDATE message SET state = 'Cancelled' WHERE id = :id AND state = 'Pending'")
+    fun _cancelMessage(id: String): Int
+
+    @Transaction
+    fun cancelMessage(id: String) {
+        val updated = _cancelMessage(id)
+        if (updated == 0) return
+        
+        _insertMessageState(
+            MessageState(id, ProcessingState.Cancelled, System.currentTimeMillis())
+        )
+        updateRecipientsState(id, ProcessingState.Cancelled, null)
+    }
+
     @Query("UPDATE message SET state = 'Processed', processedAt = strftime('%s', 'now') * 1000 WHERE id = :id")
     fun _setMessageProcessed(id: String)
     fun setMessageProcessed(id: String) {
@@ -149,7 +165,7 @@ interface MessagesDao {
         _insertMessageState(
             MessageState(
                 id,
-                me.capcom.smsgateway.domain.ProcessingState.Processed,
+                ProcessingState.Processed,
                 System.currentTimeMillis()
             )
         )
@@ -159,7 +175,7 @@ interface MessagesDao {
     fun _updateRecipientState(
         id: String,
         phoneNumber: String,
-        state: me.capcom.smsgateway.domain.ProcessingState,
+        state: ProcessingState,
         error: String?
     )
 
@@ -167,7 +183,7 @@ interface MessagesDao {
     fun updateRecipientState(
         id: String,
         phoneNumber: String,
-        state: me.capcom.smsgateway.domain.ProcessingState,
+        state: ProcessingState,
         error: String?
     ) {
         _updateRecipientState(id, phoneNumber, state, error)
@@ -181,14 +197,14 @@ interface MessagesDao {
     @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND state <> 'Failed'")
     fun _updateRecipientsState(
         id: String,
-        state: me.capcom.smsgateway.domain.ProcessingState,
+        state: ProcessingState,
         error: String?
     )
 
     @Transaction
     fun updateRecipientsState(
         id: String,
-        state: me.capcom.smsgateway.domain.ProcessingState,
+        state: ProcessingState,
         error: String?
     ) {
         _updateRecipientsState(id, state, error)
@@ -204,6 +220,6 @@ interface MessagesDao {
     @Query("UPDATE message SET partsCount = :partsCount WHERE id = :id")
     fun updatePartsCount(id: String, partsCount: Int)
 
-    @Query("DELETE FROM message WHERE createdAt < :until AND state <> 'Pending'")
+    @Query("DELETE FROM message WHERE createdAt < :until AND state NOT IN ('Pending', 'Cancelling')")
     suspend fun truncateLog(until: Long)
 }
