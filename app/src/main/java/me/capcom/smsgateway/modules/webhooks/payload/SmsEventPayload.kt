@@ -54,4 +54,12 @@ sealed class SmsEventPayload(
         val data: String,
         val receivedAt: Date,
     ) : SmsEventPayload(messageId, sender, recipient, simNumber, sender)
+
+    class SmsCancelled(
+        messageId: String,
+        sender: String?,
+        recipient: String,
+        simNumber: Int?,
+        val cancelledAt: Date,
+    ) : SmsEventPayload(messageId, sender, recipient, simNumber, recipient)
 }
