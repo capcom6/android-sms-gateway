@@ -223,12 +223,14 @@ class GatewayService(
             try {
                 processMessage(context, message)
             } catch (th: Throwable) {
+                val contentForLog = runCatching { message.content }.getOrNull()
                 logsService.insert(
                     LogEntry.Priority.ERROR,
                     MODULE_NAME,
                     "Failed to process message",
                     mapOf(
-                        "message" to message,
+                        "messageId" to message.id,
+                        "messageType" to (contentForLog?.let { it::class.simpleName } ?: "Invalid"),
                         "exception" to th.stackTraceToString(),
                     )
                 )
@@ -253,6 +255,17 @@ class GatewayService(
                     is GatewayApi.MessageContent.Data -> MessageContent.Data(
                         content.data,
                         content.port
+                    )
+                    is GatewayApi.MessageContent.Mms -> MessageContent.Mms(
+                        subject = content.subject,
+                        text = content.text,
+                        attachments = content.attachments.map {
+                            MessageContent.Mms.Attachment(
+                                contentType = it.contentType,
+                                name = it.name,
+                                data = it.data,
+                            )
+                        }
                     )
                 },
                 message.phoneNumbers,
