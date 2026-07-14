@@ -12,8 +12,7 @@
     <string name="btn_continue">استمرار</string>
     <string name="by_code">بواسطة الكود</string>
     <string name="can_affect_battery_life">يمكن أن يؤثر على عمر البطارية</string>
-    <string
-        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">انقر
+    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">انقر
         فوق استمرار لإنشاء حساب. لا يلزم تقديم معلومات شخصية.\nمن خلال الاستمرار، فإنك توافق على
         سياسة الخصوصية الخاصة بنا على https://docs.sms-gate.app/privacy/policy/</string>
     <string name="cloud_server_dotdotdot">خادم السحاب…</string>
@@ -60,7 +59,6 @@
     <string name="messages_header">الرسائل</string>
     <string name="messages">الرسائل…</string>
     <string name="minimum">الحد الأدنى</string>
-    <string name="more_settings">مزيد من الإعدادات…</string>
     <string name="n_a">غير متاح</string>
     <string name="new_sms_received_webhooks_registered">تم تسجيل ويب هوك جديد للرسائل المستلمة</string>
     <string name="no_webhooks_found">لم يتم تكوين ويب هوك</string>
@@ -68,7 +66,6 @@
     <string name="not_set">لم يحدد</string>
     <string name="notification_title">SMSGate</string>
     <string name="notification_channel">قناة الإشعارات</string>
-    <string name="notifications">الإشعارات</string>
     <string name="online_status_at_the_cost_of_battery_life">حالة الاتصال بالإنترنت على حساب عمر
         البطارية</string>
     <string name="passphrase">كلمة السر</string>

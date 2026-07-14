@@ -12,8 +12,7 @@
     <string name="btn_continue">Continue</string>
     <string name="by_code">By Code</string>
     <string name="can_affect_battery_life">can affect battery life</string>
-    <string
-        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Click
+    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Click
         Continue to create an account. No personal information is required.\nBy continuing, you
         agree to our Privacy Policy at https://docs.sms-gate.app/privacy/policy/</string>
     <string name="cloud_server_dotdotdot">Cloud server…</string>
@@ -61,7 +60,6 @@
     <string name="messages_header">Messages</string>
     <string name="messages">Messages…</string>
     <string name="minimum">Minimum</string>
-    <string name="more_settings">More settings…</string>
     <string name="n_a">n/a</string>
     <string name="new_sms_received_webhooks_registered">New SMS Received Webhooks registered</string>
     <string name="no_webhooks_found">No webhooks configured</string>
@@ -69,7 +67,6 @@
     <string name="not_set">Not set</string>
     <string name="notification_title">SMSGate</string>
     <string name="notification_channel">Notification channel</string>
-    <string name="notifications">Notifications</string>
     <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery
         life</string>
     <string name="passphrase">Passphrase</string>
@@ -146,8 +143,6 @@
     </plurals>
     <string name="processing">Processing</string>
     <string name="processing_order_title">Processing order</string>
-    <string name="receiver">Receiver</string>
-    <string name="receiver_summary">Content provider monitoring, fallback, etc.</string>
     <string name="receiver_content_provider_monitoring">Content Provider Monitoring</string>
     <string name="receiver_content_provider_monitoring_summary">Also detect incoming SMS via content
         provider</string>
@@ -181,4 +176,7 @@
     <string name="language">Language</string>
     <string name="language_system">System default</string>
     <string name="password_must_not_be_empty">Password must not be empty</string>
+    <string name="inbox_dotdotdot">Inbox…</string>
+    <string name="inbox_settings_summary">Content provider monitoring, retention, etc.</string>
+    <string name="inbox">Inbox</string>
 </resources>
