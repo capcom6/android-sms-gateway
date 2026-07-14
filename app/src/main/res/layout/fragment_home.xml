@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.appcompat.widget.LinearLayoutCompat
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -251,10 +252,12 @@
         android:layout_width="match_parent"
         android:layout_height="8dp" />
 
-    <ToggleButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonStart"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textOff="@string/settings_offline"
-        android:textOn="@string/settings_online" />
+        android:layout_margin="8dp"
+        android:text="@string/button_start_service"
+        android:backgroundTint="@color/grey_500"
+        app:cornerRadius="8dp" />
 </androidx.appcompat.widget.LinearLayoutCompat>
