@@ -3,6 +3,7 @@ package me.capcom.smsgateway.modules.receiver
 import android.util.Log
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import me.capcom.smsgateway.domain.WebhookDelivery
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.events.EventsReceiver
 import me.capcom.smsgateway.modules.receiver.events.MessagesExportRequestedEvent
@@ -23,7 +24,7 @@ class EventsReceiver : EventsReceiver() {
                         context = get(),
                         period = event.since to event.until,
                         messageTypes = event.messageTypes,
-                        triggerWebhooks = event.triggerWebhooks,
+                        webhookDelivery = event.webhookDelivery ?: WebhookDelivery.Individual,
                     )
                 }
             }
