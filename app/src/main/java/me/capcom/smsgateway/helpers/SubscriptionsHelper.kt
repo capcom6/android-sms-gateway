@@ -98,7 +98,7 @@ object SubscriptionsHelper {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             subscriptionManager.activeSubscriptionInfoList?.find {
                 it.simSlotIndex == simSlotIndex
-            }?.number?.takeIf { it.isNotBlank() }
+            }?.let { resolvePhoneNumber(subscriptionManager, it) }
         } else {
             null
         }
@@ -135,7 +135,7 @@ object SubscriptionsHelper {
                 slotIndex = info.simSlotIndex,
                 simNumber = info.simSlotIndex + 1,
                 phoneNumber = if (hasPermission) {
-                    info.number?.takeIf { it.isNotBlank() }
+                    resolvePhoneNumber(subscriptionManager, info)
                 } else {
                     null
                 },
@@ -143,5 +143,26 @@ object SubscriptionsHelper {
                 iccid = info.iccId?.takeIf { it.isNotBlank() },
             )
         }
+    }
+
+    /**
+     * Resolves the phone number for a subscription, preferring the modern
+     * SubscriptionManager.getPhoneNumber() on Android 13+ (which can source the
+     * number from the carrier/IMS, not just the SIM) and falling back to the
+     * deprecated SubscriptionInfo.number on older devices. May still be null if
+     * the carrier never provisioned the number.
+     */
+    @SuppressLint("MissingPermission")
+    private fun resolvePhoneNumber(
+        subscriptionManager: SubscriptionManager,
+        info: android.telephony.SubscriptionInfo,
+    ): String? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            runCatching { subscriptionManager.getPhoneNumber(info.subscriptionId) }
+                .getOrNull()
+                ?.takeIf { it.isNotBlank() }
+        } else {
+            null
+        } ?: info.number?.takeIf { it.isNotBlank() }
     }
 }
