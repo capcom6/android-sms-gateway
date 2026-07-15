@@ -234,4 +234,52 @@ internal class MMSParserTest {
         val notification = MMSParser.parseMNotificationInd(data)
         assert(notification.from == "+19162255887/TYPE=PLMN")
     }
+
+    @Test
+    fun parseSubjectUtf8() {
+        // Minimal MMS notification-ind PDU with UTF-8 subject "테스트" (Korean for "test")
+        // FROM uses Text-string format (no charset prefix) — first byte of address >= 0x20
+        // Subject header: 0x96 (HEADER_SUBJECT) + Value-length(0x0B=11) + Char-set(0xEA=UTF-8 Short-int) + text + 0x00
+        // Value-length = 1 (charset) + 9 (text bytes) + 1 (null terminator) = 11
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 74 65 73 74 2D 74 78 6E 2D 30 30 31 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                96 0B EA ED 85 8C EC 8A A4 ED 8A B8 00
+                8E 02 03 E8
+                85 04 63 B7 9F 80
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.subject == "테스트") { "Expected '테스트' but got '${notification.subject}'" }
+        assert(notification.transactionId == "test-txn-001")
+        assert(notification.messageSize == 1000L)
+    }
+
+    @Test
+    fun parseSubjectAscii() {
+        // Minimal MMS notification-ind PDU with ASCII subject "Hello"
+        // FROM uses Text-string format (no charset prefix)
+        // Subject header: 0x96 + Value-length(0x07=7) + Char-set(0xEA=UTF-8 Short-int) + text + 0x00
+        // Value-length = 1 (charset) + 5 (text bytes) + 1 (null terminator) = 7
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 04 61 62 63 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                96 07 EA 48 65 6C 6C 6F 00
+                8E 02 03 E8
+                85 04 63 B7 9F 80
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.subject == "Hello") { "Expected 'Hello' but got '${notification.subject}'" }
+    }
 }
