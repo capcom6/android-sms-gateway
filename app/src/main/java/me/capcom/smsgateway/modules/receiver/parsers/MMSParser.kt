@@ -1,7 +1,9 @@
 package me.capcom.smsgateway.modules.receiver.parsers
 
+import me.capcom.smsgateway.modules.mms.pdu.aosp.CharacterSets
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.charset.Charset
 import java.util.Date
 
 
@@ -161,13 +163,44 @@ object MMSParser {
     private fun parseEncodedString(buffer: ByteBuffer): String {
         if (!buffer.hasRemaining()) return ""
         val mark = buffer.position()
-        val lenOrToken = buffer.get().toInt() and 0xFF
+        val firstByte = buffer.get().toInt() and 0xFF
 
         buffer.position(mark)
 
-        if (lenOrToken < 32) {
+        if (firstByte < 32) {
+            // Value-length Char-set Text-string
             parseValueLength(buffer)
-            parseShortInteger(buffer)
+
+            // Character-set is a Constrained-encoding (Short-integer or Longer-integer).
+            // Short-integer: bit 7 set (>= 128), value = byte & 0x7F
+            // Longer-integer: bit 7 clear (< 128), length-prefixed big-endian bytes follow
+            val charsetByte = buffer.get().toInt() and 0xFF
+            val charset = if (charsetByte and 0x80 != 0) {
+                // Short-integer: 7-bit value (e.g., 0xEA = UTF-8 → 0x6A = 106)
+                charsetByte and 0x7F
+            } else {
+                // Longer-integer: first byte is length, followed by that many big-endian bytes
+                val length = charsetByte
+                var value = 0
+                repeat(length.coerceAtMost(buffer.remaining())) {
+                    value = (value shl 8) or (buffer.get().toInt() and 0xFF)
+                }
+                value
+            }
+
+            // Read the text bytes using the resolved charset
+            val charsetObj = try {
+                Charset.forName(CharacterSets.getMimeName(charset))
+            } catch (_: Exception) {
+                Charsets.UTF_8
+            }
+            val textBytes = mutableListOf<Byte>()
+            while (buffer.hasRemaining()) {
+                val b = buffer.get()
+                if (b == 0x00.toByte()) break
+                textBytes.add(b)
+            }
+            return String(textBytes.toByteArray(), charsetObj)
         }
 
         return parseTextString(buffer)
