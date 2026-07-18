@@ -153,7 +153,7 @@ class MmsContentObserver : KoinComponent {
         var message: MmsContentReader.MmsMessage? = null
         for (attempt in 1..MMS_DOWNLOAD_MAX_RETRIES) {
             message = MmsContentReader.read(context, mmsId) ?: return
-            val needsRetry = message.sender == "unknown" || message.attachments.isEmpty()
+            val needsRetry = message.sender == "unknown" || (message.body.isNullOrBlank() && message.attachments.isEmpty())
             if (!needsRetry) break
             if (attempt < MMS_DOWNLOAD_MAX_RETRIES) {
                 logsService.insert(

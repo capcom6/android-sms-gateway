@@ -230,23 +230,12 @@ object MmsContentReader {
     }
 
     private fun isLikelyMisEncoded(text: String): Boolean {
-        // Check for Unicode replacement characters (U+FFFD) — clear sign of bad decoding
-        if (text.contains('\uFFFD')) return true
-
-        // Count characters in the Latin-1 range that, when mis-decoded from UTF-8,
-        // produce mojibake. The most common pattern is a lead byte 0xC3 (from UTF-8
-        // two-byte sequences) appearing as 'Ã' (U+00C3) followed by a continuation
-        // byte 0x80-0xBF appearing as a high Latin-1 char (€, Â, etc.).
-        var c3Count = 0
+        var leadByteCount = 0
         var highByteCount = 0
         for (ch in text) {
-            if (ch == '\u00C3') c3Count++
+            if (ch.code in 0xC2..0xEF) leadByteCount++
             if (ch.code in 0x80..0xBF) highByteCount++
         }
-
-        // Heuristic: if 'Ã' (U+00C3) appears multiple times alongside many
-        // characters in 0x80-0xBF range, this is almost certainly double-encoded
-        // UTF-8 masquerading as Latin-1.
-        return c3Count >= 2 && highByteCount >= c3Count
+        return leadByteCount >= 2 && highByteCount >= leadByteCount
     }
 }
