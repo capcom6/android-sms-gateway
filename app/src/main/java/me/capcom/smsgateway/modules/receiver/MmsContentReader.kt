@@ -50,7 +50,7 @@ object MmsContentReader {
         val subscriptionId: Int?
         mmsCursor.use { c ->
             if (!c.moveToFirst()) return null
-            subject = c.getString(0)
+            subject = recoverSubjectEncoding(c.getString(0))
             // MMS dates are in seconds, not milliseconds
             date = Date(c.getLong(1) * 1000)
             subscriptionId = when {
@@ -199,5 +199,43 @@ object MmsContentReader {
             }
         }
         return Charsets.UTF_8
+    }
+
+    /**
+     * Attempts to recover from common content provider charset mis-decoding.
+     *
+     * The MMS `sub` column is decoded by the Android telephony framework. On some
+     * devices/carriers, non-ASCII subjects (e.g., Korean, Japanese, Chinese) are
+     * decoded with the wrong charset (typically ISO-8859-1 instead of UTF-8),
+     * producing garbled text instead of the correct subject.
+     *
+     * This heuristic detects such mis-decoding and attempts recovery by re-encoding
+     * the garbled string as ISO-8859-1 bytes, then decoding those bytes as UTF-8.
+     */
+    private fun recoverSubjectEncoding(subject: String?): String? {
+        if (subject == null || subject.isEmpty()) return subject
+
+        if (isLikelyMisEncoded(subject)) {
+            return try {
+                val recovered = String(subject.toByteArray(Charsets.ISO_8859_1), Charsets.UTF_8)
+                // Only use the recovered version if it looks like valid text
+                // (no replacement chars and has at least some non-ASCII content)
+                if (!recovered.contains('\uFFFD') && recovered != subject) recovered else subject
+            } catch (_: Exception) {
+                subject
+            }
+        }
+
+        return subject
+    }
+
+    private fun isLikelyMisEncoded(text: String): Boolean {
+        var leadByteCount = 0
+        var highByteCount = 0
+        for (ch in text) {
+            if (ch.code in 0xC2..0xEF) leadByteCount++
+            if (ch.code in 0x80..0xBF) highByteCount++
+        }
+        return leadByteCount >= 2 && highByteCount >= leadByteCount
     }
 }

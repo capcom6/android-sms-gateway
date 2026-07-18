@@ -147,12 +147,30 @@ class MmsContentObserver : KoinComponent {
     }
 
     private fun processMmsDownloaded(mmsId: Long) {
-        val message = MmsContentReader.read(context, mmsId) ?: return
+        // The content observer fires when the parent MMS row is inserted, but the
+        // child addr/part sub-tables may not be populated yet by the telephony
+        // framework. Retry a few times with a short delay to wait for them.
+        var message: MmsContentReader.MmsMessage? = null
+        for (attempt in 1..MMS_DOWNLOAD_MAX_RETRIES) {
+            message = MmsContentReader.read(context, mmsId) ?: return
+            val needsRetry = message.sender == "unknown" || (message.body.isNullOrBlank() && message.attachments.isEmpty())
+            if (!needsRetry) break
+            if (attempt < MMS_DOWNLOAD_MAX_RETRIES) {
+                logsService.insert(
+                    LogEntry.Priority.DEBUG,
+                    MODULE_NAME,
+                    "MMS content incomplete (id=$mmsId, sender=${message.sender}, attachments=${message.attachments.size}), " +
+                            "retrying in ${MMS_DOWNLOAD_RETRY_DELAY_MS}ms (attempt $attempt/$MMS_DOWNLOAD_MAX_RETRIES)",
+                )
+                Thread.sleep(MMS_DOWNLOAD_RETRY_DELAY_MS)
+            }
+        }
+
         receiverSvc.process(
             context,
             InboxMessage.MMS(
                 mmsId.toString(),
-                message.body,
+                message!!.body,
                 message.subject,
                 message.attachments.map {
                     InboxMessage.MMS.Attachment(
@@ -178,5 +196,7 @@ class MmsContentObserver : KoinComponent {
 
     companion object {
         private const val TAG = "MmsContentObserver"
+        private const val MMS_DOWNLOAD_MAX_RETRIES = 3
+        private const val MMS_DOWNLOAD_RETRY_DELAY_MS = 1500L
     }
 }
