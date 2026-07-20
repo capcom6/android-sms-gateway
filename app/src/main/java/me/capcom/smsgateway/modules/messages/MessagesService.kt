@@ -209,7 +209,7 @@ class MessagesService(
                     resultCode
                 )
 
-                intent.hasExtra("uri") -> ProcessingState.Sent to null
+                intent.data != null -> ProcessingState.Sent to null
                 else -> return
             }
 
@@ -463,9 +463,10 @@ class MessagesService(
 
         request.message.phoneNumbers
             .forEach { sourcePhoneNumber ->
+                val requestCode = id.hashCode().coerceAtLeast(0)
                 val sentIntent = PendingIntent.getBroadcast(
                     context,
-                    0,
+                    requestCode,
                     Intent(
                         EventsReceiver.ACTION_SENT,
                         Uri.parse("$id|$sourcePhoneNumber"),
@@ -478,7 +479,7 @@ class MessagesService(
                     false -> null
                     true -> PendingIntent.getBroadcast(
                         context,
-                        0,
+                        requestCode,
                         Intent(
                             EventsReceiver.ACTION_DELIVERED,
                             Uri.parse("$id|$sourcePhoneNumber"),
