@@ -209,7 +209,7 @@ class MessagesService(
                     resultCode
                 )
 
-                intent.hasExtra("uri") -> ProcessingState.Sent to null
+                intent.data != null || intent.hasExtra("uri") -> ProcessingState.Sent to null
                 else -> return
             }
 
