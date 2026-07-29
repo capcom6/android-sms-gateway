@@ -2,13 +2,14 @@ package me.capcom.smsgateway
 
 import android.app.Application
 import android.content.Context
-import healthModule
 import me.capcom.smsgateway.data.dbModule
 import me.capcom.smsgateway.helpers.LocaleHelper
 import me.capcom.smsgateway.modules.connection.connectionModule
 import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.events.eventBusModule
 import me.capcom.smsgateway.modules.gateway.GatewayService
+import me.capcom.smsgateway.modules.gateway.gatewayModule
+import me.capcom.smsgateway.modules.health.healthModule
 import me.capcom.smsgateway.modules.incoming.incomingModule
 import me.capcom.smsgateway.modules.localserver.localserverModule
 import me.capcom.smsgateway.modules.logs.logsModule
@@ -28,7 +29,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 
-class App: Application() {
+class App : Application() {
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base?.let { LocaleHelper.onAttach(it) })
     }
@@ -50,7 +51,7 @@ class App: Application() {
                 incomingModule,
                 receiverModule,
                 encryptionModule,
-                me.capcom.smsgateway.modules.gateway.gatewayModule,
+                gatewayModule,
                 healthModule,
                 webhooksModule,
                 localserverModule,

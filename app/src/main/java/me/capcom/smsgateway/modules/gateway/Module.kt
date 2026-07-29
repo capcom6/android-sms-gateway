@@ -5,6 +5,10 @@ import org.koin.dsl.module
 
 val gatewayModule = module {
     singleOf(::GatewayService)
+    factory {
+        val settings: GatewaySettings = get()
+        GatewayApi(settings.serverUrl, settings.privateToken)
+    }
 }
 
 val MODULE_NAME = "gateway"

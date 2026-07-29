@@ -38,21 +38,17 @@ import me.capcom.smsgateway.domain.HealthResponse
 import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.modules.health.HealthService
 import me.capcom.smsgateway.modules.health.domain.Status
-import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
 import me.capcom.smsgateway.modules.localserver.auth.JwtService
-import me.capcom.smsgateway.modules.localserver.auth.requireScope
-import me.capcom.smsgateway.modules.localserver.domain.Device
 import me.capcom.smsgateway.modules.localserver.routes.AuthRoutes
+import me.capcom.smsgateway.modules.localserver.routes.DeviceRoutes
 import me.capcom.smsgateway.modules.localserver.routes.DocsRoutes
 import me.capcom.smsgateway.modules.localserver.routes.InboxRoutes
 import me.capcom.smsgateway.modules.localserver.routes.LogsRoutes
 import me.capcom.smsgateway.modules.localserver.routes.MessagesRoutes
 import me.capcom.smsgateway.modules.localserver.routes.WebhooksRoutes
 import me.capcom.smsgateway.modules.notifications.NotificationsService
-import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
-import java.util.Date
 import kotlin.concurrent.thread
 
 class WebService : Service() {
@@ -152,27 +148,15 @@ class WebService : Service() {
                     get("/") {
                         call.respond(mapOf("status" to "ok", "model" to Build.MODEL))
                     }
-                    route("/device") {
-                        get {
-                            if (!requireScope(AuthScopes.DevicesList)) return@get
-                            val firstInstallTime = packageManager.getPackageInfo(
-                                packageName,
-                                0
-                            ).firstInstallTime
-                            val deviceName = "${Build.MANUFACTURER}/${Build.PRODUCT}"
-                            val simCards = SubscriptionsHelper.getActiveSimCards(applicationContext)
-                            val device = Device(
-                                requireNotNull(settings.deviceId),
-                                deviceName,
-                                Date(firstInstallTime),
-                                Date(),
-                                Date(),
-                                simCards
-                            )
-
-                            call.respond(listOf(device))
+                    DeviceRoutes(applicationContext, get(), get()).let {
+                        route("/device") {
+                            it.register(this)
+                        }
+                        route("/devices") {
+                            it.register(this)
                         }
                     }
+
                     MessagesRoutes(applicationContext, get(), get(), get()).let {
                         route("/message") {
                             it.register(this)
