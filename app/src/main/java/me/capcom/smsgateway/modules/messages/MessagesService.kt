@@ -143,20 +143,13 @@ class MessagesService(
         val startTime = when {
             workHoursStart != null && workHoursStart < (nextScheduled ?: 0) -> workHoursStart
             scheduleAt != null
-                && scheduleAt > System.currentTimeMillis()
-                && scheduleAt < (nextScheduled ?: 0) -> scheduleAt
+                    && scheduleAt > System.currentTimeMillis()
+                    && scheduleAt < (nextScheduled ?: 0) -> scheduleAt
+
             else -> SendMessagesWorker.IMMEDIATE
         }
 
-        if (startTime == SendMessagesWorker.IMMEDIATE) {
-            SendMessagesWorker.start(
-                context,
-                nextScheduled == null || priority >= Message.PRIORITY_EXPEDITED,
-                SendMessagesWorker.IMMEDIATE
-            )
-        } else {
-            SendMessagesWorker.start(context, true, startTime)
-        }
+        SendMessagesWorker.start(context, true, startTime)
 
         return message
     }
