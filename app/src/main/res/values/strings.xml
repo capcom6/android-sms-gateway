@@ -134,6 +134,28 @@
     <string name="webhook_id_format" translatable="false">ID: %1$s</string>
     <string name="webhook_list_summary">View registered webhooks</string>
     <string name="webhook_list_title">Registered Webhooks</string>
+    <string name="webhook_queue_empty">No webhook queue entries</string>
+    <string name="webhook_queue_empty_filter">No %1$s entries</string>
+    <string name="filter_all_count">All (%1$d)</string>
+    <string name="filter_pending_count">Pending (%1$d)</string>
+    <string name="filter_processing_count">Processing (%1$d)</string>
+    <string name="filter_completed_count">Completed (%1$d)</string>
+    <string name="filter_failed_count">Failed (%1$d)</string>
+    <string name="filter_permanently_failed_count">Permanently Failed (%1$d)</string>
+    <string name="webhook_queue_retry_count_format" translatable="false">Retries: %1$d</string>
+    <string name="webhook_queue_summary">View recent webhook queue entries</string>
+    <string name="webhook_queue_title">Webhook Queue</string>
+    <string name="webhook_queue_detail_title">Webhook Queue Entry</string>
+    <string name="webhook_queue_entry_not_found">Webhook entry not found</string>
+    <string name="webhook_queue_label_url">URL</string>
+    <string name="webhook_queue_label_status">Status</string>
+    <string name="webhook_queue_label_last_error">Last error</string>
+    <string name="webhook_queue_label_created_at">Created</string>
+    <string name="webhook_queue_label_next_attempt">Next attempt</string>
+    <string name="webhook_queue_label_retry_count">Retries</string>
+    <string name="webhook_queue_label_payload">Payload</string>
+    <string name="webhook_queue_payload_unavailable">Payload unavailable</string>
+    <string name="webhook_queue_no_error">None</string>
     <string name="webhooks_dotdotdot">Webhooks…</string>
     <string name="webhooks">Webhooks</string>
     <plurals name="review_incoming_sms_webhooks">

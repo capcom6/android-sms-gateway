@@ -27,4 +27,9 @@
         app:fragment="me.capcom.smsgateway.ui.settings.WebhooksListFragment"
         app:summary="@string/webhook_list_summary"
         app:title="@string/webhook_list_title" />
+    <Preference
+        android:icon="@drawable/ic_webhook"
+        app:fragment="me.capcom.smsgateway.ui.settings.WebhookQueueListFragment"
+        app:summary="@string/webhook_queue_summary"
+        app:title="@string/webhook_queue_title" />
 </androidx.preference.PreferenceScreen>
