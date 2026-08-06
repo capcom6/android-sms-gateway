@@ -5,7 +5,9 @@ import com.google.gson.GsonBuilder
 import java.util.TimeZone
 
 fun GsonBuilder.configure(): GsonBuilder {
-    return this.setDateFormatISO8601()
+    // Disable HTML escaping to mirror Go encoding/json (no \uXXXX for
+    // <>&= etc). Critical for base64 attachment data ("=" must stay "=").
+    return this.setDateFormatISO8601().disableHtmlEscaping()
 }
 
 private fun GsonBuilder.setDateFormatISO8601(): GsonBuilder {

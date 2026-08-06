@@ -31,4 +31,19 @@ class IncomingMessagesRepository(private val dao: IncomingMessagesDao) {
 
     fun delete(from: Long, to: Long, types: Set<IncomingMessageType>) = dao.delete(from, to, types)
     suspend fun truncate(until: Long) = dao.truncate(until)
+
+    /** All not-yet-uploaded rows (oldest first) for the A4 cloud upload worker. */
+    suspend fun selectForUpload(): List<IncomingMessage> = dao.selectForUpload(null, null, null)
+
+    /**
+     * Not-yet-uploaded rows matching optional type/period filters (used by the
+     * MessagesExportRequestedEvent path of the A4 worker).
+     */
+    suspend fun selectForUpload(
+        types: Set<IncomingMessageType>?,
+        from: Long?,
+        until: Long?
+    ): List<IncomingMessage> = dao.selectForUpload(types, from, until)
+
+    suspend fun updateUploadedAt(id: String, uploadedAt: Long) = dao.updateUploadedAt(id, uploadedAt)
 }

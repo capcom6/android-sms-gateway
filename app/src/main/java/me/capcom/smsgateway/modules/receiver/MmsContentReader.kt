@@ -5,7 +5,9 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.util.Base64
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.io.InputStream
 import java.nio.charset.Charset
 import java.util.Date
 
@@ -29,7 +31,12 @@ object MmsContentReader {
         val data: String?,
     )
 
-    fun read(context: Context, mmsId: Long): MmsMessage? {
+    /**
+     * @param maxPartBytes when set, attachment parts larger than this cap are
+     *   skipped WITHOUT being read (null data) instead of being materialized
+     *   into heap; null = read everything (receiver paths).
+     */
+    fun read(context: Context, mmsId: Long, maxPartBytes: Long? = null): MmsMessage? {
         val resolver = context.contentResolver
 
         // 1. Message-level fields
@@ -113,7 +120,7 @@ object MmsContentReader {
                             contentType = contentType,
                             name = name,
                             size = size,
-                            data = readPartData(resolver, partId),
+                            data = readPartData(resolver, partId, size, maxPartBytes),
                         )
                     )
                 }
@@ -154,15 +161,49 @@ object MmsContentReader {
     }
 
 
-    private fun readPartData(resolver: ContentResolver, partId: Long): String? {
+    private fun readPartData(
+        resolver: ContentResolver,
+        partId: Long,
+        size: Long?,
+        maxPartBytes: Long?,
+    ): String? {
+        // Enforce the cap BEFORE reading: a known oversize part is skipped via
+        // the cheap stat, an unknown-size part via a bounded read - neither
+        // allocates the whole part into heap.
+        if (maxPartBytes != null && size != null && size > maxPartBytes) {
+            return null
+        }
         return try {
             resolver.openInputStream(Uri.parse("content://mms/part/$partId"))?.use { input ->
-                val bytes = input.readBytes()
+                val bytes = if (maxPartBytes == null) {
+                    input.readBytes()
+                } else {
+                    readBounded(input, maxPartBytes) ?: return@use null
+                }
                 if (bytes.isNotEmpty()) Base64.encodeToString(bytes, Base64.NO_WRAP) else null
             }
         } catch (_: Exception) {
             null
         }
+    }
+
+    /**
+     * Reads the stream but aborts (returning null) as soon as more than
+     * [maxBytes] have been consumed, so an oversized part never enters the heap.
+     * Pure stream logic - no Android APIs.
+     */
+    internal fun readBounded(input: InputStream, maxBytes: Long): ByteArray? {
+        val out = ByteArrayOutputStream()
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+        var total = 0L
+        while (true) {
+            val n = input.read(buffer)
+            if (n < 0) break
+            total += n
+            if (total > maxBytes) return null
+            out.write(buffer, 0, n)
+        }
+        return out.toByteArray()
     }
 
     private fun readTextPart(

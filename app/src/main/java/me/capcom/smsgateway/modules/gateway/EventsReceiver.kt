@@ -12,6 +12,7 @@ import me.capcom.smsgateway.modules.gateway.events.MessageEnqueuedEvent
 import me.capcom.smsgateway.modules.gateway.events.SettingsUpdatedEvent
 import me.capcom.smsgateway.modules.gateway.events.WebhooksUpdatedEvent
 import me.capcom.smsgateway.modules.gateway.services.SSEForegroundService
+import me.capcom.smsgateway.modules.gateway.workers.GatewayInboxWorker
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
 import me.capcom.smsgateway.modules.gateway.workers.SettingsUpdateWorker
@@ -19,6 +20,7 @@ import me.capcom.smsgateway.modules.gateway.workers.WebhooksUpdateWorker
 import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.modules.ping.events.PingEvent
+import me.capcom.smsgateway.modules.receiver.events.MessagesExportRequestedEvent
 import org.koin.core.component.get
 
 class EventsReceiver : EventsReceiver() {
@@ -93,6 +95,25 @@ class EventsReceiver : EventsReceiver() {
                     if (settings.fcmToken != null) return@collect
 
                     SSEForegroundService.start(get())
+                }
+            }
+
+            launch {
+                Log.d("EventsReceiver", "launched MessagesExportRequestedEvent")
+                eventBus.collect<MessagesExportRequestedEvent> { event ->
+                    Log.d("EventsReceiver", "Event: $event")
+
+                    // SECOND subscriber for encrypted cloud upload; the local
+                    // export subscriber (modules/receiver/EventsReceiver) that
+                    // triggers webhooks stays untouched.
+                    if (!settings.enabled) return@collect
+
+                    GatewayInboxWorker.start(
+                        context = get(),
+                        since = event.since.time,
+                        until = event.until.time,
+                        types = event.messageTypes,
+                    )
                 }
             }
 

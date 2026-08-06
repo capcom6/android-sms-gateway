@@ -69,6 +69,11 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
             Log.d(TAG, "MMS received from ${mmsNotification.from}")
 
+            // MMS upload scope (A4): this headers-only row (type=MMS, id "mms-header:*")
+            // stays local-only. The second row (type=MMS_DOWNLOADED, id "mms:*") is created
+            // later by MmsContentObserver when the MMS is fully downloaded, and only that
+            // row uploads to cloud in A4. No ids are changed.
+
             val mmsMessage = InboxMessage.MmsHeaders(
                 messageId = mmsNotification.messageId,
                 transactionId = mmsNotification.transactionId,

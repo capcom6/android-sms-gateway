@@ -99,6 +99,25 @@ class GatewayApi(
         }
     }
 
+    /**
+     * Uploads inbox messages to POST $baseUrl/inbox (mobile/v1).
+     *
+     * Wire body is a JSON ARRAY (MobilePostInboxRequest). Items are prepared
+     * to the exact frozen contract (empty attachments omitted, null=omit)
+     * and POSTed as chunks of [INBOX_UPLOAD_BATCH_SIZE] per request.
+     * Follows existing error pattern: client has expectSuccess = true so
+     * ktor throws on non-2xx; no retry (handled by worker A4).
+     */
+    suspend fun uploadInbox(token: String, messages: List<InboxUploadItem>) {
+        chunkInboxUpload(messages.prepareInboxUpload()).forEach { chunk ->
+            client.post("$baseUrl/inbox") {
+                bearerAuth(token)
+                contentType(ContentType.Application.Json)
+                setBody(chunk)
+            }
+        }
+    }
+
     suspend fun getWebHooks(token: String): List<WebHook> {
         return client.get("$baseUrl/webhooks") {
             bearerAuth(token)

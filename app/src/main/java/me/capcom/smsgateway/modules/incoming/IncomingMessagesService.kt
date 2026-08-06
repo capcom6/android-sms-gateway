@@ -3,6 +3,8 @@ package me.capcom.smsgateway.modules.incoming
 import android.content.Context
 import android.util.Base64
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
+import me.capcom.smsgateway.modules.gateway.GatewaySettings
+import me.capcom.smsgateway.modules.gateway.workers.GatewayInboxWorker
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessage
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessageType
 import me.capcom.smsgateway.modules.incoming.repositories.IncomingMessagesRepository
@@ -18,6 +20,8 @@ class IncomingMessagesService(
     private val repository: IncomingMessagesRepository,
     private val attachmentStorage: MmsAttachmentStorage,
     private val logsService: LogsService,
+    private val gatewaySettings: GatewaySettings,
+    private val enqueueInboxUpload: (Context) -> Unit = { GatewayInboxWorker.start(it) },
 ) {
     fun save(message: InboxMessage): IncomingMessage {
         val simSlotIndex = message.subscriptionId?.let {
@@ -49,6 +53,12 @@ class IncomingMessagesService(
                 repository.insert(it)
                 if (message is InboxMessage.MMS) {
                     persistMmsAttachments(it.id, message)
+                }
+                // A4 trigger: after a successful save, coalesce async cloud uploads
+                // (unique one-shot work; burst of saves -> one run re-scanning
+                // pending rows). Only when the gateway is enabled.
+                if (gatewaySettings.enabled) {
+                    enqueueInboxUpload(context)
                 }
             } catch (e: Exception) {
                 logsService.insert(
@@ -122,6 +132,25 @@ class IncomingMessagesService(
         return repository.select(type, from, to, limit, offset)
     }
 
+    /** A4: all not-yet-uploaded rows (oldest first). */
+    suspend fun selectForUpload(): List<IncomingMessage> {
+        return repository.selectForUpload()
+    }
+
+    /** A4: pending rows matching optional type/period filters. */
+    suspend fun selectForUpload(
+        types: Set<IncomingMessageType>?,
+        from: Long?,
+        until: Long?
+    ): List<IncomingMessage> {
+        return repository.selectForUpload(types, from, until)
+    }
+
+    /** A4: marks one row as uploaded. */
+    suspend fun updateUploadedAt(id: String, uploadedAt: Long) {
+        repository.updateUploadedAt(id, uploadedAt)
+    }
+
     fun getById(id: String): IncomingMessage? {
         return repository.selectById(id)
     }
@@ -146,14 +175,7 @@ class IncomingMessagesService(
     }
 
     private fun buildId(message: InboxMessage): String {
-        val prefix = when (message) {
-            is InboxMessage.Data -> "data:"
-            is InboxMessage.MMS -> "mms:"
-            is InboxMessage.MmsHeaders -> "mms-header:"
-            is InboxMessage.Text -> "text:"
-        }
-
-        return prefix + message.hashCode().toString()
+        return buildIncomingMessageId(message)
     }
 
     private fun InboxMessage.toPreview(): String {
@@ -169,4 +191,17 @@ class IncomingMessagesService(
             is InboxMessage.MMS -> body ?: subject ?: "MMS content"
         }
     }
+}
+
+// FROZEN id scheme (backward compatibility): prefix + InboxMessage.hashCode().
+// Do not change; existing Room rows and cloud rows dedup on this exact value.
+internal fun buildIncomingMessageId(message: InboxMessage): String {
+    val prefix = when (message) {
+        is InboxMessage.Data -> "data:"
+        is InboxMessage.MMS -> "mms:"
+        is InboxMessage.MmsHeaders -> "mms-header:"
+        is InboxMessage.Text -> "text:"
+    }
+
+    return prefix + message.hashCode().toString()
 }

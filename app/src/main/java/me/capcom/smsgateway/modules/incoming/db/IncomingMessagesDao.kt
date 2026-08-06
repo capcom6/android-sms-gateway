@@ -8,7 +8,12 @@ import androidx.room.Query
 
 @Dao
 interface IncomingMessagesDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // PK is the caller-supplied deterministic id (prefix + InboxMessage.hashCode), so
+    // re-saving the same message targets the same row. REPLACE would delete+reinsert
+    // and wipe a future uploadedAt (set by A4). IGNORE keeps the existing row intact
+    // while preserving dedup (ReceiverService dedups via selectById/isMessageProcessed).
+    // All changed fields are hash-derived, so the kept row equals what would be inserted.
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insert(message: IncomingMessage)
 
     @Query("SELECT * FROM incoming_messages ORDER BY createdAt DESC, id DESC LIMIT :limit")
@@ -67,4 +72,24 @@ interface IncomingMessagesDao {
 
     @Query("DELETE FROM incoming_messages WHERE createdAt < :until")
     suspend fun truncate(until: Long)
+
+    @Query(
+        """
+        SELECT *
+        FROM incoming_messages
+        WHERE uploadedAt IS NULL
+          AND (:types IS NULL OR type IN (:types))
+          AND (:from IS NULL OR createdAt >= :from)
+          AND (:until IS NULL OR createdAt <= :until)
+        ORDER BY createdAt ASC, id ASC
+        """
+    )
+    suspend fun selectForUpload(
+        types: Set<IncomingMessageType>?,
+        from: Long?,
+        until: Long?
+    ): List<IncomingMessage>
+
+    @Query("UPDATE incoming_messages SET uploadedAt = :uploadedAt WHERE id = :id")
+    suspend fun updateUploadedAt(id: String, uploadedAt: Long)
 }

@@ -11,6 +11,7 @@ import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.gateway.services.SSEForegroundService
+import me.capcom.smsgateway.modules.gateway.workers.GatewayInboxWorker
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
 import me.capcom.smsgateway.modules.gateway.workers.SettingsUpdateWorker
@@ -49,6 +50,11 @@ class GatewayService(
         PullMessagesWorker.start(context)
         WebhooksUpdateWorker.start(context)
         SettingsUpdateWorker.start(context)
+        // A5 catch-up: rows saved while the gateway was disabled are not
+        // uploaded (save() only enqueues when enabled), so kick one unique
+        // one-shot upload run for all pending rows at startup. Coalesces with
+        // any burst enqueued by save()/export via the fixed NAME.
+        GatewayInboxWorker.start(context)
 
         eventsReceiver.start()
     }
@@ -60,6 +66,9 @@ class GatewayService(
         SettingsUpdateWorker.stop(context)
         WebhooksUpdateWorker.stop(context)
         PullMessagesWorker.stop(context)
+        // GatewayInboxWorker is a unique one-shot: nothing to cancel on stop.
+        // An in-flight upload keeps running; rows stay pending otherwise and
+        // are re-attempted on the next save/export/start.
 
         this._api = null
     }
