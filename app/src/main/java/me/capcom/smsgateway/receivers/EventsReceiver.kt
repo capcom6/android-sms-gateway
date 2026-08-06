@@ -21,10 +21,12 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
     private val logsService: LogsService by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
+        val pendingResult = goAsync()
+        val capturedResultCode = pendingResult.resultCode
+
         scope.launch {
             try {
-                messagesService
-                    .processStateIntent(intent, resultCode)
+                messagesService.processStateIntent(intent, capturedResultCode)
             } catch (e: Throwable) {
                 logsService.insert(
                     LogEntry.Priority.ERROR,
@@ -32,8 +34,9 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
                     "Can't process message state intent",
                     intent.toLogContext() + e.toLogContext()
                 )
+            } finally {
+                pendingResult.finish()
             }
-
         }
     }
 
