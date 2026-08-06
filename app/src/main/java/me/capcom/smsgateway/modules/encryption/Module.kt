@@ -10,4 +10,4 @@ val encryptionModule = module {
     singleOf(::E2EKeyService)
 }
 
-val MODULE_NAME = "Encryption"
+internal const val MODULE_NAME = "Encryption"

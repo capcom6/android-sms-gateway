@@ -8,6 +8,8 @@ import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.annotation.RequiresApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.modules.encryption.db.EncryptionKey
 import me.capcom.smsgateway.modules.encryption.db.EncryptionKeysDao
@@ -29,24 +31,28 @@ class E2EKeyService(
     private val dao: EncryptionKeysDao,
     private val logsSvc: LogsService,
 ) {
+    private val rotationMutex = Mutex()
+
     /**
      * Ensures the device has an E2E keypair. Generates one if missing.
      * Returns the public key base64 or null if generation failed.
      */
     suspend fun ensureKey(): EncryptionKey? {
-        val existing = getCurrentKey()
-        if (existing != null) return existing
+        return rotationMutex.withLock {
+            val existing = getCurrentKey()
+            if (existing != null) return@withLock existing
 
-        return try {
-            rotateKey()
-        } catch (e: Exception) {
-            logsSvc.insert(
-                LogEntry.Priority.WARN,
-                MODULE_NAME,
-                "Failed to rotate device key",
-                mapOf("exception" to e),
-            )
-            return null
+            try {
+                rotateKey()
+            } catch (e: Exception) {
+                logsSvc.insert(
+                    LogEntry.Priority.WARN,
+                    MODULE_NAME,
+                    "Failed to rotate device key",
+                    mapOf("exception" to e),
+                )
+                return@withLock null
+            }
         }
     }
 
@@ -65,9 +71,9 @@ class E2EKeyService(
             generateKeyPairSoftware()
         }
 
-        // Retire current active key
+        // Retire current active key (also deletes its AndroidKeyStore entry)
         dao.getCurrent()?.let { current ->
-            dao.retire(current.keyVersion)
+            retireKey(current.keyVersion)
         }
 
         val privateKeyBlob = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -86,8 +92,28 @@ class E2EKeyService(
             privateKeyBlob = privateKeyBlob,
             publicKeyBase64 = publicKeyBase64,
         )
-        val id = dao.insert(entity)
-        entity.copy(id = id)
+        val id = try {
+            dao.insert(entity)
+        } catch (e: Exception) {
+            // Remove the keystore entry so it is not orphaned when persistence fails
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                deleteKeyFromKeystore(alias)
+            }
+            throw e
+        }
+
+        val saved = entity.copy(id = id)
+        try {
+            enforceKeyLimit()
+        } catch (e: Exception) {
+            logsSvc.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Failed to enforce key limit",
+                mapOf("exception" to e),
+            )
+        }
+        saved
     }
 
     /**

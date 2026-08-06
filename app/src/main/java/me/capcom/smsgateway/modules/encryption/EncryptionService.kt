@@ -1,12 +1,15 @@
 package me.capcom.smsgateway.modules.encryption
 
 import android.util.Base64
+import java.security.spec.MGF1ParameterSpec
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.OAEPParameterSpec
 import javax.crypto.spec.PBEKeySpec
+import javax.crypto.spec.PSource
 import javax.crypto.spec.SecretKeySpec
 
 class EncryptionService(
@@ -76,7 +79,16 @@ class EncryptionService(
             ?: throw RuntimeException("No E2E private key available for version $keyVersion")
 
         val rsaCipher = Cipher.getInstance(RSA_OAEP_ALGORITHM)
-        rsaCipher.init(Cipher.DECRYPT_MODE, privateKey)
+        rsaCipher.init(
+            Cipher.DECRYPT_MODE,
+            privateKey,
+            OAEPParameterSpec(
+                "SHA-256",
+                "MGF1",
+                MGF1ParameterSpec.SHA256,
+                PSource.PSpecified.DEFAULT,
+            ),
+        )
         val aesKeyBytes = rsaCipher.doFinal(encryptedAesKey)
 
         // 2. Decrypt payload with AES-GCM
