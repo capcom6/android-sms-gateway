@@ -6,6 +6,11 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import me.capcom.smsgateway.modules.encryption.db.EncryptionKey
 import me.capcom.smsgateway.modules.encryption.db.EncryptionKeysDao
+import me.capcom.smsgateway.modules.logs.LogsService
+import me.capcom.smsgateway.modules.logs.LogsSettings
+import me.capcom.smsgateway.modules.logs.db.LogEntriesDao
+import me.capcom.smsgateway.modules.logs.db.LogEntry
+import me.capcom.smsgateway.modules.settings.KeyValueStorage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -17,6 +22,7 @@ import java.security.KeyPairGenerator
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.SecureRandom
+import java.lang.reflect.Type
 import java.security.spec.MGF1ParameterSpec
 import java.util.Base64
 import javax.crypto.Cipher
@@ -27,7 +33,8 @@ import javax.crypto.spec.SecretKeySpec
 
 class E2EKeyServiceTest {
 
-    private val now = 1_700_000_000_000L
+    /** Real wall clock: the service no longer accepts an injectable nowMillis. */
+    private val now = System.currentTimeMillis()
     private val dayMs = 24L * 60 * 60 * 1000
 
     // region fakes
@@ -73,12 +80,6 @@ class E2EKeyServiceTest {
             rows.removeAll { it.retiredAt?.let { r -> r < cutoffTime } == true }
         }
 
-        override suspend fun updatePrivateKeyBlob(keyVersion: Int, blob: ByteArray) {
-            events += "upgrade:$keyVersion"
-            val idx = rows.indexOfFirst { it.keyVersion == keyVersion }
-            if (idx >= 0) rows[idx] = rows[idx].copy(privateKeyBlob = blob)
-        }
-
         override suspend fun countActive(): Int = rows.count { it.retiredAt == null }
     }
 
@@ -87,8 +88,6 @@ class E2EKeyServiceTest {
         val deleted = mutableListOf<String>()
         /** Counts keystore loads per alias (keystore IPC is the expensive part). */
         val loadCounts = mutableMapOf<String, Int>()
-        /** Simulates the store re-encrypting a legacy blob to the PBKDF2 format. */
-        var upgradedBlob: ByteArray? = null
 
         override fun generateKeyPair(alias: String): KeyPairResult {
             val kpg = KeyPairGenerator.getInstance("RSA")
@@ -104,7 +103,7 @@ class E2EKeyServiceTest {
 
         override fun getPrivateKey(alias: String, persistedBlob: ByteArray): KeyLoadResult? {
             loadCounts[alias] = (loadCounts[alias] ?: 0) + 1
-            return keys[alias]?.let { KeyLoadResult(it.private, upgradedBlob) }
+            return keys[alias]?.let { KeyLoadResult(it.private) }
         }
 
         override fun delete(alias: String) {
@@ -113,8 +112,33 @@ class E2EKeyServiceTest {
         }
     }
 
-    private object NoopE2EKeyLogger : E2EKeyLogger {
-        override fun warn(message: String, exception: Any?) {}
+    private class FakeLogEntriesDao : LogEntriesDao {
+        val inserted = mutableListOf<LogEntry>()
+
+        override suspend fun selectByPeriod(from: Long, to: Long): List<LogEntry> = emptyList()
+        override fun selectLast(): androidx.lifecycle.LiveData<List<LogEntry>> =
+            TODO("not used by LogsService in these tests")
+
+        override fun insert(entry: LogEntry) {
+            inserted += entry
+        }
+
+        override suspend fun truncate(until: Long) {}
+    }
+
+    private class FakeKeyValueStorage : KeyValueStorage {
+        val values = mutableMapOf<String, Any?>()
+
+        override fun <T> set(key: String, value: T) {
+            values[key] = value
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        override fun <T> get(key: String, typeOfT: Type): T? = values[key] as T?
+
+        override fun remove(key: String) {
+            values.remove(key)
+        }
     }
 
     // endregion
@@ -122,12 +146,15 @@ class E2EKeyServiceTest {
     private fun createService(
         dao: FakeEncryptionKeysDao = FakeEncryptionKeysDao(),
         store: FakeEncryptionKeyStore = FakeEncryptionKeyStore(),
-    ): E2EKeyService = E2EKeyService(
-        keyStore = store,
-        dao = dao,
-        logger = NoopE2EKeyLogger,
-        nowMillis = { now },
-    )
+    ): E2EKeyService {
+        val storage = FakeKeyValueStorage()
+        return E2EKeyService(
+            keyStore = store,
+            dao = dao,
+            logsSvc = LogsService(FakeLogEntriesDao(), LogsSettings(storage)),
+            settings = EncryptionSettings(storage),
+        )
+    }
 
     private fun alias(version: Int): String = "e2e_key_v$version"
 
@@ -270,13 +297,15 @@ class E2EKeyServiceTest {
                 createdAt = now - 30L * dayMs,
                 retiredAt = now - dayMs,
             ),
-            // exactly 7 days old: boundary, must be retained
+            // boundary: retired just inside the 7-day window. The service uses
+            // the real wall clock (no injectable nowMillis), so a small clock-
+            // drift buffer keeps this row inside the retention window: retained.
             EncryptionKey(
                 keyVersion = 3,
                 privateKeyBlob = ByteArray(0),
                 publicKeyBase64 = "k3",
                 createdAt = now - 30L * dayMs,
-                retiredAt = now - 7L * dayMs,
+                retiredAt = now - 7L * dayMs + 120_000L,
             ),
             EncryptionKey(
                 keyVersion = 4,
@@ -360,13 +389,12 @@ class E2EKeyServiceTest {
     }
 
     @Test
-    fun getPrivateKey_persistsReEncryptedLegacyBlob() = runBlocking {
+    fun getPrivateKey_doesNotRewriteLegacyBlob() = runBlocking {
         val dao = FakeEncryptionKeysDao()
         val store = FakeEncryptionKeyStore()
         val service = createService(dao, store)
 
         store.generateKeyPair(alias(1))
-        store.upgradedBlob = byteArrayOf(9, 9, 9)
         dao.rows += EncryptionKey(
             id = 1,
             keyVersion = 1,
@@ -376,9 +404,12 @@ class E2EKeyServiceTest {
 
         val key = service.getPrivateKey(1)
 
+        // Current API: KeyLoadResult carries the private key only; the service
+        // never re-encrypts or persists blob upgrades (that lives in
+        // StorageBlobCipher). The stored blob must stay byte-identical.
         assertNotNull(key)
-        assertTrue(dao.rows.first { it.keyVersion == 1 }.privateKeyBlob.contentEquals(byteArrayOf(9, 9, 9)))
-        assertEquals(listOf("upgrade:1"), dao.events)
+        assertTrue(dao.rows.first { it.keyVersion == 1 }.privateKeyBlob.contentEquals(byteArrayOf(1, 2, 3)))
+        assertTrue(dao.events.isEmpty())
     }
 
     @Test
@@ -388,11 +419,10 @@ class E2EKeyServiceTest {
         val service = createService(dao, store)
 
         store.generateKeyPair(alias(1))
-        store.upgradedBlob = null // current-format blob: no re-encryption
         dao.rows += EncryptionKey(
             id = 1,
             keyVersion = 1,
-            privateKeyBlob = ByteArray(0),
+            privateKeyBlob = ByteArray(0), // current-format blob: no re-encryption
             publicKeyBase64 = "k1",
         )
 
