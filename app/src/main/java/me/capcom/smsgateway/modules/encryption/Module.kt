@@ -4,10 +4,11 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val encryptionModule = module {
-    single {
-        EncryptionService(get(), get())
-    }
+    singleOf(::EncryptionService)
     singleOf(::E2EKeyService)
+    single<EncryptionKeyStore> {
+        AndroidEncryptionKeyStore(get())
+    }
 }
 
 internal const val MODULE_NAME = "Encryption"

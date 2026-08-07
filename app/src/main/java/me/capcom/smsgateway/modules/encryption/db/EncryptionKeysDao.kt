@@ -24,6 +24,9 @@ interface EncryptionKeysDao {
     @Query("UPDATE encryption_keys SET retired_at = :retiredAt WHERE key_version = :keyVersion")
     suspend fun retire(keyVersion: Int, retiredAt: Long = System.currentTimeMillis())
 
+    @Query("SELECT * FROM encryption_keys WHERE retired_at IS NOT NULL AND retired_at < :cutoffTime")
+    suspend fun getRetiredOlderThan(cutoffTime: Long): List<EncryptionKey>
+
     @Query("DELETE FROM encryption_keys WHERE retired_at IS NOT NULL AND retired_at < :cutoffTime")
     suspend fun deleteOld(cutoffTime: Long)
 

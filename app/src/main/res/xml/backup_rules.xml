@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legacy full-backup exclusions (adb backup on API 21-30 and cloud backup
+  before API 31). The E2E encryption-key material lives in the Room "gateway"
+  database (file gateway plus WAL/SHM companions); it must never leave the
+  device, so the whole database is excluded from backups.
+-->
+<full-backup-content>
+    <exclude
+        domain="database"
+        path="gateway" />
+    <exclude
+        domain="database"
+        path="gateway-wal" />
+    <exclude
+        domain="database"
+        path="gateway-shm" />
+</full-backup-content>

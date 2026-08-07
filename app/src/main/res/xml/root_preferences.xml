@@ -14,8 +14,8 @@
     <Preference
         android:icon="@drawable/ic_messages"
         app:fragment="me.capcom.smsgateway.ui.settings.MessagesSettingsFragment"
-        app:title="@string/messages"
-        app:summary="@string/delays_limits_etc" />
+        app:summary="@string/delays_limits_etc"
+        app:title="@string/messages" />
 
     <Preference
         android:icon="@drawable/ic_inbox"
@@ -29,13 +29,11 @@
         app:summary="@string/retries_signing_etc"
         app:title="@string/webhooks_dotdotdot" />
 
-    <PreferenceCategory app:title="@string/encryption">
-        <EditTextPreference
-            app:icon="@drawable/ic_encryption"
-            app:key="encryption.passphrase"
-            app:summary="@string/use_empty_to_disable"
-            app:title="@string/passphrase" />
-    </PreferenceCategory>
+    <Preference
+        app:fragment="me.capcom.smsgateway.ui.settings.EncryptionSettingsFragment"
+        app:icon="@drawable/ic_encryption"
+        app:summary="@string/encryption_dotdotdot"
+        app:title="@string/passphrase_public_key_etc" />
 
     <PreferenceCategory
         android:summary="@string/online_status_at_the_cost_of_battery_life"
@@ -67,9 +65,9 @@
             app:summary="@string/can_affect_battery_life"
             app:title="@string/battery_optimization" />
         <ListPreference
-            android:icon="@drawable/ic_language"
             android:entries="@array/language_entries"
             android:entryValues="@array/language_values"
+            android:icon="@drawable/ic_language"
             android:key="app.language"
             android:title="@string/language"
             app:useSimpleSummaryProvider="true" />

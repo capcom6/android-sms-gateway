@@ -23,12 +23,15 @@
     <application
         android:name=".App"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:networkSecurityConfig="${networkSecurityConfig}"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SmsGateway">
+        android:theme="@style/Theme.SmsGateway"
+        tools:targetApi="s">
         <service
             android:name=".modules.gateway.services.SSEForegroundService"
             android:enabled="true"

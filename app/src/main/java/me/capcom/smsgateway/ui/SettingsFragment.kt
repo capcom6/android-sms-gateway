@@ -48,14 +48,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
-        if (preference.key == "encryption.passphrase") {
-            (preference as EditTextPreference).setOnBindEditTextListener {
-                it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                it.setSelectAllOnFocus(true)
-                it.selectAll()
-            }
-        }
-
         if (preference.key == "ping.interval_seconds"
             || preference.key == "logs.lifetime_days"
         ) {

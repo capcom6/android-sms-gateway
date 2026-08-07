@@ -14,6 +14,13 @@ class EncryptionSettings(
         get() = storage.get<Int>(VERSION) ?: 0
         set(value) = storage.set(VERSION, value)
 
+    /**
+     * Automatic E2E key rotation interval in days; null or <= 0 disables it.
+     */
+    var rotationIntervalDays: Int?
+        get() = storage.get<Int>(ROTATION_INTERVAL_DAYS)
+        set(value) = storage.set(ROTATION_INTERVAL_DAYS, value)
+
     init {
         migrate()
     }
@@ -38,6 +45,8 @@ class EncryptionSettings(
         private const val PASSPHRASE = "passphrase"
 
         private const val VERSION = "version"
+
+        private const val ROTATION_INTERVAL_DAYS = "rotate_interval_days"
     }
 
     override fun import(data: Map<String, *>): Boolean {

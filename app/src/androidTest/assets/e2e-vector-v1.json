@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "format": "rsa-oaep-aes-256-gcm",
+  "version": "1",
+  "keyVersion": 1,
+  "algorithms": {
+    "rsaOaep": "RSA/ECB/OAEPWithSHA-256AndMGF1Padding",
+    "hash": "SHA-256",
+    "mgf1": "MGF1-SHA-256",
+    "aesGcm": "AES/GCM/NoPadding",
+    "tagBits": 128,
+    "ivLen": 12
+  },
+  "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDxn2NKvx1gOlk6\ned6kEJJQGOL/c0LaT6x2NYrem6m5clY3hhlQoMaq3uaTsbHqSWVni02XABJFjuaR\nNtsVYiFmvY4mc5Rlz/2XLBNwHcGh/aFoSZGFF8QSW+VAZ0Rmh/n5G55xnZznMhjp\nWWfwlxh7Qoogtyn2G4C/doIT7W5SyIKZO2TsAE8j4cXugfCxIk8J/R9D+8JRgFK2\nHRBIxyT2OotoCjVLUjnM3cIB5NJ+f8eTlT6OMq8l/VJNahHvwC1GEG+4ASex8UBt\nwkdpDvs3u11SiM/osUypYFckV9mY58oIo2jC5iClkULKqLyLtPET4RV1cU4TWxkX\nEJLqf0cDAgMBAAECggEAAbUl1KmSHGkn0p0kNiufJRgamUHoHIvd76iZi9Dfe7Mz\nqckgVQILNWTwOJCpGGX0D1hxhW+CMYynfio8P86a5tN7IDQb6Iug7Vhp5hZyamHU\n/1wvE5jjPAVQkvUdNiOgNXhSVSzkfCZ4p5mH/bAhA6n+OOn3zsigpHnCxJTz0nub\nG1tyngp9FnJgRg8J/vuk3Tv/n+6SxnIm/rcQWIelv5SXXcto4e4/aDElBrLs8+UM\npEGD2xLM0CbGrobwEuEIX6NwaEDxVeKRgnAV7RJcmM/2VdC39NR7Mx7BaeX7nWWc\nZkXCj9gjXzQQXl4P02qVEIlJVQolTHXwBEAPVAbrQQKBgQD7JxOtxUIQ7omGtoW9\nTmT95ek/oi9u/Pb8Eh7zBGBblNfPfEi9lq30k3Njpr5386ZpeoM55ISFtjwru46X\nlbc7GRtvjRHLlXyBWtqznDU8Lr1TN6ypdhplbfxcB15qXH0/LQe9JbaO8P7+R88p\np6XUy4rlwRpiQc8vwwJfosSbQwKBgQD2STlTBhMDkGD39EnrVgqwjUMGRL14z+yt\nB6IlOtMmS4zFGpWFVd7yt/WIW1xYD/XnjkB6EPPGV8EPAPq+KScdGc6+7sWUlV6y\nLHYRu46q8vFt/kXv+mh1aI3I0rDt3+VEFRg3Hgrg1NlAfu1dYasr4JmwxJCVz/Ep\nzN+6jj+JQQKBgQCjzvv11ffeRUbr13ZpX41dUKyOdYEMme+Zv1PyW0Nh2DXePYjQ\nJ0w0fku/jk0ivYcnuuGGS/bno1GhkIZTdjH5WMndOxyFNW3sjM6iYVsTcsTHV0PF\nj6NtzovPlnrNUp/aKcunYcateqBGR53l5FOz9EIW0pkbxyKUW1Pb/rTPMwKBgQCZ\n8QMHxhA0dhZmZieeFdXwrRtr26Oi1DRXoyHSq4Y3tZlzyj4Tba1BgYLTjGeYE8Hc\nzqm2osn8+/UMb8xK+GYeZnc4GP8e9I6QSAI060stx1TpL7p/WcHZQVT+ZdN5nC0t\n9RGBwiGCjwiMq8mqSNY5QtZOC09klOlk+04MycUlAQKBgQCD+aBa7P+hnZfNEcdM\n8sNq0fX/m/5RYiDoe5VSIfQCAs4yp3yxpzig0CMOooboW0AI9SuLAAhWP+SVK9lh\n9x4YRBp4O/HMGWQ4r/hmP0hFtZb7uaX2pJcmNK2SMx6cDfscsJwxypLdFtwSQkjq\nr8Je0Wxy/Lku5NQyxEULzKuUOA==\n-----END PRIVATE KEY-----",
+  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8Z9jSr8dYDpZOnnepBCS\nUBji/3NC2k+sdjWK3pupuXJWN4YZUKDGqt7mk7Gx6kllZ4tNlwASRY7mkTbbFWIh\nZr2OJnOUZc/9lywTcB3Bof2haEmRhRfEElvlQGdEZof5+RuecZ2c5zIY6Vln8JcY\ne0KKILcp9huAv3aCE+1uUsiCmTtk7ABPI+HF7oHwsSJPCf0fQ/vCUYBSth0QSMck\n9jqLaAo1S1I5zN3CAeTSfn/Hk5U+jjKvJf1STWoR78AtRhBvuAEnsfFAbcJHaQ77\nN7tdUojP6LFMqWBXJFfZmOfKCKNowuYgpZFCyqi8i7TxE+EVdXFOE1sZFxCS6n9H\nAwIDAQAB\n-----END PUBLIC KEY-----\n",
+  "publicKeySpkiBase64": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8Z9jSr8dYDpZOnnepBCSUBji/3NC2k+sdjWK3pupuXJWN4YZUKDGqt7mk7Gx6kllZ4tNlwASRY7mkTbbFWIhZr2OJnOUZc/9lywTcB3Bof2haEmRhRfEElvlQGdEZof5+RuecZ2c5zIY6Vln8JcYe0KKILcp9huAv3aCE+1uUsiCmTtk7ABPI+HF7oHwsSJPCf0fQ/vCUYBSth0QSMck9jqLaAo1S1I5zN3CAeTSfn/Hk5U+jjKvJf1STWoR78AtRhBvuAEnsfFAbcJHaQ77N7tdUojP6LFMqWBXJFfZmOfKCKNowuYgpZFCyqi8i7TxE+EVdXFOE1sZFxCS6n9HAwIDAQAB",
+  "aesKeyHex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+  "ivHex": "000102030405060708090a0b",
+  "plaintext": "The quick brown fox jumps over the lazy dog 0123456789",
+  "chunk4EncryptedAesKeyB64": "we9jv63Er6bukIsgCkorCXDtEx5elni/OeguUvX0shoIQIQxnbr65asrFDRoJJztnEjagR45Oc1zVOwkIpnPXA9cploe7F12IVSc3oeXGWhGMtsbk3rL3PLT2qxgX390+QES4zgaKXULQ5fmmqZPFyEr/5/wQ04Z4i3PsRML5EBzMuD6rLrzrc195KIMiFYJ88AvnQN7Cju3ELvbiiNn7m20zftgcWHmo3VtzC7s1Gs8agPmjepe9GbeTaM3a9vF3qTX0hG6yjaV/tR17opQ16H9KpPGXo9rIrJJ++1olCdYDs/uw1F2iYDULncNs80zj6myn7QM1dvsd3IvBgykiQ==",
+  "ctTagChunkB64": "E2qzO7SQq3jmYfX53p4WTeW5/xSaDjIMS0eK83gbIMZpdY6QzrtruBDLGM24thoL2mxWumLvk9LtQZ0tPm1tWWUipJ5q7Q==",
+  "fullFormatSample": "$rsa-oaep-aes-256-gcm$v=1$k=1$we9jv63Er6bukIsgCkorCXDtEx5elni/OeguUvX0shoIQIQxnbr65asrFDRoJJztnEjagR45Oc1zVOwkIpnPXA9cploe7F12IVSc3oeXGWhGMtsbk3rL3PLT2qxgX390+QES4zgaKXULQ5fmmqZPFyEr/5/wQ04Z4i3PsRML5EBzMuD6rLrzrc195KIMiFYJ88AvnQN7Cju3ELvbiiNn7m20zftgcWHmo3VtzC7s1Gs8agPmjepe9GbeTaM3a9vF3qTX0hG6yjaV/tR17opQ16H9KpPGXo9rIrJJ++1olCdYDs/uw1F2iYDULncNs80zj6myn7QM1dvsd3IvBgykiQ==$AAECAwQFBgcICQoL$E2qzO7SQq3jmYfX53p4WTeW5/xSaDjIMS0eK83gbIMZpdY6QzrtruBDLGM24thoL2mxWumLvk9LtQZ0tPm1tWWUipJ5q7Q==",
+  "notes": [
+    "RSA-OAEP is randomized per RFC 8017 7.1.2: chunk4 and fullFormatSample are ONE valid sample (generated with a fixed seed for reproducibility); any rand source yields a valid chunk4.",
+    "Only ctTagChunkB64 (and chunk6 of fullFormatSample, given the same fixed key+IV+plaintext) is byte-comparable across languages.",
+    "Verify chunk4 by RSA-decrypting with privateKeyPem: the result must equal the 32 bytes of aesKeyHex.",
+    "The AES key is 32 bytes; the IV is 12 bytes. A 12-byte AES key throws InvalidKeyException on Android.",
+    "Production code MUST generate a fresh 12-byte CSPRNG IV per value (body + each phone number) and never reuse ivHex."
+  ]
+}

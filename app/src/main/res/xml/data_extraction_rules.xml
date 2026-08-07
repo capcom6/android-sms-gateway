@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  API 31+ backup/transfer exclusions. The E2E encryption-key material lives
+  in the Room "gateway" database (file gateway plus WAL/SHM companions); it is
+  excluded from both cloud backup and device-to-device transfer.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude
+            domain="database"
+            path="gateway" />
+        <exclude
+            domain="database"
+            path="gateway-wal" />
+        <exclude
+            domain="database"
+            path="gateway-shm" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude
+            domain="database"
+            path="gateway" />
+        <exclude
+            domain="database"
+            path="gateway-wal" />
+        <exclude
+            domain="database"
+            path="gateway-shm" />
+    </device-transfer>
+</data-extraction-rules>
