@@ -1,11 +1,13 @@
 package me.capcom.smsgateway.modules.encryption
 
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.modules.encryption.db.EncryptionKey
 import me.capcom.smsgateway.modules.encryption.db.EncryptionKeysDao
+import me.capcom.smsgateway.modules.encryption.workers.KeyRotationWorker
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import java.security.PrivateKey
@@ -15,6 +17,7 @@ class E2EKeyService(
     private val keyStore: EncryptionKeyStore,
     private val dao: EncryptionKeysDao,
     private val logsSvc: LogsService,
+    private val settings: EncryptionSettings,
 ) {
     private val rotationMutex = Mutex()
 
@@ -64,6 +67,50 @@ class E2EKeyService(
      */
     suspend fun rotateKey(): EncryptionKey {
         return rotationMutex.withLock {
+            rotateKeyLocked()
+        }
+    }
+
+    fun start(context: Context) {
+        KeyRotationWorker.start(context)
+    }
+
+    fun stop(context: Context) {
+        KeyRotationWorker.stop(context)
+    }
+
+    /**
+     * Rotates the active E2E key when the configured rotation interval has
+     * elapsed since the current key was created. No-op when rotation is
+     * disabled (interval null or <= 0). Creates a baseline key when none
+     * exists so future due-checks have an anchor. The interval is re-read
+     * from settings on every invocation.
+     */
+    suspend fun rotateKeyIfDue() {
+        val intervalDays = settings.rotationIntervalDays ?: return
+        if (intervalDays <= 0) return
+
+        val current = getCurrentKey()
+        if (current == null) {
+            ensureKey()
+            return
+        }
+
+        rotationMutex.withLock {
+            rotateKeyIfDueLocked(intervalDays)
+        }
+    }
+
+    /**
+     * Due-check + rotation under [rotationMutex]: the current key is re-read
+     * inside the lock so the due-decision is atomic with the rotation and a
+     * concurrent manual [rotateKey] cannot cause a double rotation. Calls
+     * [rotateKeyLocked] directly because [rotateKey] re-acquires
+     * [rotationMutex] and Kotlin Mutex is not reentrant.
+     */
+    private suspend fun rotateKeyIfDueLocked(intervalDays: Int) {
+        val current = getCurrentKey() ?: return
+        if (current.createdAt + intervalDays * 86400000L <= System.currentTimeMillis()) {
             rotateKeyLocked()
         }
     }

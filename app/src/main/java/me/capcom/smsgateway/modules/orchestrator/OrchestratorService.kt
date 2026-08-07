@@ -3,6 +3,7 @@ package me.capcom.smsgateway.modules.orchestrator
 import android.content.Context
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
+import me.capcom.smsgateway.modules.encryption.E2EKeyService
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.incoming.IncomingMessagesService
 import me.capcom.smsgateway.modules.localserver.LocalServerService
@@ -24,6 +25,7 @@ class OrchestratorService(
     private val receiverService: ReceiverService,
     private val pingSvc: PingService,
     private val logsSvc: LogsService,
+    private val e2eKeySvc: E2EKeyService,
     private val settings: SettingsHelper,
 ) {
     fun start(context: Context, autostart: Boolean) {
@@ -32,6 +34,7 @@ class OrchestratorService(
         }
 
         logsSvc.start(context)
+        e2eKeySvc.start(context)
         messagesSvc.start(context)
         incomingSvc.start(context)
         webHooksSvc.start(context)
@@ -75,6 +78,7 @@ class OrchestratorService(
         webHooksSvc.stop(context)
         messagesSvc.stop(context)
         incomingSvc.stop(context)
+        e2eKeySvc.stop(context)
         logsSvc.stop(context)
     }
 }

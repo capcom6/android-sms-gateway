@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.ui.settings
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
@@ -17,6 +18,22 @@ class EncryptionSettingsFragment : BasePreferenceFragment() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.encryption_preferences, null)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(
+            onPreferenceChanged
+        )
+    }
+
+    override fun onPause() {
+        preferenceManager.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(
+            onPreferenceChanged
+        )
+
+        super.onPause()
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
@@ -55,4 +72,11 @@ class EncryptionSettingsFragment : BasePreferenceFragment() {
             }
         }
     }
+
+    private val onPreferenceChanged =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "encryption.rotate_interval_days") {
+                e2eKeySvc.start(requireContext())
+            }
+        }
 }
