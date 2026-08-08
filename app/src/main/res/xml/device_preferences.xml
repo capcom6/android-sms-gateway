@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory app:title="@string/device_key">
         <Preference
-            android:icon="@drawable/ic_encryption"
+            android:icon="@drawable/ic_key"
             android:key="device.rotate_key"
             android:persistent="false"
             android:summary="@string/rotate_device_key_summary"
@@ -17,7 +17,7 @@
         <ListPreference
             android:entries="@array/rotation_intervals_titles"
             android:entryValues="@array/rotation_intervals_values"
-            android:icon="@drawable/ic_encryption"
+            android:icon="@drawable/ic_key"
             android:key="device.key_rotate_interval_days"
             android:title="@string/automatic_key_rotation"
             app:useSimpleSummaryProvider="true" />

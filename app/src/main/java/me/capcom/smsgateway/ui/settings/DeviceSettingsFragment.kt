@@ -104,7 +104,7 @@ class DeviceSettingsFragment : BasePreferenceFragment() {
 
     private val onPreferenceChanged =
         SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == "device.rotate_interval_days") {
+            if (key == "device.key_rotate_interval_days") {
                 deviceService.start(requireContext())
             }
         }
