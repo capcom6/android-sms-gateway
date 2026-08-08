@@ -2,6 +2,7 @@ package me.capcom.smsgateway.modules.settings
 
 import androidx.preference.PreferenceManager
 import me.capcom.smsgateway.helpers.SettingsHelper
+import me.capcom.smsgateway.modules.device.DeviceSettings
 import me.capcom.smsgateway.modules.encryption.EncryptionSettings
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import me.capcom.smsgateway.modules.incoming.IncomingMessagesSettings
@@ -62,14 +63,20 @@ val settingsModule = module {
             PreferencesStorage(get(), "webhooks")
         )
     }
-    single {
-        TemporaryStorage(
-            PreferencesStorage(get(), "webhooks")
-        )
-    }
     factory {
         ReceiverSettings(
             PreferencesStorage(get(), "receiver")
+        )
+    }
+    factory {
+        DeviceSettings(
+            PreferencesStorage(get(), "device")
+        )
+    }
+    //
+    single {
+        TemporaryStorage(
+            PreferencesStorage(get(), "webhooks")
         )
     }
     single {
