@@ -41,7 +41,7 @@
             android:persistent="false"
             android:title="@string/clear_password" />
         <Preference
-            android:icon="@drawable/ic_code"
+            android:icon="@drawable/ic_pin"
             android:key="gateway.login_code"
             android:persistent="false"
             android:summary="@string/use_this_code_to_sign_in_on_another_device"
@@ -50,11 +50,13 @@
     </PreferenceCategory>
     <PreferenceCategory app:title="@string/device">
         <Preference
-            android:icon="@drawable/ic_device_id"
+            android:icon="@drawable/ic_device_info"
             android:key="transient.device_id"
             android:title="@string/device_id"
             app:enableCopying="true"
             app:persistent="false" />
     </PreferenceCategory>
-    <Preference app:summary="@string/restart_required_to_apply_changes" />
+    <Preference
+        app:icon="@drawable/ic_restart"
+        app:summary="@string/restart_required_to_apply_changes" />
 </PreferenceScreen>
