@@ -11,4 +11,5 @@ val dbModule = module {
     single { get<AppDatabase>().inboxUploadDao() }
     single { get<AppDatabase>().logDao() }
     single { get<AppDatabase>().tokensDao() }
+    single { get<AppDatabase>().deviceKeysDao() }
 }

@@ -151,6 +151,8 @@ class GatewayApi(
         val name: String,
         val pushToken: String?,
         val simCards: List<SimCard>,
+        val publicKey: String? = null,
+        val keyVersion: Int? = null,
     )
 
     data class DeviceRegisterResponse(
@@ -163,6 +165,8 @@ class GatewayApi(
     data class DevicePatchRequest(
         val id: String,
         val pushToken: String?,
+        val publicKey: String?,
+        val keyVersion: Int?,
         val simCards: List<SimCard>?,
     )
 

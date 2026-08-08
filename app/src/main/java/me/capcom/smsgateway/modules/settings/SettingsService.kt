@@ -2,6 +2,7 @@ package me.capcom.smsgateway.modules.settings
 
 import android.content.Context
 import me.capcom.smsgateway.R
+import me.capcom.smsgateway.modules.device.DeviceSettings
 import me.capcom.smsgateway.modules.encryption.EncryptionSettings
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
 import me.capcom.smsgateway.modules.incoming.IncomingMessagesSettings
@@ -20,7 +21,8 @@ class SettingsService(
     messagesSettings: MessagesSettings,
     pingSettings: PingSettings,
     logsSettings: LogsSettings,
-    webhooksSettings: WebhooksSettings
+    webhooksSettings: WebhooksSettings,
+    deviceSettings: DeviceSettings,
 ) {
     private val settings = mapOf(
         "encryption" to encryptionSettings,
@@ -29,7 +31,8 @@ class SettingsService(
         "messages" to messagesSettings,
         "ping" to pingSettings,
         "logs" to logsSettings,
-        "webhooks" to webhooksSettings
+        "webhooks" to webhooksSettings,
+        "device" to deviceSettings,
     )
 
     fun getAll(): Map<String, *> {
