@@ -1,6 +1,11 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Preference
+        app:fragment="me.capcom.smsgateway.ui.settings.DeviceSettingsFragment"
+        app:icon="@drawable/ic_encryption"
+        app:summary="@string/device_keys_management"
+        app:title="@string/device_dotdotdot" />
+    <Preference
         android:icon="@drawable/ic_local_server"
         app:fragment="me.capcom.smsgateway.ui.settings.LocalServerSettingsFragment"
         app:summary="@string/port_credentials_etc"
