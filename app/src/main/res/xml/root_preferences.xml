@@ -47,6 +47,7 @@
         app:title="@string/ping">
         <EditTextPreference
             android:key="ping.interval_seconds"
+            app:icon="@drawable/ic_ping"
             app:title="@string/interval_seconds"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
@@ -54,6 +55,7 @@
     <PreferenceCategory app:title="@string/logs">
         <Preference
             app:fragment="me.capcom.smsgateway.ui.LogsListFragment"
+            app:icon="@drawable/ic_logs"
             app:summary="@string/list_of_last_50_log_entries"
             app:title="@string/view" />
         <EditTextPreference
@@ -84,6 +86,7 @@
         <Preference
             android:key="transient.app_version"
             android:title="@string/app_version_build"
+            app:icon="@drawable/ic_info"
             app:persistent="false"
             app:selectable="false" />
     </PreferenceCategory>
