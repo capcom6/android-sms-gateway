@@ -3,6 +3,7 @@ package me.capcom.smsgateway.modules.orchestrator
 import android.content.Context
 import me.capcom.smsgateway.helpers.SettingsHelper
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
+import me.capcom.smsgateway.modules.device.DeviceService
 import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.incoming.IncomingMessagesService
 import me.capcom.smsgateway.modules.localserver.LocalServerService
@@ -24,6 +25,7 @@ class OrchestratorService(
     private val receiverService: ReceiverService,
     private val pingSvc: PingService,
     private val logsSvc: LogsService,
+    private val deviceService: DeviceService,
     private val settings: SettingsHelper,
 ) {
     fun start(context: Context, autostart: Boolean) {
@@ -35,6 +37,7 @@ class OrchestratorService(
         messagesSvc.start(context)
         incomingSvc.start(context)
         webHooksSvc.start(context)
+        deviceService.start(context)
         gatewaySvc.start(context)
 
         try {
@@ -76,5 +79,6 @@ class OrchestratorService(
         messagesSvc.stop(context)
         incomingSvc.stop(context)
         logsSvc.stop(context)
+        deviceService.stop(context)
     }
 }
