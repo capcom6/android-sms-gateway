@@ -95,6 +95,9 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 🔔 **Real-time incoming message notifications:** Receive instant SMS and MMS notifications via webhooks.
 - 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) via the same webhooks used for real-time notifications.
 - 📎 **MMS download notifications:** Receive webhook notifications when MMS messages are fully downloaded, including message body and attachments.
+- 📦 **Batch webhook events:** Receive batched webhook deliveries when multiple messages arrive at once, reducing the number of requests.
+- 🛑 **Cancel pending messages:** Cancel queued messages before they are sent.
+- ⏳ **Send rate limiting:** Restrict the number of messages sent per period (e.g., per 30 minutes) to avoid operator throttling.
 
 🔒 Security and Privacy:
 
@@ -105,7 +108,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 
 - 💳 **Multiple SIM card support:** Supports devices with [multiple SIM cards](https://docs.sms-gate.app/features/multi-sim/).
 - 📱📱 **Multiple device support:** Connect [multiple devices](https://docs.sms-gate.app/features/multi-device/) to the same account with Cloud or Private server. Messages sent via the server are distributed across all connected devices.
-- 💾 **Data SMS support:** Send and receive binary [data payloads](https://docs.sms-gate.app/features/data-sms.md) via SMS for IoT commands, encrypted messages, and other specialized use cases.
+- 💾 **Data SMS support:** Send and receive binary [data payloads](https://docs.sms-gate.app/features/data-sms/) via SMS for IoT commands, encrypted messages, and other specialized use cases.
 - 🕐 **Working hours scheduling:** Restrict message delivery to configurable time windows, automatically pausing the queue outside of them
 
 🔌 Integration:
@@ -208,6 +211,8 @@ This mode is ideal for sending messages from a local network.
       send --phones '+19162255887,+19162255888' 'Hello, doctors!'
     ```
 
+The full API reference is available as interactive Swagger documentation at `http://<device_local_ip>:8080/docs`.
+
 ### Cloud Server
 
 <div align="center">
@@ -244,16 +249,22 @@ Use webhooks to receive notifications for messaging events (e.g., incoming SMS a
 
 #### Supported Events
 
-| Event               | Description                                                                 |
-| ------------------- | --------------------------------------------------------------------------- |
-| `sms:received`      | Triggered when an SMS message is received                                   |
-| `sms:sent`          | Triggered when an SMS message is sent                                       |
-| `sms:delivered`     | Triggered when an SMS message is delivered                                  |
-| `sms:failed`        | Triggered when an SMS message fails to send                                 |
-| `sms:data-received` | Triggered when a data SMS is received                                       |
-| `mms:received`      | Triggered when an MMS notification is received (before download)            |
-| `mms:downloaded`    | Triggered when an MMS message is fully downloaded with body and attachments |
-| `system:ping`       | Periodic heartbeat event                                                    |
+| Event                     | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `sms:received`            | Triggered when an SMS message is received                                   |
+| `sms:batch:received`      | Triggered when multiple SMS messages are received at once (batched)         |
+| `sms:sent`                | Triggered when an SMS message is sent                                       |
+| `sms:delivered`           | Triggered when an SMS message is delivered                                  |
+| `sms:failed`              | Triggered when an SMS message fails to send                                 |
+| `sms:cancelled`           | Triggered when a pending SMS message is cancelled                           |
+| `sms:data-received`       | Triggered when a data SMS is received                                       |
+| `sms:batch:data-received` | Triggered when multiple data SMS messages are received at once (batched)    |
+| `mms:received`            | Triggered when an MMS notification is received (before download)            |
+| `mms:batch:received`      | Triggered when multiple MMS notifications are received at once (batched)    |
+| `mms:downloaded`          | Triggered when an MMS message is fully downloaded with body and attachments |
+| `mms:batch:downloaded`    | Triggered when multiple MMS messages are fully downloaded (batched)         |
+| `app:started`             | Triggered when the app is started, with the list of active SIM cards        |
+| `system:ping`             | Periodic heartbeat event                                                    |
 
 #### Setting Up Webhooks
 
@@ -308,7 +319,7 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 - [x] Send notifications to an external server when the status of a message changes.
 - [ ] Incorporate scheduling capabilities for dispatching messages at specific times.
 - [ ] Implement region-based restrictions to prevent international SMS.
-- [ ] Provide an API endpoint to retrieve the list of available SIM cards on the device.
+- [x] Provide an API endpoint to retrieve the list of available SIM cards on the device.
 - [x] Include detailed error messages in responses and logs.
 
 See the [open issues](https://github.com/capcom6/android-sms-gateway/issues) for a full list of proposed features (and known issues).

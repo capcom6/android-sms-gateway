@@ -5,14 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v1.70.3] - 2026-08-11
 
-### Added
-- SMS Receiver settings section with Content Provider Monitoring toggle to disable fallback content observer
+### Changed
+- Process sent/delivered broadcasts asynchronously so message status updates aren't dropped [b08ebe6]
+
+## [v1.70.2] - 2026-08-08
+
+### Changed
+- Improve start/stop button [89c5635]
+
+## [v1.70.1] - 2026-08-06
 
 ### Fixed
-- Duplicate SMS detection when a message arrives via both broadcast receiver and content observer — use `DATE_SENT` instead of `DATE` in both paths so timestamps match consistently
-- Export (`POST /messages/inbox/export`) no longer produces duplicates of messages already received via broadcast
+- Sent message status updates no longer dropped when the broadcast is missing a URI extra [1575024]
+
+## [v1.70.0] - 2026-08-05
+
+### Changed
+- Periodically clean up incoming messages [697ec79]
+
+## [v1.69.0] - 2026-08-03
+
+### Added
+- Work hours support for outgoing messages [4bb53ab]
+
+## [v1.68.0] - 2026-07-14
+
+### Added
+- Incoming MMS attachments support [0cdc5d8]
+
+### Changed
+- Delay MMS parsing until download completes [90d16d9]
+
+## [v1.67.0] - 2026-07-08
+
+### Added
+- `sms:cancelled` webhook event [cd6c30a]
+- Ability to cancel pending messages [3820815]
+- Per 30 minutes sending limit option [11580ad]
+- SMS Receiver settings section with Content Provider Monitoring toggle to disable fallback content observer [d682d6f]
+
+### Fixed
+- Duplicate SMS detection when a message arrives via both broadcast receiver and content observer — use `DATE_SENT` instead of `DATE` in both paths so timestamps match consistently [89bf4f5]
+- Export (`POST /messages/inbox/export`) no longer produces duplicates of messages already received via broadcast [64ce33b]
 
 ## [v1.66.1] - 2026-06-24
 
