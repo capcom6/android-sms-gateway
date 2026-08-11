@@ -24,6 +24,7 @@ import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
 import me.capcom.smsgateway.modules.localserver.auth.requireScope
 import me.capcom.smsgateway.modules.localserver.domain.InboxRefreshRequest
 import me.capcom.smsgateway.modules.localserver.domain.messages.DataMessage
+import me.capcom.smsgateway.modules.localserver.domain.messages.MessageSort
 import me.capcom.smsgateway.modules.localserver.domain.messages.PostMessageRequest
 import me.capcom.smsgateway.modules.localserver.domain.messages.TextMessage
 import me.capcom.smsgateway.modules.messages.MessagesService
@@ -66,6 +67,7 @@ class MessagesRoutes(
                     return@get
                 }
             } ?: false
+            val sort = MessageSort.parse(call.request.queryParameters["sort"])
 
             // Parse date range parameters
             val from = call.request.queryParameters["from"]?.let {
@@ -106,7 +108,15 @@ class MessagesRoutes(
 
             // Get messages with pagination
             val messages = try {
-                messagesService.selectMessages(EntitySource.Local, state, from, to, limit, offset)
+                messagesService.selectMessages(
+                    EntitySource.Local,
+                    state,
+                    from,
+                    to,
+                    limit,
+                    offset,
+                    sort.toDomain()
+                )
             } catch (e: Throwable) {
                 call.respond(
                     HttpStatusCode.InternalServerError,

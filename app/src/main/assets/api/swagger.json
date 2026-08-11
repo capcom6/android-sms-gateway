@@ -2618,6 +2618,19 @@
               "default": false,
               "type": "boolean"
             }
+          },
+          {
+            "description": "Sort order per JSON:API spec. Use created_at (ascending) or -created_at (descending)",
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "default": "-created_at",
+              "enum": [
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
