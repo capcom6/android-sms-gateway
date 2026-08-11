@@ -32,6 +32,7 @@ import me.capcom.smsgateway.modules.health.domain.CheckResult
 import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
+import me.capcom.smsgateway.modules.messages.data.MessageSort
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
@@ -191,8 +192,12 @@ class MessagesService(
         start: Long,
         end: Long,
         limit: Int,
-        offset: Int
-    ) = dao.select(source, state, start, end, limit, offset)
+        offset: Int,
+        sort: MessageSort = MessageSort.CreatedAtDesc
+    ) = when (sort) {
+        MessageSort.CreatedAtDesc -> dao.selectDescending(source, state, start, end, limit, offset)
+        MessageSort.CreatedAtAsc -> dao.selectAscending(source, state, start, end, limit, offset)
+    }
     //#endregion
 
     suspend fun processStateIntent(intent: Intent, resultCode: Int) {

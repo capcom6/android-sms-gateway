@@ -76,7 +76,21 @@ interface MessagesDao {
      */
     @Transaction
     @Query("SELECT *, `rowid` FROM message WHERE source = :source AND (:state IS NULL OR state = :state) AND createdAt BETWEEN :start AND :end ORDER BY createdAt DESC LIMIT :limit OFFSET :offset")
-    fun select(
+    fun selectDescending(
+        source: EntitySource,
+        state: ProcessingState?,
+        start: Long,
+        end: Long,
+        limit: Int,
+        offset: Int
+    ): List<MessageWithRecipients>
+
+    /**
+     * Get messages with pagination, filtering and ascending sort
+     */
+    @Transaction
+    @Query("SELECT *, `rowid` FROM message WHERE source = :source AND (:state IS NULL OR state = :state) AND createdAt BETWEEN :start AND :end ORDER BY createdAt ASC, id ASC LIMIT :limit OFFSET :offset")
+    fun selectAscending(
         source: EntitySource,
         state: ProcessingState?,
         start: Long,
@@ -151,7 +165,7 @@ interface MessagesDao {
     fun cancelMessage(id: String) {
         val updated = _cancelMessage(id)
         if (updated == 0) return
-        
+
         _insertMessageState(
             MessageState(id, ProcessingState.Cancelled, System.currentTimeMillis())
         )
