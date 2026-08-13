@@ -98,8 +98,6 @@
         API. أعد تشغيل التطبيق لتطبيق التغييرات.</string>
     <string name="settings_local_address_not_found">غير متاح</string>
     <string name="settings_local_server">الخادم المحلي</string>
-    <string name="settings_offline">غير متصل</string>
-    <string name="settings_online">متصل</string>
     <string name="settings_public_address_not_found">غير متاح</string>
     <string name="settings_start_on_boot">بدء التشغيل عند إقلاع النظام</string>
     <string name="sign_in">تسجيل الدخول</string>
@@ -145,16 +143,8 @@
     <string name="processing">معالجة</string>
     <string name="processing_order_title">ترتيب المعالجة</string>
     <string name="queue_status">📊 حالة الطابور</string>
-    <string name="total_messages">الإجمالي: %1$d</string>
-    <string name="pending_messages">قيد الانتظار: %1$d</string>
-    <string name="sent_messages">تم الإرسال: %1$d</string>
-    <string name="delivered_messages">تم التسليم: %1$d</string>
-    <string name="failed_messages">فشل: %1$d</string>
     <string name="incoming_messages">الواردة</string>
     <string name="incoming_messages_status">📥 حالة الوارد</string>
-    <string name="incoming_sms_messages">SMS: %1$d</string>
-    <string name="incoming_data_messages">Data SMS: %1$d</string>
-    <string name="incoming_mms_messages">MMS: %1$d</string>
     <string name="jwt">JWT</string>
     <string name="jwt_default_ttl_seconds">TTL الافتراضي لـ JWT (بالثواني)</string>
     <string name="jwt_ttl_must_be_between_1_second_and_365_days">يجب أن يكون TTL لـ JWT بين ثانية
@@ -173,4 +163,25 @@
     <string name="clear_password">مسح كلمة المرور</string>
     <string name="password_cleared">تم مسح كلمة المرور</string>
     <string name="password_must_not_be_empty">يجب أن لا تكون كلمة المرور فارغة</string>
+    <string name="button_start_service">بدء الخدمة</string>
+    <string name="button_stop_service">إيقاف الخدمة</string>
+    <string name="receiver_content_provider_monitoring">مراقبة موفر المحتوى</string>
+    <string name="receiver_content_provider_monitoring_summary">اكتشاف الرسائل الواردة أيضًا عبر موفر المحتوى</string>
+    <string name="working_hours">ساعات العمل</string>
+    <string name="working_hours_enable">تفعيل ساعات العمل</string>
+    <string name="working_hours_summary">إرسال الرسائل فقط ضمن الفترة الزمنية المحددة</string>
+    <string name="working_hours_start">وقت البدء</string>
+    <string name="working_hours_end">وقت الانتهاء</string>
+    <string name="inbox_dotdotdot">الوارد…</string>
+    <string name="inbox_settings_summary">مراقبة موفر المحتوى، الاحتفاظ بالرسائل، إلخ.</string>
+    <string name="inbox">الوارد</string>
+    <string name="filter_all_count">الكل (%1$d)</string>
+    <string name="filter_pending_count">قيد الانتظار (%1$d)</string>
+    <string name="filter_sent_count">مرسلة (%1$d)</string>
+    <string name="filter_delivered_count">تم التسليم (%1$d)</string>
+    <string name="filter_failed_count">فشل الإرسال (%1$d)</string>
+    <string name="filter_cancelled_count">ملغاة (%1$d)</string>
+    <string name="filter_sms_count">SMS (%1$d)</string>
+    <string name="filter_data_sms_count">SMS بيانات (%1$d)</string>
+    <string name="filter_mms_count">MMS (%1$d)</string>
 </resources>
