@@ -19,53 +19,57 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="4dp"
                 android:text="@string/incoming_messages_status"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <GridLayout
+            <!-- Filter chips with counts -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/filterChipGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:alignmentMode="alignMargins"
-                android:columnCount="2"
-                android:rowOrderPreserved="false"
-                android:useDefaultMargins="true">
+                app:chipSpacingHorizontal="4dp"
+                app:chipSpacingVertical="0dp"
+                app:singleSelection="true"
+                app:selectionRequired="true">
 
-                <TextView
-                    android:id="@+id/totalIncomingMessages"
-                    android:layout_width="0dp"
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/filterAll"
+                    style="@style/CompactFilterChip"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    tools:text="Total: 0" />
+                    tools:text="All (0)" />
 
-                <TextView
-                    android:id="@+id/smsIncomingMessages"
-                    android:layout_width="0dp"
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/filterSms"
+                    style="@style/CompactFilterChip"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    tools:text="SMS: 0" />
+                    tools:text="SMS (0)" />
 
-                <TextView
-                    android:id="@+id/dataIncomingMessages"
-                    android:layout_width="0dp"
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/filterDataSms"
+                    style="@style/CompactFilterChip"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    tools:text="Data SMS: 0" />
+                    tools:text="Data SMS (0)" />
 
-                <TextView
-                    android:id="@+id/mmsIncomingMessages"
-                    android:layout_width="0dp"
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/filterMms"
+                    style="@style/CompactFilterChip"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    tools:text="MMS: 0" />
+                    tools:text="MMS (0)" />
 
-            </GridLayout>
+            </com.google.android.material.chip.ChipGroup>
+
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

@@ -72,6 +72,9 @@ class MessagesServiceTest {
         override fun selectLast(limit: Int): LiveData<List<Message>> =
             throw UnsupportedOperationException("not used in dispatch test")
 
+        override fun selectLastFiltered(limit: Int, state: String?): LiveData<List<Message>> =
+            throw UnsupportedOperationException("not used in dispatch test")
+
         override fun getPendingFifo(now: Date): MessageWithRecipients? =
             throw UnsupportedOperationException("not used in dispatch test")
 

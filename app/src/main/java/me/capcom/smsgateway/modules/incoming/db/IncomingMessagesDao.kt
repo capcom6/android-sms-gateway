@@ -16,6 +16,18 @@ interface IncomingMessagesDao {
 
     @Query(
         """
+        SELECT * FROM incoming_messages
+        WHERE (:type IS NULL OR
+              (:type = 'MMS' AND type IN ('MMS', 'MMS_DOWNLOADED')) OR
+              type = :type)
+        ORDER BY createdAt DESC, id DESC
+        LIMIT :limit
+        """
+    )
+    fun selectLastFiltered(limit: Int, type: String? = null): LiveData<List<IncomingMessage>>
+
+    @Query(
+        """
         SELECT COUNT(*)
         FROM incoming_messages
         WHERE (:type IS NULL OR type = :type)
