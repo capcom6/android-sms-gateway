@@ -12,7 +12,8 @@
     <string name="btn_continue">Продолжить</string>
     <string name="by_code">По коду</string>
     <string name="can_affect_battery_life">может влиять на время работы батареи</string>
-    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Нажмите
+    <string
+        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Нажмите
         \"Продолжить\", чтобы создать аккаунт. Личная информация не требуется.\nПродолжая, вы
         соглашаетесь с Политикой конфиденциальности по адресу
         https://docs.sms-gate.app/privacy/policy/</string>
@@ -98,8 +99,6 @@
         через API. Перезапустите приложение для применения изменений.</string>
     <string name="settings_local_address_not_found">Недоступно</string>
     <string name="settings_local_server">Локальный сервер</string>
-    <string name="settings_offline">Офлайн</string>
-    <string name="settings_online">Онлайн</string>
     <string name="settings_public_address_not_found">Недоступно</string>
     <string name="settings_start_on_boot">Автозапуск</string>
     <string name="sign_in">Войти</string>
@@ -142,11 +141,6 @@
     <string name="processing">Обработка</string>
     <string name="processing_order_title">Порядок обработки</string>
     <string name="queue_status">📊 Статус очереди</string>
-    <string name="total_messages">Всего: %1$d</string>
-    <string name="pending_messages">В ожидании: %1$d</string>
-    <string name="sent_messages">Отправлено: %1$d</string>
-    <string name="delivered_messages">Доставлено: %1$d</string>
-    <string name="failed_messages">Сбоев: %1$d</string>
     <string name="jwt">JWT</string>
     <string name="jwt_default_ttl_seconds">TTL JWT по умолчанию (в секундах)</string>
     <string name="jwt_ttl_must_be_between_1_second_and_365_days">TTL JWT должен быть между 1
@@ -160,9 +154,6 @@
     <string name="cancel">Отмена</string>
     <string name="incoming_messages">ВХОДЯЩИЕ</string>
     <string name="incoming_messages_status">📥 Статус входящих</string>
-    <string name="incoming_sms_messages">SMS: %1$d</string>
-    <string name="incoming_data_messages">Данные SMS: %1$d</string>
-    <string name="incoming_mms_messages">MMS: %1$d</string>
     <string name="outgoing_messages">ИСХОДЯЩИЕ</string>
     <string name="language">Язык</string>
     <string name="language_system">Системный (по умолчанию)</string>
@@ -171,4 +162,26 @@
     <string name="password_cleared">Пароль очищен</string>
     <string name="password_must_not_be_empty">Пароль не может быть пустым</string>
     <string name="password_hidden">Пароль скрыт</string>
+    <string name="button_start_service">Запустить</string>
+    <string name="button_stop_service">Остановить</string>
+    <string name="receiver_content_provider_monitoring">Мониторинг контент-провайдера</string>
+    <string name="receiver_content_provider_monitoring_summary">Также определять входящие SMS через
+        контент-провайдер</string>
+    <string name="working_hours">Рабочие часы</string>
+    <string name="working_hours_enable">Включить рабочие часы</string>
+    <string name="working_hours_summary">Отправлять сообщения только в заданный интервал времени</string>
+    <string name="working_hours_start">Начало</string>
+    <string name="working_hours_end">Окончание</string>
+    <string name="inbox_dotdotdot">Входящие…</string>
+    <string name="inbox_settings_summary">Мониторинг контент-провайдера, хранение сообщений и т.д.</string>
+    <string name="inbox">Входящие</string>
+    <string name="filter_all_count">Все (%1$d)</string>
+    <string name="filter_pending_count">Ожидают (%1$d)</string>
+    <string name="filter_sent_count">Отправлено (%1$d)</string>
+    <string name="filter_delivered_count">Доставлено (%1$d)</string>
+    <string name="filter_failed_count">Ошибка (%1$d)</string>
+    <string name="filter_cancelled_count">Отменено (%1$d)</string>
+    <string name="filter_sms_count">SMS (%1$d)</string>
+    <string name="filter_data_sms_count">Data SMS (%1$d)</string>
+    <string name="filter_mms_count">MMS (%1$d)</string>
 </resources>
