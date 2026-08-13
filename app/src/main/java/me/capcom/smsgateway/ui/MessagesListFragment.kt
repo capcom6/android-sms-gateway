@@ -14,6 +14,7 @@ import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.databinding.FragmentMessagesListBinding
 import me.capcom.smsgateway.modules.messages.vm.MessagesListViewModel
 import me.capcom.smsgateway.ui.adapters.MessagesAdapter
+import me.capcom.smsgateway.domain.ProcessingState
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
@@ -42,15 +43,37 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
             DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL)
         )
 
-        // Observe stats LiveData
+        // Observe stats LiveData to update filter chip counts; hide zero-valued chips
         viewModel.totals.observe(viewLifecycleOwner) { stats ->
             stats?.let {
-                binding.totalMessages.text = getString(R.string.total_messages, it.total)
-                binding.pendingMessages.text = getString(R.string.pending_messages, it.pending)
-                binding.sentMessages.text = getString(R.string.sent_messages, it.sent)
-                binding.deliveredMessages.text =
-                    getString(R.string.delivered_messages, it.delivered)
-                binding.failedMessages.text = getString(R.string.failed_messages, it.failed)
+                binding.filterAll.text = getString(R.string.filter_all_count, it.total)
+                binding.filterPending.text = getString(R.string.filter_pending_count, it.pending)
+                binding.filterPending.visibility = if (it.pending > 0) View.VISIBLE else View.GONE
+                binding.filterSent.text = getString(R.string.filter_sent_count, it.sent)
+                binding.filterSent.visibility = if (it.sent > 0) View.VISIBLE else View.GONE
+                binding.filterDelivered.text =
+                    getString(R.string.filter_delivered_count, it.delivered)
+                binding.filterDelivered.visibility =
+                    if (it.delivered > 0) View.VISIBLE else View.GONE
+                binding.filterFailed.text = getString(R.string.filter_failed_count, it.failed)
+                binding.filterFailed.visibility = if (it.failed > 0) View.VISIBLE else View.GONE
+                binding.filterCancelled.text =
+                    getString(R.string.filter_cancelled_count, it.cancelled)
+                binding.filterCancelled.visibility =
+                    if (it.cancelled > 0) View.VISIBLE else View.GONE
+
+                // If the active filter's chip was just hidden, reset to All
+                if (viewModel.filter.value != null) {
+                    val activeVisible = when (viewModel.filter.value) {
+                        ProcessingState.Pending -> it.pending > 0
+                        ProcessingState.Sent -> it.sent > 0
+                        ProcessingState.Delivered -> it.delivered > 0
+                        ProcessingState.Failed -> it.failed > 0
+                        ProcessingState.Cancelled -> it.cancelled > 0
+                        else -> true
+                    }
+                    if (!activeVisible) viewModel.setFilter(null)
+                }
             }
         }
 
@@ -58,6 +81,33 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
             val shouldScrollToTop = _binding?.recyclerView?.computeVerticalScrollOffset() == 0
             messagesAdapter.submitList(it) {
                 if (shouldScrollToTop) _binding?.recyclerView?.scrollToPosition(0)
+            }
+        }
+
+        // Filter chips setup
+        binding.filterAll.isChecked = true
+
+        viewModel.filter.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                null -> { if (!binding.filterAll.isChecked) binding.filterAll.isChecked = true }
+                ProcessingState.Pending -> { if (!binding.filterPending.isChecked) binding.filterPending.isChecked = true }
+                ProcessingState.Sent -> { if (!binding.filterSent.isChecked) binding.filterSent.isChecked = true }
+                ProcessingState.Delivered -> { if (!binding.filterDelivered.isChecked) binding.filterDelivered.isChecked = true }
+                ProcessingState.Failed -> { if (!binding.filterFailed.isChecked) binding.filterFailed.isChecked = true }
+                ProcessingState.Cancelled -> { if (!binding.filterCancelled.isChecked) binding.filterCancelled.isChecked = true }
+                else -> { if (!binding.filterAll.isChecked) binding.filterAll.isChecked = true }
+            }
+        }
+
+        binding.filterChipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            when (checkedIds.firstOrNull()) {
+                R.id.filterAll -> viewModel.setFilter(null)
+                R.id.filterPending -> viewModel.setFilter(ProcessingState.Pending)
+                R.id.filterSent -> viewModel.setFilter(ProcessingState.Sent)
+                R.id.filterDelivered -> viewModel.setFilter(ProcessingState.Delivered)
+                R.id.filterFailed -> viewModel.setFilter(ProcessingState.Failed)
+                R.id.filterCancelled -> viewModel.setFilter(ProcessingState.Cancelled)
+                else -> viewModel.setFilter(null)
             }
         }
     }

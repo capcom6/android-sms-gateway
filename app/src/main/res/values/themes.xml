@@ -30,4 +30,13 @@
         <item name="android:layout_gravity">start</item>
         <item name="android:layout_margin">4dp</item>
     </style>
+
+    <!-- Compact filter chip for stats panels -->
+    <style name="CompactFilterChip" parent="Widget.MaterialComponents.Chip.Filter">
+        <item name="chipMinHeight">28dp</item>
+        <item name="chipCornerRadius">14dp</item>
+        <item name="chipMinTouchTargetSize">32dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="checkedIconVisible">false</item>
+    </style>
 </resources>

@@ -21,6 +21,9 @@ class MessagesRepository(private val dao: MessagesDao) {
 
     fun selectLast(limit: Int) = dao.selectLast(limit).distinctUntilChanged()
 
+    fun selectLast(limit: Int, state: ProcessingState? = null) =
+        dao.selectLastFiltered(limit, state?.name).distinctUntilChanged()
+
     val messagesTotals: LiveData<MessagesTotals> = dao.getMessagesStats().distinctUntilChanged()
 
     fun get(id: String): StoredSendRequest {
