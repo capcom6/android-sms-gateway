@@ -258,15 +258,50 @@ class MessagesService(
 
             EventsReceiver.ACTION_DELIVERED -> when (resultCode) {
                 Activity.RESULT_OK -> {
-                    val message = SmsMessage.createFromPdu(
-                        intent.extras?.getByteArray("pdu")
-                    )
-                    when {
-                        message.status.toUInt() < 0b0100000u -> ProcessingState.Delivered to message.status.takeIf { it > 0 }
-                            ?.let { "Delivery result from SC ${message.serviceCenterAddress}: ${message.status}" }
+                    val pdu = intent.extras?.getByteArray("pdu")
+                    val format = intent.getStringExtra("format")
+                    val message = if (format != null
+                        && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                    ) {
+                        SmsMessage.createFromPdu(pdu, format)
+                    } else {
+                        SmsMessage.createFromPdu(pdu)
+                    }
 
-                        message.status.toUInt() < 0b1000000u -> return // SC will make more attempts
-                        else -> ProcessingState.Failed to "Delivery result from SC ${message.serviceCenterAddress}: ${message.status}"
+                    val rawStatus = message.status
+                    val scAddress = message.serviceCenterAddress
+                    val status = if (format == "3gpp2") {
+                        rawStatus
+                    } else {
+                        rawStatus and 0x7F
+                    }
+                    logsService.insert(
+                        LogEntry.Priority.DEBUG,
+                        MODULE_NAME,
+                        "Delivery report parsed",
+                        mapOf(
+                            "format" to (format ?: "default(3gpp)"),
+                            "rawStatus" to rawStatus,
+                            "status" to status,
+                            "scAddress" to scAddress,
+                        )
+                    )
+
+                    when {
+                        format == "3gpp2" -> when (rawStatus ushr 24 and 0x3) {
+                            0 -> ProcessingState.Delivered to (rawStatus ushr 16 and 0xFF).takeIf { it > 0 }
+                                ?.let { "Delivery result from SC $scAddress: $it" }
+
+                            1 -> return // SC will make more attempts
+                            else -> ProcessingState.Failed to
+                                "Delivery result from SC $scAddress: ${rawStatus ushr 16 and 0xFF}"
+                        }
+
+                        status < 0b0100000 -> ProcessingState.Delivered to status.takeIf { it > 0 }
+                            ?.let { "Delivery result from SC $scAddress: $it" }
+
+                        status < 0b1000000 -> return // SC will make more attempts
+                        else -> ProcessingState.Failed to "Delivery result from SC $scAddress: $status"
                     }
                 }
 
