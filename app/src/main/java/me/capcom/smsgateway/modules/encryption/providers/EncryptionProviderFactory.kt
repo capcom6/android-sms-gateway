@@ -8,15 +8,17 @@ object EncryptionProviderFactory : KoinComponent {
     private val providers = ConcurrentHashMap<String, EncryptionProvider>()
 
     fun create(algorithm: String?): EncryptionProvider {
-        val algorithm = algorithm ?: DEFAULT_ALGORITHM
+        val resolved = algorithm ?: DEFAULT_ALGORITHM
 
-        return providers[algorithm]
-            ?: (when (algorithm) {
-                PASSPHRASE_FORMAT -> PassphraseEncryptionProvider(get())
+        return providers[resolved]
+            ?: (when (resolved) {
+                PASSPHRASE_FORMAT -> LegacyPassphraseEncryptionProvider(get())
+                PASSPHRASE_FORMAT_V2 -> HardenedPassphraseEncryptionProvider(get())
                 else -> throw RuntimeException("Method is not supported")
-            }.also { providers[algorithm] = it })
+            }.also { providers[resolved] = it })
     }
 
     private const val PASSPHRASE_FORMAT = "aes-256-cbc/pbkdf2-sha1"
-    const val DEFAULT_ALGORITHM = PASSPHRASE_FORMAT
+    private const val PASSPHRASE_FORMAT_V2 = "aes-256-cbc/pbkdf2-sha1/v2"
+    const val DEFAULT_ALGORITHM = PASSPHRASE_FORMAT_V2
 }
