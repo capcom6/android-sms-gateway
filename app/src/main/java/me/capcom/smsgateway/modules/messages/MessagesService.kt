@@ -746,7 +746,7 @@ class MessagesService(
         }
     }
 
-    private fun decryptAndNormalizePhone(
+    private suspend fun decryptAndNormalizePhone(
         source: String,
         isEncrypted: Boolean,
         skipValidation: Boolean,
