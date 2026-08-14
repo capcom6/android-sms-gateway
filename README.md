@@ -256,6 +256,8 @@ Use the cloud server mode when dealing with dynamic or shared device IP addresse
 
 For further privacy, you can deploy your own private server. See the [Private Server](https://sms-gate.app/getting-started/private-server/) section for more details.
 
+When connected to the cloud server, received messages (SMS, Data SMS, and MMS) are automatically uploaded to the server for centralized access.
+
 ### Webhooks
 
 Use webhooks to receive notifications for messaging events (e.g., incoming SMS and MMS).

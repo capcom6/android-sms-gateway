@@ -8,6 +8,7 @@ val dbModule = module {
     single { get<AppDatabase>().incomingMessagesDao() }
     single { get<AppDatabase>().webhooksDao() }
     single { get<AppDatabase>().webhookQueueDao() }
+    single { get<AppDatabase>().inboxUploadDao() }
     single { get<AppDatabase>().logDao() }
     single { get<AppDatabase>().tokensDao() }
 }
