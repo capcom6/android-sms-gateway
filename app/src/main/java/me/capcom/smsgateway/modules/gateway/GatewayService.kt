@@ -239,38 +239,17 @@ class GatewayService(
 
     private suspend fun processMessage(context: Context, message: GatewayApi.Message) {
         when (message.state) {
-            ProcessingState.Pending, null -> {}
-            ProcessingState.Cancelling -> {
-                try {
-                    messagesService.cancelMessage(message.id)
-                } catch (_: IllegalArgumentException) {
-                    // message not found locally — nothing to cancel
-                    sendState(
-                        GatewayApi.MessagePatchRequest(
-                            message.id,
-                            ProcessingState.Cancelled,
-                            message.phoneNumbers.map {
-                                GatewayApi.RecipientState(
-                                    it,
-                                    ProcessingState.Cancelled,
-                                    null
-                                )
-                            },
-                            mapOf(ProcessingState.Cancelled to Date())
-                        )
-                    )
-                    return
-                } catch (_: IllegalStateException) {
-                    // message not in Pending state — already sent/cancelled
-                }
+            GatewayApi.MessageState.Pending, null -> {}
+            GatewayApi.MessageState.Cancelling -> {
+                handleCloudCancel(message, messagesService::cancelMessage, ::sendState)
                 return
             }
 
-            ProcessingState.Cancelled,
-            ProcessingState.Processed,
-            ProcessingState.Sent,
-            ProcessingState.Delivered,
-            ProcessingState.Failed -> return
+            GatewayApi.MessageState.Cancelled,
+            GatewayApi.MessageState.Processed,
+            GatewayApi.MessageState.Sent,
+            GatewayApi.MessageState.Delivered,
+            GatewayApi.MessageState.Failed -> return
         }
 
         val messageState = messagesService.getMessage(message.id)
@@ -368,5 +347,43 @@ class GatewayService(
         )
 
         else -> "****"
+    }
+}
+
+/**
+ * Resolves a wire-level "Cancelling" instruction from the gateway (used by
+ * [GatewayService.processMessage]). Cancelling is a server-side async-cancel
+ * marker that is handled here and never persisted locally:
+ * - [cancelMessage] succeeds (message found, still Pending): nothing else to do;
+ * - [cancelMessage] throws [IllegalArgumentException] (message missing locally):
+ *   report a Cancelled patch back to the server;
+ * - [cancelMessage] throws [IllegalStateException] (already sent/cancelled):
+ *   the actual outcome was or will be reported, stay silent.
+ */
+internal suspend fun handleCloudCancel(
+    message: GatewayApi.Message,
+    cancelMessage: suspend (String) -> Unit,
+    sendCancelled: suspend (GatewayApi.MessagePatchRequest) -> Unit
+) {
+    try {
+        cancelMessage(message.id)
+    } catch (_: IllegalArgumentException) {
+        // message not found locally — nothing to cancel
+        sendCancelled(
+            GatewayApi.MessagePatchRequest(
+                message.id,
+                ProcessingState.Cancelled,
+                message.phoneNumbers.map {
+                    GatewayApi.RecipientState(
+                        it,
+                        ProcessingState.Cancelled,
+                        null
+                    )
+                },
+                mapOf(ProcessingState.Cancelled to Date())
+            )
+        )
+    } catch (_: IllegalStateException) {
+        // message not in Pending state — already sent/cancelled
     }
 }

@@ -27,7 +27,6 @@ import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.helpers.PhoneHelper
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.encryption.EncryptionService
-import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.health.domain.CheckResult
 import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.logs.LogsService
@@ -36,7 +35,6 @@ import me.capcom.smsgateway.modules.messages.data.MessageSort
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
-import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
 import me.capcom.smsgateway.modules.messages.exceptions.ConflictException
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
@@ -51,7 +49,7 @@ class MessagesService(
     private val dao: MessagesDao,    // todo: use MessagesRepository
     private val messages: MessagesRepository,
     private val encryptionService: EncryptionService,
-    private val events: EventBus,
+    private val machine: MessageStateService,
     private val logsService: LogsService,
     private val mmsSender: MmsSender,
 ) {
@@ -100,36 +98,8 @@ class MessagesService(
     //#endregion
 
     //#region Cancel
-    suspend fun cancelMessage(id: String): MessageWithRecipients {
-        val existing = dao.get(id)
-            ?: throw IllegalArgumentException("Message with id $id not found")
-
-        if (existing.message.state == ProcessingState.Cancelled) {
-            return existing
-        }
-
-        if (existing.message.state != ProcessingState.Pending) {
-            throw IllegalStateException("Message $id is not in Pending state")
-        }
-
-        dao.cancelMessage(id)
-
-        val message = requireNotNull(dao.get(id))
-
-        events.emit(
-            MessageStateChangedEvent(
-                id,
-                message.message.source,
-                message.recipients.map { it.phoneNumber }.toSet(),
-                message.message.state,
-                message.message.simNumber,
-                message.message.partsCount,
-                null
-            )
-        )
-
-        return message
-    }
+    suspend fun cancelMessage(id: String): MessageWithRecipients =
+        machine.transitionRecipients(id, ProcessingState.Cancelled)
     //#endregion
 
     //#region Send
@@ -176,25 +146,7 @@ class MessagesService(
     //#endregion
 
     //#region Read
-    fun getMessage(id: String): MessageWithRecipients? {
-        val message = dao.get(id)
-            ?: return null
-
-        val state = message.state
-
-        if (state == message.message.state) {
-            return message
-        }
-
-        if (state != message.message.state) {
-            when (state) {
-                ProcessingState.Processed -> dao.setMessageProcessed(message.message.id)
-                else -> dao.updateMessageState(message.message.id, state)
-            }
-        }
-
-        return dao.get(id)
-    }
+    fun getMessage(id: String): MessageWithRecipients? = dao.get(id)
 
     /**
      * Count messages based on state and date range
@@ -239,7 +191,7 @@ class MessagesService(
                 ProcessingState.Failed to "MMS send result: ${mmsErrorToMessage(resultCode)}"
             }
             try {
-                updateState(id, null, mmsState, mmsError)
+                machine.transitionRecipients(id, mmsState, mmsError)
             } finally {
                 MmsSender.cleanup(context, id)
             }
@@ -278,7 +230,7 @@ class MessagesService(
 
         val (id, phone) = intent.dataString?.split("|", limit = 2) ?: return
 
-        updateState(id, phone, state, error)
+        machine.transitionRecipient(id, phone, state, error)
     }
 
     suspend fun truncateLog() {
@@ -394,13 +346,13 @@ class MessagesService(
      */
     private suspend fun sendMessage(request: StoredSendRequest): Boolean {
         if (request.params.validUntil?.before(Date()) == true) {
-            updateState(request.message.id, null, ProcessingState.Failed, "TTL expired")
+            machine.transitionRecipients(request.message.id, ProcessingState.Failed, "TTL expired")
             return false
         }
 
         // Re-check state: message might have been cancelled while in queue
         val currentState = dao.get(request.message.id)?.message?.state
-        if (currentState == ProcessingState.Cancelling || currentState == ProcessingState.Cancelled) {
+        if (currentState == ProcessingState.Cancelled) {
             logsService.insert(
                 LogEntry.Priority.INFO,
                 MODULE_NAME,
@@ -417,9 +369,8 @@ class MessagesService(
             return true
         } catch (e: Exception) {
             e.printStackTrace()
-            updateState(
+            machine.transitionRecipients(
                 request.message.id,
-                null,
                 ProcessingState.Failed,
                 "Can't send message: " + e.message
             )
@@ -480,34 +431,13 @@ class MessagesService(
         // Only transition recipients that are still Pending: if the
         // ACTION_MMS_SENT callback already recorded Sent/Failed, the terminal
         // state must not be overwritten.
-        updateState(id, null, ProcessingState.Processed)
-    }
-
-    private suspend fun updateState(
-        id: String,
-        phone: String?,
-        state: ProcessingState,
-        error: String? = null
-    ) {
-        if (phone == null) {
-            dao.updateRecipientsState(id, state, error)
-        } else {
-            dao.updateRecipientState(id, phone, state, error)
+        try {
+            machine.transitionRecipients(id, ProcessingState.Processed)
+        } catch (_: IllegalStateException) {
+            // The ACTION_MMS_SENT callback already advanced recipients to
+            // Sent/Failed before this call executed. This is a benign race
+            // condition; the callback owns the final state.
         }
-
-        val msg = requireNotNull(getMessage(id))
-
-        events.emit(
-            MessageStateChangedEvent(
-                id,
-                msg.message.source,
-                phone?.let { setOf(it) } ?: msg.recipients.map { it.phoneNumber }.toSet(),
-                state,
-                msg.message.simNumber,
-                msg.message.partsCount,
-                error
-            )
-        )
     }
 
     private fun selectSimNumber(id: Long, params: SendParams): Int? {
@@ -640,7 +570,7 @@ class MessagesService(
 
                     sendFn(normalizedPhoneNumber, sentIntent, deliveredIntent)
 
-                    updateState(id, sourcePhoneNumber, ProcessingState.Processed)
+                    machine.transitionRecipient(id, sourcePhoneNumber, ProcessingState.Processed)
                 } catch (th: Throwable) {
                     logsService.insert(
                         LogEntry.Priority.ERROR,
@@ -651,7 +581,7 @@ class MessagesService(
                         )
                     )
 
-                    updateState(
+                    machine.transitionRecipient(
                         id,
                         sourcePhoneNumber,
                         ProcessingState.Failed,
