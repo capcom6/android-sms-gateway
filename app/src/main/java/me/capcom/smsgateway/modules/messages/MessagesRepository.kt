@@ -99,6 +99,11 @@ class MessagesRepository(private val dao: MessagesDao) {
                         message.message.content,
                         MessageContent.Data::class.java
                     )
+
+                    MessageType.Mms -> gson.fromJson(
+                        message.message.content,
+                        MessageContent.Mms::class.java
+                    )
                 },
                 phoneNumbers = message.recipients.filter { it.state == ProcessingState.Pending }
                     .map { it.phoneNumber },

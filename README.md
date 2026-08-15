@@ -95,9 +95,11 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 🔔 **Real-time incoming message notifications:** Receive instant SMS and MMS notifications via webhooks.
 - 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) via the same webhooks used for real-time notifications.
 - 📎 **MMS download notifications:** Receive webhook notifications when MMS messages are fully downloaded, including message body and attachments.
+- 📤 **Send MMS messages via API:** Send multimedia messages (images, audio, video, files) with an optional subject and text body.
 - 📦 **Batch webhook events:** Receive batched webhook deliveries when multiple messages arrive at once, reducing the number of requests.
 - 🛑 **Cancel pending messages:** Cancel queued messages before they are sent.
 - ⏳ **Send rate limiting:** Restrict the number of messages sent per period (e.g., per 30 minutes) to avoid operator throttling.
+- 🖼️ **Send and receive MMS with payloads:** Send images, audio, video, and other media as MMS with inline or URL-referenced attachments. Received attachments are persisted locally and exposed via the API. See [`docs/MMS.md`](docs/MMS.md).
 
 🔒 Security and Privacy:
 
@@ -211,6 +213,17 @@ This mode is ideal for sending messages from a local network.
       send --phones '+19162255887,+19162255888' 'Hello, doctors!'
     ```
 
+    To send an MMS message, use the `mmsMessage` field with one or more Base64-encoded attachments:
+
+    ```sh
+    curl -X POST -u <username>:<password> \
+      -H "Content-Type: application/json" \
+      -d '{ "mmsMessage": { "subject": "Hello", "text": "See the photo", "attachments": [ { "contentType": "image/jpeg", "name": "photo.jpg", "data": "<base64-encoded-bytes>" } ] }, "phoneNumbers": ["+19162255887"] }' \
+      http://<device_local_ip>:8080/message
+    ```
+
+    *Note*: The `data` field must contain Base64-encoded bytes. The app must be set as the device's default SMS app for reliable MMS sending on most carriers.
+
 The full API reference is available as interactive Swagger documentation at `http://<device_local_ip>:8080/docs`.
 
 ### Cloud Server
@@ -321,6 +334,7 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 - [ ] Implement region-based restrictions to prevent international SMS.
 - [x] Provide an API endpoint to retrieve the list of available SIM cards on the device.
 - [x] Include detailed error messages in responses and logs.
+- [x] Send MMS messages via the API.
 
 See the [open issues](https://github.com/capcom6/android-sms-gateway/issues) for a full list of proposed features (and known issues).
 
