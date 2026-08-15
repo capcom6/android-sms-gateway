@@ -7,8 +7,9 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val messagesModule = module {
-    single { MessagesRepository(get()) }
+    singleOf(::MessagesRepository)
     singleOf(::MessagesService)
+    singleOf(::MessageStateService)
     viewModel { MessagesListViewModel(get()) }
     viewModel { MessageDetailsViewModel(get()) }
 }

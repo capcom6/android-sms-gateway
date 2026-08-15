@@ -151,10 +151,16 @@ interface MessagesDao {
     }
 
     @Query("UPDATE message SET state = :state WHERE id = :id AND state <> 'Failed'")
-    fun _updateMessageState(id: String, state: ProcessingState)
+    suspend fun _updateMessageState(id: String, state: ProcessingState)
 
-    fun updateMessageState(id: String, state: ProcessingState) {
-        _updateMessageState(id, state)
+    @Transaction
+    suspend fun updateMessageState(id: String, state: ProcessingState) {
+        if (state == ProcessingState.Processed) {
+            _setMessageProcessed(id)
+        } else {
+            _updateMessageState(id, state)
+        }
+
         _insertMessageState(
             MessageState(
                 id,
@@ -164,32 +170,8 @@ interface MessagesDao {
         )
     }
 
-    @Query("UPDATE message SET state = 'Cancelled' WHERE id = :id AND state = 'Pending'")
-    fun _cancelMessage(id: String): Int
-
-    @Transaction
-    fun cancelMessage(id: String) {
-        val updated = _cancelMessage(id)
-        if (updated == 0) return
-
-        _insertMessageState(
-            MessageState(id, ProcessingState.Cancelled, System.currentTimeMillis())
-        )
-        updateRecipientsState(id, ProcessingState.Cancelled, null)
-    }
-
-    @Query("UPDATE message SET state = 'Processed', processedAt = strftime('%s', 'now') * 1000 WHERE id = :id")
-    fun _setMessageProcessed(id: String)
-    fun setMessageProcessed(id: String) {
-        _setMessageProcessed(id)
-        _insertMessageState(
-            MessageState(
-                id,
-                ProcessingState.Processed,
-                System.currentTimeMillis()
-            )
-        )
-    }
+    @Query("UPDATE message SET state = 'Processed', processedAt = strftime('%s', 'now') * 1000 WHERE id = :id AND state <> 'Failed'")
+    suspend fun _setMessageProcessed(id: String)
 
     @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND phoneNumber = :phoneNumber AND state <> 'Failed'")
     fun _updateRecipientState(
@@ -229,6 +211,18 @@ interface MessagesDao {
     ) {
         _updateRecipientsState(id, state, error)
         _insertRecipientStatesByMessage(id, state)
+    }
+
+    @Transaction
+    suspend fun updateRecipientsAndMessageState(
+        id: String,
+        recipientState: ProcessingState,
+        error: String?,
+        messageState: ProcessingState
+    ) {
+        _updateRecipientsState(id, recipientState, error)
+        _insertRecipientStatesByMessage(id, recipientState)
+        updateMessageState(id, messageState)
     }
 
     @Query("UPDATE message SET simNumber = :simNumber WHERE id = :id")
