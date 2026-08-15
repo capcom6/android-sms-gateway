@@ -12,6 +12,7 @@ import java.util.Date
 enum class MessageType {
     Text,
     Data,
+    Mms,
 }
 
 @Entity(
@@ -80,6 +81,7 @@ data class Message constructor(
         type = when (content) {
             is MessageContent.Text -> MessageType.Text
             is MessageContent.Data -> MessageType.Data
+            is MessageContent.Mms -> MessageType.Mms
         },
         createdAt = createdAt,
     )
@@ -93,6 +95,12 @@ data class Message constructor(
     val dataContent: MessageContent.Data?
         get() = when (type) {
             MessageType.Data -> gson.fromJson(content, MessageContent.Data::class.java)
+            else -> null
+        }
+
+    val mmsContent: MessageContent.Mms?
+        get() = when (type) {
+            MessageType.Mms -> gson.fromJson(content, MessageContent.Mms::class.java)
             else -> null
         }
 
