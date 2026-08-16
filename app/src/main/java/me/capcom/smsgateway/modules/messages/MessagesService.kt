@@ -55,6 +55,12 @@ class MessagesService(
     private val logsService: LogsService,
     private val mmsSender: MmsSender,
 ) {
+    /**
+     * Serializes the worker (KEEP/REPLACE) decisions made from the DB snapshot
+     * with the enqueues and worker reschedules, so that a concurrent enqueue
+     * cannot install a delayed work between the snapshot read and the start call.
+     */
+    private val sendWorkerLock = Any()
     val processingOrder
         get() = settings.processingOrder
 
@@ -130,31 +136,42 @@ class MessagesService(
     fun enqueueMessage(request: SendRequest): MessageWithRecipients {
         val priority = request.params.priority ?: Message.PRIORITY_DEFAULT
         val scheduleAt = request.params.scheduleAt?.time
-        val nextScheduled = dao.nextScheduledTime()?.takeIf { it > 0 }
 
-        val message = try {
-            messages.enqueue(request)
-        } catch (_: android.database.sqlite.SQLiteConstraintException) {
-            throw ConflictException()
+        synchronized(sendWorkerLock) {
+            val nextScheduled = dao.nextScheduledTime()?.takeIf { it > 0 }
+
+            val message = try {
+                messages.enqueue(request)
+            } catch (_: android.database.sqlite.SQLiteConstraintException) {
+                throw ConflictException()
+            }
+
+            val workHoursStart = if (priority < Message.PRIORITY_EXPEDITED) {
+                settings.nextWorkHoursStart()
+            } else {
+                null
+            }
+            val startTime = when {
+                workHoursStart != null && workHoursStart < (nextScheduled ?: 0) -> workHoursStart
+                scheduleAt != null
+                        && scheduleAt > System.currentTimeMillis()
+                        && scheduleAt < (nextScheduled ?: 0) -> scheduleAt
+
+                else -> SendMessagesWorker.IMMEDIATE
+            }
+
+            if (startTime == SendMessagesWorker.IMMEDIATE) {
+                SendMessagesWorker.start(
+                    context,
+                    nextScheduled != null || priority >= Message.PRIORITY_EXPEDITED,
+                    SendMessagesWorker.IMMEDIATE
+                )
+            } else {
+                SendMessagesWorker.start(context, true, startTime)
+            }
+
+            return message
         }
-
-        val workHoursStart = if (priority < Message.PRIORITY_EXPEDITED) {
-            settings.nextWorkHoursStart()
-        } else {
-            null
-        }
-        val startTime = when {
-            workHoursStart != null && workHoursStart < (nextScheduled ?: 0) -> workHoursStart
-            scheduleAt != null
-                    && scheduleAt > System.currentTimeMillis()
-                    && scheduleAt < (nextScheduled ?: 0) -> scheduleAt
-
-            else -> SendMessagesWorker.IMMEDIATE
-        }
-
-        SendMessagesWorker.start(context, true, startTime)
-
-        return message
     }
     //#endregion
 
@@ -290,8 +307,8 @@ class MessagesService(
                 }
 
                 // skip work hours for expedited messages
-                if (priority < Message.PRIORITY_EXPEDITED) {
-                    applyWorkHoursLimit()
+                if (priority < Message.PRIORITY_EXPEDITED && applyWorkHoursLimit()) {
+                    continue
                 }
 
                 if (!withContext(NonCancellable) { sendMessage(message) }) {
@@ -313,10 +330,12 @@ class MessagesService(
             }
         } finally {
             if (coroutineContext.isActive) {
-                // After processing all pending messages, check if there are any scheduled messages for the future
-                val nextScheduledTime = dao.nextScheduledTime() ?: 0
-                if (nextScheduledTime > System.currentTimeMillis()) {
-                    SendMessagesWorker.start(context, true, nextScheduledTime)
+                synchronized(sendWorkerLock) {
+                    // After processing all pending messages, check if there are any scheduled messages for the future
+                    val nextScheduledTime = dao.nextScheduledTime() ?: 0
+                    if (nextScheduledTime > System.currentTimeMillis()) {
+                        SendMessagesWorker.start(context, true, nextScheduledTime)
+                    }
                 }
             }
         }
@@ -336,14 +355,38 @@ class MessagesService(
         delay(settings.limitPeriod.duration - (System.currentTimeMillis() - processedStats.lastTimestamp) + 1000L)
     }
 
-    private suspend fun applyWorkHoursLimit() {
-        val nextStart = settings.nextWorkHoursStart() ?: return
+    /**
+     * Delays message sending until work hours start if outside work hours.
+     *
+     * @return `true` if the current message should be skipped because due
+     * expedited messages must be sent first
+     */
+    private suspend fun applyWorkHoursLimit(): Boolean {
+        val nextStart = settings.nextWorkHoursStart() ?: return false
 
         val delayMs = nextStart - System.currentTimeMillis()
         if (delayMs > 0) {
-            SendMessagesWorker.start(context, true, nextStart)
-            delay(delayMs)
+            val shouldDelay = synchronized(sendWorkerLock) {
+                if (dao.countExpeditedDue(Message.PRIORITY_EXPEDITED, Date()) > 0) {
+                    logsService.insert(
+                        LogEntry.Priority.DEBUG,
+                        MODULE_NAME,
+                        "Deferring message outside work hours: expedited messages are due",
+                    )
+                    false
+                } else {
+                    SendMessagesWorker.start(context, true, nextStart)
+                    true
+                }
+            }
+            if (shouldDelay) {
+                delay(delayMs)
+            }
+
+            return !shouldDelay
         }
+
+        return false
     }
 
     /**

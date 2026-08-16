@@ -84,6 +84,9 @@ class MessagesServiceTest {
         override fun nextScheduledTime(): Long? =
             throw UnsupportedOperationException("not used in dispatch test")
 
+        override fun countExpeditedDue(minPriority: Byte, now: Date): Int =
+            throw UnsupportedOperationException("not used in dispatch test")
+
         override fun get(id: String): MessageWithRecipients? =
             throw UnsupportedOperationException("not used in dispatch test")
 
