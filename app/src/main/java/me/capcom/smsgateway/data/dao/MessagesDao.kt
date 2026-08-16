@@ -64,6 +64,9 @@ interface MessagesDao {
     @Query("SELECT strftime('%s', MIN(COALESCE(`scheduleAt`, '1970-01-01T00:00:00.000Z'))) * 1000 FROM Message WHERE state = 'Pending'")
     fun nextScheduledTime(): Long?
 
+    @Query("SELECT COUNT(*) FROM message WHERE state = 'Pending' AND priority >= :minPriority AND (scheduleAt IS NULL OR scheduleAt <= :now)")
+    fun countExpeditedDue(minPriority: Byte, now: Date): Int
+
     @Transaction
     @Query("SELECT *, `rowid` FROM message WHERE id = :id")
     fun get(id: String): MessageWithRecipients?
