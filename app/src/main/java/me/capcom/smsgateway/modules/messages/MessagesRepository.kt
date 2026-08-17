@@ -28,6 +28,13 @@ class MessagesRepository(private val dao: MessagesDao) {
             ?: throw IllegalArgumentException("Message with id $id not found")
     }
 
+    /**
+     * Whether the gateway itself sent [content] to a number ending in [phoneSuffix]
+     * at or after [since]. See [MessagesDao.countRecentSendsTo] for the matching rules.
+     */
+    fun wasSentByGateway(phoneSuffix: String, content: String, since: Long): Boolean =
+        dao.countRecentSendsTo(phoneSuffix, content, since) > 0
+
     fun enqueue(request: SendRequest): MessageWithRecipients {
         val message = MessageWithRecipients(
             Message(

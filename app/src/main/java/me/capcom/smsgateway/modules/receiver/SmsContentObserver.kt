@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
+import me.capcom.smsgateway.modules.messages.MessagesRepository
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.modules.webhooks.WebHooksService
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
@@ -38,6 +39,7 @@ class SmsContentObserver : KoinComponent {
     private val logsService: LogsService by inject()
     private val receiverSettings: ReceiverSettings by inject()
     private val webHooksService: WebHooksService by inject()
+    private val messagesRepository: MessagesRepository by inject()
 
     private var handlerThread: HandlerThread? = null
     private var observer: ContentObserver? = null
@@ -266,6 +268,11 @@ class SmsContentObserver : KoinComponent {
                     null
                 }
 
+                if (isGatewayEcho(address, body, date)) {
+                    storage.sentSmsLastProcessedID = id
+                    continue
+                }
+
                 try {
                     val simSlotIndex = subId?.let {
                         SubscriptionsHelper.getSimSlotIndex(context, it)
@@ -297,6 +304,41 @@ class SmsContentObserver : KoinComponent {
         }
     }
 
+    /**
+     * Whether a row in the sent box is really this gateway's own API send, mirrored into
+     * the provider by the messaging stack, rather than a message a human composed on the
+     * phone. Such a row would otherwise be reported as `sms:device-sent` on top of the
+     * `sms:sent` already emitted for it.
+     *
+     * The gateway itself never writes to the SMS provider (it holds neither `WRITE_SMS`
+     * nor the default-SMS-app role) and `SmsManager.sendTextMessage` does not persist on
+     * stock Android, so on AOSP this should never match. Some OEM builds do mirror sent
+     * messages regardless of the sending app, and this guards that case.
+     *
+     * Deliberately conservative: on any failure it returns false, so the worst outcome is
+     * a duplicate event rather than a silently dropped message.
+     */
+    private fun isGatewayEcho(address: String, body: String, sentAt: Date): Boolean {
+        val digits = address.filter { it.isDigit() }
+        if (digits.isEmpty()) return false
+
+        return try {
+            messagesRepository.wasSentByGateway(
+                phoneSuffix = digits.takeLast(PHONE_MATCH_DIGITS),
+                content = body,
+                since = sentAt.time - GATEWAY_ECHO_WINDOW_MS,
+            )
+        } catch (e: Exception) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Could not check whether a sent SMS originated from the gateway",
+                mapOf("error" to (e.message ?: e.toString())),
+            )
+            false
+        }
+    }
+
     private fun canReadSms(): Boolean = ContextCompat.checkSelfPermission(
         context,
         android.Manifest.permission.READ_SMS,
@@ -304,5 +346,11 @@ class SmsContentObserver : KoinComponent {
 
     companion object {
         private const val TAG = "SmsContentObserver"
+
+        /** How far back to look for a matching gateway send. */
+        private const val GATEWAY_ECHO_WINDOW_MS = 5 * 60 * 1000L
+
+        /** Trailing digits compared, since the sent box may store a local number format. */
+        private const val PHONE_MATCH_DIGITS = 9
     }
 }

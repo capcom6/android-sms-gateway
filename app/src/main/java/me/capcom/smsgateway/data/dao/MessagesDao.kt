@@ -84,6 +84,25 @@ interface MessagesDao {
         limit: Int,
         offset: Int
     ): List<MessageWithRecipients>
+
+    /**
+     * Counts messages the gateway itself sent to a recipient recently. Used to tell a
+     * genuinely device-composed SMS apart from a gateway send that an OEM messaging
+     * stack mirrored into `content://sms/sent`.
+     *
+     * Recipients are stored in E.164 while the sent box may hold the number in a local
+     * format, so the match is on a trailing digit suffix rather than the whole string.
+     * Content is only compared when it is not encrypted, since an encrypted row holds
+     * ciphertext that can never match the provider's plaintext body.
+     */
+    @Query(
+        "SELECT COUNT(*) FROM message m " +
+                "JOIN messagerecipient r ON r.messageId = m.id " +
+                "WHERE m.processedAt >= :since " +
+                "AND r.phoneNumber LIKE '%' || :phoneSuffix " +
+                "AND (m.isEncrypted != 0 OR m.content = :content)"
+    )
+    fun countRecentSendsTo(phoneSuffix: String, content: String, since: Long): Int
     //#endregion
 
     @Insert
