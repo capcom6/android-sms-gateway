@@ -55,6 +55,20 @@ sealed class SmsEventPayload(
         val receivedAt: Date,
     ) : SmsEventPayload(messageId, sender, recipient, simNumber, sender)
 
+    /**
+     * An outgoing SMS composed on the device itself. [sender] is the device's
+     * own number (when resolvable) and [recipient] is the remote party, which
+     * is the opposite of the *Received payloads above.
+     */
+    class SmsDeviceSent(
+        messageId: String,
+        sender: String?,
+        recipient: String,
+        simNumber: Int?,
+        val message: String,
+        val sentAt: Date,
+    ) : SmsEventPayload(messageId, sender, recipient, simNumber, recipient)
+
     class SmsCancelled(
         messageId: String,
         sender: String?,

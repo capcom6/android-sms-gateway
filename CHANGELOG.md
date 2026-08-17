@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - SMS Receiver settings section with Content Provider Monitoring toggle to disable fallback content observer
+- `sms:device-sent` webhook event reporting outgoing SMS composed on the device itself, so integrations can see both sides of a conversation (opt-in, disabled by default)
 
 ### Fixed
 - Duplicate SMS detection when a message arrives via both broadcast receiver and content observer — use `DATE_SENT` instead of `DATE` in both paths so timestamps match consistently

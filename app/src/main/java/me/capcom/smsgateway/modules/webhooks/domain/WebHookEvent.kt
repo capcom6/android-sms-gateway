@@ -32,4 +32,12 @@ enum class WebHookEvent(val value: String) {
 
     @SerializedName("sms:cancelled")
     SmsCancelled("sms:cancelled"),
+
+    /**
+     * An outgoing SMS composed on the device itself (e.g. in the default
+     * messaging app), as opposed to [SmsSent], which reports messages the
+     * gateway sent through its own API.
+     */
+    @SerializedName("sms:device-sent")
+    SmsDeviceSent("sms:device-sent"),
 }

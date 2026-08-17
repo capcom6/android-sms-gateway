@@ -247,7 +247,8 @@ Use webhooks to receive notifications for messaging events (e.g., incoming SMS a
 | Event               | Description                                                                 |
 | ------------------- | --------------------------------------------------------------------------- |
 | `sms:received`      | Triggered when an SMS message is received                                   |
-| `sms:sent`          | Triggered when an SMS message is sent                                       |
+| `sms:sent`          | Triggered when an SMS message is sent through the gateway API               |
+| `sms:device-sent`   | Triggered when an outgoing SMS is composed on the device itself (opt-in)    |
 | `sms:delivered`     | Triggered when an SMS message is delivered                                  |
 | `sms:failed`        | Triggered when an SMS message fails to send                                 |
 | `sms:data-received` | Triggered when a data SMS is received                                       |
