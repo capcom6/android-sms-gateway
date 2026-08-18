@@ -235,32 +235,39 @@
       "smsgateway.Device": {
         "properties": {
           "createdAt": {
-            "description": "Created at (read only)",
+            "description": "Time at which the device was created, read only.",
             "example": "2020-01-01T00:00:00Z",
             "type": "string"
           },
           "deletedAt": {
-            "description": "Deleted at (read only)",
+            "description": "Time at which the device was deleted, read only.",
             "example": "2020-01-01T00:00:00Z",
             "type": "string"
           },
           "id": {
-            "description": "ID",
+            "description": "Device ID, read only.",
             "example": "PyDmBQZZXYmyxMwED8Fzy",
             "type": "string"
           },
           "lastSeen": {
-            "description": "Last seen at (read only)",
+            "description": "Time at which the device was last seen, read only.",
             "example": "2020-01-01T00:00:00Z",
             "type": "string"
           },
           "name": {
-            "description": "Name",
+            "description": "Device name.",
             "example": "My Device",
             "type": "string"
           },
+          "simCards": {
+            "description": "List of SIM cards in the device.",
+            "items": {
+              "$ref": "#/components/schemas/smsgateway.SimCard"
+            },
+            "type": "array"
+          },
           "updatedAt": {
-            "description": "Updated at (read only)",
+            "description": "Time at which the device was last updated, read only.",
             "example": "2020-01-01T00:00:00Z",
             "type": "string"
           }
@@ -540,7 +547,7 @@
             "type": "string"
           },
           "triggerWebhooks": {
-            "description": "Indicates whether to trigger webhooks for the refreshed messages.",
+            "description": "Deprecated: use WebhookDelivery instead. Indicates whether to trigger webhooks for the refreshed messages.",
             "example": true,
             "type": "boolean"
           },
@@ -549,6 +556,16 @@
             "example": "2024-01-01T23:59:59Z",
             "format": "date-time",
             "type": "string"
+          },
+          "webhookDelivery": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.WebhookDelivery"
+              }
+            ],
+            "description": "Delivery mode for webhooks (overrides triggerWebhooks when set).",
+            "example": "Batch",
+            "type": "object"
           }
         },
         "required": [
@@ -679,6 +696,7 @@
           "inbox:read",
           "inbox:refresh",
           "logs:read",
+          "messages:cancel",
           "messages:send",
           "messages:read",
           "messages:list",
@@ -698,6 +716,7 @@
           "ScopeInboxRead",
           "ScopeInboxRefresh",
           "ScopeLogsRead",
+          "ScopeMessagesCancel",
           "ScopeMessagesSend",
           "ScopeMessagesRead",
           "ScopeMessagesList",
@@ -714,6 +733,7 @@
         "enum": [
           "Disabled",
           "PerMinute",
+          "Per30Minutes",
           "PerHour",
           "PerDay"
         ],
@@ -721,6 +741,7 @@
         "x-enum-varnames": [
           "Disabled",
           "PerMinute",
+          "Per30Minutes",
           "PerHour",
           "PerDay"
         ]
@@ -1003,6 +1024,8 @@
       "smsgateway.ProcessingState": {
         "enum": [
           "Pending",
+          "Cancelling",
+          "Cancelled",
           "Processed",
           "Sent",
           "Delivered",
@@ -1010,6 +1033,8 @@
         ],
         "type": "string",
         "x-enum-comments": {
+          "ProcessingStateCancelled": "Cancelled",
+          "ProcessingStateCancelling": "Cancelling (cancellation requested)",
           "ProcessingStateDelivered": "Delivered",
           "ProcessingStateFailed": "Failed",
           "ProcessingStatePending": "Pending",
@@ -1018,6 +1043,8 @@
         },
         "x-enum-descriptions": [
           "Pending",
+          "Cancelling (cancellation requested)",
+          "Cancelled",
           "Processed (received by device)",
           "Sent",
           "Delivered",
@@ -1025,6 +1052,8 @@
         ],
         "x-enum-varnames": [
           "ProcessingStatePending",
+          "ProcessingStateCancelling",
+          "ProcessingStateCancelled",
           "ProcessingStateProcessed",
           "ProcessingStateSent",
           "ProcessingStateDelivered",
@@ -1110,7 +1139,7 @@
                 "$ref": "#/components/schemas/smsgateway.LimitPeriod"
               }
             ],
-            "description": "LimitPeriod defines the period for message sending limits.\nValid values are \"Disabled\", \"PerMinute\", \"PerHour\", or \"PerDay\".",
+            "description": "LimitPeriod defines the period for message sending limits.\nValid values are \"Disabled\", \"PerMinute\", \"Per30Minutes\", \"PerHour\", or \"PerDay\".",
             "type": "object"
           },
           "limit_value": {
@@ -1150,6 +1179,18 @@
             ],
             "description": "SimSelectionMode defines how SIM cards are selected for sending messages.\nValid values are \"OSDefault\", \"RoundRobin\", or \"Random\".",
             "type": "object"
+          },
+          "work_hours_enabled": {
+            "description": "WorkHoursEnabled enables restricting message delivery to a configurable time window.",
+            "type": "boolean"
+          },
+          "work_hours_end": {
+            "description": "WorkHoursEnd is the end of the working hours window in HH:mm format (24-hour).",
+            "type": "string"
+          },
+          "work_hours_start": {
+            "description": "WorkHoursStart is the start of the working hours window in HH:mm format (24-hour).",
+            "type": "string"
           }
         },
         "type": "object"
@@ -1178,6 +1219,31 @@
           "signing_key": {
             "description": "SigningKey is the secret key used for signing webhook payloads. Must not be used with Cloud Server.",
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "smsgateway.SimCard": {
+        "properties": {
+          "carrierName": {
+            "description": "Carrier/network operator name (may be null).",
+            "type": "string"
+          },
+          "iccid": {
+            "description": "Integrated Circuit Card Identifier (may be null).",
+            "type": "string"
+          },
+          "phoneNumber": {
+            "description": "Phone number associated with the SIM.",
+            "type": "string"
+          },
+          "simNumber": {
+            "description": "1-based slot number (1, 2, or 3).",
+            "type": "integer"
+          },
+          "slotIndex": {
+            "description": "0-based physical slot index.",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -1292,6 +1358,29 @@
         ],
         "type": "object"
       },
+      "smsgateway.WebhookDelivery": {
+        "enum": [
+          "Disabled",
+          "Individual",
+          "Batch"
+        ],
+        "type": "string",
+        "x-enum-comments": {
+          "WebhookDeliveryBatch": "Deliver webhooks as ordered batches.",
+          "WebhookDeliveryDisabled": "Disable webhook delivery.",
+          "WebhookDeliveryIndividual": "Deliver webhooks individually (one per message)."
+        },
+        "x-enum-descriptions": [
+          "Disable webhook delivery.",
+          "Deliver webhooks individually (one per message).",
+          "Deliver webhooks as ordered batches."
+        ],
+        "x-enum-varnames": [
+          "WebhookDeliveryDisabled",
+          "WebhookDeliveryIndividual",
+          "WebhookDeliveryBatch"
+        ]
+      },
       "smsgateway.WebhookEvent": {
         "enum": [
           "sms:received",
@@ -1299,14 +1388,26 @@
           "sms:sent",
           "sms:delivered",
           "sms:failed",
+          "sms:cancelled",
           "system:ping",
           "mms:received",
-          "mms:downloaded"
+          "mms:downloaded",
+          "app:started",
+          "sms:batch:received",
+          "sms:batch:data-received",
+          "mms:batch:received",
+          "mms:batch:downloaded"
         ],
         "type": "string",
         "x-enum-comments": {
+          "WebhookEventAppStarted": "Triggered when the application is started.",
+          "WebhookEventMmsBatchDownloaded": "Triggered when a batch of MMS messages is downloaded.",
+          "WebhookEventMmsBatchReceived": "Triggered when a batch of MMS messages is received.",
           "WebhookEventMmsDownloaded": "Triggered when an MMS is downloaded.",
           "WebhookEventMmsReceived": "Triggered when an MMS is received.",
+          "WebhookEventSmsBatchDataReceived": "Triggered when a batch of data SMS messages is received.",
+          "WebhookEventSmsBatchReceived": "Triggered when a batch of SMS messages is received.",
+          "WebhookEventSmsCancelled": "Triggered when an SMS is cancelled.",
           "WebhookEventSmsDataReceived": "Triggered when a data SMS is received.",
           "WebhookEventSmsDelivered": "Triggered when an SMS is delivered.",
           "WebhookEventSmsFailed": "Triggered when an SMS processing fails.",
@@ -1320,9 +1421,15 @@
           "Triggered when an SMS is sent.",
           "Triggered when an SMS is delivered.",
           "Triggered when an SMS processing fails.",
+          "Triggered when an SMS is cancelled.",
           "Triggered when the device pings the server.",
           "Triggered when an MMS is received.",
-          "Triggered when an MMS is downloaded."
+          "Triggered when an MMS is downloaded.",
+          "Triggered when the application is started.",
+          "Triggered when a batch of SMS messages is received.",
+          "Triggered when a batch of data SMS messages is received.",
+          "Triggered when a batch of MMS messages is received.",
+          "Triggered when a batch of MMS messages is downloaded."
         ],
         "x-enum-varnames": [
           "WebhookEventSmsReceived",
@@ -1330,9 +1437,15 @@
           "WebhookEventSmsSent",
           "WebhookEventSmsDelivered",
           "WebhookEventSmsFailed",
+          "WebhookEventSmsCancelled",
           "WebhookEventSystemPing",
           "WebhookEventMmsReceived",
-          "WebhookEventMmsDownloaded"
+          "WebhookEventMmsDownloaded",
+          "WebhookEventAppStarted",
+          "WebhookEventSmsBatchReceived",
+          "WebhookEventSmsBatchDataReceived",
+          "WebhookEventMmsBatchReceived",
+          "WebhookEventMmsBatchDownloaded"
         ]
       },
       "SmsReceivedPayload": {
@@ -1488,7 +1601,7 @@
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
     },
     "title": "SMSGate API",
-    "version": "1.70.4"
+    "version": "1.71.0"
   },
   "openapi": "3.0.1",
   "paths": {
@@ -2274,7 +2387,7 @@
     },
     "/inbox/refresh": {
       "post": {
-        "description": "Refreshes inbox messages. Webhooks are triggered when triggerWebhooks is true.",
+        "description": "Refreshes inbox messages. Webhook triggering depends on the `webhookDelivery` parameter.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2714,6 +2827,95 @@
       }
     },
     "/messages/{id}": {
+      "delete": {
+        "description": "Cancels a pending message by ID. The message must be in Pending state.",
+        "parameters": [
+          {
+            "description": "Message ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.GetMessageResponse"
+                }
+              }
+            },
+            "description": "Message state after cancellation"
+          },
+          "400": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Message not found"
+          },
+          "500": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/smsgateway.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "ApiAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "Cancel message",
+        "tags": [
+          "User",
+          "Messages"
+        ]
+      },
       "get": {
         "description": "Returns message state by ID",
         "parameters": [
