@@ -28,7 +28,18 @@ class Converters {
 
     @TypeConverter
     fun dateFromString(value: String?): Date? {
-        return value?.let { DATE_FORMAT.parse(it) }
+        if (value == null) return null
+        // Try the canonical format first, then a tolerant fallback list.
+        // Never let a ParseException/RuntimeException escape into LiveData.
+        val parsers = listOf(DATE_FORMAT) + FALLBACK_FORMATS
+        for (format in parsers) {
+            try {
+                format.parse(value)?.let { return it }
+            } catch (_: Exception) {
+                // try next format
+            }
+        }
+        return null
     }
 
     @TypeConverter
@@ -46,5 +57,32 @@ class Converters {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
                 timeZone = TimeZone.getTimeZone("GMT")
             }
+
+        // Accepted legacy/alternate formats (all interpreted as GMT to match the
+        // canonical writer). Used only after DATE_FORMAT fails, so new rows keep
+        // the exact .SSS'Z' round-trip while old rows (e.g. produced by MIGRATION_7_8
+        // via strftime without milliseconds) are parsed without crashing.
+        private val FALLBACK_FORMATS = listOf(
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("GMT")
+                isLenient = true
+            },
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("GMT")
+                isLenient = true
+            },
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("GMT")
+                isLenient = true
+            },
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("GMT")
+                isLenient = true
+            },
+            SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("GMT")
+                isLenient = true
+            },
+        )
     }
 }
