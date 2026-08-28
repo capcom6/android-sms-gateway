@@ -481,9 +481,15 @@
             ],
             "description": "Present only when `includeContent=true` and the message type is text.",
             "type": "object"
+          },
+          "createdAt": {
+            "description": "Message creation time",
+            "format": "date-time",
+            "type": "string"
           }
         },
         "required": [
+          "createdAt",
           "deviceId",
           "id",
           "recipients",
@@ -1084,9 +1090,15 @@
             ],
             "description": "Present only when `includeContent=true` and the message type is text.",
             "type": "object"
+          },
+          "createdAt": {
+            "description": "Message creation time",
+            "format": "date-time",
+            "type": "string"
           }
         },
         "required": [
+          "createdAt",
           "deviceId",
           "id",
           "recipients",
