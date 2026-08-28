@@ -109,7 +109,7 @@
 
                         <TextView
                             style="@style/HomeCardLabel"
-                            android:text="@string/label_username" />
+                            android:text="@string/username" />
 
                         <TextView
                             android:id="@+id/textLocalUsername"
@@ -118,7 +118,7 @@
 
                         <TextView
                             style="@style/HomeCardLabel"
-                            android:text="@string/label_password" />
+                            android:text="@string/password" />
 
                         <TextView
                             android:id="@+id/textLocalPassword"
@@ -207,7 +207,7 @@
 
                         <TextView
                             style="@style/HomeCardLabel"
-                            android:text="@string/label_username" />
+                            android:text="@string/username" />
 
                         <TextView
                             android:id="@+id/textRemoteUsername"
@@ -216,7 +216,7 @@
 
                         <TextView
                             style="@style/HomeCardLabel"
-                            android:text="@string/label_password" />
+                            android:text="@string/password" />
 
                         <TextView
                             android:id="@+id/textRemotePassword"
