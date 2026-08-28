@@ -25,7 +25,7 @@ class PasswordPromptDialogFragment : DialogFragment() {
             .apply {
                 setView(binding.root)
                 setPositiveButton(R.string.btn_continue, null)
-                setNegativeButton(R.string.btn_cancel) { _, _ ->
+                setNegativeButton(R.string.cancel) { _, _ ->
                     sendCanceledResult()
                 }
             }

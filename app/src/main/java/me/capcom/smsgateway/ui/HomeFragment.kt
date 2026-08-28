@@ -253,7 +253,7 @@ class HomeFragment : Fragment() {
                         )
                     )
 
-                } ?: getString(R.string.settings_local_address_not_found)
+                } ?: getString(R.string.not_available)
 
                 binding.textPublicIP.text = event.publicIP?.let {
                     makeCopyableLink(
@@ -265,7 +265,7 @@ class HomeFragment : Fragment() {
                             )
                         )
                     )
-                } ?: getString(R.string.settings_public_address_not_found)
+                } ?: getString(R.string.not_available)
 
                 // Set Local Server Device ID
                 binding.textLocalDeviceId.text = localServerSettings.deviceId?.let {

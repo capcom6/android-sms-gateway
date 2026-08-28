@@ -8,7 +8,6 @@
     <string name="battery_optimization_is_not_supported_on_this_device">Battery optimization is not
         supported on this device</string>
     <string name="battery_optimization">Battery optimization</string>
-    <string name="btn_cancel">Cancel</string>
     <string name="btn_continue">Continue</string>
     <string name="by_code">By Code</string>
     <string name="can_affect_battery_life">can affect battery life</string>
@@ -44,8 +43,6 @@
     <string name="invalid_url">Invalid URL</string>
     <string name="is_not_a_valid_port_must_be_between_1024_and_65535">%1$s is not a valid port. Must
         be between 1024 and 65535.</string>
-    <string name="label_password">Password</string>
-    <string name="label_username">Username</string>
     <string name="limits">Limits</string>
     <string name="list_of_last_50_log_entries">List of last 50 log entries</string>
     <string name="listening_to_the_server_events">Listening to server events…</string>
@@ -66,7 +63,6 @@
     <string name="no_webhooks_found">No webhooks configured</string>
     <string name="not_registered">not registered</string>
     <string name="not_set">Not set</string>
-    <string name="notification_title">SMSGate</string>
     <string name="notification_channel">Notification channel</string>
     <string name="online_status_at_the_cost_of_battery_life">Online status at the cost of battery
         life</string>
@@ -99,12 +95,11 @@
     <string name="settings_changed_via_api_restart_the_app_to_apply_changes">Settings changed via
         API. Restart the app to apply changes.</string>
     <string name="settings_local_address_is" translatable="false">&lt;a href>%1$s:%2$d&lt;/a></string>
-    <string name="settings_local_address_not_found">Not available</string>
+    <string name="not_available">Not available</string>
     <string name="settings_local_server">Local server</string>
     <string name="button_start_service">Start Service</string>
     <string name="button_stop_service">Stop Service</string>
     <string name="settings_public_address_is" translatable="false">&lt;a href>%1$s:%2$d&lt;/a></string>
-    <string name="settings_public_address_not_found">Not available</string>
     <string name="settings_start_on_boot">Start on boot</string>
     <string name="sign_in">Sign In</string>
     <string name="sign_up">Sign Up</string>
@@ -199,11 +194,8 @@
     <string name="inbox_dotdotdot">Inbox…</string>
     <string name="inbox_settings_summary">Content provider monitoring, retention, etc.</string>
     <string name="inbox">Inbox</string>
-    <string name="filter_all_count">All (%1$d)</string>
-    <string name="filter_pending_count">Pending (%1$d)</string>
     <string name="filter_sent_count">Sent (%1$d)</string>
     <string name="filter_delivered_count">Delivered (%1$d)</string>
-    <string name="filter_failed_count">Failed (%1$d)</string>
     <string name="filter_cancelled_count">Cancelled (%1$d)</string>
     <string name="filter_sms_count">SMS (%1$d)</string>
     <string name="filter_data_sms_count">Data SMS (%1$d)</string>

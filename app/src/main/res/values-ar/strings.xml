@@ -8,7 +8,6 @@
     <string name="battery_optimization_is_not_supported_on_this_device">تحسين البطارية غير مدعوم على
         هذا الجهاز</string>
     <string name="battery_optimization">تحسين البطارية</string>
-    <string name="btn_cancel">إلغاء</string>
     <string name="btn_continue">استمرار</string>
     <string name="by_code">بواسطة الكود</string>
     <string name="can_affect_battery_life">يمكن أن يؤثر على عمر البطارية</string>
@@ -42,8 +41,6 @@
     <string name="invalid_url">رابط غير صحيح</string>
     <string name="is_not_a_valid_port_must_be_between_1024_and_65535">%1$s ليس منفذًا صالحًا. يجب أن
         يكون بين 1024 و 65535.</string>
-    <string name="label_password">كلمة المرور</string>
-    <string name="label_username">اسم المستخدم</string>
     <string name="limits">الحدود</string>
     <string name="list_of_last_50_log_entries">قائمة آخر 50 إدخال سجل</string>
     <string name="listening_to_the_server_events">الاستماع لأحداث الخادم…</string>
@@ -64,7 +61,6 @@
     <string name="no_webhooks_found">لم يتم تكوين ويب هوك</string>
     <string name="not_registered">غير مسجل</string>
     <string name="not_set">لم يحدد</string>
-    <string name="notification_title">SMSGate</string>
     <string name="notification_channel">قناة الإشعارات</string>
     <string name="online_status_at_the_cost_of_battery_life">حالة الاتصال بالإنترنت على حساب عمر
         البطارية</string>
@@ -96,9 +92,8 @@
     <string name="set_maximum_value_to_activate">حدد القيمة القصوى للتفعيل</string>
     <string name="settings_changed_via_api_restart_the_app_to_apply_changes">تم تغيير الإعدادات عبر
         API. أعد تشغيل التطبيق لتطبيق التغييرات.</string>
-    <string name="settings_local_address_not_found">غير متاح</string>
+    <string name="not_available">غير متاح</string>
     <string name="settings_local_server">الخادم المحلي</string>
-    <string name="settings_public_address_not_found">غير متاح</string>
     <string name="settings_start_on_boot">بدء التشغيل عند إقلاع النظام</string>
     <string name="sign_in">تسجيل الدخول</string>
     <string name="sign_up">إنشاء حساب</string>
@@ -184,4 +179,22 @@
     <string name="filter_sms_count">SMS (%1$d)</string>
     <string name="filter_data_sms_count">SMS بيانات (%1$d)</string>
     <string name="filter_mms_count">MMS (%1$d)</string>
+    <string name="webhook_queue_empty">لا توجد إدخالات في طابور الويب هوك</string>
+    <string name="webhook_queue_empty_filter">لا توجد إدخالات %1$s</string>
+    <string name="filter_processing_count">قيد المعالجة (%1$d)</string>
+    <string name="filter_completed_count">مكتمل (%1$d)</string>
+    <string name="filter_permanently_failed_count">فشل نهائي (%1$d)</string>
+    <string name="webhook_queue_summary">عرض إدخالات طابور الويب هوك الأخيرة</string>
+    <string name="webhook_queue_title">طابور الويب هوك</string>
+    <string name="webhook_queue_detail_title">إدخال طابور الويب هوك</string>
+    <string name="webhook_queue_entry_not_found">إدخال الويب هوك غير موجود</string>
+    <string name="webhook_queue_label_url">URL</string>
+    <string name="webhook_queue_label_status">الحالة</string>
+    <string name="webhook_queue_label_last_error">آخر خطأ</string>
+    <string name="webhook_queue_label_created_at">تم الإنشاء</string>
+    <string name="webhook_queue_label_next_attempt">المحاولة التالية</string>
+    <string name="webhook_queue_label_retry_count">المحاولات</string>
+    <string name="webhook_queue_label_payload">الحمولة</string>
+    <string name="webhook_queue_payload_unavailable">الحمولة غير متاحة</string>
+    <string name="webhook_queue_no_error">لا يوجد</string>
 </resources>

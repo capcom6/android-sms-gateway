@@ -66,7 +66,7 @@ class NotificationsService(
         contentIntent: PendingIntent? = null
     ): Notification {
         return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(context.getText(R.string.notification_title))
+            .setContentTitle(context.getText(R.string.sms_gateway))
             .setContentText(contentText)
             .setSmallIcon(icons[id] ?: R.drawable.ic_sms)
             .setContentIntent(
