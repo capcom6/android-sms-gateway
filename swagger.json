@@ -35,6 +35,52 @@
         ],
         "type": "object"
       },
+      "smsgateway.MmsMessage": {
+        "description": "MMS payload for POST /message. Requires the app to be the default SMS app for reliable delivery on most carriers.",
+        "properties": {
+          "subject": {
+            "description": "Optional MMS subject line.",
+            "nullable": true,
+            "type": "string"
+          },
+          "text": {
+            "description": "Optional text/plain body to include alongside attachments.",
+            "nullable": true,
+            "type": "string"
+          },
+          "attachments": {
+            "description": "One or more media parts, provided as inline base64 `data`.",
+            "items": {
+              "$ref": "#/components/schemas/smsgateway.MmsAttachment"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "smsgateway.MmsAttachment": {
+        "properties": {
+          "contentType": {
+            "description": "MIME type. Common values: image/jpeg, image/png, image/gif, video/mp4, audio/amr, audio/mpeg, text/plain.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Optional filename for the part (used as Content-Location).",
+            "nullable": true,
+            "type": "string"
+          },
+          "data": {
+            "description": "Base64-encoded bytes.",
+            "format": "byte",
+            "type": "string"
+          }
+        },
+        "required": [
+          "contentType",
+          "data"
+        ],
+        "type": "object"
+      },
       "MmsDownloadedPayload": {
         "allOf": [
           {
@@ -360,6 +406,15 @@
               }
             ],
             "description": "Present only when `includeContent=true` and the message type is data.",
+            "type": "object"
+          },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is MMS.",
             "type": "object"
           },
           "deviceId": {
@@ -810,6 +865,15 @@
             "description": "Data message",
             "type": "object"
           },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "MMS message (multimedia: images, audio, video, etc.)",
+            "type": "object"
+          },
           "deviceId": {
             "description": "Optional device ID for explicit selection",
             "example": "PyDmBQZZXYmyxMwED8Fzy",
@@ -945,6 +1009,15 @@
               }
             ],
             "description": "Present only when `includeContent=true` and the message type is data.",
+            "type": "object"
+          },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is MMS.",
             "type": "object"
           },
           "deviceId": {
@@ -1601,7 +1674,7 @@
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
     },
     "title": "SMSGate API",
-    "version": "1.73.0"
+    "version": "1.74.0"
   },
   "openapi": "3.0.1",
   "paths": {
