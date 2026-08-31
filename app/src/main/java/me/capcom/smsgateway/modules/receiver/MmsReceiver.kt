@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.provider.Telephony
 import android.util.Log
@@ -101,10 +102,11 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
                 addAction(Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION)
                 addDataType("application/vnd.wap.mms-message")
             }
-            appContext.registerReceiver(
-                INSTANCE,
-                filter
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                appContext.registerReceiver(INSTANCE, filter, Context.RECEIVER_EXPORTED)
+            } else {
+                appContext.registerReceiver(INSTANCE, filter)
+            }
         }
 
         fun unregister(context: Context) {
