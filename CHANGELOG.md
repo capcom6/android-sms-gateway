@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Broadcast receivers are now registered with the export flag Android 13 (API 33) requires, so incoming SMS, data SMS and MMS broadcasts and sent/delivered status updates keep being delivered on API 33+ [d79fa9f]
+
+## [v1.77.3] - 2026-10-12
+
 ### Changed
-- Messages cancelled from the cloud gateway now resolve to `Cancelled` on the device — `Cancelling` is no longer reported as a message or recipient state
+- Messages cancelled from the cloud gateway now resolve to `Cancelled` on the device — `Cancelling` is no longer reported as a message or recipient state [e26b88b]
 
 ### Fixed
-- Message status races — send, delivery, failure, and cancellation updates for a single message are now applied atomically, so a message cancelled while being sent no longer ends up with a stale or contradictory state
-- A failure in one background handler no longer stops the others — an error while uploading message status, refreshing the webhook queue, or pinging the cloud server no longer silently disables the remaining handlers
+- Message status races — send, delivery, failure, and cancellation updates for a single message are now applied atomically, so a message cancelled while being sent no longer ends up with a stale or contradictory state [e26b88b]
+- A failure in one background handler no longer stops the others — an error while uploading message status, refreshing the webhook queue, or pinging the cloud server no longer silently disables the remaining handlers [e26b88b]
 
 ## [v1.77.2] - 2026-10-05
 
@@ -1249,7 +1254,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.2...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.3...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1
@@ -1387,3 +1392,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.77.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.76.0...v1.77.0
 [v1.77.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.0...v1.77.1
 [v1.77.2]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.1...v1.77.2
+[v1.77.3]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.2...v1.77.3
