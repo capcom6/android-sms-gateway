@@ -47,6 +47,11 @@
             android:summary="@string/use_this_code_to_sign_in_on_another_device"
             android:title="@string/login_code"
             app:enableCopying="true" />
+        <Preference
+            android:icon="@drawable/ic_username"
+            android:key="gateway.sign_in"
+            android:persistent="false"
+            android:title="@string/sign_in_to_existing_account" />
     </PreferenceCategory>
     <PreferenceCategory app:title="@string/device">
         <Preference
@@ -55,6 +60,11 @@
             android:title="@string/device_id"
             app:enableCopying="true"
             app:persistent="false" />
+        <Preference
+            android:icon="@drawable/ic_clear"
+            android:key="gateway.unregister"
+            android:persistent="false"
+            android:title="@string/unregister_device" />
     </PreferenceCategory>
     <Preference app:summary="@string/restart_required_to_apply_changes" />
 </PreferenceScreen>

@@ -11,7 +11,8 @@
     <string name="btn_continue">استمرار</string>
     <string name="by_code">بواسطة الكود</string>
     <string name="can_affect_battery_life">يمكن أن يؤثر على عمر البطارية</string>
-    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">انقر
+    <string
+        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">انقر
         فوق استمرار لإنشاء حساب. لا يلزم تقديم معلومات شخصية.\nمن خلال الاستمرار، فإنك توافق على
         سياسة الخصوصية الخاصة بنا على https://docs.sms-gate.app/privacy/policy/</string>
     <string name="cloud_server_dotdotdot">خادم السحاب…</string>
@@ -161,7 +162,8 @@
     <string name="button_start_service">بدء الخدمة</string>
     <string name="button_stop_service">إيقاف الخدمة</string>
     <string name="receiver_content_provider_monitoring">مراقبة موفر المحتوى</string>
-    <string name="receiver_content_provider_monitoring_summary">اكتشاف الرسائل الواردة أيضًا عبر موفر المحتوى</string>
+    <string name="receiver_content_provider_monitoring_summary">اكتشاف الرسائل الواردة أيضًا عبر
+        موفر المحتوى</string>
     <string name="working_hours">ساعات العمل</string>
     <string name="working_hours_enable">تفعيل ساعات العمل</string>
     <string name="working_hours_summary">إرسال الرسائل فقط ضمن الفترة الزمنية المحددة</string>

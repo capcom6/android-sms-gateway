@@ -90,9 +90,13 @@ class EventsReceiver : EventsReceiver() {
                     Log.d("EventsReceiver", "Event: $it")
 
                     if (!settings.enabled) return@collect
-                    if (settings.fcmToken != null) return@collect
-
-                    SSEForegroundService.start(get())
+                    if (settings.fcmToken != null) {
+                        // FCM is the active transport; tear down the SSE fallback so
+                        // the same cloud command is not delivered twice.
+                        SSEForegroundService.stop(get())
+                    } else {
+                        SSEForegroundService.start(get())
+                    }
                 }
             }
 

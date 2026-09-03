@@ -9,7 +9,8 @@
     <string name="btn_continue">继续</string>
     <string name="by_code">通过验证码</string>
     <string name="can_affect_battery_life">可能影响电池寿命</string>
-    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">点击"继续"创建账户，无需提供个人信息。\n继续即表示您同意我们的隐私政策，详情见
+    <string
+        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">点击"继续"创建账户，无需提供个人信息。\n继续即表示您同意我们的隐私政策，详情见
         https://docs.sms-gate.app/privacy/policy/</string>
     <string name="cloud_server_dotdotdot">云服务器…</string>
     <string name="cloud_server">云服务器</string>
