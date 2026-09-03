@@ -19,14 +19,28 @@ import org.koin.core.component.inject
 class PushService : FirebaseMessagingService(), KoinComponent {
     private val logsService by inject<LogsService>()
     private val eventsRouter by inject<EventsRouter>()
+    private val gatewaySettings by inject<GatewaySettings>()
 
     override fun onNewToken(token: String) {
-        RegistrationWorker.start(this@PushService, token, true)
+        RegistrationWorker.start(this@PushService, token)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
         try {
             Log.d(this.javaClass.name, message.data.toString())
+
+            // The server keeps the push token after unregister, so it may still deliver
+            // commands for the previous registration. Reject them here, at the entry
+            // point, rather than letting each consumer re-check the registration.
+            if (gatewaySettings.registrationInfo == null) {
+                Log.d(this.javaClass.name, "Push message ignored: device is not registered")
+                logsService.insert(
+                    priority = LogEntry.Priority.INFO,
+                    module = this.javaClass.simpleName,
+                    message = "Push message ignored: device is not registered"
+                )
+                return
+            }
 
             val event = message.data["event"]?.let { ExternalEventType.valueOf(it) }
                 ?: ExternalEventType.MessageEnqueued
@@ -62,7 +76,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                     module = PushService::class.java.simpleName,
                     message = "FCM registration skipped: SSE_ONLY channel configured"
                 )
-                RegistrationWorker.start(context, null, false)
+                RegistrationWorker.start(context, null)
                 return
             }
 
@@ -96,7 +110,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                 )
 
                 // Log and toast
-                RegistrationWorker.start(context, token, false)
+                RegistrationWorker.start(context, token)
             }
         }
     }

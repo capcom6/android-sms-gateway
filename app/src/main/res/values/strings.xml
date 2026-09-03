@@ -115,6 +115,7 @@
     <string name="settings_public_address_is" translatable="false">&lt;a href>%1$s:%2$d&lt;/a></string>
     <string name="settings_start_on_boot">Start on boot</string>
     <string name="sign_in">Sign In</string>
+    <string name="sign_in_to_existing_account">Sign in to existing account</string>
     <string name="sign_up">Sign Up</string>
     <string name="signing_key">Signing Key</string>
     <string name="sms_gateway_is_running_on_port">SMSGate is running on port %1$d</string>
@@ -215,4 +216,10 @@
     <string name="filter_mms_count">MMS (%1$d)</string>
     <string name="device_key">Device Key</string>
     <string name="device_keys_management">Device keys management</string>
+    <string name="device_registered_successfully">Device registered successfully, restart the app
+        before continuing.</string>
+    <string name="device_unregistered">Device unregistered</string>
+    <string name="unregister_device">Unregister device</string>
+    <string name="confirm_unregister_device">Are you sure you want to unregister this device?
+        You will need to sign up or sign in again to use the cloud server.</string>
 </resources>
