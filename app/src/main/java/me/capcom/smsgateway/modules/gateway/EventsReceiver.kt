@@ -134,9 +134,23 @@ class EventsReceiver : EventsReceiver() {
                         Log.d("EventsReceiver", "Event: $it")
 
                         if (!settings.enabled) return@collect
-                        if (settings.fcmToken != null) return@collect
 
-                        SSEForegroundService.start(get())
+                        if (settings.notificationChannel == GatewaySettings.NotificationChannel.SSE_ONLY) {
+                            // The user pinned the SSE transport: a Firebase token refresh
+                            // must not switch the device over to FCM and tear the stream
+                            // down. The push token is only refreshed in the background,
+                            // it is not a transport switch.
+                            SSEForegroundService.start(get())
+                            return@collect
+                        }
+
+                        if (settings.fcmToken != null) {
+                            // FCM is the active transport; tear down the SSE fallback so
+                            // the same cloud command is not delivered twice.
+                            SSEForegroundService.stop(get())
+                        } else {
+                            SSEForegroundService.start(get())
+                        }
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
@@ -179,7 +193,7 @@ class EventsReceiver : EventsReceiver() {
 
                     if (!settings.enabled) return@collect
 
-                    RegistrationWorker.start(get(), settings.fcmToken, true)
+                    RegistrationWorker.start(get(), settings.fcmToken)
                 }
             }
         }
