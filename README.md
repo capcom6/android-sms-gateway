@@ -46,6 +46,8 @@
 - [Getting Started](#getting-started)
   - [Local Server](#local-server)
   - [Cloud Server](#cloud-server)
+    - [Device Registration](#device-registration)
+    - [Unregister Device](#unregister-device)
   - [Webhooks](#webhooks)
     - [Supported Events](#supported-events)
     - [Setting Up Webhooks](#setting-up-webhooks)
@@ -67,9 +69,11 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 
 📱 Core Functionality:
 
-- 🆓 **No registration required:** No registration or email is required to create an account. In local mode, you don't need an account at all!
+- 📝 **No personal information required:** Creating an account needs no email or personal details. In cloud mode the device is registered only after you sign up or sign in; in local mode you don't need an account at all!
 - 📨 **Send and Receive SMS via API:** Use [our API](https://docs.sms-gate.app/integration/api/) to send messages directly from your applications or services.
 - 🤖 **Support for Android 5.0 and above:** Compatible with Android 5.0 and later versions. [See Android 15 Note](https://docs.sms-gate.app/faq/general/#does-the-app-support-android-15)
+- 👤 **Explicit device registration:** The device never registers itself in the background — in cloud mode you always sign up or sign in first.
+- 🗑️ **Unregister device:** Remove the cloud registration from the device at any time, and sign up or sign in again whenever you need the cloud server.
 
 💬 Message Handling:
 
@@ -266,7 +270,7 @@ Use the cloud server mode when dealing with dynamic or shared device IP addresse
 
 1. Launch the app on your device.
 2. Toggle the `Cloud Server` switch to the "on" position.
-3. Tap the `Start Service` button located at the bottom of the screen to start the gateway and connect to the cloud server. Switch changes take effect after the service is restarted.
+3. Tap the `Start Service` button located at the bottom of the screen to start the gateway and connect to the cloud server. The device has to be registered first, see [Device Registration](#device-registration). Switch changes take effect after the service is restarted.
 4. In the `Cloud Server` section, the credentials for basic authentication will be displayed.
 5. To send a message via the cloud server, perform a `curl` request with a command similar to the following, substituting `<username>` and `<password>` with the actual values obtained in step 4:
 
@@ -287,6 +291,22 @@ Use the cloud server mode when dealing with dynamic or shared device IP addresse
 For further privacy, you can deploy your own private server. See the [Private Server](https://sms-gate.app/getting-started/private-server/) section for more details.
 
 When connected to the cloud server, received messages (SMS, Data SMS, and MMS) are automatically uploaded to the server for centralized access.
+
+#### Device Registration
+
+The device has to be registered with the cloud server before it can be used in cloud mode. The first time you tap the `Start Service` button, the app asks how to register:
+
+- **Sign Up** — creates a new account. No email or personal information is required.
+- **Sign In** — adds the device to an existing account with its login and password.
+- **By Code** — adds the device to an existing account with the login code shown in the app on the other device.
+
+The gateway starts as soon as the registration succeeds. The start button stays disabled while the registration is running, so a double tap cannot create two accounts or two devices.
+
+#### Unregister Device
+
+The `Unregister device` action in **Settings → Cloud server → Credentials** clears the registration on the device and stops the cloud session. The device has to sign up or sign in again before the cloud server can be used.
+
+*Note*: This only clears the registration on the device — the cloud server keeps its own record of it, so commands for the previous registration can still be pushed to the device. The app ignores them while the device is unregistered.
 
 ### Webhooks
 

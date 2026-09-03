@@ -12,7 +12,6 @@ import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import me.capcom.smsgateway.App
-import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import org.koin.core.component.KoinComponent
@@ -27,17 +26,12 @@ class RegistrationWorker(
 
     override suspend fun doWork(): Result {
         try {
-            val token = inputData.getString(DATA_TOKEN)
-            val isUpdate = inputData.getBoolean(DATA_IS_UPDATE, false)
+            val fcmToken = inputData.getString(DATA_TOKEN)
 
-            when (isUpdate) {
-                true -> App.instance.gatewayService.updateDevice(applicationContext, token ?: return Result.success())
-                false -> App.instance.gatewayService.registerDevice(
-                    applicationContext,
-                    token,
-                    GatewayService.RegistrationMode.Anonymous
-                )
-            }
+            App.instance.gatewayService.updateDevice(
+                applicationContext,
+                fcmToken,
+            )
 
             return Result.success()
         } catch (e: Exception) {
@@ -58,9 +52,8 @@ class RegistrationWorker(
         private const val NAME = "RegistrationWorker"
 
         private const val DATA_TOKEN = "token"
-        private const val DATA_IS_UPDATE = "isUpdate"
 
-        fun start(context: Context, token: String?, isUpdate: Boolean) {
+        fun start(context: Context, token: String?) {
             val work = OneTimeWorkRequestBuilder<RegistrationWorker>()
                 .setConstraints(
                     Constraints.Builder()
@@ -75,7 +68,6 @@ class RegistrationWorker(
                 .setInputData(
                     workDataOf(
                         DATA_TOKEN to token,
-                        DATA_IS_UPDATE to isUpdate,
                     )
                 )
                 .build()

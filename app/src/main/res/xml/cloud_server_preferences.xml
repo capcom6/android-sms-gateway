@@ -13,11 +13,11 @@
             app:summary="@string/ignored_for_public_server"
             app:title="@string/private_token" />
         <ListPreference
-            app:icon="@drawable/ic_notifications"
-            app:key="gateway.notification_channel"
             app:defaultValue="AUTO"
             app:entries="@array/notification_channels_titles"
             app:entryValues="@array/notification_channels_values"
+            app:icon="@drawable/ic_notifications"
+            app:key="gateway.notification_channel"
             app:title="@string/notification_channel"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
@@ -47,6 +47,11 @@
             android:summary="@string/use_this_code_to_sign_in_on_another_device"
             android:title="@string/login_code"
             app:enableCopying="true" />
+        <Preference
+            android:icon="@drawable/ic_clear"
+            android:key="gateway.unregister"
+            android:persistent="false"
+            android:title="@string/unregister_device" />
     </PreferenceCategory>
     <PreferenceCategory app:title="@string/device">
         <Preference

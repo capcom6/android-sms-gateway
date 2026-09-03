@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.ui.settings
 
 import android.annotation.SuppressLint
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
@@ -122,6 +123,22 @@ class CloudServerSettingsFragment : BasePreferenceFragment() {
             }
         }
 
+        findPreference<Preference>("gateway.unregister")?.apply {
+            isVisible = isUnregisterVisible()
+
+            onPreferenceClickListener = Preference.OnPreferenceClickListener {
+                androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.unregister_device)
+                    .setMessage(R.string.confirm_unregister_device)
+                    .setPositiveButton(R.string.confirm) { _, _ ->
+                        unregisterDevice()
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+                true
+            }
+        }
+
         setFragmentResultListener(PasswordPromptDialogFragment.REQUEST_KEY) { _, data ->
             val password =
                 PasswordPromptDialogFragment.getPassword(data) ?: return@setFragmentResultListener
@@ -141,6 +158,69 @@ class CloudServerSettingsFragment : BasePreferenceFragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        updateActionsVisibility()
+        preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(
+            onPreferenceChanged
+        )
+    }
+
+    override fun onPause() {
+        preferenceManager.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(
+            onPreferenceChanged
+        )
+
+        super.onPause()
+    }
+
+    private val onPreferenceChanged =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "gateway.ENABLED") {
+                updateActionsVisibility()
+            }
+        }
+
+    private fun updateActionsVisibility() {
+        findPreference<Preference>("gateway.unregister")?.isVisible = isUnregisterVisible()
+        listView.adapter?.notifyDataSetChanged()
+    }
+
+    // Unregister only forgets the registration locally; it cannot detach the device from the
+    // account, because the cloud server offers no way to clear the push token it holds.
+    // `PATCH /device` maps both an absent and an empty `pushToken` to nil and then omits
+    // `push_token` from the update, so it answers 204 without changing anything, and the
+    // only destructive alternative (deleting the device row) cascades to its messages,
+    // webhooks and inbox rows. Consequence: the server can still push to this device for
+    // the old registration once the user registers again. PushService and the receiver-side
+    // MessagesExportRequested collector drop commands while `registrationInfo == null`,
+    // which covers the unregistered window but not the re-registered one. Closing that
+    // needs a server contract change; do not read the toast as "server-side revoked".
+    private fun isUnregisterVisible() = settings.enabled && settings.registrationInfo != null
+
+    private fun unregisterDevice() {
+        // Local-only: there is no server-side detach available today. See the comment on
+        // isUnregisterVisible() for what this does and does not stop.
+        settings.registrationInfo = null
+        // Stop SSE session and cloud workers so they do not keep using
+        // credentials of the just-unregistered device.
+        service.stop(requireContext())
+        refreshRegistrationUi()
+        showToast(R.string.device_unregistered)
+    }
+
+    private fun refreshRegistrationUi() {
+        findPreference<EditTextPreference>("gateway.password")?.isEnabled =
+            settings.username != null
+        findPreference<Preference>("gateway.clear_password")?.isVisible = settings.hasPassword
+        findPreference<Preference>("gateway.login_code")?.isVisible = settings.username != null
+        findPreference<Preference>("gateway.unregister")?.isVisible = isUnregisterVisible()
+        findPreference<Preference>("transient.device_id")?.summary =
+            settings.deviceId ?: getString(R.string.n_a)
+        listView.adapter?.notifyDataSetChanged()
+    }
+
     private fun showPasswordPromptDialog(
         message: String,
         action: String? = null,
@@ -155,7 +235,8 @@ class CloudServerSettingsFragment : BasePreferenceFragment() {
             try {
                 requireActivity().findViewById<View>(R.id.progressBar).isVisible = true
                 service.changePassword(currentPassword, newPassword)
-                findPreference<Preference>("gateway.clear_password")?.isVisible = settings.hasPassword
+                findPreference<Preference>("gateway.clear_password")?.isVisible =
+                    settings.hasPassword
                 listView.adapter?.notifyDataSetChanged()
                 showToast(R.string.password_changed_successfully)
             } catch (e: Exception) {
