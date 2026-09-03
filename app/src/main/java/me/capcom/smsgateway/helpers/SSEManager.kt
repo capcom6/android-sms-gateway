@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class SSEManager(
     private val url: String,
-    private val authToken: String
+    private val tokenProvider: () -> String?,
 ) {
     private val client = OkHttpClient.Builder()
         .readTimeout(1, TimeUnit.HOURS)
@@ -36,12 +36,14 @@ class SSEManager(
 
     fun connect() {
         isDisconnecting.set(false)
+        val token = tokenProvider() ?: run { disconnect() }
+        
         scope.launch {
             try {
                 val request = Request.Builder()
                     .url(url)
                     .apply {
-                        header("Authorization", "Bearer $authToken")
+                        header("Authorization", "Bearer $token")
                     }
                     .build()
 

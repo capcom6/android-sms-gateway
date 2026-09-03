@@ -11,8 +11,7 @@
     <string name="btn_continue">Continue</string>
     <string name="by_code">By Code</string>
     <string name="can_affect_battery_life">can affect battery life</string>
-    <string
-        name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Click
+    <string name="click_continue_to_create_an_account_no_personal_information_is_required_nby_continuing_you_agree_to_our_privacy_policy_at_https_docs_sms_gate_app_privacy_policy">Click
         Continue to create an account. No personal information is required.\nBy continuing, you
         agree to our Privacy Policy at https://docs.sms-gate.app/privacy/policy/</string>
     <string name="cloud_server_dotdotdot">Cloud server…</string>
@@ -102,6 +101,7 @@
     <string name="settings_public_address_is" translatable="false">&lt;a href>%1$s:%2$d&lt;/a></string>
     <string name="settings_start_on_boot">Start on boot</string>
     <string name="sign_in">Sign In</string>
+    <string name="sign_in_to_existing_account">Sign in to existing account</string>
     <string name="sign_up">Sign Up</string>
     <string name="signing_key">Signing Key</string>
     <string name="sms_gateway_is_running_on_port">SMSGate is running on port %1$d</string>
@@ -200,4 +200,9 @@
     <string name="filter_sms_count">SMS (%1$d)</string>
     <string name="filter_data_sms_count">Data SMS (%1$d)</string>
     <string name="filter_mms_count">MMS (%1$d)</string>
+    <string name="device_registered_successfully">Device registered successfully, restart the app before continue.</string>
+    <string name="device_unregistered">Device unregistered</string>
+    <string name="unregister_device">Unregister device</string>
+    <string name="confirm_unregister_device">Are you sure you want to unregister this device?
+        You will need to sign up or sign in again to use the cloud server.</string>
 </resources>
