@@ -21,7 +21,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
     private val eventsRouter by inject<EventsRouter>()
 
     override fun onNewToken(token: String) {
-        RegistrationWorker.start(this@PushService, token, true)
+        RegistrationWorker.start(this@PushService, token)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -62,7 +62,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                     module = PushService::class.java.simpleName,
                     message = "FCM registration skipped: SSE_ONLY channel configured"
                 )
-                RegistrationWorker.start(context, null, false)
+                RegistrationWorker.start(context, null)
                 return
             }
 
@@ -96,7 +96,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                 )
 
                 // Log and toast
-                RegistrationWorker.start(context, token, false)
+                RegistrationWorker.start(context, token)
             }
         }
     }
