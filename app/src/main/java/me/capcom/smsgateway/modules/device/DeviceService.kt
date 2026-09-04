@@ -194,7 +194,8 @@ class DeviceService(
 
     /**
      * Returns the [PrivateKey] for the given [keyVersion], or the current
-     * active key when null. Returns null if the key cannot be found or loaded.
+     * active key when null. Returns null if the key cannot be found, has
+     * exceeded the retention period, or cannot be loaded.
      */
     suspend fun getPrivateKey(keyVersion: Int): PrivateKey? = withContext(Dispatchers.IO) {
         // Fast path: already loaded in this process for this keyVersion.
@@ -205,6 +206,9 @@ class DeviceService(
             privateKeyCache[keyVersion]?.let { return@withLock it }
 
             val record = keys.getByKeyVersion(keyVersion) ?: return@withLock null
+            if (record.retiredAt != null && record.retiredAt + RETENTION_MS <= System.currentTimeMillis()) {
+                return@withLock null
+            }
             val loaded = keyStore.getPrivateKey(keyAlias(record.keyVersion))
                 ?: return@withLock null
             loaded.also { privateKeyCache[keyVersion] = it }
