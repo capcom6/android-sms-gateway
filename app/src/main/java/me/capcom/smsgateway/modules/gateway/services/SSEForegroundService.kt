@@ -43,9 +43,11 @@ class SSEForegroundService : Service() {
     private val sseManager by lazy {
         SSEManager(
             "${settings.serverUrl}/events",
-            requireNotNull(
-                settings.registrationInfo?.token
-            ) { "Authentication token is required for SSE connection" }
+            // Resolve the bearer token fresh on every connect() so account
+            // replacement picks up the new credentials without recreating the
+            // service. Returns null while unregistered, in which case connect()
+            // tears down gracefully instead of throwing.
+            tokenProvider = { settings.registrationInfo?.token }
         )
             .apply {
                 onConnected = {
