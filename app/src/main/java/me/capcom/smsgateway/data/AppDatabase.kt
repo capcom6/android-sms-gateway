@@ -12,6 +12,8 @@ import me.capcom.smsgateway.data.entities.MessageRecipient
 import me.capcom.smsgateway.data.entities.MessageState
 import me.capcom.smsgateway.data.entities.RecipientState
 import me.capcom.smsgateway.data.entities.Token
+import me.capcom.smsgateway.modules.device.db.DeviceKey
+import me.capcom.smsgateway.modules.device.db.DeviceKeysDao
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessage
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessagesDao
 import me.capcom.smsgateway.modules.logs.db.LogEntriesDao
@@ -32,8 +34,9 @@ import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueEntity
         LogEntry::class,
         Token::class,
         IncomingMessage::class,
+        DeviceKey::class,
     ],
-    version = 23,
+    version = 24,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -57,6 +60,7 @@ import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueEntity
         AutoMigration(from = 20, to = 21),
 //        AutoMigration(from = 21, to = 22), // manual migration
         AutoMigration(from = 22, to = 23),
+        AutoMigration(from = 23, to = 24),
     ]
 )
 @TypeConverters(Converters::class)
@@ -67,6 +71,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun logDao(): LogEntriesDao
     abstract fun incomingMessagesDao(): IncomingMessagesDao
     abstract fun tokensDao(): TokensDao
+    abstract fun deviceKeysDao(): DeviceKeysDao
 
     companion object {
         fun getDatabase(context: android.content.Context): AppDatabase {

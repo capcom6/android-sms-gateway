@@ -4,6 +4,7 @@
     <string name="api_url">API URL</string>
     <string name="app_name" translatable="false">SMSGate</string>
     <string name="app_version_build">App version (build)</string>
+    <string name="automatic_key_rotation">Automatic key rotation</string>
     <string name="battery_optimization_already_disabled">Battery optimization already disabled</string>
     <string name="battery_optimization_is_not_supported_on_this_device">Battery optimization is not
         supported on this device</string>
@@ -25,6 +26,7 @@
     <string name="delete_after_days">Delete after, days</string>
     <string name="device_id">Device ID</string>
     <string name="device">Device</string>
+    <string name="device_dotdotdot">Device…</string>
     <string name="disabled">Disabled</string>
     <string name="dots">…</string>
     <string name="enabled">Enabled</string>
@@ -35,6 +37,13 @@
     <string name="failed_to_register_device">Failed to register device: %1$s</string>
     <string name="id_copied">Webhook ID copied to clipboard</string>
     <string name="if_sim_number_is_not_specified_use">If SIM number is not specified, use</string>
+    <string name="key_fingerprint">Key fingerprint</string>
+    <string name="key_fingerprint_copied">Key fingerprint copied to clipboard</string>
+    <string name="key_fingerprint_not_available">Not available</string>
+    <string name="key_rotation_failed">Key rotation failed: %1$s</string>
+    <string name="key_rotation_upload_failed">Key rotated, but the server upload failed. Will retry
+        on the next launch.</string>
+    <string name="key_rotated_successfully">Encryption key rotated</string>
     <string name="ignored_for_public_server">Ignored for public server</string>
     <string name="information">Information</string>
     <string name="internet_connection_available">Internet connection: available</string>
@@ -85,6 +94,9 @@
     <string name="restart_required_to_apply_changes">Restart required to apply changes</string>
     <string name="retries_signing_etc">Retries, signing, etc.</string>
     <string name="retry_count">Retry count</string>
+    <string name="rotate_device_key_summary">Generate a new key pair. Old keys stay valid for 7
+        days.</string>
+    <string name="rotate_device_key">Rotate device key</string>
     <string name="send_messages_notification">Sending messages…</string>
     <string name="sending_webhook">Sending webhook…</string>
     <string name="processing_webhook_queue">Processing webhook queue…</string>
@@ -200,4 +212,6 @@
     <string name="filter_sms_count">SMS (%1$d)</string>
     <string name="filter_data_sms_count">Data SMS (%1$d)</string>
     <string name="filter_mms_count">MMS (%1$d)</string>
+    <string name="device_key">Device Key</string>
+    <string name="device_keys_management">Device keys management</string>
 </resources>
