@@ -298,8 +298,9 @@ class MessagesRoutes(
             }
         }
     }
+}
 
-    private fun MessageWithRecipients.toDomain(
+internal fun MessageWithRecipients.toDomain(
         deviceId: String,
         includeContent: Boolean = false
     ): me.capcom.smsgateway.modules.localserver.domain.messages.Message {
@@ -307,6 +308,7 @@ class MessagesRoutes(
             id = message.id,
             deviceId = deviceId,
             state = message.state,
+            createdAt = Date(message.createdAt),
             isHashed = false,
             isEncrypted = message.isEncrypted,
             textMessage = when (includeContent) {
@@ -357,4 +359,3 @@ class MessagesRoutes(
             scheduleAt = message.scheduleAt,
         )
     }
-}
