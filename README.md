@@ -99,6 +99,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 📦 **Batch webhook events:** Receive batched webhook deliveries when multiple messages arrive at once, reducing the number of requests.
 - 🛑 **Cancel pending messages:** Cancel queued messages before they are sent.
 - ⏳ **Send rate limiting:** Restrict the number of messages sent per period (e.g., per 30 minutes) to avoid operator throttling.
+- 🔍 **Message filtering:** Filter messages by state (Pending, Sent, Delivered, Failed, Cancelled) and type (SMS, Data SMS, MMS).
 - 🖼️ **Send and receive MMS with payloads:** Send images, audio, video, and other media as MMS with inline or URL-referenced attachments. Received attachments are persisted locally and exposed via the API. See [`docs/MMS.md`](docs/MMS.md).
 
 🔒 Security and Privacy:
@@ -116,6 +117,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 🔌 Integration:
 
 - 🪝 **Webhooks:** Set up [webhooks](https://docs.sms-gate.app/features/webhooks/) to be triggered on specified events.
+- 📋 **Webhook queue diagnostics:** Inspect webhook queue entries with their status, retry count, last error, and next attempt time.
 
 ### Ideal For
 
@@ -330,7 +332,7 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 - [x] Add functionality to modify user credentials.
 - [x] Introduce option to adjust the local server port.
 - [x] Send notifications to an external server when the status of a message changes.
-- [ ] Incorporate scheduling capabilities for dispatching messages at specific times.
+- [x] Incorporate scheduling capabilities for dispatching messages at specific times.
 - [ ] Implement region-based restrictions to prevent international SMS.
 - [x] Provide an API endpoint to retrieve the list of available SIM cards on the device.
 - [x] Include detailed error messages in responses and logs.
