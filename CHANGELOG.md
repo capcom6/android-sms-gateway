@@ -5,6 +5,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Expose `createdAt` field in local server messages endpoint [6b4cc62]
+
+## [v1.75.0] - 2026-09-04
+
+### Added
+- Webhook queue diagnostics list screen [3ce35144]
+
+### Changed
+- Update translations [956f9d6]
+
+## [v1.74.1] - 2026-09-02
+
+### Changed
+- Replace scheduled worker on new immediate message [b179de8]
+
+## [v1.74.0] - 2026-08-31
+
+### Added
+- MMS sending support [1b6c76b]
+
+### Changed
+- Support legacy date formats [c90101d]
+
+## [v1.73.0] - 2026-08-27
+
+### Added
+- Allow to filter messages by state and type [71bf841]
+
+### Changed
+- Update translations [f4f1ea5]
+
+## [v1.72.1] - 2026-08-25
+
+### Added
+- New API for resolving phone numbers [0657438]
+
+## [v1.72.0] - 2026-08-21
+
+### Changed
+- Add sort param for messages requests [9f65754]
+
+## [v1.71.1] - 2026-08-20
+
+### Changed
+- Use scheduling instead of polling for webhooks worker [e4acf42]
+
+## [v1.71.0] - 2026-08-18
+
+### Added
+- Batch webhooks support [05351ce]
+
+### Maintenance
+- Update swagger, readme, and changelog [9c95ca2e]
+
+## [v1.70.4] - 2026-08-14
+
+### Fixed
+- Message queue no longer gets stuck when there is a scheduled message [5e1def4]
+
 ## [v1.70.3] - 2026-08-11
 
 ### Changed
@@ -1148,7 +1210,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.66.1...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.75.0...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1
