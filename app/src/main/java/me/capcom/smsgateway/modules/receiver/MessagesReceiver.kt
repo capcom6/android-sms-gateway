@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.provider.Telephony.Sms.Intents
 import android.util.Log
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
@@ -77,20 +78,22 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
             val textFilter = IntentFilter().apply {
                 addAction(Intents.SMS_RECEIVED_ACTION)
             }
-            appContext.registerReceiver(
-                INSTANCE,
-                textFilter
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                appContext.registerReceiver(INSTANCE, textFilter, Context.RECEIVER_EXPORTED)
+            } else {
+                appContext.registerReceiver(INSTANCE, textFilter)
+            }
 
             val dataFilter = IntentFilter().apply {
                 addAction(Intents.DATA_SMS_RECEIVED_ACTION)
                 addDataScheme("sms")
                 addDataAuthority("*", "53739")
             }
-            appContext.registerReceiver(
-                INSTANCE,
-                dataFilter
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                appContext.registerReceiver(INSTANCE, dataFilter, Context.RECEIVER_EXPORTED)
+            } else {
+                appContext.registerReceiver(INSTANCE, dataFilter)
+            }
         }
 
         fun unregister(context: Context) {

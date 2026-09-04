@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
@@ -58,13 +59,16 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
         }
 
         fun register(context: Context) {
-            context.registerReceiver(
-                getInstance(),
-                IntentFilter(ACTION_SENT).apply {
-                    addAction(ACTION_DELIVERED)
+            val filter = IntentFilter(ACTION_SENT)
+                .apply { 
+                    addAction(ACTION_DELIVERED) 
                     addAction(ACTION_MMS_SENT)
                 }
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(getInstance(), filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                context.registerReceiver(getInstance(), filter)
+            }
         }
     }
 }
