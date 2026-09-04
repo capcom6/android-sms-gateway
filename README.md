@@ -100,6 +100,8 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 🛑 **Cancel pending messages:** Cancel queued messages before they are sent.
 - ⏳ **Send rate limiting:** Restrict the number of messages sent per period (e.g., per 30 minutes) to avoid operator throttling.
 - 🖼️ **Send and receive MMS with payloads:** Send images, audio, video, and other media as MMS with inline or URL-referenced attachments. Received attachments are persisted locally and exposed via the API. See [`docs/MMS.md`](docs/MMS.md).
+- 🔍 **Message filtering:** Filter messages by state (pending, sent, delivered, failed) and type (SMS, MMS, Data SMS) in the app's message list.
+- 📊 **Webhook queue diagnostics:** View and manage queued webhooks via a diagnostic screen in the app settings.
 
 🔒 Security and Privacy:
 
