@@ -39,8 +39,8 @@ class ReceiverService : KoinComponent {
     private val smsContentObserver by lazy { SmsContentObserver() }
 
     fun start(context: Context) {
-        MessagesReceiver.register(context)
-        MmsReceiver.register(context)
+        MessagesReceiver.start(context)
+        MmsReceiver.start(context)
         eventsReceiver.start()
         mmsContentObserver.start()
         if (receiverSettings.contentProviderEnabled) {
@@ -52,8 +52,8 @@ class ReceiverService : KoinComponent {
         smsContentObserver.stop()
         mmsContentObserver.stop()
         eventsReceiver.stop()
-        MmsReceiver.unregister(context)
-        MessagesReceiver.unregister(context)
+        MmsReceiver.stop(context)
+        MessagesReceiver.stop(context)
     }
 
     suspend fun export(

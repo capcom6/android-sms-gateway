@@ -19,6 +19,7 @@ class BootReceiver : BroadcastReceiver(), KoinComponent {
         private val events = setOf(
             Intent.ACTION_BOOT_COMPLETED,
             "android.intent.action.ACTION_BOOT_COMPLETED",
+            Intent.ACTION_MY_PACKAGE_REPLACED,
             Intent.ACTION_REBOOT,
             "android.intent.action.QUICKBOOT_POWERON",
             "com.htc.intent.action.QUICKBOOT_POWERON",
