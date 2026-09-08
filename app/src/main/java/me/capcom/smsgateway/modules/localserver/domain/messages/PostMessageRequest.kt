@@ -86,6 +86,10 @@ data class PostMessageRequest(
             throw IllegalArgumentException("Empty phone numbers list")
         }
 
+        if (phoneNumbers.distinct().size != phoneNumbers.size) {
+            throw IllegalArgumentException("phone numbers must be unique")
+        }
+
         if (simNumber != null && simNumber < 1) {
             throw IllegalArgumentException("SIM number cannot be less than 1")
         }
