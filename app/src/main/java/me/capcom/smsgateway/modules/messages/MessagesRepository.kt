@@ -16,7 +16,10 @@ import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
 import java.util.Date
 
-class MessagesRepository(private val dao: MessagesDao) {
+class MessagesRepository(
+    private val dao: MessagesDao,
+    private val machine: MessageStateService,
+) {
     private val gson = GsonBuilder().serializeNulls().create()
 
     fun selectLast(limit: Int) = dao.selectLast(limit).distinctUntilChanged()
@@ -61,7 +64,7 @@ class MessagesRepository(private val dao: MessagesDao) {
         return message
     }
 
-    fun getPending(order: MessagesSettings.ProcessingOrder): StoredSendRequest? {
+    suspend fun getPending(order: MessagesSettings.ProcessingOrder): StoredSendRequest? {
         while (true) {
             val now = Date()
             val message = when (order) {
@@ -70,8 +73,10 @@ class MessagesRepository(private val dao: MessagesDao) {
             } ?: return null
 
             if (message.state != ProcessingState.Pending) {
-                // if for some reason stored state is not in sync with recipients state
-                dao.updateMessageState(message.message.id, message.state)
+                // stored state is not in sync with recipients state -
+                // reconciliation goes through the machine (table-gated,
+                // per-message lock, silent like the legacy read-side sync)
+                machine.syncMessageFromRecipients(message.message.id)
                 continue
             }
 

@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.modules.gateway
 
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.domain.EntitySource
@@ -30,85 +31,141 @@ class EventsReceiver : EventsReceiver() {
             launch {
                 Log.d("EventsReceiver", "launched MessageEnqueuedEvent")
                 eventBus.collect<MessageEnqueuedEvent> { event ->
-                    Log.d("EventsReceiver", "Event: $event")
+                    try {
+                        Log.d("EventsReceiver", "Event: $event")
 
-                    if (!settings.enabled) return@collect
+                        if (!settings.enabled) return@collect
 
-                    PullMessagesWorker.start(get())
+                        PullMessagesWorker.start(get())
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // per-collector isolation: an exception here must not cancel
+                        // the coroutineScope and kill sibling collectors
+                        Log.e("EventsReceiver", "MessageEnqueuedEvent collector failed", e)
+                    }
                 }
             }
             launch {
                 Log.d("EventsReceiver", "launched MessageStateChangedEvent")
                 val allowedSources = setOf(EntitySource.Cloud, EntitySource.Gateway)
                 eventBus.collect<MessageStateChangedEvent> { event ->
-                    Log.d("EventsReceiver", "Event: $event")
+                    try {
+                        Log.d("EventsReceiver", "Event: $event")
 
-                    if (!settings.enabled) return@collect
+                        if (!settings.enabled) return@collect
 
-                    if (event.source !in allowedSources) return@collect
+                        if (event.source !in allowedSources) return@collect
 
-                    SendStateWorker.start(get(), event.id)
+                        SendStateWorker.start(get(), event.id)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // per-collector isolation: an exception here must not cancel
+                        // the coroutineScope and kill sibling collectors
+                        Log.e("EventsReceiver", "MessageStateChangedEvent collector failed", e)
+                    }
                 }
             }
 
             launch {
                 Log.d("EventsReceiver", "launched PingEvent")
                 eventBus.collect<PingEvent> {
-                    Log.d("EventsReceiver", "Event: $it")
+                    try {
+                        Log.d("EventsReceiver", "Event: $it")
 
-                    if (!settings.enabled) return@collect
+                        if (!settings.enabled) return@collect
 
-                    PullMessagesWorker.start(get())
+                        PullMessagesWorker.start(get())
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // per-collector isolation: an exception here must not cancel
+                        // the coroutineScope and kill sibling collectors
+                        Log.e("EventsReceiver", "PingEvent collector failed", e)
+                    }
                 }
             }
 
             launch {
                 Log.d("EventsReceiver", "launched WebhooksUpdatedEvent")
                 eventBus.collect<WebhooksUpdatedEvent> {
-                    Log.d("EventsReceiver", "Event: $it")
+                    try {
+                        Log.d("EventsReceiver", "Event: $it")
 
-                    if (!settings.enabled) return@collect
+                        if (!settings.enabled) return@collect
 
-                    WebhooksUpdateWorker.start(get())
+                        WebhooksUpdateWorker.start(get())
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // per-collector isolation: an exception here must not cancel
+                        // the coroutineScope and kill sibling collectors
+                        Log.e("EventsReceiver", "WebhooksUpdatedEvent collector failed", e)
+                    }
                 }
             }
 
             launch {
                 Log.d("EventsReceiver", "launched SettingsUpdatedEvent")
                 eventBus.collect<SettingsUpdatedEvent> {
-                    Log.d("EventsReceiver", "Event: $it")
+                    try {
+                        Log.d("EventsReceiver", "Event: $it")
 
-                    if (!settings.enabled) return@collect
+                        if (!settings.enabled) return@collect
 
-                    SettingsUpdateWorker.start(get())
+                        SettingsUpdateWorker.start(get())
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // per-collector isolation: an exception here must not cancel
+                        // the coroutineScope and kill sibling collectors
+                        Log.e("EventsReceiver", "SettingsUpdatedEvent collector failed", e)
+                    }
                 }
             }
 
             launch {
                 Log.d("EventsReceiver", "launched DeviceRegisteredEvent")
                 eventBus.collect<DeviceRegisteredEvent> {
-                    Log.d("EventsReceiver", "Event: $it")
+                    try {
+                        Log.d("EventsReceiver", "Event: $it")
 
-                    if (!settings.enabled) return@collect
-                    if (settings.fcmToken != null) return@collect
+                        if (!settings.enabled) return@collect
+                        if (settings.fcmToken != null) return@collect
 
-                    SSEForegroundService.start(get())
+                        SSEForegroundService.start(get())
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // per-collector isolation: an exception here must not cancel
+                        // the coroutineScope and kill sibling collectors
+                        Log.e("EventsReceiver", "DeviceRegisteredEvent collector failed", e)
+                    }
                 }
             }
 
             launch {
                 Log.d("EventsReceiver", "launched MessageCancelledEvent")
                 eventBus.collect<MessageCancelledEvent> { event ->
-                    Log.d("EventsReceiver", "Event: $event")
-
-                    if (!settings.enabled) return@collect
-
                     try {
-                        get<MessagesService>().cancelMessage(event.messageId)
-                    } catch (_: IllegalArgumentException) {
-                        // message not found locally — nothing to cancel
-                    } catch (_: IllegalStateException) {
-                        // message not in Pending state — already sent/cancelled
+                        Log.d("EventsReceiver", "Event: $event")
+
+                        if (!settings.enabled) return@collect
+
+                        try {
+                            get<MessagesService>().cancelMessage(event.messageId)
+                        } catch (_: IllegalArgumentException) {
+                            // message not found locally — nothing to cancel
+                        } catch (_: IllegalStateException) {
+                            // message not in Pending state — already sent/cancelled
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // per-collector isolation: a non-IAE/ISE exception must not
+                        // cancel the coroutineScope and kill sibling collectors
+                        Log.e("EventsReceiver", "MessageCancelledEvent collector failed", e)
                     }
                 }
             }
