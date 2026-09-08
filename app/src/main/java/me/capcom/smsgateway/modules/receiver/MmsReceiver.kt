@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Telephony
 import android.util.Log
+import me.capcom.smsgateway.extensions.setComponentEnabled
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
@@ -94,7 +95,23 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
         private val INSTANCE: MmsReceiver by lazy { MmsReceiver() }
 
-        fun register(context: Context) {
+        fun start(context: Context) {
+            register(context)
+            context.applicationContext.setComponentEnabled(
+                MmsReceiver::class.java,
+                true
+            )
+        }
+
+        fun stop(context: Context) {
+            unregister(context)
+            context.applicationContext.setComponentEnabled(
+                MmsReceiver::class.java,
+                false
+            )
+        }
+
+        private fun register(context: Context) {
             val appContext = context.applicationContext
             unregister(appContext)
 
@@ -109,7 +126,7 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
             }
         }
 
-        fun unregister(context: Context) {
+        private fun unregister(context: Context) {
             try {
                 context.applicationContext.unregisterReceiver(INSTANCE)
             } catch (e: IllegalArgumentException) {

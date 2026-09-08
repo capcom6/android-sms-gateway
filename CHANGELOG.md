@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Incoming SMS, data SMS and MMS are now captured by receivers declared in the manifest and enabled while the gateway runs, so messages are still delivered when the system kills the app process [810e244]
+- The gateway now starts automatically after an app update, so incoming messages and webhooks resume without opening the app — requires the autostart setting to be enabled [810e244]
+
+## [v1.77.4] - 2026-10-19
+
 ### Fixed
-- Broadcast receivers are now registered with the export flag Android 13 (API 33) requires, so incoming SMS, data SMS and MMS broadcasts and sent/delivered status updates keep being delivered on API 33+ [d79fa9f]
+- Broadcast receivers are now registered with the export flag Android 13 (API 33) requires, so incoming SMS, data SMS and MMS broadcasts and sent/delivered status updates keep being delivered on API 33+ [a5d01a2]
 
 ## [v1.77.3] - 2026-10-12
 
@@ -1393,3 +1399,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.77.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.0...v1.77.1
 [v1.77.2]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.1...v1.77.2
 [v1.77.3]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.2...v1.77.3
+[v1.77.4]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.3...v1.77.4

@@ -79,15 +79,13 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 🔔 **Real-time incoming message notifications:** Receive instant SMS and MMS notifications via webhooks.
 - 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) via the same webhooks used for real-time notifications.
 - 📎 **MMS download notifications:** Receive webhook notifications when MMS messages are fully downloaded, including message body and attachments.
-- 📤 **Send MMS messages via API:** Send multimedia messages (images, audio, video, files) with an optional subject and text body.
+- 📤 **Send MMS messages via API:** Send multimedia messages (images, audio, video, files) as Base64-encoded attachments, with an optional subject and text body.
+- 🖼️ **Received MMS attachments:** Attachments of received MMS messages are stored on the device and can be fetched through the inbox API.
 - 📦 **Batch webhook events:** Receive batched webhook deliveries when multiple messages arrive at once, reducing the number of requests.
 - 🛑 **Cancel pending messages:** Cancel queued messages before they are sent.
-- 🔍 **Message filtering:** Filter the messages list by state (pending, sent, delivered, failed, etc.) and type to find messages quickly.
+- 🔍 **Message filtering:** Filter the messages list by state (pending, sent, delivered, failed) and type (SMS, MMS, Data SMS) to find messages quickly.
 - ⏳ **Send rate limiting:** Restrict the number of messages sent per period (e.g., per 30 minutes) to avoid operator throttling.
 - ⏰ **Message scheduling:** Schedule messages for future delivery using the optional `scheduleAt` field (it must be a future timestamp).
-- 🖼️ **Send and receive MMS with payloads:** Send images, audio, video, and other media as MMS with inline or URL-referenced attachments. Received attachments are persisted locally and exposed via the API. See [`docs/MMS.md`](docs/MMS.md).
-- 🔍 **Message filtering:** Filter messages by state (pending, sent, delivered, failed) and type (SMS, MMS, Data SMS) in the app's message list.
-- 📊 **Webhook queue diagnostics:** View and manage queued webhooks via a diagnostic screen in the app settings.
 
 🔒 Security and Privacy:
 
@@ -99,13 +97,13 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 💳 **Multiple SIM card support:** Supports devices with [multiple SIM cards](https://docs.sms-gate.app/features/multi-sim/).
 - 📱📱 **Multiple device support:** Connect [multiple devices](https://docs.sms-gate.app/features/multi-device/) to the same account with Cloud or Private server. Messages sent via the server are distributed across all connected devices.
 - 💾 **Data SMS support:** Send and receive binary [data payloads](https://docs.sms-gate.app/features/data-sms/) via SMS for IoT commands, encrypted messages, and other specialized use cases.
-- 🕐 **Working hours scheduling:** Restrict message delivery to configurable time windows, automatically pausing the queue outside of them
-- 🔭 **Webhook queue diagnostics:** Inspect the webhook delivery queue in-app to see pending deliveries, retries, and their status.
-- 📅 **Scheduled message delivery:** Set `scheduleAt` when posting a message to dispatch it at a future time.
+- 🕐 **Working hours scheduling:** Restrict message delivery to configurable time windows, automatically pausing the queue outside of them.
+- 🔄 **Reliable background capture:** SMS, data SMS, and MMS receivers are declared in the manifest and enabled while the gateway runs, so incoming messages are still delivered if the system kills the app process.
 
 🔌 Integration:
 
 - 🪝 **Webhooks:** Set up [webhooks](https://docs.sms-gate.app/features/webhooks/) to be triggered on specified events.
+- 📊 **Webhook queue diagnostics:** Inspect the webhook delivery queue in-app to see pending deliveries, retries, and their status.
 
 ### Ideal For
 
@@ -170,71 +168,43 @@ To use the application, you need to grant the following permissions:
 
 Prerequisites:
 
-- JDK 17
-- Android SDK, either through [Android Studio](https://developer.android.com/studio) or a standalone SDK installation
+- JDK 17 (required by Android Gradle Plugin 8.1.2) and the Android SDK — the project compiles against SDK 33. The Gradle wrapper (Gradle 8.0) is included in the repository.
+- The SDK location is read from `local.properties` (created automatically by Android Studio) or the `ANDROID_HOME` environment variable.
 - `app/google-services.json` — Firebase configuration required by the Google Services plugin. The file is gitignored, so provide your own copy (CI generates it from a repository secret).
 
-Gradle reads signing variables from the process environment, not from a `.env` file. The variables are listed in [`.env.example`](.env.example) with the following values:
+The `release` and `insecure` variants are signed with your own keystore, which the build expects at `app/keystore.jks` (also gitignored). Gradle reads the signing variables from the process environment, not from a `.env` file, and they are listed in [`.env.example`](.env.example):
 
-| Variable                 | Purpose                                                        | Format | Example                  |
-| ------------------------ | -------------------------------------------------------------- | ------ | ------------------------ |
-| `SIGNING_STORE_PASSWORD` | Password for the keystore file used to sign release builds     | String | `your-keystore-password` |
-| `SIGNING_KEY_ALIAS`      | Alias of the key inside the keystore that signs release builds | String | `your-key-alias`         |
-| `SIGNING_KEY_PASSWORD`   | Password for that key alias                                    | String | `your-key-password`      |
+| Variable                 | Purpose                                                                | Format        | Example                               |
+| ------------------------ | ---------------------------------------------------------------------- | ------------- | ------------------------------------- |
+| `SIGNING_STORE_PASSWORD` | Password for the keystore file used to sign release builds             | String        | `your-keystore-password`              |
+| `SIGNING_KEY_ALIAS`      | Alias of the key inside the keystore that signs release builds         | String        | `your-key-alias`                      |
+| `SIGNING_KEY_PASSWORD`   | Password for that key alias                                            | String        | `your-key-password`                   |
+| `ANDROID_HOME`           | Path to the Android SDK, used when `local.properties` has no `sdk.dir` | Absolute path | `/Users/username/Library/Android/sdk` |
 
-All three are read by `signingConfigs.release` in `app/build.gradle`, which resolves the keystore as `app/keystore.jks`. Put your keystore at that path, export the variables, and build:
+The three signing variables are read by `signingConfigs.release` in `app/build.gradle`. The `debug` and `debugInsecure` variants are signed with the default Android debug keystore and need none of them.
+
+Export the variables and build:
 
 ```sh
-export SIGNING_STORE_PASSWORD='your-keystore-password'
-export SIGNING_KEY_ALIAS='your-key-alias'
-export SIGNING_KEY_PASSWORD='your-key-password'
-./gradlew test              # run the unit test suite
-./gradlew assembleRelease   # build the secure (release) APK
-./gradlew assembleInsecure  # build the insecure APK (development/testing only)
-```
+cp .env.example .env
+# fill in your values, then:
+set -a; source .env; set +a
 
-Use `./gradlew bundleRelease` or `./gradlew bundleInsecure` to produce an App Bundle instead.
+./gradlew test             # run unit tests
+./gradlew assembleDebug    # debug build, signed with the default debug keystore
+./gradlew assembleInsecure # insecure development build, signed with the release keystore
+./gradlew assembleRelease  # secure release build, signed with the release keystore
+./gradlew bundleRelease    # release App Bundle (.aab)
+```
 
 `app/build.gradle` defines four build variants:
 
-| Variant         | Signing          | Network traffic   | Use                     |
-| --------------- | ---------------- | ----------------- | ----------------------- |
-| `release`       | Release keystore | TLS only          | Production              |
-| `insecure`      | Release keystore | Cleartext allowed | Development and testing |
-| `debug`         | Debug keystore   | TLS only          | Local debugging         |
-| `debugInsecure` | Debug keystore   | Cleartext allowed | Local debugging         |
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-### Build from Source
-
-Building from source requires JDK 17 (required by Android Gradle Plugin 8.1.2) and the Android SDK — the project compiles against SDK 33. The SDK location is read from `local.properties` (created automatically by Android Studio) or the `ANDROID_HOME` environment variable. The Gradle wrapper (Gradle 8.0) is included in the repository.
-
-1. Provide `app/google-services.json`. This file is not committed (see `.gitignore`); CI injects it from a secret, so local builds need their own Firebase configuration file.
-2. For the signed variants (`release` and `insecure`), provide a keystore at `app/keystore.jks` (also not committed) and export the signing variables documented in [`.env.example`](.env.example):
-
-    ```sh
-    cp .env.example .env
-    # fill in your values, then:
-    set -a; source .env; set +a
-    ```
-
-3. Run the build:
-
-    ```sh
-    ./gradlew test             # run unit tests
-    ./gradlew assembleDebug    # debug build, signed with the default debug keystore
-    ./gradlew assembleInsecure # insecure development build, signed with the release keystore
-    ./gradlew assembleRelease  # secure release build, signed with the release keystore
-    ./gradlew bundleRelease    # release App Bundle (.aab)
-    ```
-
-| Build type      | Description                                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `debug`         | Development build with the strict network security config, signed with the default debug keystore.                                    |
-| `debugInsecure` | Debuggable build that allows cleartext traffic, signed with the default debug keystore.                                               |
-| `insecure`      | Development and testing build with cleartext traffic allowed, signed with the release keystore. **Never use in public environments.** |
-| `release`       | Production build with strict security configurations, signed with the release keystore.                                               |
+| Variant         | Signing          | Network traffic                             | Use                     |
+| --------------- | ---------------- | ------------------------------------------- | ----------------------- |
+| `release`       | Release keystore | TLS only (cleartext allowed to `127.0.0.1`) | Production              |
+| `insecure`      | Release keystore | Cleartext allowed                           | Development and testing |
+| `debug`         | Debug keystore   | TLS only (cleartext allowed to `127.0.0.1`) | Local debugging         |
+| `debugInsecure` | Debug keystore   | Cleartext allowed                           | Local debugging         |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -255,7 +225,7 @@ This mode is ideal for sending messages from a local network.
 
 1. Launch the app on your device.
 2. Toggle the `Local Server` switch to the "on" position.
-3. Tap the `Offline` button at the bottom of the screen to activate the server.
+3. Tap the `Start Service` button at the bottom of the screen to start the gateway. Switch changes take effect after the service is restarted.
 4. In the `Local Server` section, your device's local and public IP addresses will be displayed, along with the credentials for basic authentication. Note that the public IP address is only accessible if you have a public (or "white") IP and your firewall is configured correctly.
 5. To send a message from within the local network, execute a `curl` command like the one below. Replace `<username>`, `<password>`, and `<device_local_ip>` with the actual values provided in the previous step:
 
@@ -296,7 +266,7 @@ Use the cloud server mode when dealing with dynamic or shared device IP addresse
 
 1. Launch the app on your device.
 2. Toggle the `Cloud Server` switch to the "on" position.
-3. Tap the `Online` button located at the bottom of the screen to connect to the cloud server.
+3. Tap the `Start Service` button located at the bottom of the screen to start the gateway and connect to the cloud server. Switch changes take effect after the service is restarted.
 4. In the `Cloud Server` section, the credentials for basic authentication will be displayed.
 5. To send a message via the cloud server, perform a `curl` request with a command similar to the following, substituting `<username>` and `<password>` with the actual values obtained in step 4:
 
@@ -446,7 +416,7 @@ If you have any questions or suggestions, feel free to reach out through the fol
 - **Documentation:** [https://docs.sms-gate.app](https://docs.sms-gate.app)
 - **Status Page:** [https://status.sms-gate.app](https://status.sms-gate.app)
 - **Project:** [https://github.com/android-sms-gateway](https://github.com/android-sms-gateway)
-- **Main Repository:** [https://github.com/capcom6/android-sms-gateway](https://github.com/capcom6/android-sms-gateway)
+- **Android App Repository:** [https://github.com/capcom6/android-sms-gateway](https://github.com/capcom6/android-sms-gateway)
 - **Author GitHub:** [capcom6](https://github.com/capcom6)
 
 
