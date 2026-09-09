@@ -10,6 +10,8 @@ import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
+import me.capcom.smsgateway.modules.gateway.inbox.InboxUploadService
+import me.capcom.smsgateway.modules.gateway.inbox.InboxUploadWorker
 import me.capcom.smsgateway.modules.gateway.services.SSEForegroundService
 import me.capcom.smsgateway.modules.gateway.workers.PullMessagesWorker
 import me.capcom.smsgateway.modules.gateway.workers.SendStateWorker
@@ -22,10 +24,12 @@ import me.capcom.smsgateway.modules.messages.MessagesService
 import me.capcom.smsgateway.modules.messages.MessagesSettings
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
+import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.services.PushService
 import java.util.Date
 
 class GatewayService(
+    private val inboxUploadService: InboxUploadService,
     private val messagesService: MessagesService,
     private val settings: GatewaySettings,
     private val events: EventBus,
@@ -49,6 +53,7 @@ class GatewayService(
         PullMessagesWorker.start(context)
         WebhooksUpdateWorker.start(context)
         SettingsUpdateWorker.start(context)
+        InboxUploadWorker.start(context)
 
         eventsReceiver.start()
     }
@@ -56,6 +61,7 @@ class GatewayService(
     fun stop(context: Context) {
         eventsReceiver.stop()
 
+        InboxUploadWorker.stop(context)
         SSEForegroundService.stop(context)
         SettingsUpdateWorker.stop(context)
         WebhooksUpdateWorker.stop(context)
@@ -326,6 +332,32 @@ class GatewayService(
             settings.token,
             listOf(request)
         )
+    }
+    //endregion
+
+    //region Inbox
+    fun enqueueInboxMessage(
+        context: Context,
+        message: InboxMessage,
+        sender: String,
+        recipient: String?,
+        simNumber: Int?,
+        date: Date,
+    ) {
+        if (!settings.enabled) {
+            return
+        }
+
+        inboxUploadService.enqueue(
+            context, message, sender, recipient, simNumber, date
+        )
+    }
+
+    internal suspend fun uploadInbox(messages: List<GatewayApi.InboxMessage>) {
+        val token = settings.registrationInfo?.token
+            ?: return
+
+        api.postInbox(token, messages)
     }
     //endregion
 

@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.domain.WebhookDelivery
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
+import me.capcom.smsgateway.modules.gateway.GatewayService
 import me.capcom.smsgateway.modules.incoming.IncomingMessagesService
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessageType
 import me.capcom.smsgateway.modules.logs.LogsService
@@ -31,6 +32,7 @@ class ReceiverService : KoinComponent {
     private val logsService: LogsService by inject()
     private val incomingMessagesService: IncomingMessagesService by inject()
     private val receiverSettings: ReceiverSettings by inject()
+    private val gatewayService: GatewayService by inject()
 
     private val eventsReceiver by lazy { EventsReceiver() }
     private val mmsContentObserver by lazy { MmsContentObserver() }
@@ -128,6 +130,35 @@ class ReceiverService : KoinComponent {
         context: Context,
         message: InboxMessage
     ): Pair<WebHookEvent, Any>? {
+        val simSlotIndex = message.subscriptionId?.let {
+            SubscriptionsHelper.getSimSlotIndex(context, it)
+        }
+        val simNumber = simSlotIndex?.let { it + 1 }
+        val recipient = simSlotIndex?.let {
+            SubscriptionsHelper.getPhoneNumber(context, it)
+        }
+
+        try {
+            gatewayService.enqueueInboxMessage(
+                context,
+                message,
+                message.address,
+                recipient,
+                simNumber,
+                message.date
+            )
+        } catch (e: Exception) {
+            logsService.insert(
+                LogEntry.Priority.ERROR,
+                MODULE_NAME,
+                "Failed to enqueue inbox message",
+                mapOf(
+                    "error" to (e.message ?: e.toString()),
+                    "stackTrace" to e.stackTraceToString(),
+                )
+            )
+        }
+
         if (incomingMessagesService.isMessageProcessed(message)) {
             logsService.insert(
                 LogEntry.Priority.DEBUG,
@@ -140,14 +171,6 @@ class ReceiverService : KoinComponent {
                 )
             )
             return null
-        }
-
-        val simSlotIndex = message.subscriptionId?.let {
-            SubscriptionsHelper.getSimSlotIndex(context, it)
-        }
-        val simNumber = simSlotIndex?.let { it + 1 }
-        val recipient = simSlotIndex?.let {
-            SubscriptionsHelper.getPhoneNumber(context, it)
         }
 
         val incoming = incomingMessagesService.save(message)
