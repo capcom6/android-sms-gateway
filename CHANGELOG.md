@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.75.0] - 2026-08-28
+
+### Added
+- Webhook queue diagnostic list screen for viewing and managing queued webhooks [3ce35144]
+
+### Changed
+- Update i18n strings [956f9d6]
+
+## [v1.74.1] - 2026-08-16
+
+### Changed
+- Replace scheduled worker on new immediate message for better performance [b179de8]
+
+## [v1.74.0] - 2026-08-28
+
+### Added
+- MMS sending feature for sending multimedia messages via API [1b6c76b]
+
+### Fixed
+- Support legacy date formats for improved compatibility [c90101d]
+
+## [v1.73.0] - 2026-08-13
+
+### Added
+- Allow filtering messages by state and type in the app's message list [71bf841]
+
+### Changed
+- Update i18n translations [f4f1ea5]
+
+## [v1.72.1] - 2026-07-04
+
+### Added
+- New API endpoint for resolving phone numbers [0657438]
+
+## [v1.72.0] - 2026-08-11
+
+### Added
+- Local server messages sort parameter for ordering query results [9f65754]
+
+## [v1.71.1] - 2026-07-02
+
+### Changed
+- Use scheduling instead of polling for webhook delivery [e4acf42]
+
+## [v1.71.0] - 2026-08-11
+
+### Added
+- Batch webhooks support for processing multiple webhooks efficiently [05351ce]
+
+### Documentation
+- Update swagger, readme, and changelog [9c95ca2]
+
+## [v1.70.4] - 2026-08-03
+
+### Fixed
+- Fix queue stuck when there is a scheduled message [5e1def4]
+
 ## [v1.70.3] - 2026-08-11
 
 ### Changed
@@ -1272,3 +1329,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.65.3]: https://github.com/capcom6/android-sms-gateway/compare/v1.65.2...v1.65.3
 [v1.66.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.65.3...v1.66.0
 [v1.66.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.66.0...v1.66.1
+[v1.70.4]: https://github.com/capcom6/android-sms-gateway/compare/v1.70.3...v1.70.4
+[v1.71.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.70.4...v1.71.0
+[v1.71.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.71.0...v1.71.1
+[v1.72.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.71.1...v1.72.0
+[v1.72.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.72.0...v1.72.1
+[v1.73.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.72.1...v1.73.0
+[v1.74.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.73.0...v1.74.0
+[v1.74.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.74.0...v1.74.1
+[v1.75.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.74.1...v1.75.0
