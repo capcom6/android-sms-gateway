@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.75.1] - 2026-09-08
+
+### Changed
+- Improve SMS delivery status parsing — supports CDMA (3GPP2) format and masks status bits for more accurate sent/delivered/failed reporting [f7ad73b]
+
+## [v1.75.0] - 2026-09-04
+
+### Added
+- Webhook queue diagnostic list screen in settings to inspect pending webhook deliveries [3ce3514]
+
+### Changed
+- Update strings [956f9d6]
+
+## [v1.74.1] - 2026-09-02
+
+### Changed
+- New immediate messages are now sent right away instead of waiting for the scheduled worker [b179de8]
+
+## [v1.74.0] - 2026-08-31
+
+### Added
+- Send MMS messages via the API — include one or more attachments in the `mmsMessage` field with an optional subject and text [1b6c76b]
+
+### Changed
+- Support legacy date formats when parsing received messages [c90101d]
+
+## [v1.73.0] - 2026-08-27
+
+### Added
+- Filter messages in the list by state and type [71bf8415]
+
+### Changed
+- Update translations [f4f1ea50]
+
+## [v1.72.1] - 2026-08-25
+
+### Changed
+- Resolve SIM phone numbers using the modern subscription API on Android 13+ with `READ_PHONE_NUMBERS` permission support [06574387]
+
+## [v1.72.0] - 2026-08-21
+
+### Added
+- `sort` parameter for the messages list local server endpoint [9f657545]
+
+## [v1.71.1] - 2026-08-20
+
+### Changed
+- Schedule webhook deliveries instead of polling for faster dispatch [e4acf420]
+
+## [v1.71.0] - 2026-08-18
+
+### Added
+- Batch webhook events — `sms:batch:received`, `sms:batch:data-received`, `mms:batch:received`, and `mms:batch:downloaded` deliver multiple events in a single request [05351ce]
+
+## [v1.70.4] - 2026-08-14
+
+### Fixed
+- Message queue no longer gets stuck when there is a scheduled message [5e1def46]
+
 ## [v1.70.3] - 2026-08-11
 
 ### Changed
@@ -1148,7 +1207,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.66.1...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.75.1...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1

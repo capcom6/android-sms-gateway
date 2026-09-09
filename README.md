@@ -1,22 +1,6 @@
 <a name="readme-top"></a>
-<!--
-*** Thanks for checking out the Best-README-Template. If you have a suggestion
-*** that would make this better, please fork the repo and create a pull request
-*** or simply open an issue with the tag "enhancement".
-*** Don't forget to give the project a star!
-*** Thanks again! Now go create something AMAZING! :D
--->
-
-
 
 <!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -40,7 +24,6 @@
     <a href="https://sms-gate.app"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <!-- <a href="https://github.com/capcom6/android-sms-gateway">View Demo</a> -->
     <a href="https://github.com/capcom6/android-sms-gateway/issues">Report Bug</a>
     ·
     <a href="https://github.com/capcom6/android-sms-gateway/issues">Request Feature</a>
@@ -98,6 +81,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 📤 **Send MMS messages via API:** Send multimedia messages (images, audio, video, files) with an optional subject and text body.
 - 📦 **Batch webhook events:** Receive batched webhook deliveries when multiple messages arrive at once, reducing the number of requests.
 - 🛑 **Cancel pending messages:** Cancel queued messages before they are sent.
+- 🔍 **Message filtering:** Filter the messages list by state (pending, sent, delivered, failed, etc.) and type to find messages quickly.
 - ⏳ **Send rate limiting:** Restrict the number of messages sent per period (e.g., per 30 minutes) to avoid operator throttling.
 - 🖼️ **Send and receive MMS with payloads:** Send images, audio, video, and other media as MMS with inline or URL-referenced attachments. Received attachments are persisted locally and exposed via the API. See [`docs/MMS.md`](docs/MMS.md).
 
@@ -112,6 +96,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 📱📱 **Multiple device support:** Connect [multiple devices](https://docs.sms-gate.app/features/multi-device/) to the same account with Cloud or Private server. Messages sent via the server are distributed across all connected devices.
 - 💾 **Data SMS support:** Send and receive binary [data payloads](https://docs.sms-gate.app/features/data-sms/) via SMS for IoT commands, encrypted messages, and other specialized use cases.
 - 🕐 **Working hours scheduling:** Restrict message delivery to configurable time windows, automatically pausing the queue outside of them
+- 🔭 **Webhook queue diagnostics:** Inspect the webhook delivery queue in-app to see pending deliveries, retries, and their status.
 
 🔌 Integration:
 
@@ -330,7 +315,7 @@ For cloud mode the process is similar, simply change the URL to https://api.sms-
 - [x] Add functionality to modify user credentials.
 - [x] Introduce option to adjust the local server port.
 - [x] Send notifications to an external server when the status of a message changes.
-- [ ] Incorporate scheduling capabilities for dispatching messages at specific times.
+- [x] Incorporate scheduling capabilities for dispatching messages at specific times.
 - [ ] Implement region-based restrictions to prevent international SMS.
 - [x] Provide an API endpoint to retrieve the list of available SIM cards on the device.
 - [x] Include detailed error messages in responses and logs.
@@ -389,24 +374,6 @@ If you have any questions or suggestions, feel free to reach out through the fol
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- ACKNOWLEDGMENTS -->
-<!-- ## Acknowledgments
-
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
-
-* [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
-* [React Icons](https://react-icons.github.io/react-icons/search)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p> -->
 
 
 
