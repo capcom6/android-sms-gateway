@@ -8,6 +8,7 @@ import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
+import me.capcom.smsgateway.modules.device.DeviceService
 import me.capcom.smsgateway.modules.events.EventBus
 import me.capcom.smsgateway.modules.gateway.events.DeviceRegisteredEvent
 import me.capcom.smsgateway.modules.gateway.services.SSEForegroundService
@@ -30,6 +31,7 @@ class GatewayService(
     private val settings: GatewaySettings,
     private val events: EventBus,
     private val logsService: LogsService,
+    private val deviceService: DeviceService,
 ) {
     private val eventsReceiver by lazy { EventsReceiver() }
 
@@ -130,10 +132,13 @@ class GatewayService(
         try {
             val deviceName = "${Build.MANUFACTURER}/${Build.PRODUCT}"
             val simCards = SubscriptionsHelper.getActiveSimCards(context)
+            val keyInfo = deviceService.ensureKey()
             val request = GatewayApi.DeviceRegisterRequest(
                 deviceName,
                 pushToken,
                 simCards.toDTO(),
+                publicKey = keyInfo?.publicKeyBase64,
+                keyVersion = keyInfo?.keyVersion,
             )
             val response = when (registerMode) {
                 RegistrationMode.Anonymous -> api.deviceRegister(request, null)
@@ -172,12 +177,15 @@ class GatewayService(
         val settings = settings.registrationInfo ?: return
         val accessToken = settings.token
         val simCards = SubscriptionsHelper.getActiveSimCards(context)
+        val encryptionKey = deviceService.ensureKey()
 
         api.devicePatch(
             accessToken,
             GatewayApi.DevicePatchRequest(
                 settings.id,
                 pushToken,
+                encryptionKey?.publicKeyBase64,
+                encryptionKey?.keyVersion,
                 simCards.toDTO(),
             )
         )

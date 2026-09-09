@@ -10,4 +10,5 @@ val dbModule = module {
     single { get<AppDatabase>().webhookQueueDao() }
     single { get<AppDatabase>().logDao() }
     single { get<AppDatabase>().tokensDao() }
+    single { get<AppDatabase>().deviceKeysDao() }
 }

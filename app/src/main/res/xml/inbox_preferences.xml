@@ -4,7 +4,7 @@
     <PreferenceCategory app:title="@string/inbox">
         <SwitchPreference
             android:defaultValue="true"
-            android:icon="@drawable/ic_advanced"
+            android:icon="@drawable/ic_visibility"
             android:key="receiver.content_provider_enabled"
             app:summary="@string/receiver_content_provider_monitoring_summary"
             app:title="@string/receiver_content_provider_monitoring" />
