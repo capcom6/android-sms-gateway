@@ -16,17 +16,24 @@ class WebhooksSettings(
         get() = storage.get<Int>(RETRY_COUNT) ?: 15
 
     val signingKey: String
+        // 43 characters of the NanoID alphabet is ~256 bits. The previous
+        // length of 8 is ~48 bits: one captured payload/signature pair is
+        // enough to recover it offline and then forge signed events
+        // indefinitely. Existing keys are left alone — rotating one silently
+        // would break the receiver's verification — so only newly generated
+        // keys get the longer length.
         get() = storage.get<String>(SIGNING_KEY)
             ?: NanoIdUtils.randomNanoId(
                 NanoIdUtils.DEFAULT_NUMBER_GENERATOR,
                 NanoIdUtils.DEFAULT_ALPHABET,
-                8
+                SIGNING_KEY_LENGTH
             ).also { storage.set(SIGNING_KEY, it) }
 
     companion object {
         const val INTERNET_REQUIRED = "internet_required"
         const val RETRY_COUNT = "retry_count"
         const val SIGNING_KEY = "signing_key"
+        const val SIGNING_KEY_LENGTH = 43
     }
 
     override fun export(): Map<String, *> {

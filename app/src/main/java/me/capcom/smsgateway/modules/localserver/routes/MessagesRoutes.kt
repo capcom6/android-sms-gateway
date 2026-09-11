@@ -59,6 +59,25 @@ class MessagesRoutes(
                 ?.let { ProcessingState.valueOf(it) }
             val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
             val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+
+            // Unbounded before. The value goes straight into SQL LIMIT, where
+            // SQLite treats a negative as "no limit", so ?limit=-1 with
+            // includeContent=true materialised the entire message history.
+            // InboxRoutes already enforces this range; matching it here.
+            if (limit !in 1..500) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to "limit must be between 1 and 500")
+                )
+                return@get
+            }
+            if (offset < 0) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to "offset must be non-negative")
+                )
+                return@get
+            }
             val includeContent = call.request.queryParameters["includeContent"]?.let {
                 it.toBooleanStrictOrNull() ?: run {
                     call.respond(

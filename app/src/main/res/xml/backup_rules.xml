@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Backup is disabled outright in the manifest (android:allowBackup="false").
+    These rules exist as defence in depth: if backup is ever re-enabled, the
+    credential store must not travel with it.
+
+    The default shared_prefs file holds the local API password, the JWT
+    signing secret, the cloud login and bearer token, the private token, the
+    end-to-end encryption passphrase and the webhook signing key. The
+    database and the stored webhook payloads hold message bodies and
+    recipient numbers.
+
+    Used on Android 11 and below.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="file" path="webhook_payloads" />
+</full-backup-content>

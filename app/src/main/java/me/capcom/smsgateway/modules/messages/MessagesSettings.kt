@@ -146,12 +146,28 @@ class MessagesSettings(
             storage.set(SEND_INTERVAL_MAX, storage.get<Int>(SECONDS_BETWEEN_MESSAGES)?.toString())
         }
 
+        if (version < 2) {
+            // Seed a retention default, matching what LogsSettings already
+            // does for its own table. Without one, logLifetimeDays returns
+            // null, MessagesService.truncateLog() returns before deleting
+            // anything, and the `message` table grows for the life of the
+            // install. That table is also what the /health count query scans,
+            // so a long-lived gateway gets steadily slower with no visible
+            // cause. Only seeded when the operator has not chosen a value.
+            if (storage.get<Int?>(LOG_LIFETIME_DAYS) == null) {
+                storage.set(LOG_LIFETIME_DAYS, DEFAULT_LOG_LIFETIME_DAYS.toString())
+            }
+        }
+
         version = VERSION_CODE
     }
 
     companion object {
-        private const val VERSION_CODE = 1
+        private const val VERSION_CODE = 2
         private const val VERSION = "version"
+
+        /** Matches the default LogsSettings uses for the logs table. */
+        const val DEFAULT_LOG_LIFETIME_DAYS = 30
 
         private const val SEND_INTERVAL_MIN = "send_interval_min"
         private const val SEND_INTERVAL_MAX = "send_interval_max"

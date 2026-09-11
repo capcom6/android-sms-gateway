@@ -28,6 +28,31 @@ class GatewaySettings(
         get() = storage.get(FCM_TOKEN)
         set(value) = storage.set(FCM_TOKEN, value)
 
+    /**
+     * Keep the server-sent-events connection open even when a push token is
+     * available.
+     *
+     * Previously the SSE foreground service started only when [fcmToken] was
+     * null. That service holds the only wake lock and WiFi lock in cloud
+     * mode, so on any device with Play Services the app ran with no
+     * foreground service at all: it depended on a push that Doze throttles,
+     * plus PullMessagesWorker at the 15-minute platform minimum — which Doze
+     * batches into maintenance windows that can be far longer. On OEMs with
+     * aggressive process management the app simply stopped responding for
+     * long stretches.
+     *
+     * Defaults to true: correctness for a gateway matters more than the
+     * battery cost, and a gateway phone is normally on a charger. Users who
+     * prefer push-only can turn it off.
+     */
+    var keepConnectionAlive: Boolean
+        get() = storage.get<Boolean>(KEEP_CONNECTION_ALIVE) ?: true
+        set(value) = storage.set(KEEP_CONNECTION_ALIVE, value)
+
+    /** True when the persistent connection should be running. */
+    val shouldKeepConnection: Boolean
+        get() = enabled && (keepConnectionAlive || fcmToken == null)
+
     val username: String?
         get() = registrationInfo?.login
     val password: String?
@@ -51,6 +76,7 @@ class GatewaySettings(
         private const val REGISTRATION_INFO = "REGISTRATION_INFO"
         private const val ENABLED = "ENABLED"
         private const val FCM_TOKEN = "fcm_token"
+        private const val KEEP_CONNECTION_ALIVE = "keep_connection_alive"
 
         private const val CLOUD_URL = "cloud_url"
         private const val PRIVATE_TOKEN = "private_token"

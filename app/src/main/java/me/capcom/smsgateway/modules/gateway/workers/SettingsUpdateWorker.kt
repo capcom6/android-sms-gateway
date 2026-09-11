@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import me.capcom.smsgateway.domain.EntitySource
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
@@ -26,7 +27,9 @@ class SettingsUpdateWorker(appContext: Context, params: WorkerParameters) :
             val settings = gatewaySvc.getSettings()
 
             settings?.let {
-                settingsSvc.update(settings)
+                // Cloud source: protected keys (the encryption
+                // passphrase, the webhook signing key) are filtered out.
+                settingsSvc.update(settings, EntitySource.Cloud)
             }
 
             Result.success()
