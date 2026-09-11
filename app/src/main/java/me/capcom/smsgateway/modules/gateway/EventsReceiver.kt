@@ -89,8 +89,12 @@ class EventsReceiver : EventsReceiver() {
                 eventBus.collect<DeviceRegisteredEvent> {
                     Log.d("EventsReceiver", "Event: $it")
 
-                    if (!settings.enabled) return@collect
-                    if (settings.fcmToken != null) return@collect
+                    // Was: skip whenever an FCM token exists, which meant the
+                    // only wake-lock-holding service in cloud mode never ran
+                    // on a device with Play Services. shouldKeepConnection
+                    // keeps the no-token behaviour and adds an explicit
+                    // preference for everyone else.
+                    if (!settings.shouldKeepConnection) return@collect
 
                     SSEForegroundService.start(get())
                 }

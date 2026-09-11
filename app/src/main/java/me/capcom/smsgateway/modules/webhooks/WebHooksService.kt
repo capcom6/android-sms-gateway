@@ -88,6 +88,18 @@ class WebHooksService(
         if (!isValidUrl) {
             throw IllegalArgumentException("url must start with https:// or http://127.0.0.1")
         }
+
+        // Only the scheme was checked before. Webhook deliveries are issued
+        // from the phone's network position, so an https:// URL pointing at a
+        // private range turned the gateway into a POST proxy into whatever
+        // LAN it sits on — and per-attempt status codes are logged, making it
+        // a usable blind scanner. The explicit 127.0.0.1 allowance above is
+        // deliberate and stays.
+        if (!isLocalhost && WebHookUrlPolicy.isForbiddenHost(webHook.url)) {
+            throw IllegalArgumentException(
+                "url must not point at a private, loopback or link-local address"
+            )
+        }
         
         if (webHook.event !in WebHookEvent.values()) {
             throw IllegalArgumentException(

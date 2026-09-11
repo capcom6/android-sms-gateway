@@ -50,6 +50,14 @@ class GatewayService(
         WebhooksUpdateWorker.start(context)
         SettingsUpdateWorker.start(context)
 
+        // DeviceRegisteredEvent only fires on first registration, so an
+        // already-registered device restarting (boot, process death) would
+        // never have started this. Starting it here too makes the persistent
+        // connection survive a restart.
+        if (settings.shouldKeepConnection) {
+            SSEForegroundService.start(context)
+        }
+
         eventsReceiver.start()
     }
 

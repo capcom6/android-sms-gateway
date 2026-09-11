@@ -36,6 +36,7 @@ import io.ktor.util.date.GMTDate
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.domain.HealthResponse
 import me.capcom.smsgateway.extensions.configure
+import me.capcom.smsgateway.modules.localserver.auth.LoginThrottle
 import me.capcom.smsgateway.modules.health.HealthService
 import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.localserver.auth.AuthScopes
@@ -84,13 +85,23 @@ class WebService : Service() {
                 basic("auth-basic") {
                     realm = "Access to SMS Gateway"
                     validate { credentials ->
-                        when {
-                            credentials.name == username
-                                    && credentials.password == password -> UserIdPrincipal(
-                                credentials.name
-                            )
-
-                            else -> null
+                        // Refuse outright while locked out, so a guessing
+                        // attempt cannot be distinguished from a wrong
+                        // password and cannot proceed at full speed.
+                        if (LoginThrottle.isLockedOut()) {
+                            return@validate null
+                        }
+                        // Constant-time on both fields: `==` short-circuits on
+                        // the first differing byte and leaks the matching
+                        // prefix length.
+                        val ok = LoginThrottle.secretsMatch(username, credentials.name) &&
+                                LoginThrottle.secretsMatch(password, credentials.password)
+                        if (ok) {
+                            LoginThrottle.recordSuccess()
+                            UserIdPrincipal(credentials.name)
+                        } else {
+                            LoginThrottle.recordFailure()
+                            null
                         }
                     }
                 }

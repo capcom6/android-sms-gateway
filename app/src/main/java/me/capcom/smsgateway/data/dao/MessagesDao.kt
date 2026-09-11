@@ -150,11 +150,11 @@ interface MessagesDao {
         })
     }
 
-    @Query("UPDATE message SET state = :state WHERE id = :id AND state <> 'Failed'")
-    fun _updateMessageState(id: String, state: ProcessingState)
+    @Query("UPDATE message SET state = :state WHERE id = :id AND state <> 'Failed' AND (CASE state WHEN 'Pending' THEN 0 WHEN 'Cancelling' THEN 1 WHEN 'Processed' THEN 2 WHEN 'Sent' THEN 3 WHEN 'Delivered' THEN 4 WHEN 'Cancelled' THEN 5 WHEN 'Failed' THEN 5 ELSE 0 END) <= :stateRank")
+    fun _updateMessageState(id: String, state: ProcessingState, stateRank: Int)
 
     fun updateMessageState(id: String, state: ProcessingState) {
-        _updateMessageState(id, state)
+        _updateMessageState(id, state, state.rank)
         _insertMessageState(
             MessageState(
                 id,
@@ -191,11 +191,17 @@ interface MessagesDao {
         )
     }
 
-    @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND phoneNumber = :phoneNumber AND state <> 'Failed'")
+    // The rank comparison stops a late update from moving a recipient
+    // backwards. The sent/delivered broadcasts arrive on a different
+    // coroutine from the send loop, so `Processed` (written after dispatch)
+    // and `Sent` (from the platform) race; previously whichever landed last
+    // won. See ProcessingState.rank.
+    @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND phoneNumber = :phoneNumber AND state <> 'Failed' AND (CASE state WHEN 'Pending' THEN 0 WHEN 'Cancelling' THEN 1 WHEN 'Processed' THEN 2 WHEN 'Sent' THEN 3 WHEN 'Delivered' THEN 4 WHEN 'Cancelled' THEN 5 WHEN 'Failed' THEN 5 ELSE 0 END) <= :stateRank")
     fun _updateRecipientState(
         id: String,
         phoneNumber: String,
         state: ProcessingState,
+        stateRank: Int,
         error: String?
     )
 
@@ -206,7 +212,7 @@ interface MessagesDao {
         state: ProcessingState,
         error: String?
     ) {
-        _updateRecipientState(id, phoneNumber, state, error)
+        _updateRecipientState(id, phoneNumber, state, state.rank, error)
         _insertRecipientStates(
             listOf(
                 RecipientState(id, phoneNumber, state, System.currentTimeMillis())
@@ -214,10 +220,11 @@ interface MessagesDao {
         )
     }
 
-    @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND state <> 'Failed'")
+    @Query("UPDATE messagerecipient SET state = :state, error = :error WHERE messageId = :id AND state <> 'Failed' AND (CASE state WHEN 'Pending' THEN 0 WHEN 'Cancelling' THEN 1 WHEN 'Processed' THEN 2 WHEN 'Sent' THEN 3 WHEN 'Delivered' THEN 4 WHEN 'Cancelled' THEN 5 WHEN 'Failed' THEN 5 ELSE 0 END) <= :stateRank")
     fun _updateRecipientsState(
         id: String,
         state: ProcessingState,
+        stateRank: Int,
         error: String?
     )
 
@@ -227,7 +234,7 @@ interface MessagesDao {
         state: ProcessingState,
         error: String?
     ) {
-        _updateRecipientsState(id, state, error)
+        _updateRecipientsState(id, state, state.rank, error)
         _insertRecipientStatesByMessage(id, state)
     }
 
