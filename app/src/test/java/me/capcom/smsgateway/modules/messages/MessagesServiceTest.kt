@@ -33,8 +33,19 @@ class MessagesServiceTest {
             val offset: Int,
         )
 
+        data class CountArgs(
+            val source: EntitySource,
+            val state: ProcessingState?,
+            val start: Long,
+            val end: Long,
+        )
+
         val selectCalls = mutableListOf<SelectArgs>()
         val selectAscendingCalls = mutableListOf<SelectArgs>()
+        val exclusiveEndSelectCalls = mutableListOf<SelectArgs>()
+        val exclusiveEndSelectAscendingCalls = mutableListOf<SelectArgs>()
+        val countCalls = mutableListOf<CountArgs>()
+        val exclusiveEndCountCalls = mutableListOf<CountArgs>()
 
         override fun selectDescending(
             source: EntitySource,
@@ -58,6 +69,50 @@ class MessagesServiceTest {
         ): List<MessageWithRecipients> {
             selectAscendingCalls.add(SelectArgs(source, state, start, end, limit, offset))
             return emptyList()
+        }
+
+        override fun selectDescendingExclusiveEnd(
+            source: EntitySource,
+            state: ProcessingState?,
+            start: Long,
+            end: Long,
+            limit: Int,
+            offset: Int,
+        ): List<MessageWithRecipients> {
+            exclusiveEndSelectCalls.add(SelectArgs(source, state, start, end, limit, offset))
+            return emptyList()
+        }
+
+        override fun selectAscendingExclusiveEnd(
+            source: EntitySource,
+            state: ProcessingState?,
+            start: Long,
+            end: Long,
+            limit: Int,
+            offset: Int,
+        ): List<MessageWithRecipients> {
+            exclusiveEndSelectAscendingCalls.add(SelectArgs(source, state, start, end, limit, offset))
+            return emptyList()
+        }
+
+        override fun count(
+            source: EntitySource,
+            state: ProcessingState?,
+            start: Long,
+            end: Long,
+        ): Int {
+            countCalls.add(CountArgs(source, state, start, end))
+            return 0
+        }
+
+        override fun countExclusiveEnd(
+            source: EntitySource,
+            state: ProcessingState?,
+            start: Long,
+            end: Long,
+        ): Int {
+            exclusiveEndCountCalls.add(CountArgs(source, state, start, end))
+            return 0
         }
 
         override fun countProcessedFrom(timestamp: Long): MessagesStats =
@@ -89,13 +144,6 @@ class MessagesServiceTest {
 
         override fun get(id: String): MessageWithRecipients? =
             throw UnsupportedOperationException("not used in dispatch test")
-
-        override fun count(
-            source: EntitySource,
-            state: ProcessingState?,
-            start: Long,
-            end: Long,
-        ): Int = throw UnsupportedOperationException("not used in dispatch test")
 
         override fun _insert(message: Message) =
             throw UnsupportedOperationException("not used in dispatch test")
@@ -172,7 +220,9 @@ class MessagesServiceTest {
     }
 
     @Test
-    fun selectMessagesCreatedAtDescDelegatesToSelect() {
+    fun selectMessagesCreatedAtDescDelegatesToExclusiveEndQuery() {
+        // Parity (AC-AND-1/2): list path must use created_at >= :start AND created_at < :end.
+        // Legacy inclusive BETWEEN query (created_at == to returned) must NOT be the default path.
         val fake = RecordingMessagesDao()
         val service = messagesServiceWith(fake)
 
@@ -186,8 +236,9 @@ class MessagesServiceTest {
             sort = MessageSort.CreatedAtDesc,
         )
 
-        assertEquals(1, fake.selectCalls.size)
-        assertEquals(0, fake.selectAscendingCalls.size)
+        assertEquals(1, fake.exclusiveEndSelectCalls.size)
+        assertEquals(0, fake.exclusiveEndSelectAscendingCalls.size)
+        assertEquals(0, fake.selectCalls.size)
         assertEquals(
             RecordingMessagesDao.SelectArgs(
                 EntitySource.Local,
@@ -197,13 +248,13 @@ class MessagesServiceTest {
                 50,
                 10
             ),
-            fake.selectCalls[0],
+            fake.exclusiveEndSelectCalls[0],
         )
         assertEquals(emptyList<MessageWithRecipients>(), result)
     }
 
     @Test
-    fun selectMessagesCreatedAtAscDelegatesToSelectAscending() {
+    fun selectMessagesCreatedAtAscDelegatesToExclusiveEndQuery() {
         val fake = RecordingMessagesDao()
         val service = messagesServiceWith(fake)
 
@@ -217,8 +268,9 @@ class MessagesServiceTest {
             sort = MessageSort.CreatedAtAsc,
         )
 
-        assertEquals(0, fake.selectCalls.size)
-        assertEquals(1, fake.selectAscendingCalls.size)
+        assertEquals(0, fake.exclusiveEndSelectCalls.size)
+        assertEquals(1, fake.exclusiveEndSelectAscendingCalls.size)
+        assertEquals(0, fake.selectAscendingCalls.size)
         assertEquals(
             RecordingMessagesDao.SelectArgs(
                 EntitySource.Cloud,
@@ -228,15 +280,15 @@ class MessagesServiceTest {
                 25,
                 0
             ),
-            fake.selectAscendingCalls[0],
+            fake.exclusiveEndSelectAscendingCalls[0],
         )
         assertEquals(emptyList<MessageWithRecipients>(), result)
     }
 
     @Test
-    fun selectMessagesDefaultSortResolvesToCreatedAtDesc() {
+    fun selectMessagesDefaultSortResolvesToExclusiveEndCreatedAtDesc() {
         // Regression guard: omitting the trailing sort param must behave
-        // exactly like explicit CreatedAtDesc (select, NOT selectAscending).
+        // exactly like explicit CreatedAtDesc (exclusive desc, NOT ascending).
         val fake = RecordingMessagesDao()
         val service = messagesServiceWith(fake)
 
@@ -260,9 +312,25 @@ class MessagesServiceTest {
             MessageSort.CreatedAtDesc
         )
 
-        assertEquals(2, fake.selectCalls.size)
-        assertEquals(0, fake.selectAscendingCalls.size)
-        assertEquals(args, fake.selectCalls[0])
-        assertEquals(args, fake.selectCalls[1])
+        assertEquals(2, fake.exclusiveEndSelectCalls.size)
+        assertEquals(0, fake.exclusiveEndSelectAscendingCalls.size)
+        assertEquals(args, fake.exclusiveEndSelectCalls[0])
+        assertEquals(args, fake.exclusiveEndSelectCalls[1])
+    }
+
+    @Test
+    fun countMessagesDelegatesToExclusiveEndQuery() {
+        // AC-AND-3: X-Total-Count must reflect the same exclusive-end filtering.
+        val fake = RecordingMessagesDao()
+        val service = messagesServiceWith(fake)
+
+        service.countMessages(EntitySource.Cloud, ProcessingState.Processed, 1000L, 2000L)
+
+        assertEquals(1, fake.exclusiveEndCountCalls.size)
+        assertEquals(0, fake.countCalls.size)
+        assertEquals(
+            RecordingMessagesDao.CountArgs(EntitySource.Cloud, ProcessingState.Processed, 1000L, 2000L),
+            fake.exclusiveEndCountCalls[0],
+        )
     }
 }

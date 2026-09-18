@@ -78,6 +78,12 @@ interface MessagesDao {
     fun count(source: EntitySource, state: ProcessingState?, start: Long, end: Long): Int
 
     /**
+     * Count messages based on state and date range (exclusive end bound)
+     */
+    @Query("SELECT COUNT(*) as count FROM message WHERE source = :source AND (:state IS NULL OR state = :state) AND createdAt >= :start AND createdAt < :end")
+    fun countExclusiveEnd(source: EntitySource, state: ProcessingState?, start: Long, end: Long): Int
+
+    /**
      * Get messages with pagination and filtering
      */
     @Transaction
@@ -97,6 +103,34 @@ interface MessagesDao {
     @Transaction
     @Query("SELECT *, `rowid` FROM message WHERE source = :source AND (:state IS NULL OR state = :state) AND createdAt BETWEEN :start AND :end ORDER BY createdAt ASC, id ASC LIMIT :limit OFFSET :offset")
     fun selectAscending(
+        source: EntitySource,
+        state: ProcessingState?,
+        start: Long,
+        end: Long,
+        limit: Int,
+        offset: Int
+    ): List<MessageWithRecipients>
+
+    /**
+     * Get messages with pagination and filtering (exclusive end bound)
+     */
+    @Transaction
+    @Query("SELECT *, `rowid` FROM message WHERE source = :source AND (:state IS NULL OR state = :state) AND createdAt >= :start AND createdAt < :end ORDER BY createdAt DESC LIMIT :limit OFFSET :offset")
+    fun selectDescendingExclusiveEnd(
+        source: EntitySource,
+        state: ProcessingState?,
+        start: Long,
+        end: Long,
+        limit: Int,
+        offset: Int
+    ): List<MessageWithRecipients>
+
+    /**
+     * Get messages with pagination, filtering and ascending sort (exclusive end bound)
+     */
+    @Transaction
+    @Query("SELECT *, `rowid` FROM message WHERE source = :source AND (:state IS NULL OR state = :state) AND createdAt >= :start AND createdAt < :end ORDER BY createdAt ASC, id ASC LIMIT :limit OFFSET :offset")
+    fun selectAscendingExclusiveEnd(
         source: EntitySource,
         state: ProcessingState?,
         start: Long,
