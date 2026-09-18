@@ -197,13 +197,13 @@ class MessagesService(
     }
 
     /**
-     * Count messages based on state and date range
+     * Count messages based on state and half-open date range [start, end)
      */
     fun countMessages(source: EntitySource, state: ProcessingState?, start: Long, end: Long) =
-        dao.count(source, state, start, end)
+        dao.countExclusiveEnd(source, state, start, end)
 
     /**
-     * Get messages with pagination and filtering
+     * Get messages with pagination and filtering over half-open date range [start, end)
      */
     fun selectMessages(
         source: EntitySource,
@@ -214,8 +214,8 @@ class MessagesService(
         offset: Int,
         sort: MessageSort = MessageSort.CreatedAtDesc
     ) = when (sort) {
-        MessageSort.CreatedAtDesc -> dao.selectDescending(source, state, start, end, limit, offset)
-        MessageSort.CreatedAtAsc -> dao.selectAscending(source, state, start, end, limit, offset)
+        MessageSort.CreatedAtDesc -> dao.selectDescendingExclusiveEnd(source, state, start, end, limit, offset)
+        MessageSort.CreatedAtAsc -> dao.selectAscendingExclusiveEnd(source, state, start, end, limit, offset)
     }
     //#endregion
 

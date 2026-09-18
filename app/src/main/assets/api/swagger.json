@@ -2632,7 +2632,7 @@
         "description": "Retrieves a list of messages with filtering and pagination",
         "parameters": [
           {
-            "description": "Start date in RFC3339 format",
+            "description": "Start date in RFC3339 format (inclusive - messages created at or after this timestamp are included)",
             "in": "query",
             "name": "from",
             "schema": {
@@ -2641,7 +2641,7 @@
             }
           },
           {
-            "description": "End date in RFC3339 format",
+            "description": "End date in RFC3339 format (exclusive - messages created exactly at this timestamp are excluded; half-open interval [from, to))",
             "in": "query",
             "name": "to",
             "schema": {
