@@ -51,7 +51,7 @@ class SSEForegroundService : Service() {
                 onConnected = {
                     Log.d("SSEForegroundService", "SSE connected, pulling pending messages")
                     try {
-                        PullMessagesWorker.start(this@SSEForegroundService)
+                        PullMessagesWorker.startOnce(this@SSEForegroundService)
                     } catch (e: Throwable) {
                         e.printStackTrace()
                         logsService.insert(

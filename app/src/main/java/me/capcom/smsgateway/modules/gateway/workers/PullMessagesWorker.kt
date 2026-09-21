@@ -6,7 +6,11 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
@@ -16,12 +20,18 @@ import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.App
+import me.capcom.smsgateway.R
+import me.capcom.smsgateway.modules.notifications.NotificationsService
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
 
 class PullMessagesWorker(
     appContext: Context,
     params: WorkerParameters
-) : CoroutineWorker(appContext, params) {
+) : CoroutineWorker(appContext, params), KoinComponent {
+    private val notificationsSvc: NotificationsService by inject()
+
     override suspend fun doWork(): Result {
         try {
             withContext(Dispatchers.IO) {
@@ -36,8 +46,28 @@ class PullMessagesWorker(
         }
     }
 
+    override suspend fun getForegroundInfo(): ForegroundInfo {
+        return createForegroundInfo()
+    }
+
+    // Expedited work runs as a foreground service below API 31.
+    private fun createForegroundInfo(): ForegroundInfo {
+        val notificationId = NotificationsService.NOTIFICATION_ID_PULL_WORKER
+        val notification = notificationsSvc.makeNotification(
+            applicationContext,
+            notificationId,
+            applicationContext.getString(R.string.pull_messages_notification)
+        )
+
+        return ForegroundInfo(notificationId, notification)
+    }
+
     companion object {
         const val NAME = "PullMessagesWorker"
+
+        // Unique periodic and one-time work share a namespace, so the one-shot
+        // needs its own name to avoid cancelling the periodic poll.
+        private const val NAME_ONCE = "PullMessagesWorker:once"
 
         fun start(context: Context) {
             val work = PeriodicWorkRequestBuilder<PullMessagesWorker>(PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS, TimeUnit.MILLISECONDS)
@@ -56,6 +86,26 @@ class PullMessagesWorker(
                 )
         }
 
+        // Expedited so the pull happens inside the wake window a push opens;
+        // a regular job waits for the next Doze maintenance window.
+        fun startOnce(context: Context) {
+            val work = OneTimeWorkRequestBuilder<PullMessagesWorker>()
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+            WorkManager.getInstance(context)
+                .enqueueUniqueWork(
+                    NAME_ONCE,
+                    ExistingWorkPolicy.KEEP,
+                    work
+                )
+        }
+
         fun getStateLiveData(context: Context) = WorkManager.getInstance(context)
             .getWorkInfosForUniqueWorkLiveData(NAME)
             .map { infos -> infos.any { it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.ENQUEUED } }
@@ -63,6 +113,8 @@ class PullMessagesWorker(
         fun stop(context: Context) {
             WorkManager.getInstance(context)
                 .cancelUniqueWork(NAME)
+            WorkManager.getInstance(context)
+                .cancelUniqueWork(NAME_ONCE)
         }
     }
 }
