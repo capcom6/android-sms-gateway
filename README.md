@@ -260,6 +260,8 @@ This mode is ideal for sending messages from a local network.
 
 The full API reference is available as interactive Swagger documentation at `http://<device_local_ip>:8080/docs`.
 
+The same Swagger page is published at <https://capcom6.github.io/android-sms-gateway/>, where the local-server entry resolves against the GitHub Pages origin. Use the device-hosted page above to exercise the local API.
+
 ### Cloud Server
 
 <div align="center">
