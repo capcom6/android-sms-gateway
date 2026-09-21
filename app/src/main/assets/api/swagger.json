@@ -3539,7 +3539,8 @@
       "url": "https://api.sms-gate.app/3rdparty/v1"
     },
     {
-      "url": "http://localhost:3000/api"
+      "url": "/",
+      "description": "Local server. The URL is resolved against the origin serving this page, so it is usable only when these docs are opened from the device (for example, http://<device_local_ip>:8080/docs)."
     }
   ],
   "x-original-swagger-version": "2.0"

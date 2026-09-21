@@ -7,15 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.78.0] - 2026-10-27
+
 ### Added
-- Device unregistration — a new `Unregister device` action in the cloud server settings clears the registration on the device and stops the cloud session; the device has to sign up or sign in again before the cloud server can be used [ef80d80]
+- Device unregistration — a new `Unregister device` action in the cloud server settings clears the registration on the device and stops the cloud session; the device has to sign up or sign in again before the cloud server can be used [e75ee58]
 
 ### Changed
-- Cloud mode now requires an explicit sign-up or sign-in before the gateway starts — the device no longer registers itself in the background when the app fetches its push token. The start button is disabled while the registration runs, so a double tap can no longer create two accounts or two devices [ef80d80]
+- Cloud mode now requires an explicit sign-up or sign-in before the gateway starts — the device no longer registers itself in the background when the app fetches its push token. The start button is disabled while the registration runs, so a double tap can no longer create two accounts or two devices [e75ee58]
 
 ### Fixed
-- Cloud commands are no longer delivered twice — when the push token is refreshed, the transport that is not in use is now stopped, so a command from the cloud server is no longer received by both the SSE stream and the push channel [ef80d80]
-- Push commands that arrive while the device is unregistered are now ignored instead of being processed [ef80d80]
+- Cloud commands are no longer delivered twice — when the push token is refreshed, the transport that is not in use is now stopped, so a command from the cloud server is no longer received by both the SSE stream and the push channel [e75ee58]
+- Push commands that arrive while the device is unregistered are now ignored instead of being processed [e75ee58]
 
 ## [v1.77.5] - 2026-10-21
 
@@ -1272,7 +1274,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.5...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.0...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1
@@ -1413,3 +1415,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.77.3]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.2...v1.77.3
 [v1.77.4]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.3...v1.77.4
 [v1.77.5]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.4...v1.77.5
+[v1.78.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.5...v1.78.0
