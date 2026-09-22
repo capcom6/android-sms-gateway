@@ -65,8 +65,7 @@ class PullMessagesWorker(
     companion object {
         const val NAME = "PullMessagesWorker"
 
-        // Unique periodic and one-time work share a namespace, so the one-shot
-        // needs its own name to avoid cancelling the periodic poll.
+        // Unique periodic and one-time work share a namespace, so the one-shot needs its own name.
         private const val NAME_ONCE = "PullMessagesWorker:once"
 
         fun start(context: Context) {
@@ -86,8 +85,9 @@ class PullMessagesWorker(
                 )
         }
 
-        // Expedited so the pull happens inside the wake window a push opens;
-        // a regular job waits for the next Doze maintenance window.
+        // Expedited so the pull lands in the push's wake window, not the next
+        // Doze maintenance window. REPLACE so a trigger arriving mid-pull still
+        // gets a fetch starting after it.
         fun startOnce(context: Context) {
             val work = OneTimeWorkRequestBuilder<PullMessagesWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
@@ -101,7 +101,7 @@ class PullMessagesWorker(
             WorkManager.getInstance(context)
                 .enqueueUniqueWork(
                     NAME_ONCE,
-                    ExistingWorkPolicy.KEEP,
+                    ExistingWorkPolicy.REPLACE,
                     work
                 )
         }
