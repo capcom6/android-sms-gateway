@@ -81,6 +81,7 @@
     <string name="port">Port</string>
     <string name="private_token">Private Token</string>
     <string name="public_address">Public address</string>
+    <string name="pull_messages_notification">Checking for new messages…</string>
     <string name="require_internet_connection">Require Internet connection</string>
     <string name="restart_required_to_apply_changes">Restart required to apply changes</string>
     <string name="retries_signing_etc">Retries, signing, etc.</string>
