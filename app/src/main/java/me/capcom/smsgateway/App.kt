@@ -6,6 +6,7 @@ import healthModule
 import me.capcom.smsgateway.data.dbModule
 import me.capcom.smsgateway.helpers.LocaleHelper
 import me.capcom.smsgateway.modules.connection.connectionModule
+import me.capcom.smsgateway.modules.device.deviceModule
 import me.capcom.smsgateway.modules.encryption.encryptionModule
 import me.capcom.smsgateway.modules.events.eventBusModule
 import me.capcom.smsgateway.modules.gateway.GatewayService
@@ -57,6 +58,7 @@ class App: Application() {
                 pingModule,
                 connectionModule,
                 orchestratorModule,
+                deviceModule,
             )
         }
 

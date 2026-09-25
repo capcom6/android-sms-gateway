@@ -32,7 +32,7 @@
             app:defaultValue="86400"
             app:useSimpleSummaryProvider="true" />
         <Preference
-            android:icon="@drawable/ic_advanced"
+            android:icon="@drawable/ic_autorenew"
             android:key="transient.jwt_regenerate_secret"
             android:title="@string/jwt_regenerate_secret"
             android:summary="@string/jwt_regenerate_secret_summary"
@@ -41,11 +41,13 @@
 
     <PreferenceCategory app:title="@string/device">
         <Preference
-            android:icon="@drawable/ic_device_id"
+            android:icon="@drawable/ic_device_info"
             android:key="transient.device_id"
             android:title="@string/device_id"
             app:enableCopying="true"
             android:persistent="false" />
     </PreferenceCategory>
-    <Preference app:summary="@string/restart_required_to_apply_changes" />
+    <Preference
+        app:icon="@drawable/ic_restart"
+        app:summary="@string/restart_required_to_apply_changes" />
 </PreferenceScreen>
