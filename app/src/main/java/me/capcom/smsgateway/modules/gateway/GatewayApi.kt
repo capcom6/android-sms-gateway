@@ -229,7 +229,7 @@ class GatewayApi(
         val validUntil: Date?,
         val scheduleAt: Date?,
         val priority: Byte?,
-        val state: ProcessingState?,
+        val state: MessageState?,
         val createdAt: Date?,
 
         @SerializedName("message")
@@ -248,6 +248,36 @@ class GatewayApi(
         val state: ProcessingState,
         val error: String?,
     )
+
+    /**
+     * Wire-level message state as reported by the gateway server. Mirrors the
+     * server vocabulary exactly, including Cancelling - a server-side async
+     * cancellation marker resolved in [me.capcom.smsgateway.modules.gateway.GatewayService]
+     * that never enters the local domain (kept separate from the local
+     * [ProcessingState], which never contains Cancelling).
+     */
+    enum class MessageState {
+        @SerializedName("Pending")
+        Pending,
+
+        @SerializedName("Cancelling")
+        Cancelling,
+
+        @SerializedName("Cancelled")
+        Cancelled,
+
+        @SerializedName("Processed")
+        Processed,
+
+        @SerializedName("Sent")
+        Sent,
+
+        @SerializedName("Delivered")
+        Delivered,
+
+        @SerializedName("Failed")
+        Failed
+    }
 
     data class WebHook(
         val id: String,

@@ -112,13 +112,10 @@ class MessagesServiceTest {
         override fun _insertRecipientStatesByMessage(messageId: String, state: ProcessingState) =
             throw UnsupportedOperationException("not used in dispatch test")
 
-        override fun _updateMessageState(id: String, state: ProcessingState) =
+        override suspend fun _updateMessageState(id: String, state: ProcessingState) =
             throw UnsupportedOperationException("not used in dispatch test")
 
-        override fun _cancelMessage(id: String): Int =
-            throw UnsupportedOperationException("not used in dispatch test")
-
-        override fun _setMessageProcessed(id: String) =
+        override suspend fun _setMessageProcessed(id: String) =
             throw UnsupportedOperationException("not used in dispatch test")
 
         override fun _updateRecipientState(
