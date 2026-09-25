@@ -3516,7 +3516,7 @@
       "url": "https://api.sms-gate.app/3rdparty/v1"
     },
     {
-      "url": "http://localhost:3000/api"
+      "url": "http://localhost:8080/api"
     }
   ],
   "x-original-swagger-version": "2.0"
