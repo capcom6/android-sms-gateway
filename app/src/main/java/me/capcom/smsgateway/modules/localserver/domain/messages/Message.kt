@@ -10,6 +10,7 @@ open class Message(
     val isHashed: Boolean,
     val isEncrypted: Boolean,
     val scheduleAt: Date?,
+    val createdAt: Date,
     val textMessage: TextMessage?,
     val dataMessage: DataMessage?,
     val mmsMessage: MmsMessage?,
