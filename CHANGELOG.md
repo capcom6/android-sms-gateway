@@ -7,36 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.77.3] - 2026-10-07
+
+### Fixed
+- Register broadcast receivers with the export flag required on Android 13 (API 33) and above so incoming SMS, data SMS, MMS and delivery status broadcasts keep working [822de9c]
+
+## [v1.77.2] - 2026-10-05
+
 ### Changed
-- Sending a message with duplicate phone numbers is now rejected — the `phoneNumbers` list must contain unique values [9450b93]
+- Sending a message with duplicate phone numbers is now rejected — the `phoneNumbers` list must contain unique values [bdfd691]
 
 ## [v1.77.1] - 2026-10-01
 
 ### Changed
-- `createdAt` timestamps are now included in the local server messages and device responses [3d6578a]
+- Expose `createdAt` field in local server messages endpoint [3d6578a]
 
 ## [v1.77.0] - 2026-09-29
 
 ### Added
-- Device key operations — the app generates a key pair, uploads the public key to the cloud server, and the local server exposes `publicKey` and `keyVersion` on device registration [e37b313] [3b09cca]
+- Device key management in settings — generate an RSA key pair in the Android keystore, show its fingerprint, rotate it on a 30/60/90-day schedule, and upload the public key to the server [e37b313]
+- Device public key and key version exposed on the local server device endpoint so clients can decrypt messages end-to-end [3b09cca]
 
 ### Changed
-- Hybrid encryption — message content and phone numbers are encrypted with the device public key [8d78869]
-- Refreshed settings icons [68bff54]
-
-### Documentation
-- Update Swagger and docs [d303329]
+- Opt-in hybrid message encryption (`rsa-oaep-aes-256-gcm`) using the device key pair — an AES-256-GCM content key wrapped with RSA-OAEP [8d78869]
+- Refreshed settings screen icons [68bff54]
 
 ## [v1.76.0] - 2026-09-25
 
 ### Added
-- Received messages (SMS, Data SMS, and MMS) are automatically uploaded to the cloud server when the app is connected to it, for centralized access [42a6957]
+- Upload received SMS, data SMS and MMS to a remote inbox — messages are queued locally and delivered in the background [42a6957]
 
 ### Changed
-- End-to-end encryption of message content and phone numbers now uses a hardened format with a random salt and IV per encrypted value; values encrypted with the previous format remain readable [7d1e9ed]
-
-### Documentation
-- Update Swagger, README, and changelog; add `.env.example` with build signing configuration [1b5a706]
+- Encryption moved behind a provider factory; new installs default to the hardened passphrase encryptor while existing data keeps reading the legacy one [0bc32d0] [7d1e9ed]
 
 ## [v1.75.1] - 2026-09-08
 
@@ -1240,7 +1242,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.1...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.3...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1
@@ -1377,3 +1379,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.76.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.75.1...v1.76.0
 [v1.77.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.76.0...v1.77.0
 [v1.77.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.0...v1.77.1
+[v1.77.2]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.1...v1.77.2
+[v1.77.3]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.2...v1.77.3
