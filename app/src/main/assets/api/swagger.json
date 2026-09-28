@@ -295,6 +295,12 @@
             "example": "PyDmBQZZXYmyxMwED8Fzy",
             "type": "string"
           },
+          "keyVersion": {
+            "description": "Key version for rotation tracking",
+            "example": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
           "lastSeen": {
             "description": "Time at which the device was last seen, read only.",
             "example": "2020-01-01T00:00:00Z",
@@ -303,6 +309,11 @@
           "name": {
             "description": "Device name.",
             "example": "My Device",
+            "type": "string"
+          },
+          "publicKey": {
+            "description": "Base64-encoded RSA public key for E2E encryption (nullable)",
+            "example": "MIIBIjANBgkqh...",
             "type": "string"
           },
           "simCards": {
