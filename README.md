@@ -82,6 +82,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 📦 **Batch webhook events:** Receive batched webhook deliveries when multiple messages arrive at once, reducing the number of requests.
 - 🛑 **Cancel pending messages:** Cancel queued messages before they are sent.
 - 🔍 **Message filtering:** Filter the messages list by state (pending, sent, delivered, failed, etc.) and type to find messages quickly.
+- 📅 **Schedule messages:** Schedule delivery for a future date and time by setting the `scheduleAt` field on an API request.
 - ⏳ **Send rate limiting:** Restrict the number of messages sent per period (e.g., per 30 minutes) to avoid operator throttling.
 - 🖼️ **Send and receive MMS with payloads:** Send images, audio, video, and other media as MMS with inline or URL-referenced attachments. Received attachments are persisted locally and exposed via the API. See [`docs/MMS.md`](docs/MMS.md).
 - 🔍 **Message filtering:** Filter messages by state (pending, sent, delivered, failed) and type (SMS, MMS, Data SMS) in the app's message list.
