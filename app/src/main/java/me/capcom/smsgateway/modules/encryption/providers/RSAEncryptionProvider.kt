@@ -127,8 +127,7 @@ class RSAEncryptionProvider(
          * rejects it with `InvalidAlgorithmParameterException: Unsupported MGF1 digest:
          * SHA-256. Only SHA-1 supported`, and on API 35+ Keystore2 rejects it with
          * `KeyStoreException: INCOMPATIBLE_MGF_DIGEST`. The OAEP digest itself stays
-         * SHA-256. Any change here must keep encrypt and decrypt on the same constant
-         * and must be reflected in docs/privacy/encryption.md.
+         * SHA-256. Any change here must keep encrypt and decrypt on the same constant.
          */
         private const val OAEP_DIGEST = "SHA-256"
         private val MGF1_DIGEST = MGF1ParameterSpec.SHA1
