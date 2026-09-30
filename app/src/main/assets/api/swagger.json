@@ -2896,7 +2896,7 @@
                 }
               }
             },
-            "description": "Message with such ID already exists"
+            "description": "Message with the same ID already exists"
           },
           "500": {
             "content": {

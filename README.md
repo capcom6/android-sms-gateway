@@ -42,6 +42,7 @@
   - [Prerequisites](#prerequisites)
     - [Permissions](#permissions)
   - [Installation from APK](#installation-from-apk)
+  - [Build from Source](#build-from-source)
 - [Getting Started](#getting-started)
   - [Local Server](#local-server)
   - [Cloud Server](#cloud-server)
@@ -83,6 +84,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 🛑 **Cancel pending messages:** Cancel queued messages before they are sent.
 - 🔍 **Message filtering:** Filter the messages list by state (pending, sent, delivered, failed, etc.) and type to find messages quickly.
 - ⏳ **Send rate limiting:** Restrict the number of messages sent per period (e.g., per 30 minutes) to avoid operator throttling.
+- ⏰ **Message scheduling:** Schedule messages for future delivery using the optional `scheduleAt` field (it must be a future timestamp).
 - 🖼️ **Send and receive MMS with payloads:** Send images, audio, video, and other media as MMS with inline or URL-referenced attachments. Received attachments are persisted locally and exposed via the API. See [`docs/MMS.md`](docs/MMS.md).
 - 🔍 **Message filtering:** Filter messages by state (pending, sent, delivered, failed) and type (SMS, MMS, Data SMS) in the app's message list.
 - 📊 **Webhook queue diagnostics:** View and manage queued webhooks via a diagnostic screen in the app settings.
@@ -162,6 +164,38 @@ To use the application, you need to grant the following permissions:
 6. Use a file manager app to navigate to the location of the downloaded APK file.
 7. Tap on the APK file to start the installation process.
 8. Follow the on-screen prompts to complete the installation.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Build from Source
+
+Building from source requires JDK 17 (required by Android Gradle Plugin 8.1.2) and the Android SDK — the project compiles against SDK 33. The SDK location is read from `local.properties` (created automatically by Android Studio) or the `ANDROID_HOME` environment variable. The Gradle wrapper (Gradle 8.0) is included in the repository.
+
+1. Provide `app/google-services.json`. This file is not committed (see `.gitignore`); CI injects it from a secret, so local builds need their own Firebase configuration file.
+2. For the signed variants (`release` and `insecure`), provide a keystore at `app/keystore.jks` (also not committed) and export the signing variables documented in [`.env.example`](.env.example):
+
+    ```sh
+    cp .env.example .env
+    # fill in your values, then:
+    set -a; source .env; set +a
+    ```
+
+3. Run the build:
+
+    ```sh
+    ./gradlew test             # run unit tests
+    ./gradlew assembleDebug    # debug build, signed with the default debug keystore
+    ./gradlew assembleInsecure # insecure development build, signed with the release keystore
+    ./gradlew assembleRelease  # secure release build, signed with the release keystore
+    ./gradlew bundleRelease    # release App Bundle (.aab)
+    ```
+
+| Build type      | Description                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `debug`         | Development build with the strict network security config, signed with the default debug keystore.                                    |
+| `debugInsecure` | Debuggable build that allows cleartext traffic, signed with the default debug keystore.                                               |
+| `insecure`      | Development and testing build with cleartext traffic allowed, signed with the release keystore. **Never use in public environments.** |
+| `release`       | Production build with strict security configurations, signed with the release keystore.                                               |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
