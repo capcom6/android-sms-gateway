@@ -33,9 +33,9 @@ class RSAEncryptionProvider(
             Cipher.ENCRYPT_MODE,
             publicKey,
             OAEPParameterSpec(
-                "SHA-256",
+                OAEP_DIGEST,
                 "MGF1",
-                MGF1ParameterSpec.SHA256,
+                MGF1_DIGEST,
                 PSource.PSpecified.DEFAULT,
             ),
         )
@@ -89,9 +89,9 @@ class RSAEncryptionProvider(
             Cipher.DECRYPT_MODE,
             privateKey,
             OAEPParameterSpec(
-                "SHA-256",
+                OAEP_DIGEST,
                 "MGF1",
-                MGF1ParameterSpec.SHA256,
+                MGF1_DIGEST,
                 PSource.PSpecified.DEFAULT,
             ),
         )
@@ -116,5 +116,21 @@ class RSAEncryptionProvider(
         private const val AES_ALGORITHM = "AES"
         private const val RSA_OAEP_ALGORITHM = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
         private const val AES_GCM_ALGORITHM = "AES/GCM/NoPadding"
+
+        /**
+         * MGF1 is deliberately SHA-1, not SHA-256, on every API level.
+         *
+         * Android Keystore authorizes only SHA-1 for MGF1 unless the key is generated
+         * with [android.security.keystore.KeyGenParameterSpec.Builder.setMgf1Digests],
+         * which is API 35+ only. Requesting MGF1-SHA-256 against a Keystore-backed key
+         * therefore fails on both sides of that boundary: below API 35 the provider
+         * rejects it with `InvalidAlgorithmParameterException: Unsupported MGF1 digest:
+         * SHA-256. Only SHA-1 supported`, and on API 35+ Keystore2 rejects it with
+         * `KeyStoreException: INCOMPATIBLE_MGF_DIGEST`. The OAEP digest itself stays
+         * SHA-256. Any change here must keep encrypt and decrypt on the same constant
+         * and must be reflected in docs/privacy/encryption.md.
+         */
+        private const val OAEP_DIGEST = "SHA-256"
+        private val MGF1_DIGEST = MGF1ParameterSpec.SHA1
     }
 }
