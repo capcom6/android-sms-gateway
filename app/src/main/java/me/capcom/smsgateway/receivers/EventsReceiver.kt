@@ -59,11 +59,10 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
         }
 
         fun register(context: Context) {
-            val filter = IntentFilter(ACTION_SENT)
-                .apply { 
-                    addAction(ACTION_DELIVERED) 
-                    addAction(ACTION_MMS_SENT)
-                }
+            val filter = IntentFilter(ACTION_SENT).apply {
+                addAction(ACTION_DELIVERED)
+                addAction(ACTION_MMS_SENT)
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 context.registerReceiver(getInstance(), filter, Context.RECEIVER_NOT_EXPORTED)
             } else {
