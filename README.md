@@ -101,6 +101,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 💾 **Data SMS support:** Send and receive binary [data payloads](https://docs.sms-gate.app/features/data-sms/) via SMS for IoT commands, encrypted messages, and other specialized use cases.
 - 🕐 **Working hours scheduling:** Restrict message delivery to configurable time windows, automatically pausing the queue outside of them
 - 🔭 **Webhook queue diagnostics:** Inspect the webhook delivery queue in-app to see pending deliveries, retries, and their status.
+- 📅 **Scheduled message delivery:** Set `scheduleAt` when posting a message to dispatch it at a future time.
 
 🔌 Integration:
 
@@ -164,6 +165,44 @@ To use the application, you need to grant the following permissions:
 6. Use a file manager app to navigate to the location of the downloaded APK file.
 7. Tap on the APK file to start the installation process.
 8. Follow the on-screen prompts to complete the installation.
+
+### Build from Source
+
+Prerequisites:
+
+- JDK 17
+- Android SDK, either through [Android Studio](https://developer.android.com/studio) or a standalone SDK installation
+- `app/google-services.json` — Firebase configuration required by the Google Services plugin. The file is gitignored, so provide your own copy (CI generates it from a repository secret).
+
+Gradle reads signing variables from the process environment, not from a `.env` file. The variables are listed in [`.env.example`](.env.example) with the following values:
+
+| Variable                 | Purpose                                                        | Format | Example                  |
+| ------------------------ | -------------------------------------------------------------- | ------ | ------------------------ |
+| `SIGNING_STORE_PASSWORD` | Password for the keystore file used to sign release builds     | String | `your-keystore-password` |
+| `SIGNING_KEY_ALIAS`      | Alias of the key inside the keystore that signs release builds | String | `your-key-alias`         |
+| `SIGNING_KEY_PASSWORD`   | Password for that key alias                                    | String | `your-key-password`      |
+
+All three are read by `signingConfigs.release` in `app/build.gradle`, which resolves the keystore as `app/keystore.jks`. Put your keystore at that path, export the variables, and build:
+
+```sh
+export SIGNING_STORE_PASSWORD='your-keystore-password'
+export SIGNING_KEY_ALIAS='your-key-alias'
+export SIGNING_KEY_PASSWORD='your-key-password'
+./gradlew test              # run the unit test suite
+./gradlew assembleRelease   # build the secure (release) APK
+./gradlew assembleInsecure  # build the insecure APK (development/testing only)
+```
+
+Use `./gradlew bundleRelease` or `./gradlew bundleInsecure` to produce an App Bundle instead.
+
+`app/build.gradle` defines four build variants:
+
+| Variant         | Signing          | Network traffic   | Use                     |
+| --------------- | ---------------- | ----------------- | ----------------------- |
+| `release`       | Release keystore | TLS only          | Production              |
+| `insecure`      | Release keystore | Cleartext allowed | Development and testing |
+| `debug`         | Debug keystore   | TLS only          | Local debugging         |
+| `debugInsecure` | Debug keystore   | Cleartext allowed | Local debugging         |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
