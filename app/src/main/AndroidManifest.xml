@@ -43,7 +43,7 @@
 
         <receiver
             android:name=".modules.receiver.MessagesReceiver"
-            android:enabled="true"
+            android:enabled="false"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
@@ -56,7 +56,7 @@
 
         <receiver
             android:name=".modules.receiver.MmsReceiver"
-            android:enabled="true"
+            android:enabled="false"
             android:exported="true"
             android:permission="android.permission.BROADCAST_WAP_PUSH">
             <intent-filter android:priority="999">
