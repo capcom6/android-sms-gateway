@@ -7,8 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Message status updates no longer overwrite each other — every state change for a message is now applied in order, so sent, delivered, and failed results that arrive together are all recorded instead of the last one winning [6ae09500]
+- A failing background task no longer stops the others — an error while reporting a message state, refreshing webhooks, or pulling messages from the server no longer halts the remaining handlers [6ae09500]
+
+## [v1.77.1] - 2026-10-01
+
 ### Changed
-- Expose `createdAt` field in local server messages endpoint [6b4cc62]
+- Expose `createdAt` field in local server messages endpoint [3d6578a9]
+
+## [v1.77.0] - 2026-09-29
+
+### Added
+- Device encryption key — an RSA-2048 key pair is generated on the device and its public key and version are sent to the server on registration; the fingerprint is shown in Settings, and the key can be rotated manually or automatically every 30, 60, or 90 days, with previous keys kept valid for 7 days [e37b3130]
+- Decryption of content encrypted with the device public key (`rsa-oaep-aes-256-gcm`) — messages sent from the device are still encrypted with the passphrase algorithm [8d78869e]
+- `publicKey` and `keyVersion` in the local server `GET /device` response [3b09cca4]
+
+### Changed
+- Update icons in the Settings screens [68bff54f]
+
+## [v1.76.0] - 2026-09-25
+
+### Added
+- Received SMS, data SMS, and MMS messages are uploaded in the background to the cloud server inbox while cloud server mode is enabled [42a6957c]
+
+### Changed
+- Messages are now encrypted with `aes-256-cbc/pbkdf2-sha1/v2` by default — the previous `aes-256-cbc/pbkdf2-sha1` format is still supported for data encrypted earlier [7d1e9ed0]
 
 ## [v1.75.1] - 2026-09-08
 
