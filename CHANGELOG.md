@@ -7,8 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Device-paired end-to-end encryption could not decrypt on any Android version — the RSA-OAEP parameters requested an MGF1 digest the Android keystore rejects, so MGF1 is now pinned to SHA-1 on both encrypt and decrypt while the OAEP digest stays SHA-256 [21e4791]
+
+### Testing
+- Instrumented tests run in CI on API 25, 30 and 35, so the encryption round trip is verified on real devices instead of only on the JVM [98cbe01]
+
+## [v1.77.1] - 2026-10-01
+
 ### Changed
-- Expose `createdAt` field in local server messages endpoint [6b4cc62]
+- Expose `createdAt` field in local server messages endpoint [3d6578a]
+
+## [v1.77.0] - 2026-09-29
+
+### Added
+- Device key management in settings — generate an RSA key pair in the Android keystore, show its fingerprint, rotate it manually or automatically every 30, 60 or 90 days, and upload the public key to the server [e37b313]
+- Device public key and key version on the local server device endpoint, so clients can decrypt messages end-to-end [3b09cca]
+
+### Changed
+- Opt-in hybrid message encryption (`rsa-oaep-aes-256-gcm`) using the device key pair — an AES-256-GCM content key wrapped with RSA-OAEP [8d78869]
+- Refreshed settings screen icons [68bff54]
+
+## [v1.76.0] - 2026-09-25
+
+### Added
+- Upload received SMS, data SMS and MMS to a remote inbox — messages are queued locally and delivered in the background [42a6957]
+
+### Changed
+- Encryption moved behind a provider factory; new installs default to the hardened passphrase encryptor while existing data keeps reading the legacy one [0bc32d0] [7d1e9ed]
 
 ## [v1.75.1] - 2026-09-08
 
@@ -1212,7 +1238,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.75.1...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.1...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1
@@ -1345,3 +1371,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.74.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.73.0...v1.74.0
 [v1.74.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.74.0...v1.74.1
 [v1.75.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.74.1...v1.75.0
+[v1.76.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.75.1...v1.76.0
+[v1.77.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.76.0...v1.77.0
+[v1.77.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.0...v1.77.1
