@@ -1697,7 +1697,7 @@
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
     },
     "title": "SMSGate API",
-    "version": "1.77.1"
+    "version": "1.77.2"
   },
   "openapi": "3.0.1",
   "paths": {
@@ -2896,7 +2896,7 @@
                 }
               }
             },
-            "description": "Message with such ID already exists"
+            "description": "Message with the same ID already exists"
           },
           "500": {
             "content": {
