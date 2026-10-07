@@ -8,7 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- Sending a message with duplicate phone numbers is now rejected — the `phoneNumbers` list must contain unique values [9450b93]
+- Messages cancelled from the cloud gateway now resolve to `Cancelled` on the device — `Cancelling` is no longer reported as a message or recipient state
+
+### Fixed
+- Message status races — send, delivery, failure, and cancellation updates for a single message are now applied atomically, so a message cancelled while being sent no longer ends up with a stale or contradictory state
+- A failure in one background handler no longer stops the others — an error while uploading message status, refreshing the webhook queue, or pinging the cloud server no longer silently disables the remaining handlers
+
+## [v1.77.2] - 2026-10-05
+
+### Changed
+- Sending a message with duplicate phone numbers is now rejected — the `phoneNumbers` list must contain unique values [bdfd691]
 
 ## [v1.77.1] - 2026-10-01
 
@@ -1240,7 +1249,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.1...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.2...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1
@@ -1377,3 +1386,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.76.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.75.1...v1.76.0
 [v1.77.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.76.0...v1.77.0
 [v1.77.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.0...v1.77.1
+[v1.77.2]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.1...v1.77.2
