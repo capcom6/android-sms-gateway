@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.provider.Telephony.Sms.Intents
 import android.util.Log
+import me.capcom.smsgateway.extensions.setComponentEnabled
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import org.koin.core.component.KoinComponent
@@ -70,7 +71,23 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
 
         private val INSTANCE: MessagesReceiver by lazy { MessagesReceiver() }
 
-        fun register(context: Context) {
+        fun start(context: Context) {
+            register(context)
+            context.applicationContext.setComponentEnabled(
+                MessagesReceiver::class.java,
+                true
+            )
+        }
+
+        fun stop(context: Context) {
+            unregister(context)
+            context.applicationContext.setComponentEnabled(
+                MessagesReceiver::class.java,
+                false
+            )
+        }
+
+        private fun register(context: Context) {
             val appContext = context.applicationContext
             unregister(appContext)
 
@@ -93,7 +110,7 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
             )
         }
 
-        fun unregister(context: Context) {
+        private fun unregister(context: Context) {
             try {
                 context.applicationContext.unregisterReceiver(INSTANCE)
             } catch (e: IllegalArgumentException) {
