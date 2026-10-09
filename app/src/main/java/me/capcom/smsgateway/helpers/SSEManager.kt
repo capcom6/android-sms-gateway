@@ -17,13 +17,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class SSEManager(
     private val url: String,
-    private val authToken: String
+    private val tokenProvider: () -> String?,
 ) {
     private val client = OkHttpClient.Builder()
         .readTimeout(1, TimeUnit.HOURS)
         .build()
     private val scope = CoroutineScope(Dispatchers.IO + Job())
 
+    @Volatile
     private var eventSource: EventSource? = null
     private var reconnectAttempts = 0
     private val isDisconnecting = AtomicBoolean(false)
@@ -36,18 +37,21 @@ class SSEManager(
 
     fun connect() {
         isDisconnecting.set(false)
+        val token = tokenProvider() ?: return disconnect()
+
         scope.launch {
             try {
                 val request = Request.Builder()
                     .url(url)
                     .apply {
-                        header("Authorization", "Bearer $authToken")
+                        header("Authorization", "Bearer $token")
                     }
                     .build()
 
-                eventSource = EventSources.createFactory(client)
+                val source = EventSources.createFactory(client)
                     .newEventSource(request, object : EventSourceListener() {
                         override fun onOpen(eventSource: EventSource, response: Response) {
+                            if (isDisconnecting.get()) return
                             Log.d(TAG, "SSE connected")
                             reconnectAttempts = 0
                             onConnected?.invoke()
@@ -59,11 +63,13 @@ class SSEManager(
                             type: String?,
                             data: String
                         ) {
+                            if (isDisconnecting.get()) return
                             Log.d(TAG, "Event received: $type - $data")
                             onEvent?.invoke(type, data)
                         }
 
                         override fun onClosed(eventSource: EventSource) {
+                            if (isDisconnecting.get()) return
                             Log.d(TAG, "SSE connection closed")
                             onClosed?.invoke()
                             scheduleReconnect()
@@ -74,11 +80,23 @@ class SSEManager(
                             t: Throwable?,
                             response: Response?
                         ) {
+                            if (isDisconnecting.get()) return
                             Log.e(TAG, "SSE error", t)
                             onError?.invoke(t)
                             scheduleReconnect()
                         }
                     })
+
+                // This body has no suspension point, so disconnect()'s
+                // cancelChildren() cannot stop it once started: it may store the
+                // stream after teardown already cleared the field. Store first,
+                // then verify — paired with disconnect() setting the flag before
+                // it grabs the field, one of the two always cancels the loser.
+                eventSource = source
+                if (isDisconnecting.get()) {
+                    eventSource = null
+                    source.cancel()
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Connection failed", e)
                 scheduleReconnect()
@@ -88,12 +106,14 @@ class SSEManager(
 
     fun disconnect() {
         isDisconnecting.set(true)
-        scope.launch {
-            eventSource?.cancel()
-            eventSource = null
-            reconnectAttempts = 0
-        }
+        // Kill delayed reconnects and in-flight launches FIRST: this teardown must
+        // never be scheduled as a child, because cancelChildren() would cancel it
+        // before it runs and leave the authenticated stream alive.
         scope.coroutineContext.cancelChildren()
+        val source = eventSource
+        eventSource = null
+        reconnectAttempts = 0
+        source?.cancel()
     }
 
     private fun scheduleReconnect() {
@@ -111,8 +131,10 @@ class SSEManager(
         scope.launch {
             eventSource?.cancel()
             eventSource = null
+            if (isDisconnecting.get()) return@launch
             Log.d(TAG, "Reconnecting in ${delay}ms (attempt $reconnectAttempts)")
             kotlinx.coroutines.delay(delay)
+            if (isDisconnecting.get()) return@launch
             connect()
         }
     }
