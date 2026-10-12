@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Manifest-registered SMS and MMS receivers, enabled when the gateway starts and disabled when it stops, so incoming messages are still captured after the system kills the app process. `MY_PACKAGE_REPLACED` re-enables them after an app update [0924e78]
+
 ### Changed
 - Messages cancelled from the cloud gateway now resolve to `Cancelled` on the device — `Cancelling` is no longer reported as a message or recipient state
 
@@ -46,6 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 - Update Swagger, README, and changelog; add `.env.example` with build signing configuration [1b5a706]
+
+### Fixed
+- Restrict the manifest data SMS filter to port 53739 — a `data` element without a host is ignored by the platform, so the filter matched data SMS on any port [be149ec]
 
 ## [v1.75.1] - 2026-09-08
 
