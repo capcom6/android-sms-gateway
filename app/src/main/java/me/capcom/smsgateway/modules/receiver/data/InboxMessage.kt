@@ -6,10 +6,16 @@ import java.util.Date
 sealed class InboxMessage(
     val address: String,
     val date: Date,
+    val receivedAt: Date,
     val subscriptionId: Int?
 ) {
-    class Text(val text: String, address: String, date: Date, subscriptionId: Int?) :
-        InboxMessage(address, date, subscriptionId) {
+    class Text(
+        val text: String,
+        address: String,
+        date: Date,
+        receivedAt: Date,
+        subscriptionId: Int?
+    ) : InboxMessage(address, date, receivedAt, subscriptionId) {
         override fun equals(other: Any?): Boolean {
             return super.equals(other) && (other as? Text)?.text == this.text
         }
@@ -19,8 +25,13 @@ sealed class InboxMessage(
         }
     }
 
-    class Data(val data: ByteArray?, address: String, date: Date, subscriptionId: Int?) :
-        InboxMessage(address, date, subscriptionId) {
+    class Data(
+        val data: ByteArray?,
+        address: String,
+        date: Date,
+        receivedAt: Date,
+        subscriptionId: Int?
+    ) : InboxMessage(address, date, receivedAt, subscriptionId) {
         override fun equals(other: Any?): Boolean {
             return super.equals(other) && Arrays.equals((other as? Data)?.data, this.data)
         }
@@ -38,8 +49,9 @@ sealed class InboxMessage(
         val contentClass: String?,
         address: String,
         date: Date,
+        receivedAt: Date,
         subscriptionId: Int?
-    ) : InboxMessage(address, date, subscriptionId) {
+    ) : InboxMessage(address, date, receivedAt, subscriptionId) {
         override fun equals(other: Any?): Boolean {
             return other is MmsHeaders && other.transactionId == this.transactionId
         }
@@ -56,8 +68,9 @@ sealed class InboxMessage(
         val attachments: List<Attachment>,
         address: String,
         date: Date,
+        receivedAt: Date,
         subscriptionId: Int?
-    ) : InboxMessage(address, date, subscriptionId) {
+    ) : InboxMessage(address, date, receivedAt, subscriptionId) {
         class Attachment(
             val partId: Long,
             val contentType: String,

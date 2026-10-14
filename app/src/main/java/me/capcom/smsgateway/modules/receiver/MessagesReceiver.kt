@@ -27,12 +27,14 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
 
         val isDataMessage = intent.action == Intents.DATA_SMS_RECEIVED_ACTION
         val firstMessage = messages.first()
+        val receivedAt = Date()
 
         val inboxMessage = when (isDataMessage) {
             false -> InboxMessage.Text(
                 messages.joinToString(separator = "") { it.displayMessageBody },
                 firstMessage.displayOriginatingAddress,
                 Date(firstMessage.timestampMillis),
+                receivedAt,
                 SubscriptionsHelper.extractSubscriptionId(context, intent)
             )
 
@@ -53,6 +55,7 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
                     userData,
                     firstMessage.displayOriginatingAddress,
                     Date(firstMessage.timestampMillis),
+                    receivedAt,
                     SubscriptionsHelper.extractSubscriptionId(context, intent)
                 )
             }

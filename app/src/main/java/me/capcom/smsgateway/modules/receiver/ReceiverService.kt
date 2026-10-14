@@ -145,7 +145,7 @@ class ReceiverService : KoinComponent {
                 message.address,
                 recipient,
                 simNumber,
-                message.date
+                message.receivedAt
             )
         } catch (e: Exception) {
             logsService.insert(
@@ -181,7 +181,7 @@ class ReceiverService : KoinComponent {
                 message = message.text,
                 sender = incoming.sender,
                 simNumber = simNumber,
-                receivedAt = message.date,
+                receivedAt = message.receivedAt,
                 recipient = recipient,
             )
 
@@ -189,7 +189,7 @@ class ReceiverService : KoinComponent {
                 messageId = message.hashCode().toUInt().toString(16),
                 data = Base64.encodeToString(message.data, Base64.NO_WRAP),
                 simNumber = simNumber,
-                receivedAt = message.date,
+                receivedAt = message.receivedAt,
                 sender = incoming.sender,
                 recipient = recipient,
             )
@@ -201,7 +201,7 @@ class ReceiverService : KoinComponent {
                 subject = message.subject,
                 size = message.size,
                 contentClass = message.contentClass,
-                receivedAt = message.date,
+                receivedAt = message.receivedAt,
                 sender = incoming.sender,
                 recipient = recipient,
             )
@@ -222,7 +222,7 @@ class ReceiverService : KoinComponent {
                         data = it.data,
                     )
                 },
-                receivedAt = message.date,
+                receivedAt = message.receivedAt,
             )
         }
     }
@@ -308,18 +308,19 @@ class ReceiverService : KoinComponent {
             Telephony.Sms._ID,
             Telephony.Sms.ADDRESS,
             Telephony.Sms.DATE_SENT,
+            Telephony.Sms.DATE,
             Telephony.Sms.BODY,
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             projection += Telephony.Sms.SUBSCRIPTION_ID
         }
 
-        val selection = "${Telephony.Sms.DATE_SENT} >= ? AND ${Telephony.Sms.DATE_SENT} <= ?"
+        val selection = "${Telephony.Sms.DATE} >= ? AND ${Telephony.Sms.DATE} <= ?"
         val selectionArgs = arrayOf(
             period.first.time.toString(),
             period.second.time.toString()
         )
-        val sortOrder = Telephony.Sms.DATE_SENT
+        val sortOrder = Telephony.Sms.DATE
 
         val contentResolver = context.contentResolver
         val cursor = contentResolver.query(
@@ -338,9 +339,10 @@ class ReceiverService : KoinComponent {
                     InboxMessage.Text(
                         address = cursor.getString(1),
                         date = Date(cursor.getLong(2)),
-                        text = cursor.getString(3),
+                        receivedAt = Date(cursor.getLong(3)),
+                        text = cursor.getString(4),
                         subscriptionId = when {
-                            projection.size > 4 -> cursor.getInt(4).takeIf { it >= 0 }
+                            projection.size > 5 -> cursor.getInt(5).takeIf { it >= 0 }
                             else -> null
                         }
                     )
@@ -390,6 +392,7 @@ class ReceiverService : KoinComponent {
                         },
                         address = message.sender,
                         date = message.date,
+                        receivedAt = message.date,
                         subscriptionId = message.subscriptionId
                     )
                 )

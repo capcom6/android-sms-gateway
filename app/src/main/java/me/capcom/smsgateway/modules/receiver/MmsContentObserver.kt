@@ -184,6 +184,7 @@ class MmsContentObserver : KoinComponent {
                     },
                     msg.sender,
                     msg.date,
+                    msg.date,
                     msg.subscriptionId
                 ),
                 true,

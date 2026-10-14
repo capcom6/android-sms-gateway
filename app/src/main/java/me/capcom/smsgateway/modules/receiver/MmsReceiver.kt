@@ -69,6 +69,8 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
 
             Log.d(TAG, "MMS received from ${mmsNotification.from}")
 
+            val date = mmsNotification.date ?: Date()
+
             val mmsMessage = InboxMessage.MmsHeaders(
                 messageId = mmsNotification.messageId,
                 transactionId = mmsNotification.transactionId,
@@ -76,7 +78,8 @@ class MmsReceiver : BroadcastReceiver(), KoinComponent {
                 size = mmsNotification.messageSize,
                 contentClass = mmsNotification.contentClass?.name,
                 address = mmsNotification.from.substringBefore('/'),
-                date = mmsNotification.date ?: Date(),
+                date = date,
+                receivedAt = date,
                 subscriptionId = SubscriptionsHelper.extractSubscriptionId(context, intent),
             )
 

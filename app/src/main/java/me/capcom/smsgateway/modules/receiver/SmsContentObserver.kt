@@ -131,6 +131,7 @@ class SmsContentObserver : KoinComponent {
             Telephony.Sms._ID,
             Telephony.Sms.ADDRESS,
             Telephony.Sms.DATE_SENT,
+            Telephony.Sms.DATE,
             Telephony.Sms.BODY,
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -160,9 +161,10 @@ class SmsContentObserver : KoinComponent {
                 val id = c.getLong(0)
                 val address = c.getString(1) ?: ""
                 val date = Date(c.getLong(2))
-                val body = c.getString(3) ?: ""
-                val subId = if (projection.size > 4) {
-                    c.getInt(4).takeIf { it >= 0 }
+                val receivedAt = Date(c.getLong(3))
+                val body = c.getString(4) ?: ""
+                val subId = if (projection.size > 5) {
+                    c.getInt(5).takeIf { it >= 0 }
                 } else {
                     null
                 }
@@ -170,7 +172,7 @@ class SmsContentObserver : KoinComponent {
                 try {
                     receiverSvc.process(
                         context,
-                        InboxMessage.Text(body, address, date, subId),
+                        InboxMessage.Text(body, address, date, receivedAt, subId),
                         true,
                     )
                 } catch (e: Exception) {

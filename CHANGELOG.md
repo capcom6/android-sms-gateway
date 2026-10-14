@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Messages cancelled from the cloud gateway now resolve to `Cancelled` on the device — `Cancelling` is no longer reported as a message or recipient state
 
 ### Fixed
+- Incoming SMS timestamps now use the device receive time instead of the network service-centre timestamp — on some carriers/devices the network timestamp was shifted by the local UTC offset, so webhook `receivedAt`, the local server inbox `createdAt`, and the in-app list were off (e.g. by 13 hours in NZ). Message identity/dedupe still uses the network timestamp
 - Message status races — send, delivery, failure, and cancellation updates for a single message are now applied atomically, so a message cancelled while being sent no longer ends up with a stale or contradictory state
 - A failure in one background handler no longer stops the others — an error while uploading message status, refreshing the webhook queue, or pinging the cloud server no longer silently disables the remaining handlers
 

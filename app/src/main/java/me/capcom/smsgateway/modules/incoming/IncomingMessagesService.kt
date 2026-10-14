@@ -43,7 +43,7 @@ class IncomingMessagesService(
             simNumber = simNumber,
             subscriptionId = message.subscriptionId,
             contentPreview = message.toPreview(),
-            createdAt = message.date.time,
+            createdAt = message.receivedAt.time,
         ).also {
             try {
                 repository.insert(it)
