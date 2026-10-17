@@ -1,6 +1,83 @@
 {
   "components": {
     "schemas": {
+      "AppStartedPayload": {
+        "description": "Payload of `app:started` event.",
+        "properties": {
+          "simCards": {
+            "description": "SIM cards available in the device.",
+            "items": {
+              "$ref": "#/components/schemas/smsgateway.SimCard"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "simCards"
+        ],
+        "title": "AppStartedPayload",
+        "type": "object"
+      },
+      "BatchEventPayload": {
+        "description": "Base payload for batch events.",
+        "properties": {
+          "messages": {
+            "description": "Messages in the batch, ordered chronologically.",
+            "items": {},
+            "maxItems": 100,
+            "type": "array"
+          }
+        },
+        "required": [
+          "messages"
+        ],
+        "title": "BatchEventPayload",
+        "type": "object"
+      },
+      "MmsBatchDownloadedPayload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BatchEventPayload"
+          },
+          {
+            "properties": {
+              "messages": {
+                "description": "Downloaded MMS messages, ordered chronologically.",
+                "items": {
+                  "$ref": "#/components/schemas/MmsDownloadedPayload"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "description": "Payload of `mms:batch:downloaded` event.",
+        "title": "MmsBatchDownloadedPayload"
+      },
+      "MmsBatchReceivedPayload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BatchEventPayload"
+          },
+          {
+            "properties": {
+              "messages": {
+                "description": "Received MMS messages, ordered chronologically.",
+                "items": {
+                  "$ref": "#/components/schemas/MmsReceivedPayload"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "description": "Payload of `mms:batch:received` event.",
+        "title": "MmsBatchReceivedPayload"
+      },
       "MmsDownloadedAttachment": {
         "properties": {
           "contentType": {
@@ -32,52 +109,6 @@
         "required": [
           "partId",
           "contentType"
-        ],
-        "type": "object"
-      },
-      "smsgateway.MmsMessage": {
-        "description": "MMS payload for POST /message. Requires the app to be the default SMS app for reliable delivery on most carriers.",
-        "properties": {
-          "subject": {
-            "description": "Optional MMS subject line.",
-            "nullable": true,
-            "type": "string"
-          },
-          "text": {
-            "description": "Optional text/plain body to include alongside attachments.",
-            "nullable": true,
-            "type": "string"
-          },
-          "attachments": {
-            "description": "One or more media parts, provided as inline base64 `data`.",
-            "items": {
-              "$ref": "#/components/schemas/smsgateway.MmsAttachment"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "smsgateway.MmsAttachment": {
-        "properties": {
-          "contentType": {
-            "description": "MIME type. Common values: image/jpeg, image/png, image/gif, video/mp4, audio/amr, audio/mpeg, text/plain.",
-            "type": "string"
-          },
-          "name": {
-            "description": "Optional filename for the part (used as Content-Location).",
-            "nullable": true,
-            "type": "string"
-          },
-          "data": {
-            "description": "Base64-encoded bytes.",
-            "format": "byte",
-            "type": "string"
-          }
-        },
-        "required": [
-          "contentType",
-          "data"
         ],
         "type": "object"
       },
@@ -151,11 +182,82 @@
                 "type": "string"
               }
             },
+            "required": [
+              "receivedAt",
+              "size",
+              "transactionId"
+            ],
             "type": "object"
           }
         ],
         "description": "Payload of `mms:received` event.",
         "title": "MmsReceivedPayload"
+      },
+      "SmsBatchReceivedPayload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BatchEventPayload"
+          },
+          {
+            "properties": {
+              "messages": {
+                "description": "Received SMS messages, ordered chronologically.",
+                "items": {
+                  "$ref": "#/components/schemas/SmsReceivedPayload"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "description": "Payload of `sms:batch:received` event.",
+        "title": "SmsBatchReceivedPayload"
+      },
+      "SmsCancelledPayload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmsEventPayload"
+          },
+          {
+            "properties": {
+              "cancelledAt": {
+                "description": "The timestamp when the SMS message was cancelled.",
+                "format": "date-time",
+                "type": "string"
+              }
+            },
+            "required": [
+              "cancelledAt"
+            ],
+            "type": "object"
+          }
+        ],
+        "description": "Payload of `sms:cancelled` event.",
+        "title": "SmsCancelledPayload"
+      },
+      "SmsDataBatchReceivedPayload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BatchEventPayload"
+          },
+          {
+            "properties": {
+              "messages": {
+                "description": "Received data SMS messages, ordered chronologically.",
+                "items": {
+                  "$ref": "#/components/schemas/SmsDataReceivedPayload"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "description": "Payload of `sms:batch:data-received` event.",
+        "title": "SmsDataBatchReceivedPayload"
       },
       "SmsDataReceivedPayload": {
         "allOf": [
@@ -176,6 +278,10 @@
                 "type": "string"
               }
             },
+            "required": [
+              "data",
+              "receivedAt"
+            ],
             "type": "object"
           }
         ],
@@ -195,6 +301,9 @@
                 "type": "string"
               }
             },
+            "required": [
+              "deliveredAt"
+            ],
             "type": "object"
           }
         ],
@@ -227,6 +336,10 @@
             "type": "integer"
           }
         },
+        "required": [
+          "messageId",
+          "phoneNumber"
+        ],
         "title": "MessageEventPayload",
         "type": "object"
       },
@@ -247,6 +360,10 @@
                 "type": "string"
               }
             },
+            "required": [
+              "failedAt",
+              "reason"
+            ],
             "type": "object"
           }
         ],
@@ -378,6 +495,15 @@
             "description": "Ping contains settings related to ping functionality.",
             "type": "object"
           },
+          "receiver": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.SettingsReceiver"
+              }
+            ],
+            "description": "Receiver contains settings related to SMS message reception.",
+            "type": "object"
+          },
           "webhooks": {
             "allOf": [
               {
@@ -410,6 +536,12 @@
       },
       "smsgateway.GetMessageResponse": {
         "properties": {
+          "createdAt": {
+            "description": "Message creation time",
+            "example": "2020-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
           "dataMessage": {
             "allOf": [
               {
@@ -417,15 +549,6 @@
               }
             ],
             "description": "Present only when `includeContent=true` and the message type is data.",
-            "type": "object"
-          },
-          "mmsMessage": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.MmsMessage"
-              }
-            ],
-            "description": "Present only when `includeContent=true` and the message type is MMS.",
             "type": "object"
           },
           "deviceId": {
@@ -459,6 +582,15 @@
             "example": false,
             "type": "boolean"
           },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is mms.",
+            "type": "object"
+          },
           "recipients": {
             "description": "Recipients states",
             "items": {
@@ -467,6 +599,12 @@
             "minItems": 1,
             "type": "array"
           },
+          "scheduleAt": {
+            "description": "Scheduled delivery time, if set",
+            "example": "2020-01-01T08:30:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
           "state": {
             "allOf": [
               {
@@ -474,8 +612,7 @@
               }
             ],
             "description": "State",
-            "example": "Pending",
-            "type": "object"
+            "example": "Pending"
           },
           "states": {
             "additionalProperties": {
@@ -492,15 +629,9 @@
             ],
             "description": "Present only when `includeContent=true` and the message type is text.",
             "type": "object"
-          },
-          "createdAt": {
-            "description": "Message creation time",
-            "format": "date-time",
-            "type": "string"
           }
         },
         "required": [
-          "createdAt",
           "deviceId",
           "id",
           "recipients",
@@ -540,8 +671,7 @@
                 "$ref": "#/components/schemas/smsgateway.HealthStatus"
               }
             ],
-            "description": "Status of the check.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\".",
-            "type": "object"
+            "description": "Status of the check.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\"."
           }
         },
         "type": "object"
@@ -573,8 +703,7 @@
                 "$ref": "#/components/schemas/smsgateway.HealthStatus"
               }
             ],
-            "description": "Overall status of the application.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\".",
-            "type": "object"
+            "description": "Overall status of the application.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\"."
           },
           "version": {
             "description": "Version of the application.",
@@ -595,6 +724,31 @@
           "HealthStatusWarn",
           "HealthStatusFail"
         ]
+      },
+      "smsgateway.InboxAttachment": {
+        "properties": {
+          "contentType": {
+            "description": "Attachment MIME type",
+            "example": "image/jpeg",
+            "type": "string"
+          },
+          "name": {
+            "description": "Attachment file name",
+            "example": "photo.jpg",
+            "type": "string"
+          },
+          "partId": {
+            "description": "Attachment part ID",
+            "example": 1,
+            "type": "integer"
+          },
+          "size": {
+            "description": "Attachment file size",
+            "example": 102400,
+            "type": "integer"
+          }
+        },
+        "type": "object"
       },
       "smsgateway.InboxRefreshRequest": {
         "properties": {
@@ -636,8 +790,7 @@
               }
             ],
             "description": "Delivery mode for webhooks (overrides triggerWebhooks when set).",
-            "example": "Batch",
-            "type": "object"
+            "example": "Batch"
           }
         },
         "required": [
@@ -649,9 +802,9 @@
       "smsgateway.IncomingMessage": {
         "properties": {
           "attachments": {
-            "description": "List of MMS attachments (only present for MMS_DOWNLOADED messages).",
+            "description": "MMS attachments",
             "items": {
-              "$ref": "#/components/schemas/smsgateway.IncomingMessageAttachment"
+              "$ref": "#/components/schemas/smsgateway.InboxAttachment"
             },
             "type": "array"
           },
@@ -667,9 +820,14 @@
             "type": "string"
           },
           "id": {
-            "description": "Incoming message ID",
+            "description": "Inbox message ID",
             "example": "PyDmBQZZXYmyxMwED8Fzy",
             "type": "string"
+          },
+          "isEncrypted": {
+            "description": "Whether the message is encrypted",
+            "example": true,
+            "type": "boolean"
           },
           "recipient": {
             "description": "Recipient phone number on the device",
@@ -677,7 +835,7 @@
             "type": "string"
           },
           "sender": {
-            "description": "Incoming sender phone number",
+            "description": "Inbox sender phone number",
             "example": "+79990001234",
             "type": "string"
           },
@@ -693,8 +851,7 @@
               }
             ],
             "description": "Message type",
-            "example": "SMS",
-            "type": "object"
+            "example": "SMS"
           }
         },
         "required": [
@@ -703,33 +860,6 @@
           "id",
           "sender",
           "type"
-        ],
-        "type": "object"
-      },
-      "smsgateway.IncomingMessageAttachment": {
-        "properties": {
-          "contentType": {
-            "description": "MIME type of the attachment (e.g. image/jpeg).",
-            "type": "string"
-          },
-          "name": {
-            "description": "Display name of the attachment file.",
-            "type": "string"
-          },
-          "partId": {
-            "description": "Part ID of the attachment, corresponding to the _id in content://mms/part.",
-            "type": "integer"
-          },
-          "size": {
-            "description": "Size of the attachment in bytes.",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "partId",
-          "name",
-          "size",
-          "contentType"
         ],
         "type": "object"
       },
@@ -765,8 +895,8 @@
           "devices:list",
           "devices:delete",
           "inbox:list",
-          "inbox:read",
           "inbox:refresh",
+          "inbox:read",
           "logs:read",
           "messages:cancel",
           "messages:send",
@@ -785,8 +915,8 @@
           "ScopeDevicesList",
           "ScopeDevicesDelete",
           "ScopeInboxList",
-          "ScopeInboxRead",
           "ScopeInboxRefresh",
+          "ScopeInboxRead",
           "ScopeLogsRead",
           "ScopeMessagesCancel",
           "ScopeMessagesSend",
@@ -850,8 +980,7 @@
                 "$ref": "#/components/schemas/smsgateway.LogEntryPriority"
               }
             ],
-            "description": "The priority level of the log entry.",
-            "type": "object"
+            "description": "The priority level of the log entry."
           }
         },
         "type": "object"
@@ -882,15 +1011,6 @@
             "description": "Data message",
             "type": "object"
           },
-          "mmsMessage": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.MmsMessage"
-              }
-            ],
-            "description": "MMS message (multimedia: images, audio, video, etc.)",
-            "type": "object"
-          },
           "deviceId": {
             "description": "Optional device ID for explicit selection",
             "example": "PyDmBQZZXYmyxMwED8Fzy",
@@ -914,6 +1034,15 @@
             "maxLength": 65535,
             "type": "string"
           },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "MMS message",
+            "type": "object"
+          },
           "phoneNumbers": {
             "description": "Recipients (phone numbers)",
             "example": [
@@ -924,7 +1053,8 @@
             },
             "maxItems": 100,
             "minItems": 1,
-            "type": "array"
+            "type": "array",
+            "uniqueItems": true
           },
           "priority": {
             "allOf": [
@@ -933,8 +1063,7 @@
               }
             ],
             "description": "Priority, messages with values greater than `99` will bypass limits and delays",
-            "example": 0,
-            "type": "object"
+            "example": 0
           },
           "scheduleAt": {
             "description": "Schedule message delivery at (must be in the future)",
@@ -1019,6 +1148,12 @@
       },
       "smsgateway.MessageState": {
         "properties": {
+          "createdAt": {
+            "description": "Message creation time",
+            "example": "2020-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
           "dataMessage": {
             "allOf": [
               {
@@ -1026,15 +1161,6 @@
               }
             ],
             "description": "Present only when `includeContent=true` and the message type is data.",
-            "type": "object"
-          },
-          "mmsMessage": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/smsgateway.MmsMessage"
-              }
-            ],
-            "description": "Present only when `includeContent=true` and the message type is MMS.",
             "type": "object"
           },
           "deviceId": {
@@ -1068,6 +1194,15 @@
             "example": false,
             "type": "boolean"
           },
+          "mmsMessage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.MmsMessage"
+              }
+            ],
+            "description": "Present only when `includeContent=true` and the message type is mms.",
+            "type": "object"
+          },
           "recipients": {
             "description": "Recipients states",
             "items": {
@@ -1076,6 +1211,12 @@
             "minItems": 1,
             "type": "array"
           },
+          "scheduleAt": {
+            "description": "Scheduled delivery time, if set",
+            "example": "2020-01-01T08:30:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
           "state": {
             "allOf": [
               {
@@ -1083,8 +1224,7 @@
               }
             ],
             "description": "State",
-            "example": "Pending",
-            "type": "object"
+            "example": "Pending"
           },
           "states": {
             "additionalProperties": {
@@ -1101,20 +1241,63 @@
             ],
             "description": "Present only when `includeContent=true` and the message type is text.",
             "type": "object"
-          },
-          "createdAt": {
-            "description": "Message creation time",
-            "format": "date-time",
-            "type": "string"
           }
         },
         "required": [
-          "createdAt",
           "deviceId",
           "id",
           "recipients",
           "state"
         ],
+        "type": "object"
+      },
+      "smsgateway.MmsAttachment": {
+        "properties": {
+          "contentType": {
+            "description": "ContentType is the MIME type of the attachment.",
+            "example": "image/png",
+            "type": "string"
+          },
+          "data": {
+            "description": "Data is the base64-encoded attachment content.",
+            "example": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name is the optional file name of the attachment.",
+            "example": "picture.png",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "contentType",
+          "data"
+        ],
+        "type": "object"
+      },
+      "smsgateway.MmsMessage": {
+        "properties": {
+          "attachments": {
+            "description": "Attachments is the list of attachments. Omitted when empty.",
+            "items": {
+              "$ref": "#/components/schemas/smsgateway.MmsAttachment"
+            },
+            "type": "array"
+          },
+          "subject": {
+            "description": "Subject is the optional subject of the MMS.",
+            "example": "Hello",
+            "nullable": true,
+            "type": "string"
+          },
+          "text": {
+            "description": "Text is the optional text body of the MMS.",
+            "example": "World",
+            "nullable": true,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "smsgateway.ProcessingState": {
@@ -1166,7 +1349,7 @@
           "phoneNumber": {
             "description": "Phone number or first 16 symbols of SHA256 hash",
             "example": "79990001234",
-            "maxLength": 128,
+            "maxLength": 512,
             "minLength": 1,
             "type": "string"
           },
@@ -1177,8 +1360,7 @@
               }
             ],
             "description": "State",
-            "example": "Pending",
-            "type": "object"
+            "example": "Pending"
           }
         },
         "required": [
@@ -1235,8 +1417,7 @@
                 "$ref": "#/components/schemas/smsgateway.LimitPeriod"
               }
             ],
-            "description": "LimitPeriod defines the period for message sending limits.\nValid values are \"Disabled\", \"PerMinute\", \"Per30Minutes\", \"PerHour\", or \"PerDay\".",
-            "type": "object"
+            "description": "LimitPeriod defines the period for message sending limits.\nValid values are \"Disabled\", \"PerMinute\", \"Per30Minutes\", \"PerHour\", or \"PerDay\"."
           },
           "limit_value": {
             "description": "LimitValue is the maximum number of messages allowed per limit period.\nMust be at least 1 when provided.",
@@ -1254,8 +1435,7 @@
                 "$ref": "#/components/schemas/smsgateway.MessagesProcessingOrder"
               }
             ],
-            "description": "MessagesProcessingOrder defines the order in which messages are processed.\nValid values are \"LIFO\" or \"FIFO\".",
-            "type": "object"
+            "description": "MessagesProcessingOrder defines the order in which messages are processed.\nValid values are \"LIFO\" or \"FIFO\"."
           },
           "send_interval_max": {
             "description": "SendIntervalMax is the maximum interval between message sends (in seconds).\nMust be at least 1 when provided and greater than or equal to SendIntervalMin.",
@@ -1273,8 +1453,7 @@
                 "$ref": "#/components/schemas/smsgateway.SimSelectionMode"
               }
             ],
-            "description": "SimSelectionMode defines how SIM cards are selected for sending messages.\nValid values are \"OSDefault\", \"RoundRobin\", or \"Random\".",
-            "type": "object"
+            "description": "SimSelectionMode defines how SIM cards are selected for sending messages.\nValid values are \"OSDefault\", \"RoundRobin\", or \"Random\"."
           },
           "work_hours_enabled": {
             "description": "WorkHoursEnabled enables restricting message delivery to a configurable time window.",
@@ -1297,6 +1476,15 @@
             "description": "IntervalSeconds is the interval between ping requests (in seconds).\nMust be at least 1 when provided.",
             "minimum": 1,
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "smsgateway.SettingsReceiver": {
+        "properties": {
+          "content_provider_enabled": {
+            "description": "ContentProviderEnabled enables monitoring the SMS content provider as a fallback for\ncarriers that intercept the SMS_RECEIVED broadcast.",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -1433,8 +1621,7 @@
               }
             ],
             "description": "The type of event the webhook is triggered for.",
-            "example": "sms:received",
-            "type": "object"
+            "example": "sms:received"
           },
           "id": {
             "description": "The unique identifier of the webhook.",
@@ -1561,6 +1748,10 @@
                 "type": "string"
               }
             },
+            "required": [
+              "message",
+              "receivedAt"
+            ],
             "type": "object"
           }
         ],
@@ -1574,12 +1765,20 @@
           },
           {
             "properties": {
+              "partsCount": {
+                "description": "Number of parts the message was split into. `-1` if the parts count is unknown.",
+                "type": "integer"
+              },
               "sentAt": {
                 "description": "The timestamp when the SMS message was sent.",
                 "format": "date-time",
                 "type": "string"
               }
             },
+            "required": [
+              "partsCount",
+              "sentAt"
+            ],
             "type": "object"
           }
         ],
@@ -1588,6 +1787,20 @@
       },
       "SystemPingPayload": {
         "description": "Payload of `system:ping` event.",
+        "properties": {
+          "health": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.HealthResponse"
+              }
+            ],
+            "description": "Health check result of the device.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "health"
+        ],
         "title": "SystemPingPayload",
         "type": "object"
       },
@@ -1636,6 +1849,24 @@
               },
               {
                 "$ref": "#/components/schemas/MmsDownloadedPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SmsCancelledPayload"
+              },
+              {
+                "$ref": "#/components/schemas/AppStartedPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SmsBatchReceivedPayload"
+              },
+              {
+                "$ref": "#/components/schemas/SmsDataBatchReceivedPayload"
+              },
+              {
+                "$ref": "#/components/schemas/MmsBatchReceivedPayload"
+              },
+              {
+                "$ref": "#/components/schemas/MmsBatchDownloadedPayload"
               }
             ]
           },
@@ -2223,10 +2454,10 @@
     },
     "/inbox": {
       "get": {
-        "description": "Retrieves incoming messages with filtering and pagination.",
+        "description": "Retrieves inbox messages with filtering and pagination.",
         "parameters": [
           {
-            "description": "Filter incoming messages by type",
+            "description": "Filter inbox messages by type",
             "in": "query",
             "name": "type",
             "schema": {
@@ -2291,7 +2522,6 @@
             "in": "query",
             "name": "includeAttachments",
             "schema": {
-              "default": false,
               "type": "boolean"
             }
           }
@@ -2308,12 +2538,11 @@
                 }
               }
             },
-            "description": "A list of incoming messages",
+            "description": "A list of inbox messages",
             "headers": {
               "X-Total-Count": {
                 "description": "Total number of items available",
                 "schema": {
-                  "format": "int64",
                   "type": "integer"
                 }
               }
@@ -2378,7 +2607,7 @@
             "JWTAuth": []
           }
         ],
-        "summary": "Get incoming messages",
+        "summary": "Get inbox messages",
         "tags": [
           "User",
           "Inbox"
@@ -2387,10 +2616,10 @@
     },
     "/inbox/{id}/attachments/{partId}": {
       "get": {
-        "description": "Download a specific MMS attachment by message ID and part ID.",
+        "description": "Downloads an attachment from an inbox message by message ID and part ID.",
         "parameters": [
           {
-            "description": "Incoming message ID",
+            "description": "Inbox message ID",
             "in": "path",
             "name": "id",
             "required": true,
@@ -2411,9 +2640,14 @@
         "responses": {
           "200": {
             "content": {
-              "application/octet-stream": {}
+              "application/octet-stream": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
             },
-            "description": "The attachment file"
+            "description": "Attachment file"
           },
           "400": {
             "content": {
@@ -2453,7 +2687,7 @@
                 }
               }
             },
-            "description": "Attachment not found"
+            "description": "Not found"
           },
           "500": {
             "content": {
@@ -2474,7 +2708,7 @@
             "JWTAuth": []
           }
         ],
-        "summary": "Download MMS attachment",
+        "summary": "Get attachment",
         "tags": [
           "User",
           "Inbox"
@@ -2677,6 +2911,15 @@
             "in": "query",
             "name": "state",
             "schema": {
+              "enum": [
+                "Pending",
+                "Cancelling",
+                "Cancelled",
+                "Processed",
+                "Sent",
+                "Delivered",
+                "Failed"
+              ],
               "type": "string"
             }
           },
@@ -2685,6 +2928,8 @@
             "in": "query",
             "name": "deviceId",
             "schema": {
+              "maxLength": 21,
+              "minLength": 21,
               "type": "string"
             }
           },
@@ -2694,6 +2939,8 @@
             "name": "limit",
             "schema": {
               "default": 50,
+              "maximum": 100,
+              "minimum": 1,
               "type": "integer"
             }
           },
@@ -2707,7 +2954,7 @@
             }
           },
           {
-            "description": "Include textMessage/dataMessage content for each message. Default is false",
+            "description": "Include textMessage/dataMessage/mmsMessage content for each message. Default is false",
             "in": "query",
             "name": "includeContent",
             "schema": {
