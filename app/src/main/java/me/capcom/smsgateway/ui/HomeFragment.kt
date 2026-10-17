@@ -27,6 +27,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
 import me.capcom.smsgateway.databinding.FragmentHomeBinding
@@ -44,6 +45,8 @@ import me.capcom.smsgateway.ui.dialogs.FirstStartDialogFragment
 import org.koin.android.ext.android.inject
 
 class HomeFragment : Fragment() {
+
+    private var registrationInFlight = false
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
@@ -75,50 +78,73 @@ class HomeFragment : Fragment() {
                     return@setFragmentResultListener
                 }
 
-                FirstStartDialogFragment.Result.SignUp -> requestPermissionsAndStart()
+                FirstStartDialogFragment.Result.SignUp -> {
+                    registerAndStart(GatewayService.RegistrationMode.Anonymous)
+                }
 
                 FirstStartDialogFragment.Result.SignIn -> {
-                    val username = FirstStartDialogFragment.getUsername(data)
-                    val password = FirstStartDialogFragment.getPassword(data)
-                    lifecycleScope.launch {
-                        try {
-                            gatewaySvc.registerDevice(
-                                requireContext(),
-                                null,
-                                GatewayService.RegistrationMode.WithCredentials(username, password)
-                            )
-                            requestPermissionsAndStart()
-                        } catch (th: Throwable) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to register device: ${th.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
+                    registerAndStart(
+                        GatewayService.RegistrationMode.WithCredentials(
+                            FirstStartDialogFragment.getUsername(data),
+                            FirstStartDialogFragment.getPassword(data),
+                        )
+                    )
                 }
 
                 FirstStartDialogFragment.Result.SignInByCode -> {
-                    val code = FirstStartDialogFragment.getCode(data)
-                    lifecycleScope.launch {
-                        try {
-                            gatewaySvc.registerDevice(
-                                requireContext(),
-                                null,
-                                GatewayService.RegistrationMode.WithCode(code)
-                            )
-                            requestPermissionsAndStart()
-                        } catch (th: Throwable) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to register device: ${th.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
+                    registerAndStart(
+                        GatewayService.RegistrationMode.WithCode(
+                            FirstStartDialogFragment.getCode(data)
+                        )
+                    )
                 }
             }
         }
+    }
+
+    private fun registerAndStart(mode: GatewayService.RegistrationMode) {
+        // Each registration creates a separate account and device, and the last response
+        // wins, so a second request must not start while one is still in flight.
+        if (registrationInFlight) {
+            Log.d(javaClass.name, "Device registration already in progress")
+            return
+        }
+        registrationInFlight = true
+        setStartEnabled(false)
+
+        lifecycleScope.launch {
+            try {
+                // Capture the application context up front: the fragment may be detached by
+                // the time the network call returns, and requireContext() would then throw.
+                val appContext = requireContext().applicationContext
+                gatewaySvc.registerDevice(
+                    appContext,
+                    null,
+                    mode
+                )
+                requestPermissionsAndStart()
+            } catch (e: CancellationException) {
+                // Lifecycle cancellation, not a registration failure: keep it propagating
+                // instead of reporting it as an error.
+                throw e
+            } catch (e: Exception) {
+                // `context` rather than `requireContext()`: the fragment may already be
+                // detached, and requiring a context here would throw outside the handler.
+                val ctx = context ?: return@launch
+                Toast.makeText(
+                    ctx,
+                    "Failed to register device: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            } finally {
+                registrationInFlight = false
+                setStartEnabled(true)
+            }
+        }
+    }
+
+    private fun setStartEnabled(enabled: Boolean) {
+        _binding?.buttonStart?.isEnabled = enabled
     }
 
     override fun onCreateView(
@@ -346,6 +372,11 @@ class HomeFragment : Fragment() {
 
     private fun actionStart(start: Boolean) {
         if (start) {
+            if (registrationInFlight) {
+                Log.d(javaClass.name, "Device registration already in progress")
+                return
+            }
+
             if (gatewaySettings.enabled
                 && gatewaySettings.registrationInfo == null
             ) {
