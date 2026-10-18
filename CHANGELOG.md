@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Incoming MMS notifications whose WAP-push headers are unrecognized or undecodable are no longer dropped — the notification is parsed with the AOSP PDU parser, unknown header fields are skipped and logged as warnings, and the `mms:received` webhook fires for these messages [772f8b5]
+
+## [v1.78.2] - 2026-11-03
+
+### Fixed
+- Device-paired end-to-end encryption no longer fails to decrypt — the OAEP MGF1 digest is pinned to SHA-1, which Android Keystore supports, so decryption no longer errors with `Unsupported MGF1 digest: SHA-256` (below API 35) or `INCOMPATIBLE_MGF_DIGEST` (API 35+) [adaa6c4]
+
 ## [v1.78.0] - 2026-10-27
 
 ### Added
@@ -1274,7 +1282,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.0...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.3...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1
@@ -1416,3 +1424,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.77.4]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.3...v1.77.4
 [v1.77.5]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.4...v1.77.5
 [v1.78.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.5...v1.78.0
+[v1.78.2]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.1...v1.78.2

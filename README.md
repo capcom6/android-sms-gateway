@@ -183,7 +183,6 @@ The `release` and `insecure` variants are signed with your own keystore, which t
 | `SIGNING_STORE_PASSWORD` | Password for the keystore file used to sign release builds             | String        | `your-keystore-password`              |
 | `SIGNING_KEY_ALIAS`      | Alias of the key inside the keystore that signs release builds         | String        | `your-key-alias`                      |
 | `SIGNING_KEY_PASSWORD`   | Password for that key alias                                            | String        | `your-key-password`                   |
-| `ANDROID_HOME`           | Path to the Android SDK, used when `local.properties` has no `sdk.dir` | Absolute path | `/Users/username/Library/Android/sdk` |
 
 The three signing variables are read by `signingConfigs.release` in `app/build.gradle`. The `debug` and `debugInsecure` variants are signed with the default Android debug keystore and need none of them.
 
