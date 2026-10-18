@@ -1,5 +1,6 @@
 package me.capcom.smsgateway.modules.receiver.parsers
 
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 internal class MMSParserTest {
@@ -232,7 +233,8 @@ internal class MMSParserTest {
         )
 
         val notification = MMSParser.parseMNotificationInd(data)
-        assert(notification.from == "+19162255887/TYPE=PLMN")
+        // the AOSP parser cuts the address at "/TYPE=", the receiver used to do it
+        assert(notification.from == "+19162255887")
     }
 
     @Test
@@ -269,7 +271,7 @@ internal class MMSParserTest {
         val pdu = hexToBytes(
             """
                 8C 82
-                98 04 61 62 63 00
+                98 61 62 63 00
                 8D 92
                 89 0C 80 31 32 33 34 35 36 37 38 39 30 00
                 96 07 EA 48 65 6C 6C 6F 00
@@ -281,5 +283,284 @@ internal class MMSParserTest {
         val notification = MMSParser.parseMNotificationInd(pdu)
         assert(notification.from == "1234567890")
         assert(notification.subject == "Hello") { "Expected 'Hello' but got '${notification.subject}'" }
+    }
+
+    @Test
+    fun parseSubjectWithLongCharset() {
+        // The charset of an Encoded-string-value is an Integer-value: a charset that does not
+        // fit into a Short-integer (windows-1251 = 2251) is encoded as a Long-integer
+        // Value-length(0x05=5) + Char-set(0x02 0x08 0xCB) + Text-string(0xE9) + End-of-string
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                96 05 02 08 CB E9 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.subject == "й") { "Expected 'й' but got '${notification.subject}'" }
+    }
+
+    @Test
+    fun parseSubjectIso2022Jp() {
+        // ISO-2022-JP (MIB 39) subjects carry escape bytes 0x1B that must survive parsing:
+        // ESC $ B (JIS X 0208) + 0x2422 ("あ") + ESC ( B (back to ASCII)
+        // Subject header: 0x96 + Value-length(0x0A=10) + Char-set(0xA7=39 Short-int) + text + 0x00
+        // Value-length = 1 (charset) + 8 (text bytes) + 1 (null terminator) = 10
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                96 0A A7 1B 24 42 24 22 1B 28 42 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.subject == "あ") { "Expected 'あ' but got '${notification.subject}'" }
+    }
+
+    @Test
+    fun parseBccHeader() {
+        // #457: carriers may send the Bcc (0x81) header, it must not break the parsing
+        // Bcc header: 0x81 + Value-length(0x0D=13) + Char-set(0xEA=UTF-8 Short-int) + text + 0x00
+        // Value-length = 1 (charset) + 11 (text bytes) + 1 (null terminator) = 13
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 93
+                81 0D EA 31 39 31 36 32 32 35 35 38 38 37 00
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.transactionId == "abc")
+        assert(notification.messageSize == 1000L)
+        assert(notification.ignoredHeaders.isEmpty()) { "Expected no ignored headers" }
+    }
+
+    @Test
+    fun parseAddressHeaders() {
+        // Cc (0x82) and To (0x97) carry Encoded-string-value in Text-string format
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                82 31 32 33 34 35 36 37 38 39 30 00
+                97 31 32 33 34 35 36 37 38 39 30 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.messageSize == 1000L)
+        assert(notification.ignoredHeaders.isEmpty()) { "Expected no ignored headers" }
+    }
+
+    @Test
+    fun parseUnknownHeader() {
+        // An unknown header field must not drop the whole notification
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                8E 02 03 E8
+                FF
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.transactionId == "abc")
+        assert(notification.messageSize == 1000L)
+        assert(notification.ignoredHeaders == listOf(0xFF))
+    }
+
+    @Test
+    fun parseUnknownHeaderWithValue() {
+        // The value of an unknown header field cannot be decoded, the parsing stops there
+        // instead of reading the value bytes as the next header field
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                FF 02 85 FF
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.transactionId == "abc")
+        assert(notification.ignoredHeaders == listOf(0xFF))
+        assert(notification.from == "") { "Expected an empty sender but got '${notification.from}'" }
+        assert(notification.messageSize == 0L)
+    }
+
+    @Test
+    fun parseInvalidOctetHeaderIsReported() {
+        // A recognized header with an invalid value is dropped, the field id is reported
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                86 82
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.messageSize == 1000L)
+        assert(notification.ignoredHeaders == listOf(0x86))
+    }
+
+    @Test
+    fun parseTextHeader() {
+        // WSP text-header: the field name and its value are text-strings
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                58 2D 74 65 73 74 2D 68 65 61 64 65 72 3A 31 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.messageSize == 1000L)
+    }
+
+    @Test
+    fun parseElementDescriptor() {
+        // X-Mms-Element-Descriptor (0xB2) carries a Content-type-value
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                B2 0B 69 6D 61 67 65 2F 6A 70 65 67 00
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.messageSize == 1000L)
+        assert(notification.ignoredHeaders.isEmpty()) { "Expected no ignored headers" }
+    }
+
+    @Test
+    fun parseElementDescriptorWithParameters() {
+        // X-Mms-Element-Descriptor (0xB2) may carry a Content-type-value with parameters
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                B2 08 83 81 75 74 66 2D 38 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.messageSize == 1000L)
+        assert(notification.ignoredHeaders.isEmpty()) { "Expected no ignored headers" }
+    }
+
+    @Test
+    fun parseExpiryWithAbsoluteToken() {
+        // X-Mms-Expiry (0x88) with an absolute token, the date value follows the token anyway
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                88 05 80 03 03 F4 80
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.messageSize == 1000L)
+    }
+
+    @Test
+    fun parseFromWithInsertAddressToken() {
+        // The MMS proxy inserts the address, the PDU carries a token instead of a value
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                89 01 81
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "insert-address-token")
+        assert(notification.messageSize == 1000L)
+    }
+
+    @Test
+    fun parseFromWithIso88591Charset() {
+        // The address is encoded in ISO-8859-1 (MIB 4), the byte 0xE9 is "é" there
+        // From-value(0x05=5) + Address-present-token(0x80) + Encoded-string-value
+        // Encoded-string-value = Value-length(0x03=3) + Char-set(0x84) + Text-string(0xE9)
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 05 80 03 84 E9 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "é") { "Expected 'é' but got '${notification.from}'" }
+    }
+
+    @Test
+    fun parseWithoutTransactionId() {
+        val pdu = hexToBytes(
+            """
+                8C 82
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            MMSParser.parseMNotificationInd(pdu)
+        }
     }
 }
