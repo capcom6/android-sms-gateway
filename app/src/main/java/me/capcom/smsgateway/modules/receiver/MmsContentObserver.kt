@@ -18,6 +18,7 @@ class MmsContentObserver : KoinComponent {
     private val storage: StateStorage by inject()
     private val receiverSvc: ReceiverService by inject()
     private val logsService: LogsService by inject()
+    private val receiverSettings: ReceiverSettings by inject()
 
     private var handlerThread: HandlerThread? = null
     private var observer: ContentObserver? = null
@@ -152,7 +153,11 @@ class MmsContentObserver : KoinComponent {
         // framework. Retry a few times with a short delay to wait for them.
         var message: MmsContentReader.MmsMessage? = null
         for (attempt in 1..MMS_DOWNLOAD_MAX_RETRIES) {
-            message = MmsContentReader.read(context, mmsId) ?: return
+            message = MmsContentReader.read(
+                context,
+                mmsId,
+                receiverSettings.mmsMaxInlineAttachmentBytes,
+            ) ?: return
             val needsRetry = message.sender == "unknown" || (message.body.isNullOrBlank() && message.attachments.isEmpty())
             if (!needsRetry) break
             if (attempt < MMS_DOWNLOAD_MAX_RETRIES) {
@@ -179,7 +184,8 @@ class MmsContentObserver : KoinComponent {
                             it.contentType,
                             it.name,
                             it.size,
-                            it.data
+                            it.data,
+                            it.omitted,
                         )
                     },
                     msg.sender,

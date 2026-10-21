@@ -373,21 +373,26 @@ class ReceiverService : KoinComponent {
         cursor.use { c ->
             while (c.moveToNext()) {
                 val mmsId = c.getLong(0)
-                val message = MmsContentReader.read(context, mmsId) ?: continue
+                val message = MmsContentReader.read(
+                    context,
+                    mmsId,
+                    receiverSettings.mmsMaxInlineAttachmentBytes,
+                ) ?: continue
                 messages.add(
                     InboxMessage.MMS(
                         messageId = mmsId.toString(),
                         body = message.body,
                         subject = message.subject,
-                        attachments = message.attachments.map {
-                            InboxMessage.MMS.Attachment(
-                                partId = it.partId,
-                                contentType = it.contentType,
-                                name = it.name,
-                                size = it.size,
-                                data = it.data
-                            )
-                        },
+                    attachments = message.attachments.map {
+                        InboxMessage.MMS.Attachment(
+                            partId = it.partId,
+                            contentType = it.contentType,
+                            name = it.name,
+                            size = it.size,
+                            data = it.data,
+                            omitted = it.omitted,
+                        )
+                    },
                         address = message.sender,
                         date = message.date,
                         subscriptionId = message.subscriptionId

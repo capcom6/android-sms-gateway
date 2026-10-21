@@ -64,6 +64,7 @@ sealed class InboxMessage(
             val name: String?,
             val size: Long?,
             val data: String?,
+            val omitted: Boolean = false,
         )
 
         override fun equals(other: Any?): Boolean {
