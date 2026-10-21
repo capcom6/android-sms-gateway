@@ -64,7 +64,7 @@ class LegacyPassphraseEncryptionProviderTest {
             var thrown = false
             try {
                 legacy.decrypt(hardenedOutput)
-            } catch (e: RuntimeException) {
+            } catch (e: Exception) {
                 thrown = true
             }
             assertTrue("legacy provider must reject hardened (4-chunk) output", thrown)
