@@ -19,6 +19,7 @@ object MmsContentReader {
         val date: Date,
         val attachments: List<MmsAttachment>,
         val subscriptionId: Int?,
+        val textOmitted: Boolean = false,
     )
 
     data class MmsAttachment(
@@ -27,9 +28,24 @@ object MmsContentReader {
         val name: String?,
         val size: Long?,
         val data: String?,
+        val omitted: Boolean = false,
     )
 
-    fun read(context: Context, mmsId: Long): MmsMessage? {
+    private data class PartContent(
+        val data: String?,
+        val omitted: Boolean,
+    )
+
+    private data class TextContent(
+        val text: String?,
+        val omitted: Boolean,
+    )
+
+    /**
+     * @param maxInlineBytes maximum size of a part that may be inlined into the
+     * message, larger parts are reported as omitted
+     */
+    fun read(context: Context, mmsId: Long, maxInlineBytes: Long): MmsMessage? {
         val resolver = context.contentResolver
 
         // 1. Message-level fields
@@ -80,6 +96,7 @@ object MmsContentReader {
 
         val bodyParts = mutableListOf<String>()
         val attachments = mutableListOf<MmsAttachment>()
+        var textOmitted = false
 
         partCursor?.use { c ->
             while (c.moveToNext()) {
@@ -88,10 +105,22 @@ object MmsContentReader {
                 val mimeType = contentType.substringBefore(";").trim()
 
                 if (mimeType.equals("text/plain", ignoreCase = true)) {
-                    val text = c.getString(6)?.let {
-                        readTextPart(resolver, partId, contentType)
+                    val inlineText = c.getString(2)
+                    val content = if (c.getString(6) != null) {
+                        readTextPart(resolver, partId, contentType, maxInlineBytes)
+                    } else {
+                        TextContent(text = inlineText, omitted = false)
                     }
-                        ?: c.getString(2)
+
+                    val text = when {
+                        content.omitted -> null
+                        content.text != null -> content.text
+                        else -> inlineText
+                    }
+
+                    if (content.omitted) {
+                        textOmitted = true
+                    }
 
                     if (!text.isNullOrBlank()) {
                         bodyParts.add(text)
@@ -107,13 +136,20 @@ object MmsContentReader {
                     val dataPath = c.getString(6)
                     val size = readPartSize(resolver, partId, dataPath)
 
+                    val content = if (size != null && size > maxInlineBytes) {
+                        PartContent(data = null, omitted = true)
+                    } else {
+                        readPartData(resolver, partId, maxInlineBytes)
+                    }
+
                     attachments.add(
                         MmsAttachment(
                             partId = partId,
                             contentType = contentType,
                             name = name,
                             size = size,
-                            data = readPartData(resolver, partId),
+                            data = content.data,
+                            omitted = content.omitted,
                         )
                     )
                 }
@@ -128,6 +164,7 @@ object MmsContentReader {
             date = date,
             attachments = attachments,
             subscriptionId = subscriptionId,
+            textOmitted = textOmitted,
         )
     }
 
@@ -154,33 +191,57 @@ object MmsContentReader {
     }
 
 
-    private fun readPartData(resolver: ContentResolver, partId: Long): String? {
+    private fun readPartData(resolver: ContentResolver, partId: Long, maxInlineBytes: Long): PartContent {
         return try {
-            resolver.openInputStream(Uri.parse("content://mms/part/$partId"))?.use { input ->
-                val bytes = input.readBytes()
-                if (bytes.isNotEmpty()) Base64.encodeToString(bytes, Base64.NO_WRAP) else null
+            val input = resolver.openInputStream(Uri.parse("content://mms/part/$partId"))
+                ?: return PartContent(data = null, omitted = false)
+
+            input.use { stream ->
+                val result = BoundedStreamReader.read(stream, inlineLimit(maxInlineBytes))
+                val bytes = result.bytes
+                when {
+                    result.truncated -> PartContent(data = null, omitted = true)
+                    bytes == null || bytes.isEmpty() -> PartContent(data = null, omitted = false)
+                    else -> PartContent(
+                        data = Base64.encodeToString(bytes, Base64.NO_WRAP),
+                        omitted = false,
+                    )
+                }
             }
         } catch (_: Exception) {
-            null
+            PartContent(data = null, omitted = false)
         }
     }
 
     private fun readTextPart(
         resolver: ContentResolver,
         partId: Long,
-        contentType: String?
-    ): String? {
+        contentType: String?,
+        maxInlineBytes: Long
+    ): TextContent {
         return try {
-            resolver.openInputStream(Uri.parse("content://mms/part/$partId"))?.use { input ->
-                val bytes = input.readBytes()
-                if (bytes.isEmpty()) return null
+            val input = resolver.openInputStream(Uri.parse("content://mms/part/$partId"))
+                ?: return TextContent(text = null, omitted = false)
 
-                val charset = parseCharset(contentType)
-                String(bytes, charset)
+            input.use { stream ->
+                val result = BoundedStreamReader.read(stream, inlineLimit(maxInlineBytes))
+                val bytes = result.bytes
+                when {
+                    result.truncated -> TextContent(text = null, omitted = true)
+                    bytes == null || bytes.isEmpty() -> TextContent(text = null, omitted = false)
+                    else -> TextContent(
+                        text = String(bytes, parseCharset(contentType)),
+                        omitted = false,
+                    )
+                }
             }
         } catch (_: IOException) {
-            null
+            TextContent(text = null, omitted = false)
         }
+    }
+
+    private fun inlineLimit(maxInlineBytes: Long): Int {
+        return maxInlineBytes.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
     }
 
     private fun parseCharset(contentType: String?): Charset {
