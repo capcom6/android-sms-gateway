@@ -378,6 +378,15 @@
             "description": "Ping contains settings related to ping functionality.",
             "type": "object"
           },
+          "receiver": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.SettingsReceiver"
+              }
+            ],
+            "description": "Receiver contains settings related to incoming messages processing.",
+            "type": "object"
+          },
           "webhooks": {
             "allOf": [
               {
@@ -1296,6 +1305,21 @@
           "interval_seconds": {
             "description": "IntervalSeconds is the interval between ping requests (in seconds).\nMust be at least 1 when provided.",
             "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "smsgateway.SettingsReceiver": {
+        "properties": {
+          "content_provider_enabled": {
+            "description": "ContentProviderEnabled enables detection of incoming messages via the content provider.",
+            "type": "boolean"
+          },
+          "mms_max_inline_attachment_bytes": {
+            "description": "MMSMaxInlineAttachmentBytes is the maximum size of an MMS attachment that may be inlined into webhook payloads and cloud uploads. Larger attachments are kept on the device only.\nMust be between 0 and 67108864 when provided.",
+            "maximum": 67108864,
+            "minimum": 0,
             "type": "integer"
           }
         },
