@@ -286,6 +286,27 @@ internal class MMSParserTest {
     }
 
     @Test
+    fun parseSubjectWithLongCharset() {
+        // The charset of an Encoded-string-value is an Integer-value: a charset that does not
+        // fit into a Short-integer (windows-1251 = 2251) is encoded as a Long-integer
+        // Value-length(0x05=5) + Char-set(0x02 0x08 0xCB) + Text-string(0xE9) + End-of-string
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                96 05 02 08 CB E9 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.subject == "й") { "Expected 'й' but got '${notification.subject}'" }
+    }
+
+    @Test
     fun parseBccHeader() {
         // #457: carriers may send the Bcc (0x81) header, it must not break the parsing
         // Bcc header: 0x81 + Value-length(0x0D=13) + Char-set(0xEA=UTF-8 Short-int) + text + 0x00
@@ -389,6 +410,26 @@ internal class MMSParserTest {
     }
 
     @Test
+    fun parseElementDescriptorWithParameters() {
+        // X-Mms-Element-Descriptor (0xB2) may carry a Content-type-value with parameters
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                B2 08 83 81 75 74 66 2D 38 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.messageSize == 1000L)
+        assert(notification.ignoredHeaders.isEmpty()) { "Expected no ignored headers" }
+    }
+
+    @Test
     fun parseExpiryWithAbsoluteToken() {
         // X-Mms-Expiry (0x88) with an absolute token, the date value follows the token anyway
         val pdu = hexToBytes(
@@ -422,6 +463,25 @@ internal class MMSParserTest {
         val notification = MMSParser.parseMNotificationInd(pdu)
         assert(notification.from == "insert-address-token")
         assert(notification.messageSize == 1000L)
+    }
+
+    @Test
+    fun parseFromWithIso88591Charset() {
+        // The address is encoded in ISO-8859-1 (MIB 4), the byte 0xE9 is "é" there
+        // From-value(0x05=5) + Address-present-token(0x80) + Encoded-string-value
+        // Encoded-string-value = Value-length(0x03=3) + Char-set(0x84) + Text-string(0xE9)
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 05 80 03 84 E9 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "é") { "Expected 'é' but got '${notification.from}'" }
     }
 
     @Test

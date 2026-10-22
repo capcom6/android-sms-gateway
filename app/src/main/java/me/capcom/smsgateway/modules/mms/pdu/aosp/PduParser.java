@@ -414,16 +414,11 @@ public class PduParser {
                         if (null != from) {
                             byte[] address = from.getTextString();
                             if (null != address) {
-                                String str = new String(address);
-                                int endIndex = str.indexOf("/");
+                                /* fork: cut the "/TYPE=PLMN" suffix off the raw bytes,
+                                 * decoding them would break the declared charset */
+                                int endIndex = indexOfByte(address, (byte) '/');
                                 if (endIndex > 0) {
-                                    str = str.substring(0, endIndex);
-                                }
-                                try {
-                                    from.setTextString(str.getBytes());
-                                } catch(NullPointerException e) {
-                                    log("null pointer error!");
-                                    break;   /* fork: keep parsing an unexpected value */
+                                    from.setTextString(Arrays.copyOf(address, endIndex));
                                 }
                             }
                         }
@@ -646,7 +641,7 @@ public class PduParser {
                     if (LOCAL_LOGV) {
                         Log.v(LOG_TAG, "parseHeaders: ELEMENT_DESCRIPTOR: " + headerField);
                     }
-                    parseContentType(pduDataStream, null);
+                    parseContentType(pduDataStream, new HashMap<Integer, Object>());
 
                     /* not store this header filed in "headers",
                     because now PduHeaders doesn't support it */
@@ -702,6 +697,23 @@ public class PduParser {
         if (LOCAL_LOGV) {
             Log.v(LOG_TAG, text);
         }
+    }
+
+    /**
+     * Find the first occurrence of a byte in the array.
+     *
+     * @param data the array to search in
+     * @param value the byte to find
+     * @return the index of the byte, -1 when the array does not contain it
+     */
+    private static int indexOfByte(byte[] data, byte value) {
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] == value) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     /**
@@ -793,7 +805,9 @@ public class PduParser {
         if (first < TEXT_MIN) {
             parseValueLength(pduDataStream);
 
-            charset = parseShortInteger(pduDataStream); //get the "Charset"
+            /* fork: the charset is an Integer-value, a charset that does not fit into
+             * a Short-integer (e.g. windows-1251) is encoded as a Long-integer */
+            charset = (int) parseIntegerValue(pduDataStream); //get the "Charset"
         }
 
         byte[] textString = parseWapString(pduDataStream, TYPE_TEXT_STRING);
@@ -1152,7 +1166,9 @@ public class PduParser {
 
                         if (index < PduContentTypes.contentTypes.length) {
                             byte[] type = (PduContentTypes.contentTypes[index]).getBytes();
-                            map.put(PduPart.P_TYPE, type);
+                            if (map != null) {
+                                map.put(PduPart.P_TYPE, type);
+                            }
                         } else {
                             //not support this type, ignore it.
                         }
@@ -1218,11 +1234,15 @@ public class PduParser {
                         try {
                             int charsetInt = CharacterSets.getMibEnumValue(
                                     new String(charsetStr));
-                            map.put(PduPart.P_CHARSET, charsetInt);
+                            if (map != null) {
+                                map.put(PduPart.P_CHARSET, charsetInt);
+                            }
                         } catch (UnsupportedEncodingException e) {
                             // Not a well-known charset, use "*".
                             Log.e(LOG_TAG, Arrays.toString(charsetStr), e);
-                            map.put(PduPart.P_CHARSET, CharacterSets.ANY_CHARSET);
+                            if (map != null) {
+                                map.put(PduPart.P_CHARSET, CharacterSets.ANY_CHARSET);
+                            }
                         }
                     } else {
                         //Well-known-charset
