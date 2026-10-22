@@ -215,4 +215,8 @@
     <string name="filter_mms_count">MMS (%1$d)</string>
     <string name="device_key">Device Key</string>
     <string name="device_keys_management">Device keys management</string>
+    <string name="device_unregistered">Device unregistered</string>
+    <string name="unregister_device">Unregister device</string>
+    <string name="confirm_unregister_device">Are you sure you want to unregister this device?
+        You will need to sign up or sign in again to use the cloud server.</string>
 </resources>
