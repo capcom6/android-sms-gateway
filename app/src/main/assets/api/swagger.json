@@ -612,8 +612,7 @@
               }
             ],
             "description": "State",
-            "example": "Pending",
-            "type": "object"
+            "example": "Pending"
           },
           "states": {
             "additionalProperties": {
@@ -672,8 +671,7 @@
                 "$ref": "#/components/schemas/smsgateway.HealthStatus"
               }
             ],
-            "description": "Status of the check.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\".",
-            "type": "object"
+            "description": "Status of the check.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\"."
           }
         },
         "type": "object"
@@ -705,8 +703,7 @@
                 "$ref": "#/components/schemas/smsgateway.HealthStatus"
               }
             ],
-            "description": "Overall status of the application.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\".",
-            "type": "object"
+            "description": "Overall status of the application.\nIt can be one of the following values: \"pass\", \"warn\", or \"fail\"."
           },
           "version": {
             "description": "Version of the application.",
@@ -793,8 +790,7 @@
               }
             ],
             "description": "Delivery mode for webhooks (overrides triggerWebhooks when set).",
-            "example": "Batch",
-            "type": "object"
+            "example": "Batch"
           }
         },
         "required": [
@@ -855,8 +851,7 @@
               }
             ],
             "description": "Message type",
-            "example": "SMS",
-            "type": "object"
+            "example": "SMS"
           }
         },
         "required": [
@@ -985,8 +980,7 @@
                 "$ref": "#/components/schemas/smsgateway.LogEntryPriority"
               }
             ],
-            "description": "The priority level of the log entry.",
-            "type": "object"
+            "description": "The priority level of the log entry."
           }
         },
         "type": "object"
@@ -1069,8 +1063,7 @@
               }
             ],
             "description": "Priority, messages with values greater than `99` will bypass limits and delays",
-            "example": 0,
-            "type": "object"
+            "example": 0
           },
           "scheduleAt": {
             "description": "Schedule message delivery at (must be in the future)",
@@ -1231,8 +1224,7 @@
               }
             ],
             "description": "State",
-            "example": "Pending",
-            "type": "object"
+            "example": "Pending"
           },
           "states": {
             "additionalProperties": {
@@ -1365,8 +1357,7 @@
               }
             ],
             "description": "State",
-            "example": "Pending",
-            "type": "object"
+            "example": "Pending"
           }
         },
         "required": [
@@ -1423,8 +1414,7 @@
                 "$ref": "#/components/schemas/smsgateway.LimitPeriod"
               }
             ],
-            "description": "LimitPeriod defines the period for message sending limits.\nValid values are \"Disabled\", \"PerMinute\", \"Per30Minutes\", \"PerHour\", or \"PerDay\".",
-            "type": "object"
+            "description": "LimitPeriod defines the period for message sending limits.\nValid values are \"Disabled\", \"PerMinute\", \"Per30Minutes\", \"PerHour\", or \"PerDay\"."
           },
           "limit_value": {
             "description": "LimitValue is the maximum number of messages allowed per limit period.\nMust be at least 1 when provided.",
@@ -1442,8 +1432,7 @@
                 "$ref": "#/components/schemas/smsgateway.MessagesProcessingOrder"
               }
             ],
-            "description": "MessagesProcessingOrder defines the order in which messages are processed.\nValid values are \"LIFO\" or \"FIFO\".",
-            "type": "object"
+            "description": "MessagesProcessingOrder defines the order in which messages are processed.\nValid values are \"LIFO\" or \"FIFO\"."
           },
           "send_interval_max": {
             "description": "SendIntervalMax is the maximum interval between message sends (in seconds).\nMust be at least 1 when provided and greater than or equal to SendIntervalMin.",
@@ -1461,8 +1450,7 @@
                 "$ref": "#/components/schemas/smsgateway.SimSelectionMode"
               }
             ],
-            "description": "SimSelectionMode defines how SIM cards are selected for sending messages.\nValid values are \"OSDefault\", \"RoundRobin\", or \"Random\".",
-            "type": "object"
+            "description": "SimSelectionMode defines how SIM cards are selected for sending messages.\nValid values are \"OSDefault\", \"RoundRobin\", or \"Random\"."
           },
           "work_hours_enabled": {
             "description": "WorkHoursEnabled enables restricting message delivery to a configurable time window.",
@@ -1630,8 +1618,7 @@
               }
             ],
             "description": "The type of event the webhook is triggered for.",
-            "example": "sms:received",
-            "type": "object"
+            "example": "sms:received"
           },
           "id": {
             "description": "The unique identifier of the webhook.",
