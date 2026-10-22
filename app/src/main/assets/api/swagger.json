@@ -23,6 +23,7 @@
         "properties": {
           "messages": {
             "description": "Messages in the batch, ordered chronologically.",
+            "items": {},
             "maxItems": 100,
             "type": "array"
           }
@@ -181,6 +182,11 @@
                 "type": "string"
               }
             },
+            "required": [
+              "receivedAt",
+              "size",
+              "transactionId"
+            ],
             "type": "object"
           }
         ],
@@ -222,6 +228,9 @@
                 "type": "string"
               }
             },
+            "required": [
+              "cancelledAt"
+            ],
             "type": "object"
           }
         ],
@@ -269,6 +278,10 @@
                 "type": "string"
               }
             },
+            "required": [
+              "data",
+              "receivedAt"
+            ],
             "type": "object"
           }
         ],
@@ -288,6 +301,9 @@
                 "type": "string"
               }
             },
+            "required": [
+              "deliveredAt"
+            ],
             "type": "object"
           }
         ],
@@ -320,6 +336,10 @@
             "type": "integer"
           }
         },
+        "required": [
+          "messageId",
+          "phoneNumber"
+        ],
         "title": "MessageEventPayload",
         "type": "object"
       },
@@ -340,6 +360,10 @@
                 "type": "string"
               }
             },
+            "required": [
+              "failedAt",
+              "reason"
+            ],
             "type": "object"
           }
         ],
@@ -1734,6 +1758,10 @@
                 "type": "string"
               }
             },
+            "required": [
+              "message",
+              "receivedAt"
+            ],
             "type": "object"
           }
         ],
@@ -1758,7 +1786,8 @@
               }
             },
             "required": [
-              "partsCount"
+              "partsCount",
+              "sentAt"
             ],
             "type": "object"
           }
@@ -1768,6 +1797,20 @@
       },
       "SystemPingPayload": {
         "description": "Payload of `system:ping` event.",
+        "properties": {
+          "health": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/smsgateway.HealthResponse"
+              }
+            ],
+            "description": "Health check result of the device.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "health"
+        ],
         "title": "SystemPingPayload",
         "type": "object"
       },
