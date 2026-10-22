@@ -23,9 +23,12 @@ class LocalServerService(
         ).firstInstallTime
         val deviceName = "${Build.MANUFACTURER}/${Build.PRODUCT}"
 
-        return deviceName.hashCode().toULong()
-            .toString(16).padStart(16, '0') + firstInstallTime.toULong()
-            .toString(16).padStart(16, '0')
+        val modelHash = deviceName.hashCode().toULong()
+            .toString(16).padStart(MODEL_HASH_LENGTH, '0').take(MODEL_HASH_LENGTH)
+        val installHash = firstInstallTime.toULong()
+            .toString(16).padStart(INSTALL_HASH_LENGTH, '0').take(INSTALL_HASH_LENGTH)
+
+        return modelHash + installHash
     }
 
     fun start(context: Context) {
@@ -49,6 +52,11 @@ class LocalServerService(
     fun isActiveLiveData(context: Context) = WebService.STATUS
 
     companion object {
+        const val DEVICE_ID_LENGTH = 21
+
+        private const val MODEL_HASH_LENGTH = 5
+        private const val INSTALL_HASH_LENGTH = DEVICE_ID_LENGTH - MODEL_HASH_LENGTH
+
         private val job = SupervisorJob()
         private val scope = CoroutineScope(job)
     }
