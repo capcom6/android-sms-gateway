@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Local server device IDs now use the 21-character format the API spec requires (`DeviceID char(21)`), so spec-validating clients no longer reject the device's own ID; only newly generated IDs change — existing registrations keep their current ID [de6defb]
+
+## [v1.79.0] - 2026-11-17
+
 ### Added
 - Maximum inline MMS attachment size is configurable — the new *Max inline attachment size* option in *Settings → Inbox* (default 1 MiB, `0` disables inlining, maximum 64 MiB) controls how large a received MMS attachment may be before it stops being inlined; it can also be set through `PATCH /settings` with `receiver.mms_max_inline_attachment_bytes` [d8f274e]
 
 ### Changed
 - MMS attachments larger than the inline limit are no longer included in `mms:downloaded` webhook payloads or cloud inbox uploads — the bytes are kept on the device and can be fetched with `GET /inbox/<messageId>/attachments/<partId>` [d8f274e]
+
+## [v1.78.4] - 2026-11-12
 
 ### Fixed
 - Incoming MMS notifications whose WAP-push headers are unrecognized or undecodable are no longer dropped — the notification is parsed with the AOSP PDU parser, unknown header fields are skipped and logged as warnings, and the `mms:received` webhook fires for these messages [772f8b5]
