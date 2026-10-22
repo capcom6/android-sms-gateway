@@ -204,9 +204,11 @@ public class PduParser {
                     } catch(InvalidHeaderValueException e) {
                         log("Set invalid Octet value: " + value +
                                 " into the header filed: " + headerField);
+                        mIgnoredHeaders.add(headerField);  /* fork: report the skipped field */
                         break;   /* fork: keep parsing an unexpected value */
                     } catch(RuntimeException e) {
                         log(headerField + "is not Octet header field!");
+                        mIgnoredHeaders.add(headerField);  /* fork: report the skipped field */
                         break;   /* fork: keep parsing an unexpected value */
                     }
                     break;
@@ -682,6 +684,13 @@ public class PduParser {
                         Log.v(LOG_TAG, "parseHeaders: Unknown header: " + headerField);
                     }
                     log("Unknown header");
+
+                    /* fork: the value of an unparsed header must be consumed, otherwise
+                     * the value bytes are read as the next header field. The value of a
+                     * header that is not known cannot be decoded, the parsing stops */
+                    if (!skipHeaderValue(headerField, pduDataStream)) {
+                        keepParsing = false;
+                    }
                 }
             }
         }
@@ -714,6 +723,55 @@ public class PduParser {
         }
 
         return -1;
+    }
+
+    /**
+     * Skip the value of a header field that is not parsed.
+     *
+     * <p>Fork addition: the value of a header that is not parsed has to be consumed,
+     * otherwise the parser reads the value bytes as the next header field. The value
+     * of a header field that is not known cannot be decoded, the parsing has to stop
+     * in that case.
+     *
+     * @param headerField the id of the header field
+     * @param pduDataStream pdu data input stream
+     * @return true when the value was skipped, false when the parsing has to stop
+     */
+    protected static boolean skipHeaderValue(int headerField,
+            ByteArrayInputStream pduDataStream) {
+        switch (headerField) {
+            case PduHeaders.CONTENT:
+            case PduHeaders.ATTRIBUTES:
+                /* Text-string value */
+                return skipTextString(pduDataStream);
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Skip a text string value.
+     *
+     * @param pduDataStream pdu data input stream
+     * @return true when the value was skipped, false when it is not a text string
+     */
+    private static boolean skipTextString(ByteArrayInputStream pduDataStream) {
+        pduDataStream.mark(1);
+        int first = extractByteValue(pduDataStream);
+        pduDataStream.reset();
+
+        if (first < TEXT_MIN) {
+            /* not a text string, the value cannot be skipped safely */
+            return false;
+        }
+
+        while (pduDataStream.available() > 0) {
+            if (extractByteValue(pduDataStream) == END_STRING_FLAG) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

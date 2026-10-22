@@ -352,15 +352,15 @@ internal class MMSParserTest {
 
     @Test
     fun parseUnknownHeader() {
-        // An unknown header field must be skipped instead of dropping the whole notification
+        // An unknown header field must not drop the whole notification
         val pdu = hexToBytes(
             """
                 8C 82
                 98 61 62 63 00
                 8D 92
-                FF
                 89 0C 80 31 32 33 34 35 36 37 38 39 30 00
                 8E 02 03 E8
+                FF
             """.trimIndent()
         )
 
@@ -369,6 +369,48 @@ internal class MMSParserTest {
         assert(notification.transactionId == "abc")
         assert(notification.messageSize == 1000L)
         assert(notification.ignoredHeaders == listOf(0xFF))
+    }
+
+    @Test
+    fun parseUnknownHeaderWithValue() {
+        // The value of an unknown header field cannot be decoded, the parsing stops there
+        // instead of reading the value bytes as the next header field
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                FF 02 85 FF
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.transactionId == "abc")
+        assert(notification.ignoredHeaders == listOf(0xFF))
+        assert(notification.from == "") { "Expected an empty sender but got '${notification.from}'" }
+        assert(notification.messageSize == 0L)
+    }
+
+    @Test
+    fun parseInvalidOctetHeaderIsReported() {
+        // A recognized header with an invalid value is dropped, the field id is reported
+        val pdu = hexToBytes(
+            """
+                8C 82
+                98 61 62 63 00
+                8D 92
+                89 0C 80 31 32 33 34 35 36 37 38 39 30 00
+                86 82
+                8E 02 03 E8
+            """.trimIndent()
+        )
+
+        val notification = MMSParser.parseMNotificationInd(pdu)
+        assert(notification.from == "1234567890")
+        assert(notification.messageSize == 1000L)
+        assert(notification.ignoredHeaders == listOf(0x86))
     }
 
     @Test
