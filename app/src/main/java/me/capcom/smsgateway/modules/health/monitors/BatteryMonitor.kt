@@ -7,6 +7,31 @@ import android.os.BatteryManager
 import me.capcom.smsgateway.modules.health.domain.CheckResult
 import me.capcom.smsgateway.modules.health.domain.Status
 
+internal const val CHARGING_ACTIVE_FLAG = 1L
+internal const val CHARGING_AC_FLAG = 2L
+internal const val CHARGING_USB_FLAG = 4L
+internal const val CHARGING_WIRELESS_FLAG = 8L
+
+internal fun encodeChargingFlags(status: Int, chargePlug: Int): Long {
+    var flags = if (status == BatteryManager.BATTERY_STATUS_CHARGING) {
+        CHARGING_ACTIVE_FLAG
+    } else {
+        0L
+    }
+
+    if (chargePlug and BatteryManager.BATTERY_PLUGGED_AC != 0) {
+        flags += CHARGING_AC_FLAG
+    }
+    if (chargePlug and BatteryManager.BATTERY_PLUGGED_USB != 0) {
+        flags += CHARGING_USB_FLAG
+    }
+    if (chargePlug and BatteryManager.BATTERY_PLUGGED_WIRELESS != 0) {
+        flags += CHARGING_WIRELESS_FLAG
+    }
+
+    return flags
+}
+
 class BatteryMonitor(
     private val context: Context
 ) {
@@ -17,12 +42,7 @@ class BatteryMonitor(
             }
 
         val status: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-        val isCharging: Boolean = status == BatteryManager.BATTERY_STATUS_CHARGING
-
-        // How are we charging?
         val chargePlug: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1
-        val usbCharge: Boolean = chargePlug == BatteryManager.BATTERY_PLUGGED_USB
-        val acCharge: Boolean = chargePlug == BatteryManager.BATTERY_PLUGGED_AC
 
         val batteryPct: Float? = batteryStatus?.let { intent ->
             val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
@@ -47,16 +67,9 @@ class BatteryMonitor(
             ),
             "charging" to CheckResult(
                 Status.PASS,
-                when {
-                    acCharge -> 2L
-                    usbCharge -> 4L
-                    else -> 0L
-                } + when (isCharging) {
-                    true -> 1L
-                    false -> 0L
-                },
+                encodeChargingFlags(status, chargePlug),
                 "flags",
-                "Is the phone charging?"
+                "Charging flags: active=1, AC=2, USB=4, wireless=8"
             ),
         )
     }
