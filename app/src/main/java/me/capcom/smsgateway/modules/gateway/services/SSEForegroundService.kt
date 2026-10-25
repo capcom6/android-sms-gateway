@@ -53,7 +53,8 @@ class SSEForegroundService : Service() {
                 onConnected = {
                     Log.d("SSEForegroundService", "SSE connected, pulling pending messages")
                     try {
-                        PullMessagesWorker.start(this@SSEForegroundService)
+                        // T7: reconnect bursts coalesce to <=1 pull per cooldown window
+                        PullMessagesWorker.startCoalesced(this@SSEForegroundService)
                     } catch (e: Throwable) {
                         e.printStackTrace()
                         logsService.insert(

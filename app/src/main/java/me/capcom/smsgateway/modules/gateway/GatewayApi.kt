@@ -1,5 +1,10 @@
 package me.capcom.smsgateway.modules.gateway
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonElement
+import com.google.gson.JsonParseException
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -13,6 +18,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Url
@@ -20,6 +26,7 @@ import io.ktor.http.contentType
 import io.ktor.http.hostWithPort
 import io.ktor.serialization.gson.gson
 import io.ktor.util.encodeBase64
+import kotlinx.coroutines.CancellationException
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.extensions.configure
@@ -44,6 +51,10 @@ class GatewayApi(
         }
         expectSuccess = true
     }
+
+    // Gson instance mirroring the ContentNegotiation configuration above; used
+    // for the per-element batch deserialization in getMessages.
+    private val messageGson: Gson by lazy { GsonBuilder().configure().create() }
 
     suspend fun getDevice(token: String?): DeviceGetResponse {
         return client.get("$baseUrl/device") {
@@ -84,11 +95,25 @@ class GatewayApi(
         }
     }
 
-    suspend fun getMessages(token: String, processingOrder: ProcessingOrder): List<Message> {
-        return client.get("$baseUrl/message") {
+    /**
+     * Fetches the pending batch with per-element deserialization (T7).
+     *
+     * The response body is read as raw text and each array element is
+     * deserialized on its own ([parseMessageBatch]), so ONE malformed
+     * element (any per-element JsonSyntaxException: bad timestamp value,
+     * wrong field type, ...) can no longer abort the whole batch before any
+     * local processing or ack happens - the pre-T7 `.body()` deserialized
+     * the entire List<Message> first and threw the whole window away.
+     * Body-level faults (whole payload unparseable / not an array) still
+     * throw and keep the existing retry semantics.
+     */
+    suspend fun getMessages(token: String, processingOrder: ProcessingOrder): MessageBatch {
+        val body = client.get("$baseUrl/message") {
             parameter("order", processingOrder)
             bearerAuth(token)
-        }.body()
+        }.bodyAsText()
+
+        return parseMessageBatch(body, messageGson)
     }
 
     suspend fun patchMessages(token: String, request: List<MessagePatchRequest>) {
@@ -335,4 +360,85 @@ class GatewayApi(
         val size: Long?,
         val data: String, // base64 of raw bytes
     )
+}
+
+/**
+ * Result of a per-element batch parse (T7): the deserialized messages plus a
+ * report of every element that could NOT be deserialized.
+ *
+ * The policy is isolate-and-skip-with-logging (conservative default per OQ-B,
+ * a permanent gap): a poison element never aborts the batch, and it is never
+ * silently dropped - every skip carries index, best-effort server row id, and
+ * the cause so the caller can log it.
+ */
+data class MessageBatch(
+    val messages: List<GatewayApi.Message>,
+    val skipped: List<SkippedMessage>,
+)
+
+/** One element that failed to deserialize, reported instead of dropped. */
+data class SkippedMessage(
+    val index: Int,
+    val id: String?,
+    val error: Throwable,
+)
+
+/**
+ * Deserializes a mobile GET /message response body element-by-element.
+ *
+ * - Element-level faults (poison timestamp, bad shape of one object, JSON
+ *   null element) are isolated: the element goes to [MessageBatch.skipped]
+ *   with its index and best-effort id, the siblings survive.
+ * - Body-level faults (whole payload unparseable, payload not a JSON array)
+ *   still throw [JsonParseException] so callers keep the historical
+ *   abort-and-retry semantics for transport/shape errors.
+ * - CancellationException is never swallowed.
+ */
+internal fun parseMessageBatch(raw: String, gson: Gson): MessageBatch {
+    val root = try {
+        JsonParser.parseString(raw)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (th: Throwable) {
+        throw JsonParseException("Unparseable message batch body", th)
+    }
+
+    if (!root.isJsonArray) {
+        throw JsonParseException(
+            "Message batch body is not a JSON array: ${root.javaClass.simpleName}"
+        )
+    }
+
+    val messages = ArrayList<GatewayApi.Message>()
+    val skipped = ArrayList<SkippedMessage>()
+
+    root.asJsonArray.forEachIndexed { index, element ->
+        try {
+            if (element.isJsonNull) {
+                throw JsonParseException("null element at index $index")
+            }
+            val message = gson.fromJson(element, GatewayApi.Message::class.java)
+                ?: throw JsonParseException("null message at index $index")
+            messages.add(message)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (th: Throwable) {
+            skipped.add(SkippedMessage(index, element.extractIdOrNull(), th))
+        }
+    }
+
+    return MessageBatch(messages, skipped)
+}
+
+/** Best-effort row id from a (possibly unparseable) element, never throws. */
+private fun JsonElement.extractIdOrNull(): String? = try {
+    if (isJsonObject) {
+        asJsonObject.get("id")
+            ?.takeIf { it.isJsonPrimitive }
+            ?.asString
+    } else {
+        null
+    }
+} catch (th: Throwable) {
+    null
 }
