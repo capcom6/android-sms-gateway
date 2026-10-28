@@ -413,7 +413,6 @@ class ReceiverService : KoinComponent {
                         ),
                     )
                     messages.add(inboxMessage.withoutInlineData())
-                    inlineBudget = 0
                 } else {
                     messages.add(inboxMessage)
                     inlineBudget -= inlineBytes
