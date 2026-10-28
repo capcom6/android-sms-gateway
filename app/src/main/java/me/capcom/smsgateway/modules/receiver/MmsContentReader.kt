@@ -42,6 +42,13 @@ object MmsContentReader {
     )
 
     /**
+     * Bound for reading a `text/plain` part stored in `_data`. Deliberately
+     * independent of the attachment inline limit so that setting the
+     * attachment limit to `0` does not remove the message body.
+     */
+    private const val BODY_MAX_INLINE_BYTES = 1_048_576L
+
+    /**
      * @param maxInlineBytes maximum size of a part that may be inlined into the
      * message, larger parts are reported as omitted
      */
@@ -107,7 +114,7 @@ object MmsContentReader {
                 if (mimeType.equals("text/plain", ignoreCase = true)) {
                     val inlineText = c.getString(2)
                     val content = if (c.getString(6) != null) {
-                        readTextPart(resolver, partId, contentType, maxInlineBytes)
+                        readTextPart(resolver, partId, contentType, BODY_MAX_INLINE_BYTES)
                     } else {
                         TextContent(text = inlineText, omitted = false)
                     }
