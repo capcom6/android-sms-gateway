@@ -111,7 +111,7 @@ class MmsAttachmentStorageTest : KoinComponent {
 
             assertEquals(
                 context.filesDir,
-                stored.file.parentFile?.parentFile,
+                stored.file.parentFile?.parentFile?.parentFile,
             )
         } finally {
             storage.remove(messageId)
