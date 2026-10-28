@@ -48,7 +48,7 @@ class ReceiverSettings(
                 }
 
                 MMS_MAX_INLINE_ATTACHMENT_BYTES -> {
-                    val bytes = value?.toString()?.trim()?.toLongOrNull()
+                    val bytes = value.asLongOrNull()
                         ?: throw IllegalArgumentException("$MMS_MAX_INLINE_ATTACHMENT_BYTES must be a number")
                     if (bytes !in 0..MAX_INLINE_ATTACHMENT_BYTES) {
                         throw IllegalArgumentException(
@@ -63,6 +63,22 @@ class ReceiverSettings(
                 else -> false
             }
         }.any { it }
+    }
+
+    /**
+     * Parses a whole-number value from an API payload. Gson deserializes JSON
+     * numbers into [Double], so `1048576` arrives as `1048576.0` and must not
+     * be rejected by a `Long`-only parse.
+     */
+    private fun Any?.asLongOrNull(): Long? {
+        val value = this ?: return null
+        if (value is Number) {
+            val asDouble = value.toDouble()
+            if (!asDouble.isFinite()) return null
+            val asLong = asDouble.toLong()
+            return asLong.takeIf { it.toDouble() == asDouble }
+        }
+        return value.toString().trim().toLongOrNull()
     }
 
     companion object {

@@ -75,6 +75,34 @@ internal class ReceiverSettingsTest {
     }
 
     @Test
+    fun importsTheLimitFromAGsonDoubleValue() {
+        val storage = FakeKeyValueStorage()
+        val settings = ReceiverSettings(storage)
+
+        assertTrue(settings.import(mapOf(KEY to 4096.0)))
+        assertEquals(4096L, settings.mmsMaxInlineAttachmentBytes)
+    }
+
+    @Test
+    fun acceptsTheDocumentedRequestValueWithoutThrowing() {
+        val settings = ReceiverSettings(FakeKeyValueStorage())
+
+        // docs/MMS.md PATCH example: {"receiver":{"mms_max_inline_attachment_bytes":1048576}}
+        settings.import(mapOf(KEY to 1_048_576.0))
+
+        assertEquals(1_048_576L, settings.mmsMaxInlineAttachmentBytes)
+    }
+
+    @Test
+    fun importRejectsAFractionalLimit() {
+        val settings = ReceiverSettings(FakeKeyValueStorage())
+
+        assertThrows(IllegalArgumentException::class.java) {
+            settings.import(mapOf(KEY to 100.5))
+        }
+    }
+
+    @Test
     fun importReportsNoChangeForTheSameValue() {
         val settings = ReceiverSettings(FakeKeyValueStorage())
         settings.import(mapOf(KEY to 4096))
