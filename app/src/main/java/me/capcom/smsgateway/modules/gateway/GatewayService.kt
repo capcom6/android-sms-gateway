@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.CancellationException
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
@@ -232,11 +233,12 @@ class GatewayService(
             MessagesSettings.ProcessingOrder.LIFO -> GatewayApi.ProcessingOrder.LIFO
             MessagesSettings.ProcessingOrder.FIFO -> GatewayApi.ProcessingOrder.FIFO
         }
-        val messages = api.getMessages(settings.token, processingOrder)
-        for (message in messages) {
-            try {
-                processMessage(context, message)
-            } catch (th: Throwable) {
+        val batch = api.getMessages(settings.token, processingOrder)
+        reportSkippedMessages(batch.skipped)
+        processMessageBatch(
+            batch.messages,
+            process = { processMessage(context, it) },
+            onError = { message, th ->
                 logsService.insert(
                     LogEntry.Priority.ERROR,
                     MODULE_NAME,
@@ -248,7 +250,33 @@ class GatewayService(
                 )
                 th.printStackTrace()
             }
-        }
+        )
+    }
+
+    /**
+     * T7 skip policy: elements that failed deserialization are never silent
+     * drops - each cause goes to logcat and ONE aggregated Room row is
+     * written per pull batch (the logs ring keeps the last 50 entries, so
+     * per-element rows would churn it under a re-served poison batch).
+     */
+    private fun reportSkippedMessages(skipped: List<SkippedMessage>) {
+        if (skipped.isEmpty()) return
+
+        skipped.forEach { it.error.printStackTrace() }
+        logsService.insert(
+            LogEntry.Priority.ERROR,
+            MODULE_NAME,
+            "Skipped ${skipped.size} malformed message(s) in pull batch",
+            mapOf(
+                "skipped" to skipped.map { element ->
+                    mapOf(
+                        "index" to element.index,
+                        "id" to (element.id ?: "unknown"),
+                        "error" to (element.error.message ?: element.error.toString()),
+                    )
+                }
+            )
+        )
     }
 
     private suspend fun processMessage(context: Context, message: GatewayApi.Message) {
@@ -387,6 +415,32 @@ class GatewayService(
         )
 
         else -> "****"
+    }
+}
+
+/**
+ * Per-item processing loop of a pull batch (T7), extracted so its semantics
+ * are unit-testable:
+ * - one failing item is reported via [onError] and the loop CONTINUES with
+ *   the remaining siblings (isolation kept from the pre-T7 inline loop);
+ * - [CancellationException] is rethrown, never swallowed: the pre-T7
+ *   `catch (th: Throwable)` ate coroutine cancellation, which under
+ *   WorkManager REPLACE churn could hide a cancelled pull as a logged
+ *   item error.
+ */
+internal suspend fun processMessageBatch(
+    messages: List<GatewayApi.Message>,
+    process: suspend (GatewayApi.Message) -> Unit,
+    onError: suspend (GatewayApi.Message, Throwable) -> Unit,
+) {
+    for (message in messages) {
+        try {
+            process(message)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (th: Throwable) {
+            onError(message, th)
+        }
     }
 }
 
