@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.modules.incoming
 
 import android.content.Context
+import android.net.Uri
 import android.util.Base64
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.incoming.db.IncomingMessage
@@ -66,45 +67,105 @@ class IncomingMessagesService(
 
     private fun persistMmsAttachments(messageId: String, message: InboxMessage.MMS) {
         message.attachments.forEach { att ->
-            val decoded = att.data?.let {
-                runCatching {
-                    Base64.decode(it, Base64.DEFAULT)
-                }.onFailure { e ->
-                    logsService.insert(
-                        LogEntry.Priority.WARN,
-                        MODULE_NAME,
-                        "Failed to decode MMS attachment data",
-                        mapOf(
-                            "messageId" to messageId,
-                            "partId" to att.partId,
-                            "name" to (att.name ?: ""),
-                            "error" to (e.message ?: e.toString()),
-                        )
-                    )
-                }.getOrNull()
+            when {
+                att.data != null -> persistInlineAttachment(messageId, message.messageId, att, att.data)
+                att.omitted -> persistOmittedAttachment(messageId, message.messageId, att)
+                else -> Unit
             }
-            if (decoded != null) {
-                try {
-                    attachmentStorage.store(
-                        messageId,
-                        att.partId,
-                        att.name,
-                        att.contentType,
-                        decoded,
+        }
+    }
+
+    private fun persistInlineAttachment(
+        messageId: String,
+        mmsId: String,
+        attachment: InboxMessage.MMS.Attachment,
+        data: String,
+    ) {
+        val decoded = runCatching {
+            Base64.decode(data, Base64.DEFAULT)
+        }.onFailure { e ->
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Failed to decode MMS attachment data",
+                mapOf(
+                    "messageId" to messageId,
+                    "mmsId" to mmsId,
+                    "partId" to attachment.partId,
+                    "name" to (attachment.name ?: ""),
+                    "error" to (e.message ?: e.toString()),
+                )
+            )
+        }.getOrNull() ?: return
+
+        try {
+            attachmentStorage.store(
+                messageId,
+                attachment.partId,
+                attachment.name,
+                attachment.contentType,
+                decoded,
+            )
+        } catch (e: Exception) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Failed to persist MMS attachment",
+                mapOf(
+                    "messageId" to messageId,
+                    "mmsId" to mmsId,
+                    "partId" to attachment.partId,
+                    "error" to (e.message ?: e.toString()),
+                )
+            )
+        }
+    }
+
+    /**
+     * Stores an attachment that was too large to be inlined by streaming it
+     * from the MMS provider, so its bytes stay available on the device.
+     */
+    private fun persistOmittedAttachment(
+        messageId: String,
+        mmsId: String,
+        attachment: InboxMessage.MMS.Attachment,
+    ) {
+        val uri = Uri.parse("content://mms/part/${attachment.partId}")
+        try {
+            val source = context.contentResolver.openInputStream(uri)
+            if (source == null) {
+                logsService.insert(
+                    LogEntry.Priority.WARN,
+                    MODULE_NAME,
+                    "MMS attachment is no longer available in the provider",
+                    mapOf(
+                        "messageId" to messageId,
+                        "mmsId" to mmsId,
+                        "partId" to attachment.partId,
                     )
-                } catch (e: Exception) {
-                    logsService.insert(
-                        LogEntry.Priority.WARN,
-                        MODULE_NAME,
-                        "Failed to persist MMS attachment",
-                        mapOf(
-                            "messageId" to message.messageId,
-                            "partId" to att.partId,
-                            "error" to (e.message ?: e.toString()),
-                        )
-                    )
-                }
+                )
+                return
             }
+
+            attachmentStorage.storeFromStream(
+                messageId,
+                attachment.partId,
+                attachment.name,
+                attachment.contentType,
+                source,
+            )
+        } catch (e: Exception) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Failed to persist MMS attachment",
+                mapOf(
+                    "messageId" to messageId,
+                    "mmsId" to mmsId,
+                    "partId" to attachment.partId,
+                    "error" to (e.message ?: e.toString()),
+                )
+            )
         }
     }
 
@@ -124,6 +185,12 @@ class IncomingMessagesService(
 
     fun getById(id: String): IncomingMessage? {
         return repository.selectById(id)
+    }
+
+    fun findAttachment(id: String, partId: Long): MmsAttachmentStorage.StoredAttachment? {
+        attachmentStorage.find(id, partId)?.let { return it }
+        if (id.contains(':')) return null
+        return attachmentStorage.find(mmsInboxId(id), partId)
     }
 
     fun isMessageProcessed(message: InboxMessage): Boolean {
@@ -148,13 +215,16 @@ class IncomingMessagesService(
     private fun buildId(message: InboxMessage): String {
         val prefix = when (message) {
             is InboxMessage.Data -> "data:"
-            is InboxMessage.MMS -> "mms:"
+            is InboxMessage.MMS -> return mmsInboxId(message.messageId)
             is InboxMessage.MmsHeaders -> "mms-header:"
             is InboxMessage.Text -> "text:"
         }
 
         return prefix + message.hashCode().toString()
     }
+
+    private fun mmsInboxId(providerMmsId: String): String =
+        "mms:" + providerMmsId.hashCode()
 
     private fun InboxMessage.toPreview(): String {
         return when (this) {

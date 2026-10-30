@@ -370,36 +370,86 @@ class ReceiverService : KoinComponent {
         ) ?: return emptyList()
 
         val messages = mutableListOf<InboxMessage>()
+        var inlineBudget = EXPORT_INLINE_BUDGET_BYTES
+
         cursor.use { c ->
             while (c.moveToNext()) {
                 val mmsId = c.getLong(0)
-                val message = MmsContentReader.read(context, mmsId) ?: continue
-                messages.add(
-                    InboxMessage.MMS(
-                        messageId = mmsId.toString(),
-                        body = message.body,
-                        subject = message.subject,
-                        attachments = message.attachments.map {
-                            InboxMessage.MMS.Attachment(
-                                partId = it.partId,
-                                contentType = it.contentType,
-                                name = it.name,
-                                size = it.size,
-                                data = it.data
-                            )
-                        },
-                        address = message.sender,
-                        date = message.date,
-                        subscriptionId = message.subscriptionId
-                    )
+                val message = MmsContentReader.read(
+                    context,
+                    mmsId,
+                    receiverSettings.mmsMaxInlineAttachmentBytes,
+                ) ?: continue
+
+                val inboxMessage = InboxMessage.MMS(
+                    messageId = mmsId.toString(),
+                    body = message.body,
+                    subject = message.subject,
+                    attachments = message.attachments.map {
+                        InboxMessage.MMS.Attachment(
+                            partId = it.partId,
+                            contentType = it.contentType,
+                            name = it.name,
+                            size = it.size,
+                            data = it.data,
+                            omitted = it.omitted,
+                        )
+                    },
+                    address = message.sender,
+                    date = message.date,
+                    subscriptionId = message.subscriptionId
                 )
+
+                val inlineBytes = inboxMessage.attachments.sumOf { it.data?.length?.toLong() ?: 0L }
+                if (inlineBytes > inlineBudget) {
+                    logsService.insert(
+                        LogEntry.Priority.WARN,
+                        MODULE_NAME,
+                        "MMS export inline budget exceeded, attachment bytes are not inlined (id=$mmsId)",
+                        mapOf(
+                            "mmsId" to mmsId,
+                            "inlineBytes" to inlineBytes,
+                            "budget" to EXPORT_INLINE_BUDGET_BYTES,
+                        ),
+                    )
+                    messages.add(inboxMessage.withoutInlineData())
+                } else {
+                    messages.add(inboxMessage)
+                    inlineBudget -= inlineBytes
+                }
             }
         }
 
         return messages
     }
 
+    /**
+     * Drops the inlined attachment bytes, keeping the metadata. The bytes are
+     * persisted on the device by the incoming messages service.
+     */
+    private fun InboxMessage.MMS.withoutInlineData(): InboxMessage.MMS {
+        return InboxMessage.MMS(
+            messageId = messageId,
+            body = body,
+            subject = subject,
+            attachments = attachments.map {
+                InboxMessage.MMS.Attachment(
+                    partId = it.partId,
+                    contentType = it.contentType,
+                    name = it.name,
+                    size = it.size,
+                    data = null,
+                    omitted = true,
+                )
+            },
+            address = address,
+            date = date,
+            subscriptionId = subscriptionId,
+        )
+    }
+
     companion object {
         private const val BATCH_SIZE = 100
+        private const val EXPORT_INLINE_BUDGET_BYTES = 16L * 1024 * 1024
     }
 }
