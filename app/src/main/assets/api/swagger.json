@@ -2414,7 +2414,7 @@
         "description": "Download a specific MMS attachment by message ID and part ID.",
         "parameters": [
           {
-            "description": "Incoming message ID",
+            "description": "Incoming message ID: the inbox message id (as in GET /inbox) or the MMS provider id sent in the mms:downloaded webhook payload",
             "in": "path",
             "name": "id",
             "required": true,

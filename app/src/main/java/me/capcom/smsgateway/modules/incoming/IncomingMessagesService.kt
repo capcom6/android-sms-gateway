@@ -187,6 +187,12 @@ class IncomingMessagesService(
         return repository.selectById(id)
     }
 
+    fun findAttachment(id: String, partId: Long): MmsAttachmentStorage.StoredAttachment? {
+        attachmentStorage.find(id, partId)?.let { return it }
+        if (id.contains(':')) return null
+        return attachmentStorage.find(mmsInboxId(id), partId)
+    }
+
     fun isMessageProcessed(message: InboxMessage): Boolean {
         return getById(buildId(message)) != null
     }
@@ -209,13 +215,16 @@ class IncomingMessagesService(
     private fun buildId(message: InboxMessage): String {
         val prefix = when (message) {
             is InboxMessage.Data -> "data:"
-            is InboxMessage.MMS -> "mms:"
+            is InboxMessage.MMS -> return mmsInboxId(message.messageId)
             is InboxMessage.MmsHeaders -> "mms-header:"
             is InboxMessage.Text -> "text:"
         }
 
         return prefix + message.hashCode().toString()
     }
+
+    private fun mmsInboxId(providerMmsId: String): String =
+        "mms:" + providerMmsId.hashCode()
 
     private fun InboxMessage.toPreview(): String {
         return when (this) {

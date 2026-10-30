@@ -164,7 +164,7 @@ curl -u "<user>:<pass>" -H 'Content-Type: application/json' \
    carrier's MMSC over the dedicated MMS APN.
 3. Once the PDU is downloaded and parsed, the gateway:
    - Saves each non-SMIL attachment to private storage under
-     `<appData>/files/mms-in/<sha256(messageId)>/<partId>`.
+     `<appData>/files/mms-in/<sha256(inbox message id)>/<partId>`.
    - Inserts an `incoming_messages` row (type `MMS_DOWNLOADED`).
    - Emits the `mms:downloaded` webhook carrying part metadata and, for
      parts within the inline limit, the base64 bytes.
@@ -238,6 +238,10 @@ curl -u "<user>:<pass>" \
   http://<device_ip>:8080/inbox/<messageId>/attachments/<partId> \
   -o photo.jpg
 ```
+
+`<messageId>` accepts either the `messageId` from the `mms:downloaded`
+payload (the MMS provider id, the same value the cloud inbox upload uses)
+or the message's `id` from `GET /inbox` responses.
 
 `Content-Type` reflects the attachment's MIME type; `Content-Disposition`
 carries the original filename when one was present.
