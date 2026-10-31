@@ -212,48 +212,87 @@ class MessagesService(
                 Activity.RESULT_OK -> {
                     val pdu = intent.extras?.getByteArray("pdu")
                     val format = intent.getStringExtra("format")
-                    val message = if (format != null
-                        && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                    ) {
-                        SmsMessage.createFromPdu(pdu, format)
-                    } else {
-                        SmsMessage.createFromPdu(pdu)
-                    }
 
-                    val rawStatus = message.status
-                    val scAddress = message.serviceCenterAddress
-                    val status = if (format == "3gpp2") {
-                        rawStatus
-                    } else {
-                        rawStatus and 0x7F
-                    }
                     logsService.insert(
                         LogEntry.Priority.DEBUG,
                         MODULE_NAME,
-                        "Delivery report parsed",
+                        "Delivery report received",
                         mapOf(
-                            "format" to (format ?: "default(3gpp)"),
-                            "rawStatus" to rawStatus,
-                            "status" to status,
-                            "scAddress" to scAddress,
+                            "format" to format,
+                            "pduSize" to (pdu?.size ?: 0),
+                            "data" to intent.dataString,
                         )
                     )
 
-                    when {
-                        format == "3gpp2" -> when (rawStatus ushr 24 and 0x3) {
-                            0 -> ProcessingState.Delivered to (rawStatus ushr 16 and 0xFF).takeIf { it > 0 }
+                    val message = try {
+                        if (format != null
+                            && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                        ) {
+                            SmsMessage.createFromPdu(pdu, format)
+                        } else {
+                            SmsMessage.createFromPdu(pdu)
+                        }
+                    } catch (e: Throwable) {
+                        logsService.insert(
+                            LogEntry.Priority.WARN,
+                            MODULE_NAME,
+                            "Can't parse delivery report",
+                            mapOf(
+                                "format" to format,
+                                "pdu" to pdu?.joinToString("") { "%02x".format(it) },
+                                "error" to e.message,
+                            )
+                        )
+                        null
+                    }
+
+                    if (message == null) {
+                        logsService.insert(
+                            LogEntry.Priority.WARN,
+                            MODULE_NAME,
+                            "Delivery report has no parsable PDU, treating as delivered",
+                            mapOf(
+                                "format" to format,
+                                "pdu" to pdu?.joinToString("") { "%02x".format(it) },
+                            )
+                        )
+                        ProcessingState.Delivered to null
+                    } else {
+                        val rawStatus = message.status
+                        val scAddress = message.serviceCenterAddress
+                        val status = if (format == "3gpp2") {
+                            rawStatus
+                        } else {
+                            rawStatus and 0x7F
+                        }
+                        logsService.insert(
+                            LogEntry.Priority.DEBUG,
+                            MODULE_NAME,
+                            "Delivery report parsed",
+                            mapOf(
+                                "format" to (format ?: "default(3gpp)"),
+                                "rawStatus" to rawStatus,
+                                "status" to status,
+                                "scAddress" to scAddress,
+                            )
+                        )
+
+                        when {
+                            format == "3gpp2" -> when (rawStatus ushr 24 and 0x3) {
+                                0 -> ProcessingState.Delivered to (rawStatus ushr 16 and 0xFF).takeIf { it > 0 }
+                                    ?.let { "Delivery result from SC $scAddress: $it" }
+
+                                1 -> return // SC will make more attempts
+                                else -> ProcessingState.Failed to
+                                    "Delivery result from SC $scAddress: ${rawStatus ushr 16 and 0xFF}"
+                            }
+
+                            status < 0b0100000 -> ProcessingState.Delivered to status.takeIf { it > 0 }
                                 ?.let { "Delivery result from SC $scAddress: $it" }
 
-                            1 -> return // SC will make more attempts
-                            else -> ProcessingState.Failed to
-                                "Delivery result from SC $scAddress: ${rawStatus ushr 16 and 0xFF}"
+                            status < 0b1000000 -> return // SC will make more attempts
+                            else -> ProcessingState.Failed to "Delivery result from SC $scAddress: $status"
                         }
-
-                        status < 0b0100000 -> ProcessingState.Delivered to status.takeIf { it > 0 }
-                            ?.let { "Delivery result from SC $scAddress: $it" }
-
-                        status < 0b1000000 -> return // SC will make more attempts
-                        else -> ProcessingState.Failed to "Delivery result from SC $scAddress: $status"
                     }
                 }
 
@@ -263,9 +302,35 @@ class MessagesService(
             else -> return
         }
 
-        val (id, phone) = intent.dataString?.split("|", limit = 2) ?: return
+        val parts = intent.dataString?.split("|", limit = 2)
+        if (parts == null || parts.size < 2) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Can't correlate message state intent: malformed data",
+                mapOf(
+                    "action" to intent.action,
+                    "data" to intent.dataString,
+                )
+            )
+            return
+        }
+        val (id, phone) = parts
 
-        machine.transitionRecipient(id, phone, state, error)
+        try {
+            machine.transitionRecipient(id, phone, state, error)
+        } catch (e: IllegalArgumentException) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Can't update message state: ${e.message}",
+                mapOf(
+                    "id" to id,
+                    "phone" to phone,
+                    "state" to state,
+                )
+            )
+        }
     }
 
     suspend fun truncateLog() {
@@ -597,6 +662,19 @@ class MessagesService(
                         PendingIntent.FLAG_MUTABLE
                     )
                 }
+
+                logsService.insert(
+                    LogEntry.Priority.DEBUG,
+                    MODULE_NAME,
+                    "Sending SMS",
+                    mapOf(
+                        "id" to id,
+                        "phone" to sourcePhoneNumber,
+                        "withDeliveryReport" to request.params.withDeliveryReport,
+                        "deliveryIntent" to (deliveredIntent != null),
+                        "simNumber" to simNumber,
+                    )
+                )
 
                 try {
                     val normalizedPhoneNumber = decryptAndNormalizePhone(
