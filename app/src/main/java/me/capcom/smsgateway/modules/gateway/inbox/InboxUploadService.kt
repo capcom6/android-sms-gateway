@@ -9,6 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.modules.encryption.EncryptionService
+import me.capcom.smsgateway.modules.encryption.EncryptionSettings
 import me.capcom.smsgateway.modules.gateway.GatewayApi.InboxMessageType
 import me.capcom.smsgateway.modules.gateway.MODULE_NAME
 import me.capcom.smsgateway.modules.logs.LogsService
@@ -20,6 +21,7 @@ import java.util.Date
 
 class InboxUploadService : KoinComponent {
     private val encryptionService: EncryptionService by inject()
+    private val encryptionSettings: EncryptionSettings by inject()
     private val repository: InboxUploadRepository by inject()
     private val logsService: LogsService by inject()
 
@@ -34,6 +36,19 @@ class InboxUploadService : KoinComponent {
         simNumber: Int?,
         date: Date,
     ) {
+        // The server only accepts encrypted inbox messages, and encryption
+        // requires a passphrase. Skip with an actionable message instead of
+        // failing inside the encryption provider.
+        if (encryptionSettings.passphrase == null) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "Inbox upload skipped: encryption passphrase is not set. " +
+                        "Set it in Settings → Encryption → Passphrase to upload received messages to the server",
+            )
+            return
+        }
+
         scope.launch {
             try {
                 val mapped = mapAndEncrypt(message) ?: return@launch
