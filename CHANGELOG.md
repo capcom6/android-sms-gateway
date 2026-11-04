@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Cloud message pulls triggered by push/SSE events are now coalesced to at most one request per 5-second window, with a trailing catch-up pull, instead of one full pull per event — newly enqueued messages are fetched within seconds rather than waiting for the 15-minute periodic pull [b6fe706]
+
+## [v1.79.2] - 2026-11-24
+
 ### Fixed
-- Setting `receiver.content_provider_enabled` to `null` via `PATCH /settings` now resets the setting to its default (enabled) instead of failing with a validation error; explicit `true`/`false` values and invalid values keep their existing behavior [7b2be5f]
+- Setting `receiver.content_provider_enabled` to `null` via `PATCH /settings` now resets the setting to its default (enabled) instead of failing with a validation error; explicit `true`/`false` values and invalid values keep their existing behavior [0abc78b]
 
 ## [v1.79.1] - 2026-11-19
 
@@ -1300,7 +1305,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.1...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.2...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1
@@ -1453,3 +1458,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.78.4]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.3...v1.78.4
 [v1.79.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.4...v1.79.0
 [v1.79.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.0...v1.79.1
+[v1.79.2]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.1...v1.79.2
