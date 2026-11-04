@@ -164,11 +164,10 @@ curl -u "<user>:<pass>" -H 'Content-Type: application/json' \
    carrier's MMSC over the dedicated MMS APN.
 3. Once the PDU is downloaded and parsed, the gateway:
    - Saves each non-SMIL attachment to private storage under
-     `<appData>/files/mms-in/<messageId>/<partId>-<name>`.
+     `<appData>/files/mms-in/<sha256(inbox message id)>/<partId>`.
    - Inserts an `incoming_messages` row (type `MMS_DOWNLOADED`).
-   - Emits the `mms:downloaded` webhook carrying part metadata, inline
-     base64 bytes, and a relative URL to fetch the same bytes from the
-     gateway.
+   - Emits the `mms:downloaded` webhook carrying part metadata and, for
+     parts within the inline limit, the base64 bytes.
 
 If the app is *not* the default SMS app, step 2 is handled by whichever
 app is default; once that app writes the message into `content://mms`,
@@ -199,8 +198,10 @@ downloaded.
 ### Webhook: `mms:downloaded`
 
 Fired once the content has been retrieved and stored. Attachments are
-included inline as base64 (`data`) **and** as a URL path on the gateway's
-local HTTP server (`url`) — consumers may use either.
+included inline as base64 (`data`) when they are within the inline limit
+(see [Limits and carrier behavior](#limits-and-carrier-behavior)); larger
+attachments are reported with their metadata only and must be fetched from
+the gateway.
 
 ```json
 {
@@ -218,8 +219,7 @@ local HTTP server (`url`) — consumers may use either.
         "contentType": "image/jpeg",
         "name": "photo.jpg",
         "size": 38421,
-        "data": "<base64>",
-        "url": "/inbox/hex-derived-id/attachments/3"
+        "data": "<base64>"
       }
     ],
     "receivedAt": "2026-04-20T17:31:14.000+00:00"
@@ -239,8 +239,16 @@ curl -u "<user>:<pass>" \
   -o photo.jpg
 ```
 
+`<messageId>` accepts either the `messageId` from the `mms:downloaded`
+payload (the MMS provider id, the same value the cloud inbox upload uses)
+or the message's `id` from `GET /inbox` responses.
+
 `Content-Type` reflects the attachment's MIME type; `Content-Disposition`
 carries the original filename when one was present.
+
+This is also the only way to get the bytes of an attachment that exceeds the
+inline limit: those are stored on the device, but not inlined into the
+webhook payload.
 
 Required auth scope: `inbox:read`.
 
@@ -319,6 +327,17 @@ are reported back to the cloud identically to SMS.
 
 ## Limits and carrier behavior
 
+- **Inline attachment limit.** A received attachment is inlined (base64) into
+  the `mms:downloaded` webhook payload and into cloud inbox uploads only when
+  it is not larger than the *Max inline attachment size* setting — 1 MiB by
+  default, `0` disables inlining completely. Change it in
+  *Settings → Inbox*, or through the API:
+  `PATCH /settings {"receiver":{"mms_max_inline_attachment_bytes":1048576}}`
+  (scope `settings:write`; the value is the maximum **raw** size of a part,
+  the inlined base64 is about 4/3 of it). Larger attachments are stored on
+  the device, reported with their metadata only, and must be fetched with
+  `GET /inbox/<messageId>/attachments/<partId>`. In cloud mode they are not
+  uploaded to the server at all.
 - **PDU format.** The gateway composes PDUs with AOSP's reference
   `PduComposer` (ported from klinker-apps's `pdu_alt`, Apache-2.0), so
   the output matches Google Messages' format and is accepted by every
@@ -362,6 +381,11 @@ are reported back to the cloud identically to SMS.
   `mms:downloaded`.** The app likely isn't the default SMS app, or the
   device dropped the MMS APN while downloading. Check the app's log
   screen for `MMS download failed` entries.
+- **A large attachment is missing from the `mms:downloaded` payload.** The
+  part is larger than the *Max inline attachment size* setting, so only its
+  metadata is reported. The bytes are kept on the device — fetch them with
+  `GET /inbox/<messageId>/attachments/<partId>` — and the app log screen
+  holds a `MMS attachment exceeds the inline limit and was skipped` entry.
 - **Inspecting the outgoing PDU for debugging.** With USB debugging
   enabled:
   ```sh
