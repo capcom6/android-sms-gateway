@@ -38,7 +38,8 @@ class EventsReceiver : EventsReceiver() {
 
                         if (!settings.enabled) return@collect
 
-                        PullMessagesWorker.start(get())
+                        // T7: event bursts coalesce to <=1 pull per cooldown window
+                        PullMessagesWorker.startCoalesced(get())
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
@@ -78,7 +79,8 @@ class EventsReceiver : EventsReceiver() {
 
                         if (!settings.enabled) return@collect
 
-                        PullMessagesWorker.start(get())
+                        // T7: event bursts coalesce to <=1 pull per cooldown window
+                        PullMessagesWorker.startCoalesced(get())
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
