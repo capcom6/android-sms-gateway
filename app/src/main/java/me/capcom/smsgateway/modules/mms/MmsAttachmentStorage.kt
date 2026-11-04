@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import java.io.File
+import java.io.InputStream
 import java.security.MessageDigest
 
 /**
@@ -25,21 +26,36 @@ class MmsAttachmentStorage(
     private val root: File
         get() = File(context.filesDir, "mms-in").apply { mkdirs() }
 
-    fun store(
+    /**
+     * Stores an attachment by streaming its content, so the bytes are never
+     * held in memory as a whole. The source stream is closed by this method.
+     */
+    fun storeFromStream(
         messageId: String,
         partId: Long,
         name: String?,
         contentType: String,
-        bytes: ByteArray,
+        source: InputStream,
     ): StoredAttachment {
         val dir = messageDir(messageId).apply { mkdirs() }
         val file = File(dir, "$partId")
-        file.writeBytes(bytes)
-        val meta = AttachmentMetadata(
-            name = name,
-            contentType = contentType.ifBlank { DEFAULT_CONTENT_TYPE },
-        )
-        metadataFile(file).writeText(gson.toJson(meta))
+        val temp = File(dir, "$partId.tmp")
+
+        try {
+            source.use { input ->
+                temp.outputStream().use { output ->
+                    input.copyTo(output, COPY_BUFFER_SIZE)
+                }
+            }
+
+            if (!temp.renameTo(file)) {
+                temp.copyTo(file, overwrite = true)
+            }
+        } finally {
+            temp.delete()
+        }
+
+        val meta = writeMetadata(file, name, contentType)
         return StoredAttachment(partId, meta.displayName, meta.contentType, file)
     }
 
@@ -120,6 +136,15 @@ class MmsAttachmentStorage(
 
     private fun metadataFile(file: File): File = File(file.parentFile, file.name + METADATA_SUFFIX)
 
+    private fun writeMetadata(file: File, name: String?, contentType: String): AttachmentMetadata {
+        val meta = AttachmentMetadata(
+            name = name,
+            contentType = contentType.ifBlank { DEFAULT_CONTENT_TYPE },
+        )
+        metadataFile(file).writeText(gson.toJson(meta))
+        return meta
+    }
+
     private data class AttachmentMetadata(
         val name: String? = null,
         val contentType: String = DEFAULT_CONTENT_TYPE,
@@ -139,5 +164,6 @@ class MmsAttachmentStorage(
         private const val DEFAULT_CONTENT_TYPE = "application/octet-stream"
         private const val METADATA_SUFFIX = ".metadata"
         private const val MILLIS_PER_DAY = 86_400_000L
+        private const val COPY_BUFFER_SIZE = 64 * 1024
     }
 }

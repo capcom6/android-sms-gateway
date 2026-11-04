@@ -14,5 +14,12 @@
             app:key="incoming.lifetime_days"
             app:title="@string/delete_after_days"
             app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:icon="@drawable/ic_attach"
+            app:key="receiver.mms_max_inline_attachment_bytes"
+            app:defaultValue="1048576"
+            app:title="@string/mms_max_inline_attachment_size"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

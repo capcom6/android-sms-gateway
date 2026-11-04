@@ -18,6 +18,7 @@ class MmsContentObserver : KoinComponent {
     private val storage: StateStorage by inject()
     private val receiverSvc: ReceiverService by inject()
     private val logsService: LogsService by inject()
+    private val receiverSettings: ReceiverSettings by inject()
 
     private var handlerThread: HandlerThread? = null
     private var observer: ContentObserver? = null
@@ -98,6 +99,22 @@ class MmsContentObserver : KoinComponent {
     }
 
     private fun processNewMessages() {
+        try {
+            processNewMessagesInternal()
+        } catch (e: Throwable) {
+            logsService.insert(
+                LogEntry.Priority.ERROR,
+                MODULE_NAME,
+                "MMS inbox processing failed",
+                mapOf(
+                    "error" to (e.message ?: e.toString()),
+                    "stackTrace" to e.stackTraceToString(),
+                ),
+            )
+        }
+    }
+
+    private fun processNewMessagesInternal() {
         if (!canReadSms()) {
             logsService.insert(
                 LogEntry.Priority.WARN,
@@ -132,16 +149,25 @@ class MmsContentObserver : KoinComponent {
                 val mmsId = c.getLong(0)
                 try {
                     processMmsDownloaded(mmsId)
-                } catch (e: Exception) {
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    break
+                } catch (e: Throwable) {
                     logsService.insert(
                         LogEntry.Priority.ERROR,
                         MODULE_NAME,
                         "Failed processing downloaded MMS (id=$mmsId)",
-                        mapOf("mmsId" to mmsId, "error" to (e.message ?: e.toString())),
+                        mapOf(
+                            "mmsId" to mmsId,
+                            "error" to (e.message ?: e.toString()),
+                            "stackTrace" to e.stackTraceToString(),
+                        ),
                     )
+                } finally {
+                    // Always advance the mark, even when the row failed, so a single
+                    // broken MMS can not be reprocessed on every start
+                    storage.mmsLastProcessedID = mmsId
                 }
-                // Always advance mark to prevent one corrupt MMS from blocking the pipeline
-                storage.mmsLastProcessedID = mmsId
             }
         }
     }
@@ -152,7 +178,11 @@ class MmsContentObserver : KoinComponent {
         // framework. Retry a few times with a short delay to wait for them.
         var message: MmsContentReader.MmsMessage? = null
         for (attempt in 1..MMS_DOWNLOAD_MAX_RETRIES) {
-            message = MmsContentReader.read(context, mmsId) ?: return
+            message = MmsContentReader.read(
+                context,
+                mmsId,
+                receiverSettings.mmsMaxInlineAttachmentBytes,
+            ) ?: return
             val needsRetry = message.sender == "unknown" || (message.body.isNullOrBlank() && message.attachments.isEmpty())
             if (!needsRetry) break
             if (attempt < MMS_DOWNLOAD_MAX_RETRIES) {
@@ -167,6 +197,8 @@ class MmsContentObserver : KoinComponent {
         }
 
         message?.let { msg ->
+            logOmittedParts(msg)
+
             receiverSvc.process(
                 context,
                 InboxMessage.MMS(
@@ -179,7 +211,8 @@ class MmsContentObserver : KoinComponent {
                             it.contentType,
                             it.name,
                             it.size,
-                            it.data
+                            it.data,
+                            it.omitted,
                         )
                     },
                     msg.sender,
@@ -187,6 +220,34 @@ class MmsContentObserver : KoinComponent {
                     msg.subscriptionId
                 ),
                 true,
+            )
+        }
+    }
+
+    private fun logOmittedParts(message: MmsContentReader.MmsMessage) {
+        val limit = receiverSettings.mmsMaxInlineAttachmentBytes
+
+        if (message.textOmitted) {
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "MMS text part exceeds the inline limit and was skipped (id=${message.id})",
+                mapOf("mmsId" to message.id, "limit" to limit),
+            )
+        }
+
+        message.attachments.filter { it.omitted }.forEach { attachment ->
+            logsService.insert(
+                LogEntry.Priority.WARN,
+                MODULE_NAME,
+                "MMS attachment exceeds the inline limit and was skipped " +
+                        "(id=${message.id}, partId=${attachment.partId})",
+                mapOf(
+                    "mmsId" to message.id,
+                    "partId" to attachment.partId,
+                    "size" to (attachment.size ?: -1L),
+                    "limit" to limit,
+                ),
             )
         }
     }

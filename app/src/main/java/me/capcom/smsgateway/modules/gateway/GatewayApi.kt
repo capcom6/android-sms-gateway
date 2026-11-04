@@ -333,6 +333,7 @@ class GatewayApi(
         val contentType: String,
         val name: String,
         val size: Long?,
-        val data: String, // base64 of raw bytes
+        // the E2E envelope of the encrypted attachment data, not base64
+        val data: String,
     )
 }
