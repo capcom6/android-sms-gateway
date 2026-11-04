@@ -501,7 +501,7 @@
                 "$ref": "#/components/schemas/smsgateway.SettingsReceiver"
               }
             ],
-            "description": "Receiver contains settings related to SMS message reception.",
+            "description": "Receiver contains settings related to incoming messages processing.",
             "type": "object"
           },
           "webhooks": {
@@ -1483,8 +1483,14 @@
       "smsgateway.SettingsReceiver": {
         "properties": {
           "content_provider_enabled": {
-            "description": "ContentProviderEnabled enables monitoring the SMS content provider as a fallback for\ncarriers that intercept the SMS_RECEIVED broadcast.",
+            "description": "ContentProviderEnabled enables detection of incoming messages via the content provider.",
             "type": "boolean"
+          },
+          "mms_max_inline_attachment_bytes": {
+            "description": "MMSMaxInlineAttachmentBytes is the maximum size of an MMS attachment that may be inlined into webhook payloads and cloud uploads. Larger attachments are kept on the device only.\nMust be between 0 and 67108864 when provided.",
+            "maximum": 67108864,
+            "minimum": 0,
+            "type": "integer"
           }
         },
         "type": "object"
