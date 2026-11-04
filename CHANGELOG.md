@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Maximum inline MMS attachment size is configurable — the new *Max inline attachment size* option in *Settings → Inbox* (default 1 MiB, `0` disables inlining, maximum 64 MiB) controls how large a received MMS attachment may be before it stops being inlined; it can also be set through `PATCH /settings` with `receiver.mms_max_inline_attachment_bytes` [d8f274e]
+
+### Changed
+- MMS attachments larger than the inline limit are no longer included in `mms:downloaded` webhook payloads or cloud inbox uploads — the bytes are kept on the device and can be fetched with `GET /inbox/<messageId>/attachments/<partId>` [d8f274e]
+
 ### Fixed
 - Incoming MMS notifications whose WAP-push headers are unrecognized or undecodable are no longer dropped — the notification is parsed with the AOSP PDU parser, unknown header fields are skipped and logged as warnings, and the `mms:received` webhook fires for these messages [772f8b5]
 
@@ -1282,7 +1288,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.3...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.4...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1

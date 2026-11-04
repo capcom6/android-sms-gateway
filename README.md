@@ -84,7 +84,7 @@ SMS Gateway turns your Android smartphone into an SMS gateway. It's a lightweigh
 - 📖 **Read received messages:** Access [previously received messages](https://docs.sms-gate.app/features/reading-messages/) via the same webhooks used for real-time notifications.
 - 📎 **MMS download notifications:** Receive webhook notifications when MMS messages are fully downloaded, including message body and attachments.
 - 📤 **Send MMS messages via API:** Send multimedia messages (images, audio, video, files) as Base64-encoded attachments, with an optional subject and text body.
-- 🖼️ **Received MMS attachments:** Attachments of received MMS messages are stored on the device and can be fetched through the inbox API.
+- 🖼️ **Received MMS attachments:** Attachments of received MMS messages are stored on the device and can be fetched through the inbox API. Attachments larger than the configurable inline size limit (*Settings → Inbox*, 1 MiB by default) are kept on the device and omitted from webhook payloads and cloud uploads.
 - 📦 **Batch webhook events:** Receive batched webhook deliveries when multiple messages arrive at once, reducing the number of requests.
 - 🛑 **Cancel pending messages:** Cancel queued messages before they are sent.
 - 🔍 **Message filtering:** Filter the messages list by state (pending, sent, delivered, failed) and type (SMS, MMS, Data SMS) to find messages quickly.

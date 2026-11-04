@@ -83,13 +83,28 @@ class InboxUploadService : KoinComponent {
             is InboxMessage.MmsHeaders -> null
 
             is InboxMessage.MMS -> {
-                val attachments = message.attachments.map {
+                val omitted = message.attachments.filter { it.data == null }
+                if (omitted.isNotEmpty()) {
+                    logsService.insert(
+                        LogEntry.Priority.WARN,
+                        MODULE_NAME,
+                        "MMS attachments are too large to be uploaded to the cloud server",
+                        mapOf(
+                            "messageId" to message.messageId,
+                            "partIds" to omitted.map { it.partId },
+                            "sizes" to omitted.map { it.size },
+                        ),
+                    )
+                }
+
+                val attachments = message.attachments.mapNotNull { attachment ->
+                    val data = attachment.data ?: return@mapNotNull null
                     EncryptedAttachment(
-                        partId = it.partId,
-                        contentType = it.contentType,
-                        name = encryptionService.encrypt(it.name ?: ""),
-                        size = it.size,
-                        data = encryptionService.encrypt(it.data ?: ""),
+                        partId = attachment.partId,
+                        contentType = attachment.contentType,
+                        name = encryptionService.encrypt(attachment.name ?: ""),
+                        size = attachment.size,
+                        data = encryptionService.encrypt(data),
                     )
                 }
                 Mapped(

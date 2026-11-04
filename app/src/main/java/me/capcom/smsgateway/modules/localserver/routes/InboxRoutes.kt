@@ -161,7 +161,7 @@ class InboxRoutes(
                     mapOf("message" to "partId must be a number")
                 )
 
-            val attachment = attachmentStorage.find(id, partId)
+            val attachment = incomingMessagesService.findAttachment(id, partId)
                 ?: return@get call.respond(HttpStatusCode.NotFound)
             val file = attachment.file
             if (!file.exists()) {
