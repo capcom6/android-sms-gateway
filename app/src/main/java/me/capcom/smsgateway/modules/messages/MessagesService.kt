@@ -250,13 +250,13 @@ class MessagesService(
                         logsService.insert(
                             LogEntry.Priority.WARN,
                             MODULE_NAME,
-                            "Delivery report has no parsable PDU, treating as delivered",
+                            "Delivery report has no parsable PDU, leaving recipient state unchanged",
                             mapOf(
                                 "format" to format,
                                 "pdu" to pdu?.joinToString("") { "%02x".format(it) },
                             )
                         )
-                        ProcessingState.Delivered to null
+                        return
                     } else {
                         val rawStatus = message.status
                         val scAddress = message.serviceCenterAddress
