@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Received messages are no longer silently dropped from the cloud inbox upload when no encryption passphrase is set — the upload is skipped with a warning in the logs explaining that a passphrase is required
+
 ## [v1.78.0] - 2026-10-27
 
 ### Added
