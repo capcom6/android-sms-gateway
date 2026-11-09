@@ -11,7 +11,6 @@ import android.provider.Telephony
 import androidx.core.content.ContextCompat
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
-import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.Date
@@ -35,6 +34,7 @@ class SmsContentObserver : KoinComponent {
 
     private var handlerThread: HandlerThread? = null
     private var observer: ContentObserver? = null
+    private val processTask = Runnable { processNewMessages() }
 
     fun start() {
         if (observer != null) {
@@ -63,7 +63,10 @@ class SmsContentObserver : KoinComponent {
         val obs = object : ContentObserver(handler) {
             override fun onChange(selfChange: Boolean) {
                 super.onChange(selfChange)
-                processNewMessages()
+                // Give the SMS_RECEIVED broadcast (which carries the real subscription id)
+                // a head start, so the same SMS is not posted twice. Debounced.
+                handler.removeCallbacks(processTask)
+                handler.postDelayed(processTask, OBSERVER_DELAY_MS)
             }
         }
         observer = obs
@@ -168,11 +171,9 @@ class SmsContentObserver : KoinComponent {
                 }
 
                 try {
-                    receiverSvc.process(
-                        context,
-                        InboxMessage.Text(body, address, date, subId),
-                        true,
-                    )
+                    // subId is the raw provider value: the subscription id on stock
+                    // Android, the SIM slot index on some OEMs. ReceiverService resolves it.
+                    receiverSvc.processProviderSms(context, body, address, date, subId)
                 } catch (e: Exception) {
                     logsService.insert(
                         LogEntry.Priority.ERROR,
@@ -193,5 +194,8 @@ class SmsContentObserver : KoinComponent {
 
     companion object {
         private const val TAG = "SmsContentObserver"
+
+        /** Head start for the SMS_RECEIVED broadcast before an inbox row is processed. */
+        private const val OBSERVER_DELAY_MS = 3_000L
     }
 }

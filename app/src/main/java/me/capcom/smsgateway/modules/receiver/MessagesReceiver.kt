@@ -60,11 +60,7 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
             }
         }
 
-        receiverSvc.process(
-            context,
-            inboxMessage,
-            true,
-        )
+        receiverSvc.processBroadcast(context, inboxMessage)
     }
 
     companion object {

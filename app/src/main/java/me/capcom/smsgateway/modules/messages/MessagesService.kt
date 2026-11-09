@@ -637,18 +637,19 @@ class MessagesService(
                 throw UnsupportedOperationException("SIM selection requires READ_PHONE_STATE permission")
             }
 
-            val subscriptionManager = SubscriptionsHelper.getSubscriptionsManager(context)
+            SubscriptionsHelper.getSubscriptionsManager(context)
                 ?: throw UnsupportedOperationException("SIM selection available from API 22")
 
-            subscriptionManager.activeSubscriptionInfoList.find {
-                it.simSlotIndex == simNumber
-            }?.let {
+            // `simNumber` here is the 0-based slot index. The subscription id is looked up BY
+            // SLOT (it is not the slot, and not the list position: e.g. ids 1 and 3 for slots
+            // 0 and 1 on a Huawei dual-SIM phone).
+            SubscriptionsHelper.getSubscriptionId(context, simNumber)?.let { subscriptionId ->
                 if (Build.VERSION.SDK_INT < 31) {
                     @Suppress("DEPRECATION")
-                    SmsManager.getSmsManagerForSubscriptionId(it.subscriptionId)
+                    SmsManager.getSmsManagerForSubscriptionId(subscriptionId)
                 } else {
                     context.getSystemService(SmsManager::class.java)
-                        .createForSubscriptionId(it.subscriptionId)
+                        .createForSubscriptionId(subscriptionId)
                 }
             } ?: throw UnsupportedOperationException("SIM ${simNumber + 1} not found")
         } else {

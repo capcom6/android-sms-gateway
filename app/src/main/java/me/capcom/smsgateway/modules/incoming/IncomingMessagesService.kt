@@ -10,6 +10,7 @@ import me.capcom.smsgateway.modules.incoming.workers.IncomingLogTruncateWorker
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.mms.MmsAttachmentStorage
+import me.capcom.smsgateway.modules.receiver.RecentBroadcasts
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 
 class IncomingMessagesService(
@@ -128,6 +129,21 @@ class IncomingMessagesService(
 
     fun isMessageProcessed(message: InboxMessage): Boolean {
         return getById(buildId(message)) != null
+    }
+
+    /**
+     * Finds an already saved text SMS with the same sender and body at (nearly) the same time,
+     * regardless of the subscription id. The same SMS can arrive from the broadcast and from the
+     * SMS inbox observer with different subscription ids, so the hash id can't match them.
+     */
+    fun findSimilarText(message: InboxMessage.Text): IncomingMessage? {
+        val tolerance = RecentBroadcasts.DATE_TOLERANCE_MS
+        return repository.selectSimilarSms(
+            message.address,
+            message.text,
+            message.date.time - tolerance,
+            message.date.time + tolerance,
+        )
     }
 
     fun start(context: Context) {

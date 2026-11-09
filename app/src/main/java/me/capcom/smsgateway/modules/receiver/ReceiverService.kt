@@ -33,6 +33,13 @@ class ReceiverService : KoinComponent {
     private val incomingMessagesService: IncomingMessagesService by inject()
     private val receiverSettings: ReceiverSettings by inject()
     private val gatewayService: GatewayService by inject()
+    private val stateStorage: StateStorage by inject()
+
+    /** Text SMS the broadcast path already handled; see [RecentBroadcasts]. */
+    private val recentBroadcasts = RecentBroadcasts()
+
+    /** Serializes the live paths (broadcast and inbox observer) so a twin is seen exactly once. */
+    private val liveLock = Any()
 
     private val eventsReceiver by lazy { EventsReceiver() }
     private val mmsContentObserver by lazy { MmsContentObserver() }
@@ -98,6 +105,118 @@ class ReceiverService : KoinComponent {
         )
     }
 
+
+    /**
+     * Entry point of the `SMS_RECEIVED` / `DATA_SMS_RECEIVED` broadcast. Its subscription id
+     * comes from the intent and is authoritative.
+     *
+     * A text SMS the inbox observer already posted (observer first) is not posted again.
+     */
+    fun processBroadcast(context: Context, message: InboxMessage) {
+        synchronized(liveLock) {
+            if (message is InboxMessage.Text) {
+                recentBroadcasts.record(
+                    message.address,
+                    message.text,
+                    message.date.time,
+                    message.subscriptionId
+                )
+                if (isAlreadyPosted(message)) {
+                    logDuplicate("broadcast", message)
+                    return
+                }
+            }
+            process(context, message, true)
+        }
+    }
+
+    /**
+     * Entry point of the SMS inbox observer (a row of `content://sms/inbox`).
+     *
+     * [providerSubId] is the raw `sub_id` of the row. Depending on the OEM it is the
+     * subscription id (stock Android) or the SIM slot index (Huawei EMUI), so it is resolved
+     * before use. A message the broadcast path already handled is not posted again; instead
+     * the pair (row value, broadcast subscription id) tells how this provider writes `sub_id`.
+     */
+    fun processProviderSms(
+        context: Context,
+        text: String,
+        address: String,
+        date: Date,
+        providerSubId: Int?,
+    ) {
+        synchronized(liveLock) {
+            val twin = recentBroadcasts.find(address, text, date.time)
+            if (twin != null) {
+                learnProviderSubIdMode(context, providerSubId, twin.subscriptionId)
+                logDuplicate("observer", InboxMessage.Text(text, address, date, twin.subscriptionId))
+                return
+            }
+
+            val message = InboxMessage.Text(
+                text,
+                address,
+                date,
+                providerSubId?.let { resolveProviderSubId(context, it) },
+            )
+            if (isAlreadyPosted(message)) {
+                logDuplicate("observer", message)
+                return
+            }
+            process(context, message, true)
+        }
+    }
+
+    /** Raw provider `sub_id` to subscription id, using what was learned about this device. */
+    fun resolveProviderSubId(context: Context, providerSubId: Int): Int =
+        SubscriptionsHelper.resolveProviderSubId(
+            context,
+            providerSubId,
+            stateStorage.providerSubIdMode
+        )
+
+    private fun learnProviderSubIdMode(
+        context: Context,
+        providerSubId: Int?,
+        broadcastSubscriptionId: Int?,
+    ) {
+        if (providerSubId == null || broadcastSubscriptionId == null) {
+            return
+        }
+        val learned = SubscriptionsHelper.inferProviderSubIdMode(
+            context,
+            providerSubId,
+            broadcastSubscriptionId
+        ) ?: return
+        if (learned == stateStorage.providerSubIdMode) {
+            return
+        }
+        stateStorage.providerSubIdMode = learned
+        logsService.insert(
+            LogEntry.Priority.INFO,
+            MODULE_NAME,
+            "ReceiverService - learned how the SMS provider writes sub_id",
+            mapOf("mode" to learned.name)
+        )
+    }
+
+    private fun isAlreadyPosted(message: InboxMessage.Text): Boolean {
+        return incomingMessagesService.isMessageProcessed(message)
+                || incomingMessagesService.findSimilarText(message) != null
+    }
+
+    private fun logDuplicate(source: String, message: InboxMessage) {
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            MODULE_NAME,
+            "ReceiverService - same SMS already handled by the other path, skipping",
+            mapOf(
+                "source" to source,
+                "date" to message.date,
+                "subscriptionId" to message.subscriptionId,
+            )
+        )
+    }
 
     fun process(context: Context, message: InboxMessage, triggerWebhooks: Boolean) {
         logsService.insert(
@@ -341,6 +460,8 @@ class ReceiverService : KoinComponent {
                         text = cursor.getString(3),
                         subscriptionId = when {
                             projection.size > 4 -> cursor.getInt(4).takeIf { it >= 0 }
+                                // some OEMs store the slot index here, not the subscription id
+                                ?.let { resolveProviderSubId(context, it) }
                             else -> null
                         }
                     )
