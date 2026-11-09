@@ -36,8 +36,9 @@ import org.junit.Test
  *   stats depend on it)
  * - history rows appended through the inherited interface default wrappers
  * (the fake implements only the underscored @Query primitives).
+ * `open`: MessagesServiceSendRaceTest extends it with latch/fetch hooks.
  */
-internal class FakeMessagesDao : MessagesDao {
+internal open class FakeMessagesDao : MessagesDao {
 
     val messages = mutableMapOf<String, Message>()
     val recipients = mutableMapOf<Pair<String, String>, MessageRecipient>()

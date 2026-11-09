@@ -17,6 +17,8 @@ import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
@@ -59,6 +61,16 @@ class MessagesService(
      * cannot install a delayed work between the snapshot read and the start call.
      */
     private val sendWorkerLock = Any()
+
+    /**
+     * Serializes the actual send of one message across workers. A replacement
+     * worker (ExistingWorkPolicy.REPLACE, issue #476) waits here until the
+     * in-flight send of the previous worker finishes, then skips the message
+     * via the state re-check in sendMessage() instead of sending it twice.
+     * Held per message only - never across the rate limit / work hours delays.
+     */
+    private val sendMutex = Mutex()
+
     val processingOrder
         get() = settings.processingOrder
 
@@ -298,7 +310,10 @@ class MessagesService(
                     continue
                 }
 
-                if (!withContext(NonCancellable) { sendMessage(message) }) {
+                val sent = sendMutex.withLock {
+                    withContext(NonCancellable) { sendMessage(message) }
+                }
+                if (!sent) {
                     // if message was not sent - don't need any delay before next message
                     continue
                 }
@@ -380,19 +395,22 @@ class MessagesService(
      * @return `true` if message was sent
      */
     private suspend fun sendMessage(request: StoredSendRequest): Boolean {
-        if (request.params.validUntil?.before(Date()) == true) {
-            machine.transitionRecipients(request.message.id, ProcessingState.Failed, "TTL expired")
-            return false
-        }
-
-        // Re-check state: message might have been cancelled while in queue
+        // Re-check state under the send mutex: while we waited for the slot,
+        // another worker may have already sent this message (REPLACE race,
+        // #476) or it may have been cancelled while in queue. A missing row is
+        // skipped too - there is nothing left to send or to transition.
         val currentState = dao.get(request.message.id)?.message?.state
-        if (currentState == ProcessingState.Cancelled) {
+        if (currentState != ProcessingState.Pending) {
             logsService.insert(
                 LogEntry.Priority.INFO,
                 MODULE_NAME,
-                "Skipping cancelled message ${request.message.id}",
+                "Skipping message ${request.message.id} in state $currentState",
             )
+            return false
+        }
+
+        if (request.params.validUntil?.before(Date()) == true) {
+            machine.transitionRecipients(request.message.id, ProcessingState.Failed, "TTL expired")
             return false
         }
 
