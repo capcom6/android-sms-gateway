@@ -291,17 +291,55 @@ internal class LiveSmsDeduperTest {
     fun aHuaweiLikeVendorThatBehavesLikeStockIsCorrectedAfterTwoMessages() {
         val h = Harness(stock, vendorHint = true)
 
-        // first message: the vendor hint maps value 1 to slot 1 (SIM 2): a duplicate, nothing lost
+        // first message: the vendor hint would map value 1 to slot 1 (SIM 2), but the lone
+        // broadcast on SIM 1 matches the subscription-id reading: one post, on SIM 1
         h.broadcast("a", 10_000, sub = 1)
         h.row("a", 10_000, raw = 1)
         assertEquals(ProviderSubIdMode.UNKNOWN, h.mode)
-        assertEquals(listOf<Int?>(1, 2), h.posted.map { it.subscriptionId })
+        assertEquals(listOf<Int?>(1), h.posted.map { it.subscriptionId })
 
-        // second agreeing message: learned, and this row is recognised as the twin
+        // second agreeing message: learned
         h.broadcast("b", 20_000, sub = 1)
         h.row("b", 20_000, raw = 1)
         assertEquals(ProviderSubIdMode.SUBSCRIPTION_ID, h.mode)
-        assertEquals(3, h.posted.size)
+        assertEquals(listOf<Int?>(1, 1), h.posted.map { it.subscriptionId })
+    }
+
+    @Test
+    fun huaweiThatWritesTheSubscriptionIdNeverPostsTheSmsToTheOtherSim() {
+        // ids {1,3}; the vendor hint reads raw 1 as slot 1 (SIM 2) but this phone writes ids
+        val h = Harness(emui, vendorHint = true)
+
+        h.broadcast("a", 10_000, sub = 1)
+        h.row("a", 10_000, raw = 1)
+        h.broadcast("b", 20_000, sub = 3)
+        h.row("b", 20_000, raw = 3)
+
+        assertEquals(listOf(1, 2), h.simNumbers())
+    }
+
+    @Test
+    fun nonHuaweiThatWritesTheSlotIndexNeverPostsTheSmsToTheOtherSim() {
+        // ids {1,2}; without the hint raw 1 reads as subscription 1 (SIM 1) but this phone
+        // writes the slot index, so raw 1 is SIM 2
+        val h = Harness(stock, vendorHint = false)
+
+        h.broadcast("a", 10_000, sub = 2)
+        h.row("a", 10_000, raw = 1)
+        h.broadcast("b", 20_000, sub = 1)
+        h.row("b", 20_000, raw = 0)
+
+        assertEquals(listOf(2, 1), h.simNumbers())
+        assertEquals(2, h.posted.size)
+    }
+
+    @Test
+    fun unlearnedGuessIsStillUsedWhenNoBroadcastWasSeen() {
+        val h = Harness(emui, vendorHint = true)
+
+        h.row("a", 10_000, raw = 1)
+
+        assertEquals(listOf<Int?>(3), h.posted.map { it.subscriptionId })
     }
 
     @Test

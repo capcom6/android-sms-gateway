@@ -37,6 +37,8 @@ class SmsContentObserver : KoinComponent {
 
     // Only touched on the observer's handler thread (onChange and the task both run there).
     private var scanScheduled = false
+    private var scanHandler: Handler? = null
+    private val failedAttempts = mutableMapOf<Long, Int>()
     private val processTask = Runnable {
         scanScheduled = false
         processNewMessages()
@@ -66,6 +68,7 @@ class SmsContentObserver : KoinComponent {
         val thread = HandlerThread("SmsContentObserver").apply { start() }
         handlerThread = thread
         val handler = Handler(thread.looper)
+        scanHandler = handler
 
         val obs = object : ContentObserver(handler) {
             override fun onChange(selfChange: Boolean) {
@@ -186,16 +189,35 @@ class SmsContentObserver : KoinComponent {
                     // Android, the SIM slot index on some OEMs. ReceiverService resolves it.
                     receiverSvc.processProviderSms(body, address, date, subId)
                 } catch (e: Exception) {
+                    val attempts = (failedAttempts[id] ?: 0) + 1
+                    val willRetry = attempts < MAX_ATTEMPTS && scheduleRetry()
                     logsService.insert(
                         LogEntry.Priority.ERROR,
                         MODULE_NAME,
-                        "Failed processing inbox SMS (id=$id)",
+                        "Failed processing inbox SMS (id=$id, attempt $attempts)",
                         mapOf("smsId" to id, "error" to (e.message ?: e.toString())),
                     )
+                    if (willRetry) {
+                        // keep the high-water mark below this row so the next scan retries it
+                        failedAttempts[id] = attempts
+                        return
+                    }
+                    failedAttempts.remove(id)
                 }
+                failedAttempts.remove(id)
                 storage.smsLastProcessedID = id
             }
         }
+    }
+
+    /** Schedules one more scan; false when it can't be scheduled (the row is then skipped). */
+    private fun scheduleRetry(): Boolean {
+        val handler = scanHandler ?: return false
+        if (!scanScheduled) {
+            scanScheduled = true
+            handler.postDelayed(processTask, RETRY_DELAY_MS)
+        }
+        return true
     }
 
     private fun canReadSms(): Boolean = ContextCompat.checkSelfPermission(
@@ -208,5 +230,9 @@ class SmsContentObserver : KoinComponent {
 
         /** Head start for the SMS_RECEIVED broadcast before an inbox row is processed. */
         private const val OBSERVER_DELAY_MS = 3_000L
+
+        /** A row whose post failed is retried this often, at most [MAX_ATTEMPTS] times. */
+        private const val RETRY_DELAY_MS = 10_000L
+        private const val MAX_ATTEMPTS = 3
     }
 }

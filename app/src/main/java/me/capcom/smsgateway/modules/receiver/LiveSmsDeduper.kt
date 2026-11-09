@@ -126,7 +126,19 @@ internal class LiveSmsDeduper(
                 )
             }
 
-            val twin = twins.firstOrNull { it.subscriptionId == resolved }
+            var twin = twins.firstOrNull { it.subscriptionId == resolved }
+            if (twin == null && rawSubId != null && readMode() == ProviderSubIdMode.UNKNOWN) {
+                // Mode not learned yet: the guess in `resolved` may be the wrong reading, and
+                // posting it would hand the SMS to the other SIM's line. A lone broadcast
+                // candidate whose subscription equals EITHER reading of the raw value is the
+                // twin. With a candidate per SIM (same text on both) nothing is guessed.
+                val only = twins.singleOrNull()
+                if (only?.subscriptionId != null
+                    && only.subscriptionId in readingsOf(rawSubId)
+                ) {
+                    twin = only
+                }
+            }
             if (twin != null) {
                 broadcasts.consume(twin)
                 log(
@@ -147,6 +159,12 @@ internal class LiveSmsDeduper(
             post(InboxMessage.Text(text, address, date, resolved))
             observerPosts.record(address, text, date.time, resolved, rawSubId)
         }
+
+    /** The raw `sub_id` read as a subscription id, and read as a slot index. */
+    private fun readingsOf(rawSubId: Int): Set<Int> {
+        val slotReading = activeSubscriptions().find { it.second == rawSubId }?.first
+        return setOfNotNull(rawSubId, slotReading)
+    }
 
     private fun learn(inferred: ProviderSubIdMode?) {
         val learned = learner.observe(inferred, readMode()) ?: return
