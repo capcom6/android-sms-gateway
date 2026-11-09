@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- A scheduled message is no longer sent twice when a replacement worker takes over an in-flight send — sends are now serialized and the message state is re-checked before dispatch, so the replacement worker skips a message that was already sent (issue #476) [f43a070]
+
+## [v1.79.3] - 2026-11-26
+
 ### Changed
-- Cloud message pulls triggered by push/SSE events are now coalesced to at most one request per 5-second window, with a trailing catch-up pull, instead of one full pull per event — newly enqueued messages are fetched within seconds rather than waiting for the 15-minute periodic pull [b6fe706]
+- Cloud message pulls triggered by push/SSE events are now coalesced to at most one request per 5-second window, with a trailing catch-up pull, instead of one full pull per event — newly enqueued messages are fetched within seconds rather than waiting for the 15-minute periodic pull [6aacabe]
 
 ## [v1.79.2] - 2026-11-24
 
@@ -1305,7 +1310,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.2...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.3...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1
@@ -1459,3 +1464,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.79.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.4...v1.79.0
 [v1.79.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.0...v1.79.1
 [v1.79.2]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.1...v1.79.2
+[v1.79.3]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.2...v1.79.3
