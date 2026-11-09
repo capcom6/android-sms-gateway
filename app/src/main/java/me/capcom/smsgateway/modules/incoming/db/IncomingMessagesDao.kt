@@ -57,19 +57,22 @@ interface IncomingMessagesDao {
     @Query("SELECT * FROM incoming_messages WHERE id = :id LIMIT 1")
     fun selectById(id: String): IncomingMessage?
 
-    /** Text SMS from the same sender with the same body within a short time window. */
+    /**
+     * Text SMS from the same sender (trimmed, case-insensitive) with the same body in the time
+     * window [from, to]. [sender] must already be trimmed.
+     */
     @Query(
         """
         SELECT * FROM incoming_messages
         WHERE type = 'SMS'
-          AND sender = :sender COLLATE NOCASE
+          AND TRIM(sender) = :sender COLLATE NOCASE
           AND contentPreview = :text
           AND createdAt BETWEEN :from AND :to
         ORDER BY createdAt DESC, id DESC
-        LIMIT 1
+        LIMIT 10
         """
     )
-    fun selectSimilarSms(sender: String, text: String, from: Long, to: Long): IncomingMessage?
+    fun selectSimilarSms(sender: String, text: String, from: Long, to: Long): List<IncomingMessage>
 
     @Query(
         """

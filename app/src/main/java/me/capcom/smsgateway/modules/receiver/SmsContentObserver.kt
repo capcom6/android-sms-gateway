@@ -34,7 +34,13 @@ class SmsContentObserver : KoinComponent {
 
     private var handlerThread: HandlerThread? = null
     private var observer: ContentObserver? = null
-    private val processTask = Runnable { processNewMessages() }
+
+    // Only touched on the observer's handler thread (onChange and the task both run there).
+    private var scanScheduled = false
+    private val processTask = Runnable {
+        scanScheduled = false
+        processNewMessages()
+    }
 
     fun start() {
         if (observer != null) {
@@ -56,6 +62,7 @@ class SmsContentObserver : KoinComponent {
             storage.smsLastProcessedID = queryMaxSmsId()
         }
 
+        scanScheduled = false
         val thread = HandlerThread("SmsContentObserver").apply { start() }
         handlerThread = thread
         val handler = Handler(thread.looper)
@@ -64,9 +71,13 @@ class SmsContentObserver : KoinComponent {
             override fun onChange(selfChange: Boolean) {
                 super.onChange(selfChange)
                 // Give the SMS_RECEIVED broadcast (which carries the real subscription id)
-                // a head start, so the same SMS is not posted twice. Debounced.
-                handler.removeCallbacks(processTask)
-                handler.postDelayed(processTask, OBSERVER_DELAY_MS)
+                // a head start, so the same SMS is not posted twice. At most one scan is
+                // pending and it is never pushed back, so frequent provider writes (sent
+                // box, status updates) cannot starve the inbox scan.
+                if (!scanScheduled) {
+                    scanScheduled = true
+                    handler.postDelayed(processTask, OBSERVER_DELAY_MS)
+                }
             }
         }
         observer = obs
@@ -173,7 +184,7 @@ class SmsContentObserver : KoinComponent {
                 try {
                     // subId is the raw provider value: the subscription id on stock
                     // Android, the SIM slot index on some OEMs. ReceiverService resolves it.
-                    receiverSvc.processProviderSms(context, body, address, date, subId)
+                    receiverSvc.processProviderSms(body, address, date, subId)
                 } catch (e: Exception) {
                     logsService.insert(
                         LogEntry.Priority.ERROR,

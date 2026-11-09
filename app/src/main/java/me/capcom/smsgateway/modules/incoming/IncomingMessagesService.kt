@@ -10,7 +10,6 @@ import me.capcom.smsgateway.modules.incoming.workers.IncomingLogTruncateWorker
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.mms.MmsAttachmentStorage
-import me.capcom.smsgateway.modules.receiver.RecentBroadcasts
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 
 class IncomingMessagesService(
@@ -24,7 +23,7 @@ class IncomingMessagesService(
         val simSlotIndex = message.subscriptionId?.let {
             SubscriptionsHelper.getSimSlotIndex(context, it)
         }
-        val simNumber = simSlotIndex?.let { it + 1 }
+        val simNumber = SubscriptionsHelper.simNumberForSlotIndex(simSlotIndex)
         val recipient = simSlotIndex?.let {
             SubscriptionsHelper.getPhoneNumber(context, it)
         }
@@ -132,18 +131,12 @@ class IncomingMessagesService(
     }
 
     /**
-     * Finds an already saved text SMS with the same sender and body at (nearly) the same time,
-     * regardless of the subscription id. The same SMS can arrive from the broadcast and from the
-     * SMS inbox observer with different subscription ids, so the hash id can't match them.
+     * Text SMS already saved for the same sender and body at EXACTLY the same time (the same
+     * window the hash id uses), whatever their subscription id. The caller compares the
+     * subscription; the window is deliberately not wider than the hash id's.
      */
-    fun findSimilarText(message: InboxMessage.Text): IncomingMessage? {
-        val tolerance = RecentBroadcasts.DATE_TOLERANCE_MS
-        return repository.selectSimilarSms(
-            message.address,
-            message.text,
-            message.date.time - tolerance,
-            message.date.time + tolerance,
-        )
+    fun findStoredText(address: String, text: String, dateMs: Long): List<IncomingMessage> {
+        return repository.selectSimilarSms(address.trim(), text, dateMs, dateMs)
     }
 
     fun start(context: Context) {

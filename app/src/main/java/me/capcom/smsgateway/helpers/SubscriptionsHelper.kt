@@ -142,12 +142,9 @@ object SubscriptionsHelper {
     fun slotIndexForSimNumber(simNumber: Int?): Int? =
         simNumber?.takeIf { it >= 1 }?.let { it - 1 }
 
-    fun simNumberForSlotIndex(slotIndex: Int?): Int? = slotIndex?.let { it + 1 }
+    fun simNumberForSlotIndex(slotIndex: Int): Int = slotIndex + 1
 
-    fun simNumberForSubscriptionId(active: List<Pair<Int, Int>>, subscriptionId: Int?): Int? =
-        simNumberForSlotIndex(
-            subscriptionId?.let { id -> active.find { it.first == id }?.second }
-        )
+    fun simNumberForSlotIndex(slotIndex: Int?): Int? = slotIndex?.let { it + 1 }
 
     @SuppressLint("MissingPermission")
     fun getActiveSubscriptions(context: Context): List<Pair<Int, Int>>? {
@@ -179,15 +176,6 @@ object SubscriptionsHelper {
             mode,
             providerUsesSlotIndex(Build.MANUFACTURER)
         )
-    }
-
-    fun inferProviderSubIdMode(
-        context: Context,
-        providerValue: Int,
-        broadcastSubscriptionId: Int,
-    ): ProviderSubIdMode? {
-        val active = getActiveSubscriptions(context) ?: return null
-        return inferProviderSubIdMode(providerValue, broadcastSubscriptionId, active)
     }
 
     private fun hasPhoneStatePermission(context: Context): Boolean {

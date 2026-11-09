@@ -421,7 +421,7 @@ class MessagesService(
 
         val simNumber = selectSimNumber(request.id, request.params)
         if (request.params.simNumber == null && simNumber != null) {
-            dao.updateSimNumber(id, simNumber + 1)
+            dao.updateSimNumber(id, SubscriptionsHelper.simNumberForSlotIndex(simNumber))
         }
 
         // Resolve a subscription ID + MSISDN from the chosen SIM slot (if any).
@@ -477,7 +477,9 @@ class MessagesService(
 
     private fun selectSimNumber(id: Long, params: SendParams): Int? {
         if (params.simNumber != null) {
-            return params.simNumber - 1
+            // 1-based API value to 0-based slot index; 0 or negative is not a SIM
+            return SubscriptionsHelper.slotIndexForSimNumber(params.simNumber)
+                ?: throw UnsupportedOperationException("SIM ${params.simNumber} not found")
         }
 
         val simSlots = SubscriptionsHelper.selectAvailableSimSlots(context)?.sorted() ?: return null
@@ -500,7 +502,7 @@ class MessagesService(
         val smsManager: SmsManager = getSmsManager(simNumber)
 
         if (request.params.simNumber == null && simNumber != null) {
-            dao.updateSimNumber(id, simNumber + 1)
+            dao.updateSimNumber(id, SubscriptionsHelper.simNumberForSlotIndex(simNumber))
         }
 
         val sendFn: (String, PendingIntent, PendingIntent?) -> Unit =

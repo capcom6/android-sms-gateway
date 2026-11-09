@@ -220,16 +220,4 @@ internal class SubscriptionsHelperTest {
         assertEquals(2, SubscriptionsHelper.simNumberForSlotIndex(1))
         assertNull(SubscriptionsHelper.simNumberForSlotIndex(null))
     }
-
-    // ---- inbound/status: subscription id -> simNumber ----
-
-    @Test
-    fun simNumberForSubscriptionIdBothSlotsBothDevices() {
-        assertEquals(1, SubscriptionsHelper.simNumberForSubscriptionId(active, 1))
-        assertEquals(2, SubscriptionsHelper.simNumberForSubscriptionId(active, 3))
-        assertEquals(1, SubscriptionsHelper.simNumberForSubscriptionId(stock, 1))
-        assertEquals(2, SubscriptionsHelper.simNumberForSubscriptionId(stock, 2))
-        assertNull(SubscriptionsHelper.simNumberForSubscriptionId(active, 2))
-        assertNull(SubscriptionsHelper.simNumberForSubscriptionId(active, null))
-    }
 }

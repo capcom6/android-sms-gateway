@@ -3,15 +3,16 @@ package me.capcom.smsgateway.modules.receiver
 import kotlin.math.abs
 
 /**
- * Remembers text SMS delivered through the `SMS_RECEIVED` broadcast for a short time.
+ * Remembers text SMS handled by one live path for a short time.
  *
- * The same incoming SMS can reach the app twice: through the broadcast (which carries the real
- * subscription id) and through the SMS inbox content observer (whose `sub_id` column may hold
- * the SIM slot index on some OEM builds). The observer uses this registry to
- * recognise a message the broadcast already handled and to learn how the provider writes
- * `sub_id` from the pair of values.
+ * The same incoming SMS can reach the app twice: through the `SMS_RECEIVED` broadcast (which
+ * carries the real subscription id) and through the SMS inbox content observer (whose `sub_id`
+ * column may hold the SIM slot index on some OEM builds). [LiveSmsDeduper] keeps one registry per
+ * path so each path is compared only against the OTHER path.
+ *
+ * An entry is matched at most once: [consume] removes it, so two identical SMS never share a twin.
  */
-internal class RecentBroadcasts(
+internal class RecentSms(
     private val ttlMs: Long = DEFAULT_TTL_MS,
     private val maxEntries: Int = DEFAULT_MAX_ENTRIES,
     private val clock: () -> Long = System::currentTimeMillis,
@@ -20,26 +21,46 @@ internal class RecentBroadcasts(
         val address: String,
         val text: String,
         val dateMs: Long,
+        /** Subscription id this path posted the SMS with (null when unknown). */
         val subscriptionId: Int?,
+        /** Raw provider `sub_id` (observer entries only). */
+        val rawSubId: Int?,
         val recordedAtMs: Long,
     )
 
     private val entries = ArrayDeque<Entry>()
 
     @Synchronized
-    fun record(address: String, text: String, dateMs: Long, subscriptionId: Int?) {
+    fun record(
+        address: String,
+        text: String,
+        dateMs: Long,
+        subscriptionId: Int?,
+        rawSubId: Int? = null,
+    ) {
         evictExpired()
-        entries.addLast(Entry(address, text, dateMs, subscriptionId, clock()))
+        val duplicate = entries.any {
+            it.address == address && it.text == text && it.dateMs == dateMs
+                    && it.subscriptionId == subscriptionId && it.rawSubId == rawSubId
+        }
+        if (duplicate) {
+            return
+        }
+        entries.addLast(Entry(address, text, dateMs, subscriptionId, rawSubId, clock()))
         while (entries.size > maxEntries) {
             entries.removeFirst()
         }
     }
 
+    /** All live entries for the same sender, body and (nearly) the same time, oldest first. */
     @Synchronized
-    fun find(address: String, text: String, dateMs: Long): Entry? {
+    fun candidates(address: String, text: String, dateMs: Long): List<Entry> {
         evictExpired()
-        return entries.lastOrNull { sameMessage(it.address, it.text, it.dateMs, address, text, dateMs) }
+        return entries.filter { sameMessage(it.address, it.text, it.dateMs, address, text, dateMs) }
     }
+
+    @Synchronized
+    fun consume(entry: Entry): Boolean = entries.remove(entry)
 
     private fun evictExpired() {
         val limit = clock() - ttlMs

@@ -35,11 +35,7 @@ class ReceiverService : KoinComponent {
     private val gatewayService: GatewayService by inject()
     private val stateStorage: StateStorage by inject()
 
-    /** Text SMS the broadcast path already handled; see [RecentBroadcasts]. */
-    private val recentBroadcasts = RecentBroadcasts()
-
-    /** Serializes the live paths (broadcast and inbox observer) so a twin is seen exactly once. */
-    private val liveLock = Any()
+    private val appContext: Context by inject()
 
     private val eventsReceiver by lazy { EventsReceiver() }
     private val mmsContentObserver by lazy { MmsContentObserver() }
@@ -110,22 +106,12 @@ class ReceiverService : KoinComponent {
      * Entry point of the `SMS_RECEIVED` / `DATA_SMS_RECEIVED` broadcast. Its subscription id
      * comes from the intent and is authoritative.
      *
-     * A text SMS the inbox observer already posted (observer first) is not posted again.
+     * A text SMS is compared only with SMS the inbox observer posted; see [LiveSmsDeduper].
      */
     fun processBroadcast(context: Context, message: InboxMessage) {
-        synchronized(liveLock) {
-            if (message is InboxMessage.Text) {
-                recentBroadcasts.record(
-                    message.address,
-                    message.text,
-                    message.date.time,
-                    message.subscriptionId
-                )
-                if (isAlreadyPosted(message)) {
-                    logDuplicate("broadcast", message)
-                    return
-                }
-            }
+        if (message is InboxMessage.Text) {
+            deduper.onBroadcast(message)
+        } else {
             process(context, message, true)
         }
     }
@@ -135,36 +121,39 @@ class ReceiverService : KoinComponent {
      *
      * [providerSubId] is the raw `sub_id` of the row. Depending on the OEM it is the
      * subscription id (stock Android) or the SIM slot index (Huawei EMUI), so it is resolved
-     * before use. A message the broadcast path already handled is not posted again; instead
-     * the pair (row value, broadcast subscription id) tells how this provider writes `sub_id`.
+     * before use; see [LiveSmsDeduper].
      */
     fun processProviderSms(
-        context: Context,
         text: String,
         address: String,
         date: Date,
         providerSubId: Int?,
     ) {
-        synchronized(liveLock) {
-            val twin = recentBroadcasts.find(address, text, date.time)
-            if (twin != null) {
-                learnProviderSubIdMode(context, providerSubId, twin.subscriptionId)
-                logDuplicate("observer", InboxMessage.Text(text, address, date, twin.subscriptionId))
-                return
-            }
+        deduper.onProviderRow(text, address, date, providerSubId)
+    }
 
-            val message = InboxMessage.Text(
-                text,
-                address,
-                date,
-                providerSubId?.let { resolveProviderSubId(context, it) },
-            )
-            if (isAlreadyPosted(message)) {
-                logDuplicate("observer", message)
-                return
-            }
-            process(context, message, true)
-        }
+    private val deduper: LiveSmsDeduper by lazy {
+        LiveSmsDeduper(
+            activeSubscriptions = {
+                SubscriptionsHelper.getActiveSubscriptions(appContext) ?: emptyList()
+            },
+            vendorUsesSlotIndex = SubscriptionsHelper.providerUsesSlotIndex(Build.MANUFACTURER),
+            readMode = { stateStorage.providerSubIdMode },
+            writeMode = { stateStorage.providerSubIdMode = it },
+            findStored = { address, text, dateMs ->
+                incomingMessagesService.findStoredText(address, text, dateMs)
+                    .map { it.subscriptionId }
+            },
+            post = { process(appContext, it, true) },
+            log = { message, details ->
+                logsService.insert(
+                    LogEntry.Priority.DEBUG,
+                    MODULE_NAME,
+                    "ReceiverService - $message",
+                    details
+                )
+            },
+        )
     }
 
     /** Raw provider `sub_id` to subscription id, using what was learned about this device. */
@@ -174,49 +163,6 @@ class ReceiverService : KoinComponent {
             providerSubId,
             stateStorage.providerSubIdMode
         )
-
-    private fun learnProviderSubIdMode(
-        context: Context,
-        providerSubId: Int?,
-        broadcastSubscriptionId: Int?,
-    ) {
-        if (providerSubId == null || broadcastSubscriptionId == null) {
-            return
-        }
-        val learned = SubscriptionsHelper.inferProviderSubIdMode(
-            context,
-            providerSubId,
-            broadcastSubscriptionId
-        ) ?: return
-        if (learned == stateStorage.providerSubIdMode) {
-            return
-        }
-        stateStorage.providerSubIdMode = learned
-        logsService.insert(
-            LogEntry.Priority.INFO,
-            MODULE_NAME,
-            "ReceiverService - learned how the SMS provider writes sub_id",
-            mapOf("mode" to learned.name)
-        )
-    }
-
-    private fun isAlreadyPosted(message: InboxMessage.Text): Boolean {
-        return incomingMessagesService.isMessageProcessed(message)
-                || incomingMessagesService.findSimilarText(message) != null
-    }
-
-    private fun logDuplicate(source: String, message: InboxMessage) {
-        logsService.insert(
-            LogEntry.Priority.DEBUG,
-            MODULE_NAME,
-            "ReceiverService - same SMS already handled by the other path, skipping",
-            mapOf(
-                "source" to source,
-                "date" to message.date,
-                "subscriptionId" to message.subscriptionId,
-            )
-        )
-    }
 
     fun process(context: Context, message: InboxMessage, triggerWebhooks: Boolean) {
         logsService.insert(
@@ -252,7 +198,7 @@ class ReceiverService : KoinComponent {
         val simSlotIndex = message.subscriptionId?.let {
             SubscriptionsHelper.getSimSlotIndex(context, it)
         }
-        val simNumber = simSlotIndex?.let { it + 1 }
+        val simNumber = SubscriptionsHelper.simNumberForSlotIndex(simSlotIndex)
         val recipient = simSlotIndex?.let {
             SubscriptionsHelper.getPhoneNumber(context, it)
         }
