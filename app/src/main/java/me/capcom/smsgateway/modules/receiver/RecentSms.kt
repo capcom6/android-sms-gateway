@@ -62,6 +62,16 @@ internal class RecentSms(
     @Synchronized
     fun consume(entry: Entry): Boolean = entries.remove(entry)
 
+    /** True when exactly this SMS (same time and subscription) was recorded before. */
+    @Synchronized
+    fun contains(address: String, text: String, dateMs: Long, subscriptionId: Int?): Boolean {
+        evictExpired()
+        return entries.any {
+            it.address == address && it.text == text && it.dateMs == dateMs
+                    && it.subscriptionId == subscriptionId
+        }
+    }
+
     private fun evictExpired() {
         val limit = clock() - ttlMs
         while (entries.isNotEmpty() && entries.first().recordedAtMs < limit) {

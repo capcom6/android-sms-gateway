@@ -94,15 +94,38 @@ internal class LiveSmsDeduperTest {
     }
 
     @Test
-    fun aBroadcastIsNeverComparedWithAnotherBroadcast() {
+    fun aBroadcastIsNeverComparedWithAnotherBroadcastExceptItsOwnRedelivery() {
         val h = Harness(emui, vendorHint = true)
 
-        // two real identical SMS on one SIM, two seconds apart, and an exact repeat
+        // two real identical SMS on one SIM, two seconds apart: both kept
         h.broadcast("ok", 10_000, sub = 1)
         h.broadcast("ok", 12_000, sub = 1)
-        h.broadcast("ok", 12_000, sub = 1)
+        assertEquals(2, h.posted.size)
 
-        assertEquals(3, h.posted.size)
+        // the same broadcast delivered a second time (manifest + runtime registration)
+        h.broadcast("ok", 12_000, sub = 1)
+        assertEquals(2, h.posted.size)
+    }
+
+    @Test
+    fun theSameTextWithTheSameTimeOnTheOtherSimIsNotARedelivery() {
+        val h = Harness(emui, vendorHint = true)
+
+        h.broadcast("ok", 10_000, sub = 1)
+        h.broadcast("ok", 10_000, sub = 3)
+
+        assertEquals(listOf(1, 2), h.simNumbers())
+    }
+
+    @Test
+    fun observerFirstThenTheDoubleBroadcastDeliveryPostsOnce() {
+        val h = Harness(stock, vendorHint = false)
+
+        h.row("a", 10_000, raw = 2)
+        h.broadcast("a", 10_000, sub = 2)
+        h.broadcast("a", 10_000, sub = 2)
+
+        assertEquals(1, h.posted.size)
     }
 
     @Test

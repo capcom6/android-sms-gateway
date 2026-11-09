@@ -39,10 +39,28 @@ internal class LiveSmsDeduper(
     private val lock = Any()
     private val broadcasts = RecentSms(clock = clock)
     private val observerPosts = RecentSms(clock = clock)
+
+    /**
+     * Every broadcast seen, never consumed. The manifest and the runtime registration both
+     * deliver each broadcast, so an identical copy (same time and subscription, the window the
+     * hash id always used) is the same delivery, not a new SMS.
+     */
+    private val seenBroadcasts = RecentSms(clock = clock)
     private val learner = ModeLearner()
 
     /** `SMS_RECEIVED` (authoritative subscription id from the intent). */
     fun onBroadcast(message: InboxMessage.Text) = synchronized(lock) {
+        if (seenBroadcasts.contains(
+                message.address,
+                message.text,
+                message.date.time,
+                message.subscriptionId
+            )
+        ) {
+            log("identical broadcast already handled, skipping", details(message))
+            return@synchronized
+        }
+
         val posts = observerPosts.candidates(message.address, message.text, message.date.time)
 
         posts.singleOrNull()?.let { observed ->
@@ -56,11 +74,23 @@ internal class LiveSmsDeduper(
         val twin = posts.firstOrNull { it.subscriptionId == message.subscriptionId }
         if (twin != null) {
             observerPosts.consume(twin)
+            seenBroadcasts.record(
+                message.address,
+                message.text,
+                message.date.time,
+                message.subscriptionId
+            )
             log("same SMS already posted by the inbox observer, skipping broadcast", details(message))
             return@synchronized
         }
 
         post(message)
+        seenBroadcasts.record(
+            message.address,
+            message.text,
+            message.date.time,
+            message.subscriptionId
+        )
         broadcasts.record(
             message.address,
             message.text,
