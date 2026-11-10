@@ -115,7 +115,7 @@ class FirstStartDialogFragment : DialogFragment() {
     }
 
     private fun actionSignInByCode() {
-        val code = binding.editCode.text.toString()
+        val code = binding.editCode.text.toString().trim()
 
         binding.editCodeLayout.error = null
 
