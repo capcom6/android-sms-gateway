@@ -120,7 +120,7 @@
                 android:id="@+id/editCode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="number|numberPassword" />
+                android:inputType="text|textPassword" />
 
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
