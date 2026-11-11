@@ -14,14 +14,10 @@ import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.modules.messages.data.MessageSort
 import me.capcom.smsgateway.modules.messages.providers.SendMessageProviderFactory
 import me.capcom.smsgateway.modules.messages.providers.fakeContext
-import me.capcom.smsgateway.modules.messages.providers.fakeEncryptionService
 import me.capcom.smsgateway.modules.messages.providers.fakeLogsService
 import me.capcom.smsgateway.modules.messages.providers.fakeMachine
 import me.capcom.smsgateway.modules.messages.providers.fakeMessagesSettings
-import me.capcom.smsgateway.modules.messages.providers.fakePhoneNormalizer
 import me.capcom.smsgateway.modules.messages.providers.fakeRepository
-import me.capcom.smsgateway.modules.messages.providers.fakeSimSelector
-import me.capcom.smsgateway.modules.mms.MmsSender
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Date
@@ -162,12 +158,8 @@ class MessagesServiceTest {
             settings = fakeMessagesSettings(),
             dao = fake,
             messages = fakeRepository(FakeMessagesDao(), machine),
-            encryptionService = fakeEncryptionService(),
             machine = machine,
             logsService = fakeLogsService(),
-            mmsSender = MmsSender(fakeContext()),
-            simSelector = fakeSimSelector(),
-            phoneNormalizer = fakePhoneNormalizer(),
             sendProviderFactory = SendMessageProviderFactory(emptyList()),
         )
     }
