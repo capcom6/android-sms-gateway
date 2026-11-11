@@ -14,10 +14,7 @@ import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.domain.EntitySource
-import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
-import me.capcom.smsgateway.helpers.SubscriptionsHelper
-import me.capcom.smsgateway.modules.encryption.EncryptionService
 import me.capcom.smsgateway.modules.health.domain.CheckResult
 import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.logs.LogsService
@@ -26,9 +23,7 @@ import me.capcom.smsgateway.modules.messages.data.MessageSort
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
 import me.capcom.smsgateway.modules.messages.exceptions.ConflictException
-import me.capcom.smsgateway.modules.messages.providers.PhoneNormalizer
 import me.capcom.smsgateway.modules.messages.providers.SendMessageProviderFactory
-import me.capcom.smsgateway.modules.messages.providers.SimSelector
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.modules.mms.MmsSender
@@ -41,12 +36,8 @@ class MessagesService(
     private val settings: MessagesSettings,
     private val dao: MessagesDao,    // todo: use MessagesRepository
     private val messages: MessagesRepository,
-    private val encryptionService: EncryptionService,
     private val machine: MessageStateService,
     private val logsService: LogsService,
-    private val mmsSender: MmsSender,
-    private val simSelector: SimSelector,
-    private val phoneNormalizer: PhoneNormalizer,
     private val sendProviderFactory: SendMessageProviderFactory,
 ) {
     /**
@@ -390,10 +381,7 @@ class MessagesService(
         }
 
         try {
-            when (val content = request.message.content) {
-                is MessageContent.Mms -> sendMMS(request)
-                else -> sendProviderFactory.resolve(content).send(request)
-            }
+            sendProviderFactory.resolve(request.message.content).send(request)
             return true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -405,67 +393,6 @@ class MessagesService(
         }
 
         return false
-    }
-
-    private suspend fun sendMMS(request: StoredSendRequest) {
-        val message = request.message
-        val id = message.id
-        val content = message.content as MessageContent.Mms
-
-        val simNumber = simSelector.select(request.id, request.params)
-        if (request.params.simNumber == null && simNumber != null) {
-            dao.updateSimNumber(id, simNumber + 1)
-        }
-
-        // Resolve a subscription ID + MSISDN from the chosen SIM slot (if any).
-        // Verizon and some other US carriers silently drop MMS whose From
-        // header is the insert-address-token, so we pass an explicit MSISDN
-        // whenever the platform exposes one.
-        val subscriptionId = simNumber?.let { SubscriptionsHelper.getSubscriptionId(context, it) }
-        val fromMsisdn = simNumber?.let { SubscriptionsHelper.getPhoneNumber(context, it) }
-            ?: SubscriptionsHelper.getActiveSimCards(context)?.firstOrNull()?.phoneNumber
-
-        val decryptedContent = if (message.isEncrypted) {
-            MessageContent.Mms(
-                subject = content.subject?.let { encryptionService.decrypt(it) },
-                text = content.text?.let { encryptionService.decrypt(it) },
-                attachments = content.attachments.map {
-                    it.copy(
-                        name = it.name?.let { v -> encryptionService.decrypt(v) },
-                        data = encryptionService.decrypt(it.data)
-                    )
-                }
-            )
-        } else content
-
-        val recipients = message.phoneNumbers.map { source ->
-            phoneNormalizer.normalize(
-                source,
-                message.isEncrypted,
-                request.params.skipPhoneValidation
-            )
-        }
-
-        dao.updatePartsCount(id, 1 + decryptedContent.attachments.size)
-
-        // Don't set fromMsisdn — insert-address-token lets the MMSC fill
-        // the From field, which matches how Google Messages composes its
-        // PDUs and is what Verizon's MMSC expects.
-        mmsSender.send(id, recipients, decryptedContent, subscriptionId, fromMsisdn)
-
-        // Move all recipients out of Pending immediately so the worker loop
-        // does not re-pull this message while we wait for ACTION_MMS_SENT.
-        // State transitions to Sent/Failed are driven by processStateIntent.
-        // Only transition recipients that are still Pending: if the
-        // ACTION_MMS_SENT callback already recorded Sent/Failed, the terminal
-        // state must not be overwritten.
-        try {
-            machine.transitionRecipients(id, ProcessingState.Processed)
-        } catch (_: IllegalStateException) {
-            // The ACTION_MMS_SENT callback already advanced recipients to
-            // Sent/Failed before this call executed. This is a benign race
-            // condition; the callback owns the final state.
-        }
     }
 
     private fun mmsErrorToMessage(resultCode: Int): String {

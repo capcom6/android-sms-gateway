@@ -1,6 +1,7 @@
 package me.capcom.smsgateway.modules.messages
 
 import me.capcom.smsgateway.modules.messages.providers.DataSendProvider
+import me.capcom.smsgateway.modules.messages.providers.MmsSendProvider
 import me.capcom.smsgateway.modules.messages.providers.PhoneNormalizer
 import me.capcom.smsgateway.modules.messages.providers.SendMessageProviderFactory
 import me.capcom.smsgateway.modules.messages.providers.SimSelector
@@ -19,8 +20,11 @@ val messagesModule = module {
     single { PhoneNormalizer(get(), get()) }
     singleOf(::TextSendProvider)
     singleOf(::DataSendProvider)
+    singleOf(::MmsSendProvider)
     single {
-        SendMessageProviderFactory(listOf(get<TextSendProvider>(), get<DataSendProvider>()))
+        SendMessageProviderFactory(
+            listOf(get<TextSendProvider>(), get<DataSendProvider>(), get<MmsSendProvider>())
+        )
     }
     viewModel { MessagesListViewModel(get()) }
     viewModel { MessageDetailsViewModel(get()) }
