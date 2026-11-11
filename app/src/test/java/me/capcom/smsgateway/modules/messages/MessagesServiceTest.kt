@@ -12,9 +12,18 @@ import me.capcom.smsgateway.data.entities.RecipientState
 import me.capcom.smsgateway.domain.EntitySource
 import me.capcom.smsgateway.domain.ProcessingState
 import me.capcom.smsgateway.modules.messages.data.MessageSort
+import me.capcom.smsgateway.modules.messages.providers.SendMessageProviderFactory
+import me.capcom.smsgateway.modules.messages.providers.fakeContext
+import me.capcom.smsgateway.modules.messages.providers.fakeEncryptionService
+import me.capcom.smsgateway.modules.messages.providers.fakeLogsService
+import me.capcom.smsgateway.modules.messages.providers.fakeMachine
+import me.capcom.smsgateway.modules.messages.providers.fakeMessagesSettings
+import me.capcom.smsgateway.modules.messages.providers.fakePhoneNormalizer
+import me.capcom.smsgateway.modules.messages.providers.fakeRepository
+import me.capcom.smsgateway.modules.messages.providers.fakeSimSelector
+import me.capcom.smsgateway.modules.mms.MmsSender
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.lang.reflect.Field
 import java.util.Date
 
 class MessagesServiceTest {
@@ -142,30 +151,25 @@ class MessagesServiceTest {
     }
 
     private fun messagesServiceWith(fake: MessagesDao): MessagesService {
-        // MessagesService's constructor touches Android APIs (countryCode field
-        // reads the TelephonyManager), so it cannot run in a plain JVM test.
-        // Allocate the instance without the constructor and inject the dao
-        // field - the only dependency selectMessages uses. No mocking library.
-        // sun.misc.Unsafe is reached via reflection: the Kotlin unit-test
-        // classpath cannot resolve it at compile time.
-        val unsafeClass = Class.forName("sun.misc.Unsafe")
-        val unsafe = unsafeClass
-            .getDeclaredField("theUnsafe")
-            .also { it.isAccessible = true }
-            .get(null)
-
-        val service = unsafeClass
-            .getMethod("allocateInstance", Class::class.java)
-            .invoke(unsafe, MessagesService::class.java) as MessagesService
-
-        val daoField = MessagesService::class.java.getDeclaredField("dao")
-        val offset = unsafeClass
-            .getMethod("objectFieldOffset", Field::class.java)
-            .invoke(unsafe, daoField)
-        unsafeClass
-            .getMethod("putObject", Any::class.java, java.lang.Long.TYPE, Any::class.java)
-            .invoke(unsafe, service, offset, fake)
-        return service
+        // The constructor only stores fields: SIM selection and phone
+        // normalization were extracted into SimSelector/PhoneNormalizer, so it
+        // is JVM-safe and the old sun.misc.Unsafe allocation hack is gone.
+        // Every dependency is a real instance over the test doubles; only the
+        // platform-typed context is a null cast (unused by selectMessages).
+        val machine = fakeMachine(FakeMessagesDao())
+        return MessagesService(
+            context = fakeContext(),
+            settings = fakeMessagesSettings(),
+            dao = fake,
+            messages = fakeRepository(FakeMessagesDao(), machine),
+            encryptionService = fakeEncryptionService(),
+            machine = machine,
+            logsService = fakeLogsService(),
+            mmsSender = MmsSender(fakeContext()),
+            simSelector = fakeSimSelector(),
+            phoneNormalizer = fakePhoneNormalizer(),
+            sendProviderFactory = SendMessageProviderFactory(emptyList()),
+        )
     }
 
     @Test
