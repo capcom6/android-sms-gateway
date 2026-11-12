@@ -178,7 +178,7 @@ internal class BaseSmsSendProviderTest {
         assertEquals(ProcessingState.Processed, h.dao.recipientState("m1", "+79001234567"))
         assertEquals(ProcessingState.Failed, h.dao.recipientState("m1", "abc"))
         val error = h.dao.recipients[Pair("m1", "abc")]!!.error
-        assertTrue(error!!.startsWith("sendSMS: "))
+        assertTrue(error!!.startsWith("send: "))
 
         val entry = h.logDao.entries.single()
         assertEquals(LogEntry.Priority.ERROR, entry.priority)

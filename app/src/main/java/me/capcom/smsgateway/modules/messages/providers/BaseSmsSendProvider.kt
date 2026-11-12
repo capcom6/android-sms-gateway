@@ -7,11 +7,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.telephony.SmsManager
 import androidx.core.app.ActivityCompat
 import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.domain.ProcessingState
+import me.capcom.smsgateway.helpers.SmsManagerHelper
 import me.capcom.smsgateway.helpers.SubscriptionsHelper
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
@@ -85,7 +85,7 @@ abstract class BaseSmsSendProvider(
                     id,
                     sourcePhoneNumber,
                     ProcessingState.Failed,
-                    "sendSMS: " + th.message
+                    "send: " + th.message
                 )
             }
         }
@@ -93,37 +93,26 @@ abstract class BaseSmsSendProvider(
 
     @SuppressLint("NewApi")
     protected open fun getSmsManager(simNumber: Int?): SmsManager {
-        return if (simNumber != null) {
-            if (ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.READ_PHONE_STATE
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                throw UnsupportedOperationException("SIM selection requires READ_PHONE_STATE permission")
-            }
-
-            val subscriptionManager = SubscriptionsHelper.getSubscriptionsManager(context)
-                ?: throw UnsupportedOperationException("SIM selection available from API 22")
-
-            subscriptionManager.activeSubscriptionInfoList.find {
-                it.simSlotIndex == simNumber
-            }?.let {
-                if (Build.VERSION.SDK_INT < 31) {
-                    @Suppress("DEPRECATION")
-                    SmsManager.getSmsManagerForSubscriptionId(it.subscriptionId)
-                } else {
-                    context.getSystemService(SmsManager::class.java)
-                        .createForSubscriptionId(it.subscriptionId)
-                }
-            } ?: throw UnsupportedOperationException("SIM ${simNumber + 1} not found")
-        } else {
-            if (Build.VERSION.SDK_INT < 31) {
-                @Suppress("DEPRECATION")
-                SmsManager.getDefault()
-            } else {
-                context.getSystemService(SmsManager::class.java)
-            }
+        if (simNumber == null) {
+            return SmsManagerHelper.forSubscription(context, null)
         }
+
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.READ_PHONE_STATE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            throw UnsupportedOperationException("SIM selection requires READ_PHONE_STATE permission")
+        }
+
+        val subscriptionManager = SubscriptionsHelper.getSubscriptionsManager(context)
+            ?: throw UnsupportedOperationException("SIM selection available from API 22")
+
+        val info = subscriptionManager.activeSubscriptionInfoList.find {
+            it.simSlotIndex == simNumber
+        } ?: throw UnsupportedOperationException("SIM ${simNumber + 1} not found")
+
+        return SmsManagerHelper.forSubscription(context, info.subscriptionId)
     }
 
     protected open fun broadcastIntent(
