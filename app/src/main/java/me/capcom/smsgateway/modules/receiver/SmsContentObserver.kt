@@ -11,7 +11,6 @@ import android.provider.Telephony
 import androidx.core.content.ContextCompat
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
-import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.Date
@@ -36,6 +35,15 @@ class SmsContentObserver : KoinComponent {
     private var handlerThread: HandlerThread? = null
     private var observer: ContentObserver? = null
 
+    // Only touched on the observer's handler thread (onChange and the task both run there).
+    private var scanScheduled = false
+    private var scanHandler: Handler? = null
+    private val failedAttempts = mutableMapOf<Long, Int>()
+    private val processTask = Runnable {
+        scanScheduled = false
+        processNewMessages()
+    }
+
     fun start() {
         if (observer != null) {
             return
@@ -56,14 +64,23 @@ class SmsContentObserver : KoinComponent {
             storage.smsLastProcessedID = queryMaxSmsId()
         }
 
+        scanScheduled = false
         val thread = HandlerThread("SmsContentObserver").apply { start() }
         handlerThread = thread
         val handler = Handler(thread.looper)
+        scanHandler = handler
 
         val obs = object : ContentObserver(handler) {
             override fun onChange(selfChange: Boolean) {
                 super.onChange(selfChange)
-                processNewMessages()
+                // Give the SMS_RECEIVED broadcast (which carries the real subscription id)
+                // a head start, so the same SMS is not posted twice. At most one scan is
+                // pending and it is never pushed back, so frequent provider writes (sent
+                // box, status updates) cannot starve the inbox scan.
+                if (!scanScheduled) {
+                    scanScheduled = true
+                    handler.postDelayed(processTask, OBSERVER_DELAY_MS)
+                }
             }
         }
         observer = obs
@@ -168,22 +185,39 @@ class SmsContentObserver : KoinComponent {
                 }
 
                 try {
-                    receiverSvc.process(
-                        context,
-                        InboxMessage.Text(body, address, date, subId),
-                        true,
-                    )
+                    // subId is the raw provider value: the subscription id on stock
+                    // Android, the SIM slot index on some OEMs. ReceiverService resolves it.
+                    receiverSvc.processProviderSms(body, address, date, subId)
                 } catch (e: Exception) {
+                    val attempts = (failedAttempts[id] ?: 0) + 1
+                    val willRetry = attempts < MAX_ATTEMPTS && scheduleRetry()
                     logsService.insert(
                         LogEntry.Priority.ERROR,
                         MODULE_NAME,
-                        "Failed processing inbox SMS (id=$id)",
+                        "Failed processing inbox SMS (id=$id, attempt $attempts)",
                         mapOf("smsId" to id, "error" to (e.message ?: e.toString())),
                     )
+                    if (willRetry) {
+                        // keep the high-water mark below this row so the next scan retries it
+                        failedAttempts[id] = attempts
+                        return
+                    }
+                    failedAttempts.remove(id)
                 }
+                failedAttempts.remove(id)
                 storage.smsLastProcessedID = id
             }
         }
+    }
+
+    /** Schedules one more scan; false when it can't be scheduled (the row is then skipped). */
+    private fun scheduleRetry(): Boolean {
+        val handler = scanHandler ?: return false
+        if (!scanScheduled) {
+            scanScheduled = true
+            handler.postDelayed(processTask, RETRY_DELAY_MS)
+        }
+        return true
     }
 
     private fun canReadSms(): Boolean = ContextCompat.checkSelfPermission(
@@ -193,5 +227,12 @@ class SmsContentObserver : KoinComponent {
 
     companion object {
         private const val TAG = "SmsContentObserver"
+
+        /** Head start for the SMS_RECEIVED broadcast before an inbox row is processed. */
+        private const val OBSERVER_DELAY_MS = 3_000L
+
+        /** A row whose post failed is retried this often, at most [MAX_ATTEMPTS] times. */
+        private const val RETRY_DELAY_MS = 10_000L
+        private const val MAX_ATTEMPTS = 3
     }
 }

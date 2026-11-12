@@ -60,17 +60,28 @@ class MessagesReceiver : BroadcastReceiver(), KoinComponent {
             }
         }
 
-        receiverSvc.process(
-            context,
-            inboxMessage,
-            true,
-        )
+        // Processing takes the live lock and writes to the database: keep it off the main
+        // thread. A single thread keeps the broadcasts in arrival order.
+        val pending = goAsync()
+        EXECUTOR.execute {
+            try {
+                receiverSvc.processBroadcast(context, inboxMessage)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to process incoming SMS", e)
+            } finally {
+                pending?.finish()
+            }
+        }
     }
 
     companion object {
         private const val TAG = "MessagesReceiver"
 
         private val INSTANCE: MessagesReceiver by lazy { MessagesReceiver() }
+
+        private val EXECUTOR: java.util.concurrent.ExecutorService by lazy {
+            java.util.concurrent.Executors.newSingleThreadExecutor()
+        }
 
         fun start(context: Context) {
             register(context)

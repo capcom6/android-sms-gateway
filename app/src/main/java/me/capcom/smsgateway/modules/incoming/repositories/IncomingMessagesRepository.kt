@@ -28,6 +28,9 @@ class IncomingMessagesRepository(private val dao: IncomingMessagesDao) {
 
     fun selectById(id: String): IncomingMessage? = dao.selectById(id)
 
+    fun selectSimilarSms(sender: String, text: String, from: Long, to: Long): List<IncomingMessage> =
+        dao.selectSimilarSms(sender, text, from, to)
+
     val totals: LiveData<IncomingMessageTotals> = dao.getStats().distinctUntilChanged()
 
     fun insert(message: IncomingMessage) = dao.insert(message)

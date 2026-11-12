@@ -23,7 +23,7 @@ class IncomingMessagesService(
         val simSlotIndex = message.subscriptionId?.let {
             SubscriptionsHelper.getSimSlotIndex(context, it)
         }
-        val simNumber = simSlotIndex?.let { it + 1 }
+        val simNumber = SubscriptionsHelper.simNumberForSlotIndex(simSlotIndex)
         val recipient = simSlotIndex?.let {
             SubscriptionsHelper.getPhoneNumber(context, it)
         }
@@ -128,6 +128,15 @@ class IncomingMessagesService(
 
     fun isMessageProcessed(message: InboxMessage): Boolean {
         return getById(buildId(message)) != null
+    }
+
+    /**
+     * Text SMS already saved for the same sender and body at EXACTLY the same time (the same
+     * window the hash id uses), whatever their subscription id. The caller compares the
+     * subscription; the window is deliberately not wider than the hash id's.
+     */
+    fun findStoredText(address: String, text: String, dateMs: Long): List<IncomingMessage> {
+        return repository.selectSimilarSms(address.trim(), text, dateMs, dateMs)
     }
 
     fun start(context: Context) {
