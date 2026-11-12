@@ -5,12 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.telephony.SmsManager
 import android.util.Base64
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.domain.MessageContent
+import me.capcom.smsgateway.helpers.SmsManagerHelper
 import me.capcom.smsgateway.modules.mms.pdu.aosp.CharacterSets
 import me.capcom.smsgateway.modules.mms.pdu.aosp.EncodedStringValue
 import me.capcom.smsgateway.modules.mms.pdu.aosp.PduBody
@@ -65,7 +65,7 @@ class MmsSender(
             pendingIntentFlags()
         )
 
-        val manager = getSmsManager(subscriptionId)
+        val manager = SmsManagerHelper.forSubscription(context, subscriptionId)
         try {
             manager.sendMultimediaMessage(
                 context,
@@ -163,28 +163,6 @@ class MmsSender(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
         } else {
             PendingIntent.FLAG_UPDATE_CURRENT
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    private fun getSmsManager(subscriptionId: Int?): SmsManager {
-        return when {
-            subscriptionId == null || subscriptionId < 0 -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    context.getSystemService(SmsManager::class.java)
-                } else {
-                    SmsManager.getDefault()
-                }
-            }
-
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-                context.getSystemService(SmsManager::class.java)
-                    .createForSubscriptionId(subscriptionId)
-
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 ->
-                SmsManager.getSmsManagerForSubscriptionId(subscriptionId)
-
-            else -> SmsManager.getDefault()
         }
     }
 

@@ -1,19 +1,11 @@
 package me.capcom.smsgateway.modules.messages
 
-import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.telephony.SmsManager
 import android.telephony.SmsMessage
-import android.telephony.TelephonyManager
-import android.util.Base64
-import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -22,20 +14,16 @@ import me.capcom.smsgateway.data.dao.MessagesDao
 import me.capcom.smsgateway.data.entities.Message
 import me.capcom.smsgateway.data.entities.MessageWithRecipients
 import me.capcom.smsgateway.domain.EntitySource
-import me.capcom.smsgateway.domain.MessageContent
 import me.capcom.smsgateway.domain.ProcessingState
-import me.capcom.smsgateway.helpers.PhoneHelper
-import me.capcom.smsgateway.helpers.SubscriptionsHelper
-import me.capcom.smsgateway.modules.encryption.EncryptionService
 import me.capcom.smsgateway.modules.health.domain.CheckResult
 import me.capcom.smsgateway.modules.health.domain.Status
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.messages.data.MessageSort
-import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.messages.data.StoredSendRequest
 import me.capcom.smsgateway.modules.messages.exceptions.ConflictException
+import me.capcom.smsgateway.modules.messages.providers.SendMessageProviderFactory
 import me.capcom.smsgateway.modules.messages.workers.LogTruncateWorker
 import me.capcom.smsgateway.modules.messages.workers.SendMessagesWorker
 import me.capcom.smsgateway.modules.mms.MmsSender
@@ -46,12 +34,11 @@ import kotlin.coroutines.coroutineContext
 class MessagesService(
     private val context: Context,
     private val settings: MessagesSettings,
-    private val dao: MessagesDao,    // todo: use MessagesRepository
+    private val dao: MessagesDao,    // reads only: state -> machine, send metadata -> providers, enqueue/pending -> repository
     private val messages: MessagesRepository,
-    private val encryptionService: EncryptionService,
     private val machine: MessageStateService,
     private val logsService: LogsService,
-    private val mmsSender: MmsSender,
+    private val sendProviderFactory: SendMessageProviderFactory,
 ) {
     /**
      * Serializes the worker (KEEP/REPLACE) decisions made from the DB snapshot
@@ -61,9 +48,6 @@ class MessagesService(
     private val sendWorkerLock = Any()
     val processingOrder
         get() = settings.processingOrder
-
-    private val countryCode: String? =
-        (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkCountryIso
 
     //#region Health
     fun healthCheck(): Map<String, CheckResult> {
@@ -397,10 +381,7 @@ class MessagesService(
         }
 
         try {
-            when (request.message.content) {
-                is MessageContent.Mms -> sendMMS(request)
-                else -> sendSMS(request)
-            }
+            sendProviderFactory.resolve(request.message.content).send(request)
             return true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -412,253 +393,6 @@ class MessagesService(
         }
 
         return false
-    }
-
-    private suspend fun sendMMS(request: StoredSendRequest) {
-        val message = request.message
-        val id = message.id
-        val content = message.content as MessageContent.Mms
-
-        val simNumber = selectSimNumber(request.id, request.params)
-        if (request.params.simNumber == null && simNumber != null) {
-            dao.updateSimNumber(id, simNumber + 1)
-        }
-
-        // Resolve a subscription ID + MSISDN from the chosen SIM slot (if any).
-        // Verizon and some other US carriers silently drop MMS whose From
-        // header is the insert-address-token, so we pass an explicit MSISDN
-        // whenever the platform exposes one.
-        val subscriptionId = simNumber?.let { SubscriptionsHelper.getSubscriptionId(context, it) }
-        val fromMsisdn = simNumber?.let { SubscriptionsHelper.getPhoneNumber(context, it) }
-            ?: SubscriptionsHelper.getActiveSimCards(context)?.firstOrNull()?.phoneNumber
-
-        val decryptedContent = if (message.isEncrypted) {
-            MessageContent.Mms(
-                subject = content.subject?.let { encryptionService.decrypt(it) },
-                text = content.text?.let { encryptionService.decrypt(it) },
-                attachments = content.attachments.map {
-                    it.copy(
-                        name = it.name?.let { v -> encryptionService.decrypt(v) },
-                        data = encryptionService.decrypt(it.data)
-                    )
-                }
-            )
-        } else content
-
-        val recipients = message.phoneNumbers.map { source ->
-            decryptAndNormalizePhone(
-                source,
-                message.isEncrypted,
-                request.params.skipPhoneValidation
-            )
-        }
-
-        dao.updatePartsCount(id, 1 + decryptedContent.attachments.size)
-
-        // Don't set fromMsisdn — insert-address-token lets the MMSC fill
-        // the From field, which matches how Google Messages composes its
-        // PDUs and is what Verizon's MMSC expects.
-        mmsSender.send(id, recipients, decryptedContent, subscriptionId, fromMsisdn)
-
-        // Move all recipients out of Pending immediately so the worker loop
-        // does not re-pull this message while we wait for ACTION_MMS_SENT.
-        // State transitions to Sent/Failed are driven by processStateIntent.
-        // Only transition recipients that are still Pending: if the
-        // ACTION_MMS_SENT callback already recorded Sent/Failed, the terminal
-        // state must not be overwritten.
-        try {
-            machine.transitionRecipients(id, ProcessingState.Processed)
-        } catch (_: IllegalStateException) {
-            // The ACTION_MMS_SENT callback already advanced recipients to
-            // Sent/Failed before this call executed. This is a benign race
-            // condition; the callback owns the final state.
-        }
-    }
-
-    private fun selectSimNumber(id: Long, params: SendParams): Int? {
-        if (params.simNumber != null) {
-            return params.simNumber - 1
-        }
-
-        val simSlots = SubscriptionsHelper.selectAvailableSimSlots(context)?.sorted() ?: return null
-        if (simSlots.isEmpty()) {
-            throw RuntimeException("No SIMs found")
-        }
-
-        return when (settings.simSelectionMode) {
-            MessagesSettings.SimSelectionMode.OSDefault -> null
-            MessagesSettings.SimSelectionMode.RoundRobin -> simSlots[(id % simSlots.size).toInt()]
-            MessagesSettings.SimSelectionMode.Random -> simSlots.random()
-        }
-    }
-
-    private suspend fun sendSMS(request: StoredSendRequest) {
-        val message = request.message
-        val id = message.id
-
-        val simNumber = selectSimNumber(request.id, request.params)
-        val smsManager: SmsManager = getSmsManager(simNumber)
-
-        if (request.params.simNumber == null && simNumber != null) {
-            dao.updateSimNumber(id, simNumber + 1)
-        }
-
-        val sendFn: (String, PendingIntent, PendingIntent?) -> Unit =
-            when (val content = message.content) {
-                is MessageContent.Text -> {
-                    // Handle text messages
-                    val text = when (message.isEncrypted) {
-                        true -> encryptionService.decrypt(content.text)
-                        false -> content.text
-                    }
-
-                    val parts = smsManager.divideMessage(text)
-                    dao.updatePartsCount(id, parts.size)
-
-                    if (parts.size > 1) {
-                        { phoneNumber: String, sentIntent: PendingIntent, deliveredIntent: PendingIntent? ->
-                            smsManager.sendMultipartTextMessage(
-                                phoneNumber,
-                                null,
-                                parts,
-                                ArrayList(List(parts.size) { sentIntent }),
-                                deliveredIntent?.let { intent -> ArrayList(List(parts.size) { intent }) }
-                            )
-                        }
-                    } else {
-                        { phoneNumber: String, sentIntent: PendingIntent, deliveredIntent: PendingIntent? ->
-                            smsManager.sendTextMessage(
-                                phoneNumber,
-                                null,
-                                text,
-                                sentIntent,
-                                deliveredIntent
-                            )
-                        }
-                    }
-                }
-
-                is MessageContent.Mms ->
-                    throw IllegalStateException("MMS content must be handled via sendMMS")
-
-                is MessageContent.Data -> {
-                    val data = when (message.isEncrypted) {
-                        true -> encryptionService.decrypt(content.data)
-                        false -> content.data
-                    }
-                    val decodedData = try {
-                        Base64.decode(data, Base64.DEFAULT)
-                    } catch (e: IllegalArgumentException) {
-                        throw IllegalArgumentException(
-                            "Invalid Base64 data for message ${message.id}",
-                            e
-                        )
-                    }
-                    dao.updatePartsCount(id, 1);
-
-                    { phoneNumber: String, sentIntent: PendingIntent, deliveredIntent: PendingIntent? ->
-                        smsManager.sendDataMessage(
-                            phoneNumber,
-                            null,  // scAddress
-                            content.port.toShort(),
-                            decodedData,
-                            sentIntent,
-                            deliveredIntent
-                        )
-                    }
-                }
-            }
-
-        request.message.phoneNumbers
-            .forEach { sourcePhoneNumber ->
-                val requestCode = id.hashCode()
-                val sentIntent = PendingIntent.getBroadcast(
-                    context,
-                    requestCode,
-                    Intent(
-                        EventsReceiver.ACTION_SENT,
-                        Uri.parse("$id|$sourcePhoneNumber"),
-                        context,
-                        EventsReceiver::class.java
-                    ),
-                    PendingIntent.FLAG_MUTABLE
-                )
-                val deliveredIntent = when (request.params.withDeliveryReport) {
-                    false -> null
-                    true -> PendingIntent.getBroadcast(
-                        context,
-                        requestCode,
-                        Intent(
-                            EventsReceiver.ACTION_DELIVERED,
-                            Uri.parse("$id|$sourcePhoneNumber"),
-                            context,
-                            EventsReceiver::class.java
-                        ),
-                        PendingIntent.FLAG_MUTABLE
-                    )
-                }
-
-                try {
-                    val normalizedPhoneNumber = decryptAndNormalizePhone(
-                        sourcePhoneNumber, message.isEncrypted, request.params.skipPhoneValidation,
-                    )
-
-                    sendFn(normalizedPhoneNumber, sentIntent, deliveredIntent)
-
-                    machine.transitionRecipient(id, sourcePhoneNumber, ProcessingState.Processed)
-                } catch (th: Throwable) {
-                    logsService.insert(
-                        LogEntry.Priority.ERROR,
-                        MODULE_NAME,
-                        "Can't send message: " + th.message,
-                        mapOf(
-                            "stacktrace" to th.stackTraceToString(),
-                        )
-                    )
-
-                    machine.transitionRecipient(
-                        id,
-                        sourcePhoneNumber,
-                        ProcessingState.Failed,
-                        "sendSMS: " + th.message
-                    )
-                }
-            }
-    }
-
-    @SuppressLint("NewApi")
-    private fun getSmsManager(simNumber: Int?): SmsManager {
-        return if (simNumber != null) {
-            if (ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.READ_PHONE_STATE
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                throw UnsupportedOperationException("SIM selection requires READ_PHONE_STATE permission")
-            }
-
-            val subscriptionManager = SubscriptionsHelper.getSubscriptionsManager(context)
-                ?: throw UnsupportedOperationException("SIM selection available from API 22")
-
-            subscriptionManager.activeSubscriptionInfoList.find {
-                it.simSlotIndex == simNumber
-            }?.let {
-                if (Build.VERSION.SDK_INT < 31) {
-                    @Suppress("DEPRECATION")
-                    SmsManager.getSmsManagerForSubscriptionId(it.subscriptionId)
-                } else {
-                    context.getSystemService(SmsManager::class.java)
-                        .createForSubscriptionId(it.subscriptionId)
-                }
-            } ?: throw UnsupportedOperationException("SIM ${simNumber + 1} not found")
-        } else {
-            if (Build.VERSION.SDK_INT < 31) {
-                @Suppress("DEPRECATION")
-                SmsManager.getDefault()
-            } else {
-                context.getSystemService(SmsManager::class.java)
-            }
-        }
     }
 
     private fun mmsErrorToMessage(resultCode: Int): String {
@@ -673,19 +407,6 @@ class MessagesService(
             SmsManager.MMS_ERROR_CONFIGURATION_ERROR -> "MMS_ERROR_CONFIGURATION_ERROR (MMS configuration error)"
             SmsManager.MMS_ERROR_NO_DATA_NETWORK -> "MMS_ERROR_NO_DATA_NETWORK (No data network available)"
             else -> "Unknown MMS error: $resultCode"
-        }
-    }
-
-    private suspend fun decryptAndNormalizePhone(
-        source: String,
-        isEncrypted: Boolean,
-        skipValidation: Boolean,
-    ): String {
-        val phone = if (isEncrypted) encryptionService.decrypt(source) else source
-        return if (skipValidation) {
-            phone.filter { it.isDigit() || it == '+' || it == '*' || it == '#' }
-        } else {
-            PhoneHelper.filterPhoneNumber(phone, countryCode ?: "RU")
         }
     }
 
