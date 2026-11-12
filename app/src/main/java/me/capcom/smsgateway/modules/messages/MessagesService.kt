@@ -34,7 +34,7 @@ import kotlin.coroutines.coroutineContext
 class MessagesService(
     private val context: Context,
     private val settings: MessagesSettings,
-    private val dao: MessagesDao,    // todo: use MessagesRepository
+    private val dao: MessagesDao,    // reads only: state -> machine, send metadata -> providers, enqueue/pending -> repository
     private val messages: MessagesRepository,
     private val machine: MessageStateService,
     private val logsService: LogsService,
