@@ -39,8 +39,9 @@ import me.capcom.smsgateway.modules.messages.events.MessageStateChangedEvent
  *   (contract parity with the legacy MessagesService.kt:108 requireNotNull ->
  *   route 404).
  *
- * DAO state-mutation methods stay public API for now (MessagesService still
- * uses them; visibility/removal is deferred to wave 4 (t4)).
+ * DAO state-mutation methods stay public API for now (this class owns state
+ * transitions; send providers use updateSimNumber/updatePartsCount as send
+ * metadata; narrowing visibility is deferred).
  */
 open class MessageStateService(
     private val dao: MessagesDao,
