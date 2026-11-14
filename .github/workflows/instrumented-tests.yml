@@ -3,6 +3,7 @@ name: Instrumented Tests
 on:
   pull_request: { types: [opened, synchronize, ready_for_review] }
   push: { branches: [master] }
+  workflow_dispatch:
 
 jobs:
   # Device-paired E2E lives behind Android Keystore, whose RSA-OAEP behaviour is

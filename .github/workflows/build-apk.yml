@@ -20,6 +20,20 @@ on:
         required: true
       signing-store-password:
         required: true
+  workflow_dispatch:
+    inputs:
+      version-name:
+        description: 'Version name (a leading "v" is stripped)'
+        required: true
+        default: 'manual'
+      build-type:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - insecure
 
 jobs:
   build-apk:
@@ -46,7 +60,7 @@ jobs:
 
       - name: Setup Google Services
         env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.google-services-json }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.google-services-json || secrets.GOOGLE_SERVICES_JSON }}
         run: |
           # Fork PRs and secretless runs decode an empty secret into an empty
           # file, which makes the google-services plugin fail with
@@ -68,7 +82,7 @@ jobs:
       #1
       - name: Decode Keystore
         env:
-          ENCODED_STRING: ${{ secrets.signing-key-store-base64 }}
+          ENCODED_STRING: ${{ secrets.signing-key-store-base64 || secrets.SIGNING_KEY_STORE_BASE64 }}
           SIGNING_KEY_STORE_PATH: app/keystore.jks
 
         run: |
@@ -83,18 +97,18 @@ jobs:
       - name: Build ${{ inputs.build-type }} apk
         env:
           SIGNING_KEY_STORE_PATH: app/keystore.jks
-          SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password }}
-          SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password }}
+          SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias || secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password || secrets.SIGNING_KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password || secrets.SIGNING_STORE_PASSWORD }}
           TARGET: ${{ inputs.build-type }}
         run: ./gradlew assemble${TARGET^}
 
       - name: Build ${{ inputs.build-type }} bundle
         env:
           SIGNING_KEY_STORE_PATH: app/keystore.jks
-          SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password }}
-          SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password }}
+          SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias || secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password || secrets.SIGNING_KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password || secrets.SIGNING_STORE_PASSWORD }}
           TARGET: ${{ inputs.build-type }}
         run: ./gradlew bundle${TARGET^}
       #3
