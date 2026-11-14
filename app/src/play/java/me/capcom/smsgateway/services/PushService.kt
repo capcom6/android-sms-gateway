@@ -90,15 +90,19 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                 FirebaseMessaging.getInstance().token
             } catch (e: IllegalStateException) {
                 // play build without google-services.json: no default
-                // FirebaseApp, so FCM is unavailable. Register with a null
-                // token — the cloud server then uses the SSE transport.
+                // FirebaseApp, so FCM is unavailable. Register with an empty
+                // token — the server clears the stored token for it, and then
+                // delivers commands over the SSE transport.
                 logger.insert(
                     priority = LogEntry.Priority.ERROR,
                     module = PushService::class.java.simpleName,
                     message = "Firebase is not initialized, falling back to the SSE transport",
                     mapOf("error" to e.toString())
                 )
-                RegistrationWorker.start(context, null)
+                // An empty token clears the stored token server-side; null
+                // would mean "leave unchanged", keeping a stale FCM token
+                // that blocks SSE delivery.
+                RegistrationWorker.start(context, "")
                 return
             }
             tokenTask.addOnCompleteListener { task ->

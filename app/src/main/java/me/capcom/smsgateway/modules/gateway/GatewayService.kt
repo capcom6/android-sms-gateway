@@ -196,7 +196,12 @@ class GatewayService(
             )
         )
 
-        this.settings.fcmToken = pushToken
+        // The server treats an absent pushToken as "leave unchanged" and an
+        // empty string as "clear the stored token" (devices/repository.go
+        // Update uses lo.EmptyableToPtr). Keep the local token null in both
+        // cases so the app selects the SSE transport whenever there is no
+        // live FCM token.
+        this.settings.fcmToken = pushToken?.ifEmpty { null }
 
         events.emit(
             DeviceRegisteredEvent.Success(
