@@ -55,10 +55,10 @@ jobs:
           aws_bucket: ${{ secrets.AWS_BUCKET }}
           endpoint: ${{ secrets.AWS_ENDPOINT }}
           source_files: |
-            ./apk/play/release/app-play-release.apk
-            ./bundle/playRelease/app-play-release.aab
+            ./apk/play/release/app-release.apk
+            ./bundle/playRelease/app-release.aab
             ./apk/play/insecure/app-insecure.apk
-            ./bundle/playInsecure/app-play-insecure.aab
+            ./bundle/playInsecure/app-insecure.aab
           destination_dir: apk/${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Find Comment
@@ -81,9 +81,9 @@ jobs:
 
             | file | commit |
             | ---- | ------ |
-            | [`app-play-release.apk`](https://s3.sms-gate.app/apk/${{ github.event.pull_request.head.sha }}/app-play-release.apk) | ${{ github.event.pull_request.head.sha }} |
-            | [`app-play-release.aab`](https://s3.sms-gate.app/apk/${{ github.event.pull_request.head.sha }}/app-play-release.aab) | ${{ github.event.pull_request.head.sha }} |
-            | [`app-play-insecure.apk`](https://s3.sms-gate.app/apk/${{ github.event.pull_request.head.sha }}/app-play-insecure.apk) | ${{ github.event.pull_request.head.sha }} |
-            | [`app-play-insecure.aab`](https://s3.sms-gate.app/apk/${{ github.event.pull_request.head.sha }}/app-play-insecure.aab) | ${{ github.event.pull_request.head.sha }} |
+            | [`app-release.apk`](https://s3.sms-gate.app/apk/${{ github.event.pull_request.head.sha }}/app-release.apk) | ${{ github.event.pull_request.head.sha }} |
+            | [`app-release.aab`](https://s3.sms-gate.app/apk/${{ github.event.pull_request.head.sha }}/app-release.aab) | ${{ github.event.pull_request.head.sha }} |
+            | [`app-insecure.apk`](https://s3.sms-gate.app/apk/${{ github.event.pull_request.head.sha }}/app-insecure.apk) | ${{ github.event.pull_request.head.sha }} |
+            | [`app-insecure.aab`](https://s3.sms-gate.app/apk/${{ github.event.pull_request.head.sha }}/app-insecure.aab) | ${{ github.event.pull_request.head.sha }} |
 
           edit-mode: replace

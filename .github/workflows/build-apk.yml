@@ -111,6 +111,15 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password || secrets.SIGNING_STORE_PASSWORD }}
           TARGET: ${{ inputs.build-type }}
         run: ./gradlew bundlePlay${TARGET^}
+
+      # AAB outputs keep the app-play-* name; restore the legacy filename so
+      # release automation is unaffected by the flavor split.
+      - name: Restore the legacy bundle filename
+        env:
+          TARGET: ${{ inputs.build-type }}
+        run: |
+          cd app/build/outputs/bundle/play${TARGET^}
+          mv app-play-*.aab app-${TARGET}.aab
       #3
       - name: Upload ${{ inputs.build-type }} Build to Artifacts
         uses: actions/upload-artifact@v4

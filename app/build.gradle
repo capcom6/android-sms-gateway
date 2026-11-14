@@ -94,6 +94,16 @@ android {
         exclude 'META-INF/INDEX.LIST'
         exclude 'META-INF/io.netty.versions.properties'
     }
+    // The play flavor keeps the legacy output filenames (app-release.apk,
+    // app-insecure.apk, ...) so download links and automation keep working
+    // after the flavor split. The fdroid flavor keeps its distinctive name.
+    applicationVariants.all { variant ->
+        if (variant.flavorName == "play") {
+            variant.outputs.all { output ->
+                outputFileName = outputFileName.replace("app-play-", "app-")
+            }
+        }
+    }
     namespace 'me.capcom.smsgateway'
 
     testOptions {
