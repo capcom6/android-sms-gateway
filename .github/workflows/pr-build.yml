@@ -25,6 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     needs: [build]
+    # Fork PRs run without repository secrets: the artifact upload and the
+    # download links would fail or point nowhere, so guard on AWS credentials.
+    env:
+      AWS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
     steps:
       - name: Download release artifacts
         uses: actions/download-artifact@v4
@@ -37,6 +41,7 @@ jobs:
           name: insecure-artifacts
 
       - name: Upload to S3
+        if: env.AWS_KEY_ID != ''
         uses: capcom6/upload-s3-action@master
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -53,6 +58,7 @@ jobs:
           destination_dir: apk/${{ github.event.pull_request.head.sha }}
 
       - name: Find Comment
+        if: env.AWS_KEY_ID != ''
         uses: peter-evans/find-comment@v3
         id: fc
         with:
@@ -61,6 +67,7 @@ jobs:
           body-includes: Pull request artifacts
 
       - name: Create or update comment
+        if: env.AWS_KEY_ID != ''
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}

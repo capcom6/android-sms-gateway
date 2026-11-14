@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- The `google-services` Gradle plugin is applied only when `google-services.json` is present, so builds without the file (CI without the secret, local checkouts) skip Firebase setup entirely
+- Release and insecure builds fall back to an unsigned APK when `keystore.jks` is absent, so builds without the signing key (CI on forks, local builds) can produce binaries
+
 ### Fixed
 - Incoming MMS notifications whose WAP-push headers are unrecognized or undecodable are no longer dropped — the notification is parsed with the AOSP PDU parser, unknown header fields are skipped and logged as warnings, and the `mms:received` webhook fires for these messages [772f8b5]
 

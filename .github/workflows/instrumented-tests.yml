@@ -39,7 +39,16 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
 
       - name: Setup Google Services
-        run: echo ${{ secrets.GOOGLE_SERVICES_JSON }} | base64 --decode > ./app/google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          # Fork PRs and secretless runs decode an empty secret into an empty
+          # file, which makes the google-services plugin fail with
+          # "Malformed root json". Skip the file entirely - the build applies
+          # the plugin only when the file exists.
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" | base64 --decode > ./app/google-services.json
+          fi
 
       - name: Grant KVM
         run: |
