@@ -37,7 +37,7 @@ jobs:
           generate_release_notes: true
           prerelease: true
           files: |
-            ./apk/release/app-release.apk
-            ./bundle/release/app-release.aab
-            ./apk/insecure/app-insecure.apk
-            ./bundle/insecure/app-insecure.aab
+            ./apk/play/release/app-release.apk
+            ./bundle/playRelease/app-release.aab
+            ./apk/play/insecure/app-insecure.apk
+            ./bundle/playInsecure/app-insecure.aab

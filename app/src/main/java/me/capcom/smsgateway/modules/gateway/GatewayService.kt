@@ -26,7 +26,7 @@ import me.capcom.smsgateway.modules.messages.MessagesSettings
 import me.capcom.smsgateway.modules.messages.data.SendParams
 import me.capcom.smsgateway.modules.messages.data.SendRequest
 import me.capcom.smsgateway.modules.receiver.data.InboxMessage
-import me.capcom.smsgateway.services.PushService
+import me.capcom.smsgateway.services.PushInterop
 import java.util.Date
 
 class GatewayService(
@@ -51,7 +51,7 @@ class GatewayService(
     fun start(context: Context) {
         if (!settings.enabled) return
 
-        PushService.register(context)
+        PushInterop.register(context)
         PullMessagesWorker.start(context)
         WebhooksUpdateWorker.start(context)
         SettingsUpdateWorker.start(context)
@@ -196,7 +196,12 @@ class GatewayService(
             )
         )
 
-        this.settings.fcmToken = pushToken
+        // The server treats an absent pushToken as "leave unchanged" and an
+        // empty string as "clear the stored token" (devices/repository.go
+        // Update uses lo.EmptyableToPtr). Keep the local token null in both
+        // cases so the app selects the SSE transport whenever there is no
+        // live FCM token.
+        this.settings.fcmToken = pushToken?.ifEmpty { null }
 
         events.emit(
             DeviceRegisteredEvent.Success(

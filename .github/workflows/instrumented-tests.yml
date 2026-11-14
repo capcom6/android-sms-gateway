@@ -3,6 +3,7 @@ name: Instrumented Tests
 on:
   pull_request: { types: [opened, synchronize, ready_for_review] }
   push: { branches: [master] }
+  workflow_dispatch:
 
 jobs:
   # Device-paired E2E lives behind Android Keystore, whose RSA-OAEP behaviour is
@@ -39,7 +40,16 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
 
       - name: Setup Google Services
-        run: echo ${{ secrets.GOOGLE_SERVICES_JSON }} | base64 --decode > ./app/google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          # Fork PRs and secretless runs decode an empty secret into an empty
+          # file, which makes the google-services plugin fail with
+          # "Malformed root json". Skip the file entirely - the build applies
+          # the plugin only when the file exists.
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" | base64 --decode > ./app/google-services.json
+          fi
 
       - name: Grant KVM
         run: |
@@ -61,9 +71,9 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            ./gradlew :app:assemblePlayDebug :app:assemblePlayDebugAndroidTest
+            adb install -r app/build/outputs/apk/play/debug/app-debug.apk
+            adb install -r app/build/outputs/apk/androidTest/play/debug/app-play-debug-androidTest.apk
             adb shell am instrument -w me.capcom.smsgateway.test/androidx.test.runner.AndroidJUnitRunner | tee instrumented-output.txt
             if ! grep -qE "OK \([1-9][0-9]* tests?\)" instrumented-output.txt || grep -q "FAILURES!!!" instrumented-output.txt; then adb logcat -d > logcat.txt; exit 1; fi
 
