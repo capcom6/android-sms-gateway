@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Incoming MMS notifications whose WAP-push headers are unrecognized or undecodable are no longer dropped — the notification is parsed with the AOSP PDU parser, unknown header fields are skipped and logged as warnings, and the `mms:received` webhook fires for these messages [772f8b5]
+- Cloud commands are no longer lost when the notification channel is pinned to SSE_ONLY — the FCM token stored on the server is cleared, so delivery switches to the SSE transport
 
 ## [v1.78.2] - 2026-11-03
 

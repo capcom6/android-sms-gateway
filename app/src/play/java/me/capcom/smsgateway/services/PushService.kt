@@ -76,7 +76,10 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                     module = PushService::class.java.simpleName,
                     message = "FCM registration skipped: SSE_ONLY channel configured"
                 )
-                RegistrationWorker.start(context, null)
+                // An empty token clears any FCM token stored server-side; a
+                // null token would leave it in place, and the server would
+                // keep routing cloud commands to push instead of SSE.
+                RegistrationWorker.start(context, "")
                 return
             }
 
