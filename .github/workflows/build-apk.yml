@@ -118,4 +118,6 @@ jobs:
           name: ${{ inputs.build-type }}-artifacts
           path: |
             app/build/outputs/apk/play/${{ inputs.build-type }}/
-            app/build/outputs/bundle/play/${{ inputs.build-type }}/
+            # AABs go to outputs/bundle/<variant>/ (playRelease, playInsecure),
+            # not bundle/<flavor>/<buildType>/ like APKs.
+            app/build/outputs/bundle/play${{ inputs.build-type == 'release' && 'Release' || 'Insecure' }}/
