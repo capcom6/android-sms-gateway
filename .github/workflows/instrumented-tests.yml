@@ -71,9 +71,9 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            ./gradlew :app:assemblePlayDebug :app:assemblePlayDebugAndroidTest
+            adb install -r app/build/outputs/apk/play/debug/app-play-debug.apk
+            adb install -r app/build/outputs/apk/androidTest/play/debug/app-play-debug-androidTest.apk
             adb shell am instrument -w me.capcom.smsgateway.test/androidx.test.runner.AndroidJUnitRunner | tee instrumented-output.txt
             if ! grep -qE "OK \([1-9][0-9]* tests?\)" instrumented-output.txt || grep -q "FAILURES!!!" instrumented-output.txt; then adb logcat -d > logcat.txt; exit 1; fi
 

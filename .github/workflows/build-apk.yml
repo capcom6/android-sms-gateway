@@ -101,7 +101,7 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password || secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password || secrets.SIGNING_STORE_PASSWORD }}
           TARGET: ${{ inputs.build-type }}
-        run: ./gradlew assemble${TARGET^}
+        run: ./gradlew assemblePlay${TARGET^}
 
       - name: Build ${{ inputs.build-type }} bundle
         env:
@@ -110,12 +110,12 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password || secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password || secrets.SIGNING_STORE_PASSWORD }}
           TARGET: ${{ inputs.build-type }}
-        run: ./gradlew bundle${TARGET^}
+        run: ./gradlew bundlePlay${TARGET^}
       #3
       - name: Upload ${{ inputs.build-type }} Build to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.build-type }}-artifacts
           path: |
-            app/build/outputs/apk/${{ inputs.build-type }}/
-            app/build/outputs/bundle/${{ inputs.build-type }}/
+            app/build/outputs/apk/play/${{ inputs.build-type }}/
+            app/build/outputs/bundle/play/${{ inputs.build-type }}/

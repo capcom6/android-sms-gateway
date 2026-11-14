@@ -27,6 +27,20 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    flavorDimensions "store"
+    productFlavors {
+        play {
+            dimension "store"
+        }
+        // F-Droid flavor: no Firebase Cloud Messaging (proprietary Google
+        // Play Services). Cloud commands arrive over the SSE transport, the
+        // path the app already uses when the channel is pinned to SSE_ONLY.
+        fdroid {
+            dimension "store"
+        }
+    }
+
     buildFeatures {
         viewBinding true
     }
@@ -140,9 +154,10 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
 
-    // Import the Firebase BoM
-    implementation platform('com.google.firebase:firebase-bom:31.1.1')
-    implementation 'com.google.firebase:firebase-messaging-ktx'
+    // Import the Firebase BoM (play flavor only — the fdroid flavor
+    // builds without Firebase/Google Play Services)
+    playImplementation platform('com.google.firebase:firebase-bom:31.1.1')
+    playImplementation 'com.google.firebase:firebase-messaging-ktx'
 
     implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.22'
 

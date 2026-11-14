@@ -55,10 +55,10 @@ jobs:
           aws_bucket: ${{ secrets.AWS_BUCKET }}
           endpoint: ${{ secrets.AWS_ENDPOINT }}
           source_files: |
-            ./apk/release/app-release.apk
-            ./bundle/release/app-release.aab
-            ./apk/insecure/app-insecure.apk
-            ./bundle/insecure/app-insecure.aab
+            ./apk/play/release/app-play-release.apk
+            ./bundle/play/release/app-play-release.aab
+            ./apk/play/insecure/app-insecure.apk
+            ./bundle/play/insecure/app-play-insecure.aab
           destination_dir: apk/${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Find Comment
