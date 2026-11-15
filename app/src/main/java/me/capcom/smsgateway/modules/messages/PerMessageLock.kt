@@ -14,9 +14,12 @@ import kotlinx.coroutines.sync.withLock
  *
  * Each key maps to an [Entry] holding the mutex and a user counter. Both the
  * counter increment (get-or-create) and the decrement-remove are performed
- * atomically via [ConcurrentHashMap.compute], which serializes them under the
- * map's bin lock, so the counter cannot lose updates. Cleanup removes the
- * entry only when the counter reaches zero AND the mutex is uncontended
+ * atomically inside `synchronized(locks)`, so the counter cannot lose
+ * updates. ([ConcurrentHashMap.compute] would serialize the same way under
+ * the map's bin lock, but it requires API 24 while minSdk is 21 - calling it
+ * threw NoSuchMethodError on Android 5.x/6.x and broke every state
+ * transition, see issue #330.) Cleanup removes the entry only when the
+ * counter reaches zero AND the mutex is uncontended
  * ([Mutex.tryLock] succeeds, i.e. no other coroutine is holding or waiting).
  * A caller that holds the entry reference is always already counted, so a
  * finishing caller cannot remove the entry from under it, and a released key
@@ -38,27 +41,25 @@ class PerMessageLock {
     private val locks = ConcurrentHashMap<String, Entry>()
 
     suspend fun <T> withLock(key: String, block: suspend () -> T): T {
-        // Atomic get-or-create-and-increment under the map's bin lock: a caller
-        // that holds the entry reference is already counted, so a finishing
-        // caller can never remove the entry from under it.
-        val entry = locks.compute(key) { _, e -> (e ?: Entry()).also { it.users++ } }!!
+        // Atomic get-or-create-and-increment: a caller that holds the entry
+        // reference is already counted, so a finishing caller can never remove
+        // the entry from under it.
+        val entry = synchronized(locks) {
+            (locks.getOrPut(key) { Entry() }).also { it.users++ }
+        }
         return try {
             entry.mutex.withLock { block() }
         } finally {
-            // Atomic decrement-and-remove under the map's bin lock: no suspension
-            // inside the lambda (only Mutex.tryLock), so the removal decision
+            // Atomic decrement-and-remove under the same monitor: no suspension
+            // inside the block (only Mutex.tryLock), so the removal decision
             // cannot race a concurrent acquire for the same key.
-            locks.compute(key) { _, e ->
-                if (e === entry) {
-                    e.users--
-                    if (e.users == 0 && e.mutex.tryLock()) {
-                        e.mutex.unlock()
-                        null
-                    } else {
-                        e
+            synchronized(locks) {
+                if (locks[key] === entry) {
+                    entry.users--
+                    if (entry.users == 0 && entry.mutex.tryLock()) {
+                        entry.mutex.unlock()
+                        locks.remove(key)
                     }
-                } else {
-                    e
                 }
             }
         }

@@ -196,4 +196,6 @@
     <string name="webhook_queue_label_payload">Полезная нагрузка</string>
     <string name="webhook_queue_payload_unavailable">Полезная нагрузка недоступна</string>
     <string name="webhook_queue_no_error">Нет</string>
+    <string name="mms_max_inline_attachment_size">Максимальный размер встроенного вложения, байт</string>
+    <string name="mms_max_inline_attachment_size_invalid">Введите число от 0 до 67108864</string>
 </resources>

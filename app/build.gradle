@@ -68,6 +68,14 @@ android {
     }
     namespace 'me.capcom.smsgateway'
 
+    lint {
+        // Freeze pre-existing findings (16 strings missing ar/ru/zh
+        // translations, KeyStore WrongConstant) so CI gates NEW issues.
+        // Regenerate with ./gradlew updateLintBaseline after intentionally
+        // fixing debt.
+        baseline = file("lint-baseline.xml")
+    }
+
     testOptions {
         unitTests {
             // EventBus.emit logs via android.util.Log; local unit tests must not
