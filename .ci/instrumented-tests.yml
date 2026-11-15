@@ -1,0 +1,39 @@
+# Mirrors .github/workflows/instrumented-tests.yml.
+# Requires a runner with KVM (/dev/kvm); manual so it never blocks pipelines.
+# Same API levels as the GitHub workflow: 25 and 30 exercise the Keystore1
+# provider, 35 is the first level on which Keystore2 enforces the MGF1 digest.
+test:instrumented:
+  stage: instrumented
+  image: cimg/android:2025.01
+  when: manual
+  allow_failure: true
+  parallel:
+    matrix:
+      - API_LEVEL: ["25", "30", "35"]
+  variables:
+    GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle-home"
+  cache:
+    key: gradle
+    paths:
+      - .gradle-home/caches/
+      - .gradle-home/wrapper/
+  before_script:
+    - if [ -n "$GOOGLE_SERVICES_JSON" ]; then echo "$GOOGLE_SERVICES_JSON" | base64 -d > ./app/google-services.json; fi
+    - sdkmanager "emulator" "system-images;android-$API_LEVEL;google_apis;x86_64" > /dev/null
+    - echo no | avdmanager create avd -n ci -k "system-images;android-$API_LEVEL;google_apis;x86_64" --device pixel
+  script:
+    # Same flow as the GitHub workflow: build, install, `am instrument`
+    # (the AGP 8.1.2 connectedAndroidTest launcher fails on API 35).
+    - ./gradlew :app:assemblePlayDebug :app:assemblePlayDebugAndroidTest
+    - emulator -avd ci -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none &
+    - adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+    - adb install -r app/build/outputs/apk/play/debug/app-debug.apk
+    - adb install -r app/build/outputs/apk/androidTest/play/debug/app-play-debug-androidTest.apk
+    - adb shell am instrument -w me.capcom.smsgateway.test/androidx.test.runner.AndroidJUnitRunner | tee instrumented-output.txt
+    - if ! grep -qE "OK \([1-9][0-9]* tests?\)" instrumented-output.txt || grep -q "FAILURES!!!" instrumented-output.txt; then adb logcat -d > logcat.txt; exit 1; fi
+  artifacts:
+    when: on_failure
+    paths:
+      - instrumented-output.txt
+      - logcat.txt
+    expire_in: 1 week
