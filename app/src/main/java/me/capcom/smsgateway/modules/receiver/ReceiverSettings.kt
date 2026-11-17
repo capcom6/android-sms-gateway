@@ -40,10 +40,13 @@ class ReceiverSettings(
         return data.map { (key, value) ->
             when (key) {
                 CONTENT_PROVIDER_ENABLED -> {
-                    val enabled = value?.toString()?.toBooleanStrictOrNull()
-                        ?: throw IllegalArgumentException("$CONTENT_PROVIDER_ENABLED must be a boolean")
-                    val changed = contentProviderEnabled != enabled
-                    storage.set(key, enabled)
+                    val raw = value?.toString()
+                    val newValue = raw?.toBooleanStrictOrNull()
+                    if (raw != null && newValue == null) {
+                        throw IllegalArgumentException("$CONTENT_PROVIDER_ENABLED must be true or false")
+                    }
+                    val changed = contentProviderEnabled != (newValue ?: true)
+                    storage.set(key, newValue)
                     changed
                 }
 
