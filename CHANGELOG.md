@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Local server device IDs now use the 21-character format the API spec requires (`DeviceID char(21)`), so spec-validating clients no longer reject the device's own ID; only newly generated IDs change — existing registrations keep their current ID [de6defb]
+- Setting `receiver.content_provider_enabled` to `null` via `PATCH /settings` now resets the setting to its default (enabled) instead of failing with a validation error; explicit `true`/`false` values and invalid values keep their existing behavior [7b2be5f]
+
+## [v1.79.1] - 2026-11-19
+
+### Fixed
+- Local server device IDs now use the 21-character format the API spec requires (`DeviceID char(21)`), so spec-validating clients no longer reject the device's own ID; only newly generated IDs change — existing registrations keep their current ID [e1fc50c]
 
 ## [v1.79.0] - 2026-11-17
 
@@ -1295,7 +1300,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDK version check for SmsManager compatibility [4b7e593]
 
 
-[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.4...HEAD
+[Unreleased]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.1...HEAD
 [v1.0.0]: https://github.com/capcom6/android-sms-gateway/releases/tag/v1.0.0
 [v1.1.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.0.0...v1.1.0
 [v1.1.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.1.0...v1.1.1
@@ -1419,6 +1424,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.65.3]: https://github.com/capcom6/android-sms-gateway/compare/v1.65.2...v1.65.3
 [v1.66.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.65.3...v1.66.0
 [v1.66.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.66.0...v1.66.1
+[v1.67.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.66.2...v1.67.0
+[v1.68.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.67.0...v1.68.0
+[v1.69.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.68.1...v1.69.0
+[v1.70.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.69.0...v1.70.0
+[v1.70.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.70.0...v1.70.1
+[v1.70.2]: https://github.com/capcom6/android-sms-gateway/compare/v1.70.1...v1.70.2
+[v1.70.3]: https://github.com/capcom6/android-sms-gateway/compare/v1.70.2...v1.70.3
 [v1.70.4]: https://github.com/capcom6/android-sms-gateway/compare/v1.70.3...v1.70.4
 [v1.71.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.70.4...v1.71.0
 [v1.71.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.71.0...v1.71.1
@@ -1438,3 +1450,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v1.77.5]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.4...v1.77.5
 [v1.78.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.77.5...v1.78.0
 [v1.78.2]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.1...v1.78.2
+[v1.78.4]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.3...v1.78.4
+[v1.79.0]: https://github.com/capcom6/android-sms-gateway/compare/v1.78.4...v1.79.0
+[v1.79.1]: https://github.com/capcom6/android-sms-gateway/compare/v1.79.0...v1.79.1
