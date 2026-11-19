@@ -10,11 +10,11 @@ ksp {
 }
 
 android {
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "me.capcom.smsgateway"
-        minSdk 21
+        minSdk 23
         targetSdk 33
         versionCode 1
         versionName "1.0.0"
@@ -80,7 +80,7 @@ android {
 dependencies {
     def ktor_version = "2.2.4"
     def okhttp_version = "4.10.0"
-    def room_version = "2.4.3"
+    def room_version = "2.6.1"
     def coroutines_version = "1.6.1"
     def work_version = "2.7.1"
     def koin_version = "3.4.0"
@@ -127,8 +127,8 @@ dependencies {
     ksp("androidx.room:room-compiler:$room_version")
 
     // Import the Firebase BoM
-    implementation platform('com.google.firebase:firebase-bom:31.1.1')
-    implementation 'com.google.firebase:firebase-messaging-ktx'
+    implementation platform('com.google.firebase:firebase-bom:34.15.0')
+    implementation 'com.google.firebase:firebase-messaging'
 
     implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.22'
 
