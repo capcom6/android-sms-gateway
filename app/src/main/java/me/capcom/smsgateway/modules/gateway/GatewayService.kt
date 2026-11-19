@@ -29,6 +29,8 @@ import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.services.PushService
 import java.util.Date
 
+private const val PUSH_TOKEN_TYPE_FID = "fid"
+
 class GatewayService(
     private val inboxUploadService: InboxUploadService,
     private val messagesService: MessagesService,
@@ -145,6 +147,7 @@ class GatewayService(
                 simCards.toDTO(),
                 publicKey = keyInfo?.publicKeyBase64,
                 keyVersion = keyInfo?.keyVersion,
+                pushTokenType = if (pushToken == null) null else PUSH_TOKEN_TYPE_FID,
             )
             val response = when (registerMode) {
                 RegistrationMode.Anonymous -> api.deviceRegister(request, null)
@@ -193,6 +196,7 @@ class GatewayService(
                 encryptionKey?.publicKeyBase64,
                 encryptionKey?.keyVersion,
                 simCards.toDTO(),
+                pushTokenType = if (pushToken == null) null else PUSH_TOKEN_TYPE_FID,
             )
         )
 
