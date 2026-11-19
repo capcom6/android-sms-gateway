@@ -21,8 +21,20 @@ class PushService : FirebaseMessagingService(), KoinComponent {
     private val eventsRouter by inject<EventsRouter>()
     private val gatewaySettings by inject<GatewaySettings>()
 
-    override fun onNewToken(token: String) {
-        RegistrationWorker.start(this@PushService, token)
+    override fun onRegistered(installationId: String) {
+        if (gatewaySettings.notificationChannel == GatewaySettings.NotificationChannel.SSE_ONLY) {
+            Log.d(this.javaClass.name, "FID registration ignored: SSE_ONLY channel configured")
+            RegistrationWorker.start(this@PushService, null)
+            return
+        }
+
+        Log.d(this.javaClass.name, "FID registration received")
+        logsService.insert(
+            priority = LogEntry.Priority.INFO,
+            module = this.javaClass.simpleName,
+            message = "FID registration received",
+        )
+        RegistrationWorker.start(this@PushService, installationId)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -86,32 +98,23 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                 module = PushService::class.java.simpleName,
                 message = "FCM registration started"
             )
-            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                if (!task.isSuccessful || task.isCanceled) {
+            FirebaseMessaging.getInstance().register()
+                .addOnCompleteListener { task ->
+                    if (!task.isSuccessful || task.isCanceled) {
+                        logger.insert(
+                            priority = LogEntry.Priority.ERROR,
+                            module = PushService::class.java.simpleName,
+                            message = "FCM registration failed: ${task.exception}"
+                        )
+                        return@addOnCompleteListener
+                    }
+
                     logger.insert(
-                        priority = LogEntry.Priority.ERROR,
+                        priority = LogEntry.Priority.INFO,
                         module = PushService::class.java.simpleName,
-                        message = "Fetching FCM registration token failed: ${task.exception}"
+                        message = "FCM registration finished; awaiting onRegistered callback"
                     )
                 }
-
-                // Get new FCM registration token
-                val token = try {
-                    task.result
-                } catch (e: Throwable) {
-                    null
-                }
-
-                logger.insert(
-                    priority = LogEntry.Priority.INFO,
-                    module = PushService::class.java.simpleName,
-                    message = "FCM registration finished",
-                    mapOf("token" to token)
-                )
-
-                // Log and toast
-                RegistrationWorker.start(context, token)
-            }
         }
     }
 }
