@@ -2,7 +2,13 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'com.google.devtools.ksp'
-    id 'com.google.gms.google-services'
+}
+
+// google-services.json is not committed (CI injects it from secrets).
+// Applying the plugin without the file fails the build, so F-Droid and
+// local builds without the file skip Firebase setup entirely.
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
 }
 
 ksp {
@@ -45,13 +51,21 @@ android {
         insecure {
             initWith debug
             debuggable true
-            signingConfig signingConfigs.release
+            // Keystore absent (F-Droid build server, local builds): produce
+            // an unsigned APK instead of failing on the missing file.
+            if (file("keystore.jks").exists()) {
+                signingConfig signingConfigs.release
+            }
             manifestPlaceholders = [networkSecurityConfig: "@xml/network_security_config_insecure"]
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            // Keystore absent (F-Droid build server, local builds): produce
+            // an unsigned APK instead of failing on the missing file.
+            if (file("keystore.jks").exists()) {
+                signingConfig signingConfigs.release
+            }
             manifestPlaceholders = [networkSecurityConfig: "@xml/network_security_config"]
         }
     }
