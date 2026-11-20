@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.Spanned
+import android.text.TextUtils
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.URLSpan
@@ -27,6 +28,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.lifecycleScope
+import io.ktor.http.Url
+import io.ktor.http.hostWithPort
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
@@ -164,6 +167,8 @@ class HomeFragment : Fragment() {
         binding.textLocalPassword.movementMethod = LinkMovementMethod.getInstance()
         binding.textLocalDeviceId.movementMethod = LinkMovementMethod.getInstance()
         binding.textRemoteDeviceId.movementMethod = LinkMovementMethod.getInstance()
+        binding.textRemoteUsername.movementMethod = LinkMovementMethod.getInstance()
+        binding.textRemotePassword.movementMethod = LinkMovementMethod.getInstance()
 
         binding.switchAutostart.isChecked = settingsHelper.autostart
 
@@ -198,37 +203,8 @@ class HomeFragment : Fragment() {
 //        }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            events.collect<DeviceRegisteredEvent.Success> { event ->
-                binding.textRemoteAddress.text = getString(R.string.address_is, event.server)
-
-                binding.textRemoteUsername.movementMethod = LinkMovementMethod.getInstance()
-                binding.textRemotePassword.movementMethod = LinkMovementMethod.getInstance()
-
-                binding.textRemoteUsername.text = makeCopyableLink(
-                    Html
-                        .fromHtml(
-                            "<a href>${event.login}</a>"
-                        )
-                )
-
-                binding.textRemotePassword.text = when (event.password) {
-                    null -> getString(R.string.password_hidden)
-                    else -> makeCopyableLink(
-                        Html
-                            .fromHtml(
-                                "<a href>${event.password}</a>"
-                            )
-                    )
-                }
-
-                // Set Cloud Server Device ID
-                binding.textRemoteDeviceId.text = gatewaySettings.deviceId?.let {
-                    makeCopyableLink(
-                        Html.fromHtml(
-                            "<a href>$it</a>"
-                        )
-                    )
-                } ?: getString(R.string.n_a)
+            events.collect<DeviceRegisteredEvent.Success> { _ ->
+                renderCloudRegistration()
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
@@ -363,11 +339,32 @@ class HomeFragment : Fragment() {
         return builder.toSpanned()
     }
 
+    private fun renderCloudRegistration() {
+        val view = _binding ?: return
+        val info = gatewaySettings.registrationInfo
+        fun copyable(value: String): Spanned = makeCopyableLink(
+            Html.fromHtml("<a href>${TextUtils.htmlEncode(value)}</a>")
+        )
+        view.textRemoteAddress.text = getString(
+            R.string.address_is, Url(gatewaySettings.serverUrl).hostWithPort
+        )
+        view.textRemoteUsername.text = info?.login?.let(::copyable)
+            ?: getString(R.string.not_registered)
+        view.textRemotePassword.text = when {
+            info == null -> getString(R.string.n_a)
+            info.password == null -> getString(R.string.password_hidden)
+            else -> copyable(info.password)
+        }
+        view.textRemoteDeviceId.text = info?.id?.let(::copyable)
+            ?: getString(R.string.n_a)
+    }
+
     override fun onResume() {
         super.onResume()
 
         binding.switchUseRemoteServer.isChecked = gatewaySettings.enabled
         binding.switchUseLocalServer.isChecked = localServerSettings.enabled
+        renderCloudRegistration()
     }
 
     private fun actionStart(start: Boolean) {
