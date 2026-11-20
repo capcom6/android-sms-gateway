@@ -28,8 +28,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.lifecycleScope
-import io.ktor.http.Url
-import io.ktor.http.hostWithPort
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
@@ -346,7 +344,8 @@ class HomeFragment : Fragment() {
             Html.fromHtml("<a href>${TextUtils.htmlEncode(value)}</a>")
         )
         view.textRemoteAddress.text = getString(
-            R.string.address_is, Url(gatewaySettings.serverUrl).hostWithPort
+            R.string.address_is,
+            cloudServerAddress(gatewaySettings.serverUrl) ?: getString(R.string.n_a)
         )
         view.textRemoteUsername.text = info?.login?.let(::copyable)
             ?: getString(R.string.not_registered)
