@@ -498,4 +498,57 @@ internal class MessageStateServiceTest {
         assertEquals("TTL expired", event.error)
     }
     //#endregion
+
+    //#region simNumber on sent/delivered/failed events (both SIM slots)
+    @Test
+    fun sentDeliveredAndFailedEventsCarryTheStoredSimNumberForBothSlots() = runTest {
+        val h = harness()
+        listOf(1, 2).forEach { sim ->
+            h.dao.seed(
+                "sent-$sim",
+                simNumber = sim,
+                seedRecipients = listOf("+111" to ProcessingState.Pending)
+            )
+            h.dao.seed(
+                "delivered-$sim",
+                simNumber = sim,
+                seedRecipients = listOf("+111" to ProcessingState.Sent)
+            )
+            h.dao.seed(
+                "failed-$sim",
+                simNumber = sim,
+                seedRecipients = listOf("+111" to ProcessingState.Processed)
+            )
+
+            h.service.transitionRecipients("sent-$sim", ProcessingState.Sent)
+            h.service.transitionRecipients("delivered-$sim", ProcessingState.Delivered)
+            h.service.transitionRecipients("failed-$sim", ProcessingState.Failed, "boom")
+        }
+
+        runCurrent()
+        val byId = h.events.associateBy { it.id }
+        listOf(1, 2).forEach { sim ->
+            assertEquals(ProcessingState.Sent, byId.getValue("sent-$sim").state)
+            assertEquals(sim, byId.getValue("sent-$sim").simNumber)
+            assertEquals(ProcessingState.Delivered, byId.getValue("delivered-$sim").state)
+            assertEquals(sim, byId.getValue("delivered-$sim").simNumber)
+            assertEquals(ProcessingState.Failed, byId.getValue("failed-$sim").state)
+            assertEquals(sim, byId.getValue("failed-$sim").simNumber)
+        }
+    }
+
+    @Test
+    fun simNumberSetAfterSelectionIsVisibleOnTheNextEvent() = runTest {
+        val h = harness()
+        // the sender stores the chosen SIM (1-based) right before sending when the request
+        // did not pin one; the following sent event must carry it
+        h.dao.seed("m1", seedRecipients = listOf("+111" to ProcessingState.Processed))
+        h.dao.updateSimNumber("m1", 2)
+
+        h.service.transitionRecipients("m1", ProcessingState.Sent)
+
+        runCurrent()
+        assertEquals(2, h.events.single().simNumber)
+    }
+    //#endregion
 }

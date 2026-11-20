@@ -421,7 +421,7 @@ class MessagesService(
 
         val simNumber = selectSimNumber(request.id, request.params)
         if (request.params.simNumber == null && simNumber != null) {
-            dao.updateSimNumber(id, simNumber + 1)
+            dao.updateSimNumber(id, SubscriptionsHelper.simNumberForSlotIndex(simNumber))
         }
 
         // Resolve a subscription ID + MSISDN from the chosen SIM slot (if any).
@@ -477,7 +477,9 @@ class MessagesService(
 
     private fun selectSimNumber(id: Long, params: SendParams): Int? {
         if (params.simNumber != null) {
-            return params.simNumber - 1
+            // 1-based API value to 0-based slot index; 0 or negative is not a SIM
+            return SubscriptionsHelper.slotIndexForSimNumber(params.simNumber)
+                ?: throw UnsupportedOperationException("SIM ${params.simNumber} not found")
         }
 
         val simSlots = SubscriptionsHelper.selectAvailableSimSlots(context)?.sorted() ?: return null
@@ -500,7 +502,7 @@ class MessagesService(
         val smsManager: SmsManager = getSmsManager(simNumber)
 
         if (request.params.simNumber == null && simNumber != null) {
-            dao.updateSimNumber(id, simNumber + 1)
+            dao.updateSimNumber(id, SubscriptionsHelper.simNumberForSlotIndex(simNumber))
         }
 
         val sendFn: (String, PendingIntent, PendingIntent?) -> Unit =
@@ -637,18 +639,19 @@ class MessagesService(
                 throw UnsupportedOperationException("SIM selection requires READ_PHONE_STATE permission")
             }
 
-            val subscriptionManager = SubscriptionsHelper.getSubscriptionsManager(context)
+            SubscriptionsHelper.getSubscriptionsManager(context)
                 ?: throw UnsupportedOperationException("SIM selection available from API 22")
 
-            subscriptionManager.activeSubscriptionInfoList.find {
-                it.simSlotIndex == simNumber
-            }?.let {
+            // `simNumber` here is the 0-based slot index. The subscription id is looked up BY
+            // SLOT (it is not the slot, and not the list position: e.g. ids 1 and 3 for slots
+            // 0 and 1 on a Huawei dual-SIM phone).
+            SubscriptionsHelper.getSubscriptionId(context, simNumber)?.let { subscriptionId ->
                 if (Build.VERSION.SDK_INT < 31) {
                     @Suppress("DEPRECATION")
-                    SmsManager.getSmsManagerForSubscriptionId(it.subscriptionId)
+                    SmsManager.getSmsManagerForSubscriptionId(subscriptionId)
                 } else {
                     context.getSystemService(SmsManager::class.java)
-                        .createForSubscriptionId(it.subscriptionId)
+                        .createForSubscriptionId(subscriptionId)
                 }
             } ?: throw UnsupportedOperationException("SIM ${simNumber + 1} not found")
         } else {

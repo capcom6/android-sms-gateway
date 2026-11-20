@@ -33,6 +33,9 @@ class ReceiverService : KoinComponent {
     private val incomingMessagesService: IncomingMessagesService by inject()
     private val receiverSettings: ReceiverSettings by inject()
     private val gatewayService: GatewayService by inject()
+    private val stateStorage: StateStorage by inject()
+
+    private val appContext: Context by inject()
 
     private val eventsReceiver by lazy { EventsReceiver() }
     private val mmsContentObserver by lazy { MmsContentObserver() }
@@ -99,6 +102,68 @@ class ReceiverService : KoinComponent {
     }
 
 
+    /**
+     * Entry point of the `SMS_RECEIVED` / `DATA_SMS_RECEIVED` broadcast. Its subscription id
+     * comes from the intent and is authoritative.
+     *
+     * A text SMS is compared only with SMS the inbox observer posted; see [LiveSmsDeduper].
+     */
+    fun processBroadcast(context: Context, message: InboxMessage) {
+        if (message is InboxMessage.Text) {
+            deduper.onBroadcast(message)
+        } else {
+            process(context, message, true)
+        }
+    }
+
+    /**
+     * Entry point of the SMS inbox observer (a row of `content://sms/inbox`).
+     *
+     * [providerSubId] is the raw `sub_id` of the row. Depending on the OEM it is the
+     * subscription id (stock Android) or the SIM slot index (Huawei EMUI), so it is resolved
+     * before use; see [LiveSmsDeduper].
+     */
+    fun processProviderSms(
+        text: String,
+        address: String,
+        date: Date,
+        providerSubId: Int?,
+    ) {
+        deduper.onProviderRow(text, address, date, providerSubId)
+    }
+
+    private val deduper: LiveSmsDeduper by lazy {
+        LiveSmsDeduper(
+            activeSubscriptions = {
+                SubscriptionsHelper.getActiveSubscriptions(appContext) ?: emptyList()
+            },
+            vendorUsesSlotIndex = SubscriptionsHelper.providerUsesSlotIndex(Build.MANUFACTURER),
+            readMode = { stateStorage.providerSubIdMode },
+            writeMode = { stateStorage.providerSubIdMode = it },
+            findStored = { address, text, dateMs ->
+                incomingMessagesService.findStoredText(address, text, dateMs)
+                    .map { it.subscriptionId }
+            },
+            post = { process(appContext, it, true) },
+            log = { message, details ->
+                logsService.insert(
+                    LogEntry.Priority.DEBUG,
+                    MODULE_NAME,
+                    "ReceiverService - $message",
+                    details
+                )
+            },
+        )
+    }
+
+    /** Raw provider `sub_id` to subscription id, using what was learned about this device. */
+    fun resolveProviderSubId(context: Context, providerSubId: Int): Int =
+        SubscriptionsHelper.resolveProviderSubId(
+            context,
+            providerSubId,
+            stateStorage.providerSubIdMode
+        )
+
     fun process(context: Context, message: InboxMessage, triggerWebhooks: Boolean) {
         logsService.insert(
             LogEntry.Priority.DEBUG,
@@ -133,7 +198,7 @@ class ReceiverService : KoinComponent {
         val simSlotIndex = message.subscriptionId?.let {
             SubscriptionsHelper.getSimSlotIndex(context, it)
         }
-        val simNumber = simSlotIndex?.let { it + 1 }
+        val simNumber = SubscriptionsHelper.simNumberForSlotIndex(simSlotIndex)
         val recipient = simSlotIndex?.let {
             SubscriptionsHelper.getPhoneNumber(context, it)
         }
@@ -341,6 +406,8 @@ class ReceiverService : KoinComponent {
                         text = cursor.getString(3),
                         subscriptionId = when {
                             projection.size > 4 -> cursor.getInt(4).takeIf { it >= 0 }
+                                // some OEMs store the slot index here, not the subscription id
+                                ?.let { resolveProviderSubId(context, it) }
                             else -> null
                         }
                     )
