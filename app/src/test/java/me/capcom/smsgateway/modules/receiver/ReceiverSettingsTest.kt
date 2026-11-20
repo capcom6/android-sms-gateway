@@ -129,6 +129,46 @@ internal class ReceiverSettingsTest {
     }
 
     @Test
+    fun exportReturnsDefaultWhenUnset() {
+        val exported = ReceiverSettings(FakeKeyValueStorage()).export()
+
+        assertEquals(true, exported["content_provider_enabled"])
+        assertEquals(ReceiverSettings.DEFAULT_MAX_INLINE_ATTACHMENT_BYTES, exported[KEY])
+    }
+
+    @Test
+    fun importDisablesContentProvider() {
+        val settings = ReceiverSettings(FakeKeyValueStorage())
+
+        val changed = settings.import(mapOf("content_provider_enabled" to false))
+
+        assertTrue(changed)
+        assertFalse(settings.contentProviderEnabled)
+        assertEquals(false, settings.export()["content_provider_enabled"])
+    }
+
+    @Test
+    fun importOfSameValueReportsNoChange() {
+        val settings = ReceiverSettings(FakeKeyValueStorage())
+        settings.import(mapOf("content_provider_enabled" to false))
+
+        val changed = settings.import(mapOf("content_provider_enabled" to false))
+
+        assertFalse(changed)
+    }
+
+    @Test
+    fun importOfNullValueResetsToDefault() {
+        val settings = ReceiverSettings(FakeKeyValueStorage())
+        settings.import(mapOf("content_provider_enabled" to false))
+
+        val changed = settings.import(mapOf("content_provider_enabled" to null))
+
+        assertTrue(changed)
+        assertTrue(settings.contentProviderEnabled)
+    }
+
+    @Test
     fun importRejectsAnUnparsableContentProviderFlag() {
         val settings = ReceiverSettings(FakeKeyValueStorage())
 
@@ -137,11 +177,20 @@ internal class ReceiverSettingsTest {
         }
     }
 
+    @Test
+    fun importOfUnknownKeyIsIgnored() {
+        assertFalse(ReceiverSettings(FakeKeyValueStorage()).import(mapOf("unknown" to 1)))
+    }
+
     private class FakeKeyValueStorage : KeyValueStorage {
         private val values = mutableMapOf<String, Any?>()
 
         override fun <T> set(key: String, value: T) {
-            values[key] = value
+            if (value == null) {
+                values.remove(key)
+            } else {
+                values[key] = value
+            }
         }
 
         @Suppress("UNCHECKED_CAST")
