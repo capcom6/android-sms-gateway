@@ -1,0 +1,19 @@
+# Mirrors the "Test" step of .github/workflows/build-apk.yml (./gradlew test).
+test:unit:
+  stage: test
+  image: cimg/android:2025.01
+  variables:
+    GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle-home"
+  cache:
+    key: gradle
+    paths:
+      - .gradle-home/caches/
+      - .gradle-home/wrapper/
+  before_script:
+    - if [ -n "$GOOGLE_SERVICES_JSON" ]; then echo "$GOOGLE_SERVICES_JSON" | base64 -d > ./app/google-services.json; fi
+  script:
+    - ./gradlew test
+  artifacts:
+    when: always
+    reports:
+      junit: "**/build/test-results/**/TEST-*.xml"

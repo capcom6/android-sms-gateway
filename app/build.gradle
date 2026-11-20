@@ -2,7 +2,13 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'com.google.devtools.ksp'
-    id 'com.google.gms.google-services'
+}
+
+// google-services.json is not committed (CI injects it from secrets).
+// Applying the plugin without the file fails the build, so F-Droid and
+// local builds without the file skip Firebase setup entirely.
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
 }
 
 ksp {
@@ -21,6 +27,20 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    flavorDimensions "store"
+    productFlavors {
+        play {
+            dimension "store"
+        }
+        // F-Droid flavor: no Firebase Cloud Messaging (proprietary Google
+        // Play Services). Cloud commands arrive over the SSE transport, the
+        // path the app already uses when the channel is pinned to SSE_ONLY.
+        fdroid {
+            dimension "store"
+        }
+    }
+
     buildFeatures {
         viewBinding true
     }
@@ -45,13 +65,21 @@ android {
         insecure {
             initWith debug
             debuggable true
-            signingConfig signingConfigs.release
+            // Keystore absent (F-Droid build server, local builds): produce
+            // an unsigned APK instead of failing on the missing file.
+            if (file("keystore.jks").exists()) {
+                signingConfig signingConfigs.release
+            }
             manifestPlaceholders = [networkSecurityConfig: "@xml/network_security_config_insecure"]
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            // Keystore absent (F-Droid build server, local builds): produce
+            // an unsigned APK instead of failing on the missing file.
+            if (file("keystore.jks").exists()) {
+                signingConfig signingConfigs.release
+            }
             manifestPlaceholders = [networkSecurityConfig: "@xml/network_security_config"]
         }
     }
@@ -65,6 +93,16 @@ android {
     packagingOptions {
         exclude 'META-INF/INDEX.LIST'
         exclude 'META-INF/io.netty.versions.properties'
+    }
+    // The play flavor keeps the legacy output filenames (app-release.apk,
+    // app-insecure.apk, ...) so download links and automation keep working
+    // after the flavor split. The fdroid flavor keeps its distinctive name.
+    applicationVariants.all { variant ->
+        if (variant.flavorName == "play") {
+            variant.outputs.all { output ->
+                outputFileName = outputFileName.replace("app-play-", "app-")
+            }
+        }
     }
     namespace 'me.capcom.smsgateway'
 
@@ -126,9 +164,10 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
 
-    // Import the Firebase BoM
-    implementation platform('com.google.firebase:firebase-bom:31.1.1')
-    implementation 'com.google.firebase:firebase-messaging-ktx'
+    // Import the Firebase BoM (play flavor only — the fdroid flavor
+    // builds without Firebase/Google Play Services)
+    playImplementation platform('com.google.firebase:firebase-bom:31.1.1')
+    playImplementation 'com.google.firebase:firebase-messaging-ktx'
 
     implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.22'
 

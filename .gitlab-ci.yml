@@ -1,0 +1,23 @@
+# GitLab CI entry point. Job definitions live in .ci/, one file per
+# GitHub Actions workflow in .github/workflows/:
+#   .ci/build-apk.yml           <- build-apk.yml
+#   .ci/unit-tests.yml          <- the "Test" step of build-apk.yml
+#   .ci/instrumented-tests.yml  <- instrumented-tests.yml
+
+stages: [test, build, instrumented]
+
+include:
+  - local: .ci/build-apk.yml
+  - local: .ci/unit-tests.yml
+  - local: .ci/instrumented-tests.yml
+
+workflow:
+  rules:
+    # Merge request pipelines take precedence; skip the duplicate
+    # branch pipeline when an MR is open for this branch.
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "schedule"

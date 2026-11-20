@@ -20,6 +20,20 @@ on:
         required: true
       signing-store-password:
         required: true
+  workflow_dispatch:
+    inputs:
+      version-name:
+        description: 'Version name (a leading "v" is stripped)'
+        required: true
+        default: 'manual'
+      build-type:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - insecure
 
 jobs:
   build-apk:
@@ -45,7 +59,16 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
 
       - name: Setup Google Services
-        run: echo ${{ secrets.google-services-json }} | base64 --decode > ./app/google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.google-services-json || secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          # Fork PRs and secretless runs decode an empty secret into an empty
+          # file, which makes the google-services plugin fail with
+          # "Malformed root json". Skip the file entirely - the build applies
+          # the plugin only when the file exists.
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" | base64 --decode > ./app/google-services.json
+          fi
 
       - name: Set App Version
         run: |
@@ -59,36 +82,51 @@ jobs:
       #1
       - name: Decode Keystore
         env:
-          ENCODED_STRING: ${{ secrets.signing-key-store-base64 }}
+          ENCODED_STRING: ${{ secrets.signing-key-store-base64 || secrets.SIGNING_KEY_STORE_BASE64 }}
           SIGNING_KEY_STORE_PATH: app/keystore.jks
 
         run: |
-          echo $ENCODED_STRING > keystore-b64.txt
-          base64 -d keystore-b64.txt > $SIGNING_KEY_STORE_PATH
+          # Leave keystore.jks absent instead of creating an empty one, so
+          # the build falls back to an unsigned APK.
+          if [ -n "$ENCODED_STRING" ]; then
+            echo $ENCODED_STRING > keystore-b64.txt
+            base64 -d keystore-b64.txt > $SIGNING_KEY_STORE_PATH
+          fi
 
       #2
       - name: Build ${{ inputs.build-type }} apk
         env:
           SIGNING_KEY_STORE_PATH: app/keystore.jks
-          SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password }}
-          SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password }}
+          SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias || secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password || secrets.SIGNING_KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password || secrets.SIGNING_STORE_PASSWORD }}
           TARGET: ${{ inputs.build-type }}
-        run: ./gradlew assemble${TARGET^}
+        run: ./gradlew assemblePlay${TARGET^}
 
       - name: Build ${{ inputs.build-type }} bundle
         env:
           SIGNING_KEY_STORE_PATH: app/keystore.jks
-          SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password }}
-          SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password }}
+          SIGNING_KEY_ALIAS: ${{ secrets.signing-key-alias || secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.signing-key-password || secrets.SIGNING_KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.signing-store-password || secrets.SIGNING_STORE_PASSWORD }}
           TARGET: ${{ inputs.build-type }}
-        run: ./gradlew bundle${TARGET^}
+        run: ./gradlew bundlePlay${TARGET^}
+
+      # AAB outputs keep the app-play-* name; restore the legacy filename so
+      # release automation is unaffected by the flavor split.
+      - name: Restore the legacy bundle filename
+        env:
+          TARGET: ${{ inputs.build-type }}
+        run: |
+          cd app/build/outputs/bundle/play${TARGET^}
+          mv app-play-*.aab app-${TARGET}.aab
       #3
       - name: Upload ${{ inputs.build-type }} Build to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.build-type }}-artifacts
           path: |
-            app/build/outputs/apk/${{ inputs.build-type }}/
-            app/build/outputs/bundle/${{ inputs.build-type }}/
+            app/build/outputs/apk/play/${{ inputs.build-type }}/
+            # AABs go to outputs/bundle/<variant>/ (playRelease, playInsecure),
+            # not bundle/<flavor>/<buildType>/ like APKs.
+            app/build/outputs/bundle/play${{ inputs.build-type == 'release' && 'Release' || 'Insecure' }}/
