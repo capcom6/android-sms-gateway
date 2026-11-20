@@ -7,16 +7,17 @@ on:
 jobs:
   # Device-paired E2E lives behind Android Keystore, whose RSA-OAEP behaviour is
   # API-level dependent, so a JVM unit test cannot cover it - build-apk.yml only runs
-  # `./gradlew test`. These levels are the ones that matter: 25 and 30 exercise the
-  # Keystore1 provider, and 35 is the first level on which Keystore2 enforces the
-  # MGF1 digest against the key's authorised set. The pre-M KeyPairGeneratorSpec
-  # branch (API 21-22) is not covered here. Dropping any of these levels silently
-  # re-opens the MGF1 regression that shipped broken in v1.77.0.
+  # `./gradlew test`. These levels are the ones that matter: 22 exercises the pre-M
+  # KeyPairGeneratorSpec branch, 25 and 30 exercise the Keystore1 provider, and 35
+  # is the first level on which Keystore2 enforces the MGF1 digest against the key's
+  # authorised set. Dropping any of these levels silently re-opens a regression:
+  # the MGF1 one shipped broken in v1.77.0, and the pre-M spec requires a serial
+  # number (API 22 key generation failed until it was set).
   encryption:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [25, 30, 35]
+        api-level: [22, 25, 30, 35]
     name: Instrumented tests (API ${{ matrix.api-level }})
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest

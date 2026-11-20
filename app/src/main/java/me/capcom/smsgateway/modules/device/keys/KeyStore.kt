@@ -7,6 +7,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.annotation.RequiresApi
+import java.math.BigInteger
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.KeyStore
@@ -99,6 +100,7 @@ class KeyStore(
             .setAlias(alias)
             .setKeyType(RSA_ALGORITHM)
             .setKeySize(2048)
+            .setSerialNumber(BigInteger.valueOf(System.currentTimeMillis()))
             // No setEncryptionRequired() call: pre-M API is parameterless and
             // sets the flag to true (encryption at rest required, which blocks
             // use before device unlock). Default (omitted) = not required,
