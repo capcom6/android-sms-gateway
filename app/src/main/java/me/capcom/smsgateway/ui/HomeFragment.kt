@@ -28,6 +28,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.lifecycleScope
+import io.ktor.http.Url
+import io.ktor.http.hostWithPort
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import me.capcom.smsgateway.R
@@ -335,6 +337,16 @@ class HomeFragment : Fragment() {
         }
 
         return builder.toSpanned()
+    }
+
+    internal fun cloudServerAddress(serverUrl: String): String? {
+        if (serverUrl.isBlank()) return null
+        return try {
+            val url = Url(serverUrl)
+            url.hostWithPort.takeIf { url.host.isNotBlank() }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun renderCloudRegistration() {
