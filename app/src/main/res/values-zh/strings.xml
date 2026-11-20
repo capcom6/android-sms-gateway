@@ -174,4 +174,6 @@
     <string name="webhook_queue_label_payload">负载</string>
     <string name="webhook_queue_payload_unavailable">负载不可用</string>
     <string name="webhook_queue_no_error">无</string>
+    <string name="mms_max_inline_attachment_size">内联附件最大大小（字节）</string>
+    <string name="mms_max_inline_attachment_size_invalid">请输入 0 到 67108864 之间的数字</string>
 </resources>

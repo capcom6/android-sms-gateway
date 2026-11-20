@@ -165,6 +165,10 @@ object SubscriptionsHelper {
                 ?.takeIf { it.isNotBlank() }
         } else {
             null
-        } ?: info.number?.takeIf { it.isNotBlank() }
+        } ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            info.number?.takeIf { it.isNotBlank() }
+        } else {
+            null
+        }
     }
 }

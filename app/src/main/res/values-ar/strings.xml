@@ -199,4 +199,6 @@
     <string name="webhook_queue_label_payload">الحمولة</string>
     <string name="webhook_queue_payload_unavailable">الحمولة غير متاحة</string>
     <string name="webhook_queue_no_error">لا يوجد</string>
+    <string name="mms_max_inline_attachment_size">الحد الأقصى لحجم المرفق المضمن، بايت</string>
+    <string name="mms_max_inline_attachment_size_invalid">أدخل رقماً بين 0 و 67108864</string>
 </resources>
