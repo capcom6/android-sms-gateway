@@ -28,6 +28,10 @@ class GatewaySettings(
         get() = storage.get(FCM_TOKEN)
         set(value) = storage.set(FCM_TOKEN, value)
 
+    var pushTokenType: String?
+        get() = storage.get(PUSH_TOKEN_TYPE)
+        set(value) = storage.set(PUSH_TOKEN_TYPE, value)
+
     val username: String?
         get() = registrationInfo?.login
     val password: String?
@@ -51,6 +55,7 @@ class GatewaySettings(
         private const val REGISTRATION_INFO = "REGISTRATION_INFO"
         private const val ENABLED = "ENABLED"
         private const val FCM_TOKEN = "fcm_token"
+        private const val PUSH_TOKEN_TYPE = "push_token_type"
 
         private const val CLOUD_URL = "cloud_url"
         private const val PRIVATE_TOKEN = "private_token"

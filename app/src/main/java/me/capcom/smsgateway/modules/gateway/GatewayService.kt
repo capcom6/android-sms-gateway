@@ -29,7 +29,7 @@ import me.capcom.smsgateway.modules.receiver.data.InboxMessage
 import me.capcom.smsgateway.services.PushService
 import java.util.Date
 
-private const val PUSH_TOKEN_TYPE_FID = "fid"
+const val PUSH_TOKEN_TYPE_FID = "fid"
 
 class GatewayService(
     private val inboxUploadService: InboxUploadService,
@@ -117,7 +117,8 @@ class GatewayService(
     internal suspend fun registerDevice(
         context: Context,
         pushToken: String?,
-        registerMode: RegistrationMode
+        registerMode: RegistrationMode,
+        pushTokenType: String? = null
     ) {
         if (!settings.enabled) return
 
@@ -127,7 +128,7 @@ class GatewayService(
         if (accessToken != null) {
             // if there's an access token, try to update push token
             try {
-                updateDevice(context, pushToken)
+                updateDevice(context, pushToken, pushTokenType)
                 return
             } catch (e: ClientRequestException) {
                 // if token is invalid, try to register new one
@@ -147,7 +148,7 @@ class GatewayService(
                 simCards.toDTO(),
                 publicKey = keyInfo?.publicKeyBase64,
                 keyVersion = keyInfo?.keyVersion,
-                pushTokenType = if (pushToken == null) null else PUSH_TOKEN_TYPE_FID,
+                pushTokenType = pushTokenType,
             )
             val response = when (registerMode) {
                 RegistrationMode.Anonymous -> api.deviceRegister(request, null)
@@ -159,6 +160,7 @@ class GatewayService(
             }
 
             this.settings.fcmToken = pushToken
+            this.settings.pushTokenType = pushTokenType
             this.settings.registrationInfo = response
 
             events.emit(
@@ -180,7 +182,11 @@ class GatewayService(
         }
     }
 
-    internal suspend fun updateDevice(context: Context, pushToken: String?) {
+    internal suspend fun updateDevice(
+        context: Context,
+        pushToken: String?,
+        pushTokenType: String? = null
+    ) {
         if (!settings.enabled) return
 
         val settings = settings.registrationInfo ?: return
@@ -196,11 +202,12 @@ class GatewayService(
                 encryptionKey?.publicKeyBase64,
                 encryptionKey?.keyVersion,
                 simCards.toDTO(),
-                pushTokenType = if (pushToken == null) null else PUSH_TOKEN_TYPE_FID,
+                pushTokenType = pushTokenType,
             )
         )
 
         this.settings.fcmToken = pushToken
+        this.settings.pushTokenType = pushTokenType
 
         events.emit(
             DeviceRegisteredEvent.Success(

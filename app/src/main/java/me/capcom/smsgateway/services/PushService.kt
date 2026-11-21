@@ -8,6 +8,7 @@ import com.google.firebase.messaging.RemoteMessage
 import me.capcom.smsgateway.modules.events.ExternalEvent
 import me.capcom.smsgateway.modules.events.ExternalEventType
 import me.capcom.smsgateway.modules.gateway.GatewaySettings
+import me.capcom.smsgateway.modules.gateway.PUSH_TOKEN_TYPE_FID
 import me.capcom.smsgateway.modules.gateway.workers.RegistrationWorker
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
@@ -34,7 +35,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
             module = this.javaClass.simpleName,
             message = "FID registration received",
         )
-        RegistrationWorker.start(this@PushService, installationId)
+        RegistrationWorker.start(this@PushService, installationId, PUSH_TOKEN_TYPE_FID)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -106,6 +107,7 @@ class PushService : FirebaseMessagingService(), KoinComponent {
                             module = PushService::class.java.simpleName,
                             message = "FCM registration failed: ${task.exception}"
                         )
+                        RegistrationWorker.start(context, null, null)
                         return@addOnCompleteListener
                     }
 
