@@ -193,7 +193,11 @@ class EventsReceiver : EventsReceiver() {
 
                     if (!settings.enabled) return@collect
 
-                    RegistrationWorker.start(get(), settings.fcmToken)
+                    RegistrationWorker.start(
+                        get(),
+                        settings.fcmToken,
+                        settings.pushTokenType
+                    )
                 }
             }
         }
