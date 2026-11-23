@@ -57,6 +57,8 @@
     <string name="messages_header">الرسائل</string>
     <string name="messages">الرسائل…</string>
     <string name="minimum">الحد الأدنى</string>
+    <string name="mms_global_message_id">معرّف رسالة MMS العالمي</string>
+    <string name="mms_global_message_id_summary">اشتقاق المعرّف من محتوى الرسالة ليظل ثابتًا عند استبدال الجهاز</string>
     <string name="n_a">غير متاح</string>
     <string name="new_sms_received_webhooks_registered">تم تسجيل ويب هوك جديد للرسائل المستلمة</string>
     <string name="no_webhooks_found">لم يتم تكوين ويب هوك</string>

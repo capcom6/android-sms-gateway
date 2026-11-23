@@ -21,5 +21,11 @@
             app:defaultValue="1048576"
             app:title="@string/mms_max_inline_attachment_size"
             app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreference
+            android:defaultValue="true"
+            app:key="receiver.mms_global_message_id"
+            app:summary="@string/mms_global_message_id_summary"
+            app:title="@string/mms_global_message_id" />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

@@ -19,6 +19,7 @@ import me.capcom.smsgateway.modules.notifications.notificationsModule
 import me.capcom.smsgateway.modules.orchestrator.OrchestratorService
 import me.capcom.smsgateway.modules.orchestrator.orchestratorModule
 import me.capcom.smsgateway.modules.ping.pingModule
+import me.capcom.smsgateway.modules.receiver.ReceiverSettings
 import me.capcom.smsgateway.modules.receiver.receiverModule
 import me.capcom.smsgateway.modules.settings.settingsModule
 import me.capcom.smsgateway.modules.webhooks.webhooksModule
@@ -61,6 +62,12 @@ class App: Application() {
                 deviceModule,
             )
         }
+
+        get<ReceiverSettings>().migrateMmsMessageId(
+            packageManager.getPackageInfo(packageName, 0).let {
+                it.lastUpdateTime <= it.firstInstallTime
+            },
+        )
 
         Thread.setDefaultUncaughtExceptionHandler(
             GlobalExceptionHandler(

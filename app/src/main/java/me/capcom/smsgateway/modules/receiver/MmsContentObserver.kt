@@ -199,10 +199,16 @@ class MmsContentObserver : KoinComponent {
         message?.let { msg ->
             logOmittedParts(msg)
 
+            val messageId = if (receiverSettings.mmsGlobalMessageId) {
+                MmsMessageId.from(msg)
+            } else {
+                mmsId.toString()
+            }
+
             receiverSvc.process(
                 context,
                 InboxMessage.MMS(
-                    mmsId.toString(),
+                    messageId,
                     msg.body,
                     msg.subject,
                     msg.attachments.map {

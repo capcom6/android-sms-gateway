@@ -53,6 +53,8 @@
     <string name="messages_header">消息</string>
     <string name="messages">消息…</string>
     <string name="minimum">最小值</string>
+    <string name="mms_global_message_id">全局 MMS 消息 ID</string>
+    <string name="mms_global_message_id_summary">根据消息内容生成 ID，使其在更换设备后保持不变</string>
     <string name="n_a">无数据</string>
     <string name="new_sms_received_webhooks_registered">已注册新短信接收 Webhook</string>
     <string name="no_webhooks_found">未配置 Webhook</string>

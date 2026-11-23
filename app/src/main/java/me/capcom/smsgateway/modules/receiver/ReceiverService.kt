@@ -381,8 +381,14 @@ class ReceiverService : KoinComponent {
                     receiverSettings.mmsMaxInlineAttachmentBytes,
                 ) ?: continue
 
+                val messageId = if (receiverSettings.mmsGlobalMessageId) {
+                    MmsMessageId.from(message)
+                } else {
+                    mmsId.toString()
+                }
+
                 val inboxMessage = InboxMessage.MMS(
-                    messageId = mmsId.toString(),
+                    messageId = messageId,
                     body = message.body,
                     subject = message.subject,
                     attachments = message.attachments.map {
