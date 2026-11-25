@@ -49,6 +49,10 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
                 binding.filterAll.text = getString(R.string.filter_all_count, it.total)
                 binding.filterPending.text = getString(R.string.filter_pending_count, it.pending)
                 binding.filterPending.visibility = if (it.pending > 0) View.VISIBLE else View.GONE
+                binding.filterProcessing.text =
+                    getString(R.string.filter_processing_count, it.processed)
+                binding.filterProcessing.visibility =
+                    if (it.processed > 0) View.VISIBLE else View.GONE
                 binding.filterSent.text = getString(R.string.filter_sent_count, it.sent)
                 binding.filterSent.visibility = if (it.sent > 0) View.VISIBLE else View.GONE
                 binding.filterDelivered.text =
@@ -66,6 +70,7 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
                 if (viewModel.filter.value != null) {
                     val activeVisible = when (viewModel.filter.value) {
                         ProcessingState.Pending -> it.pending > 0
+                        ProcessingState.Processed -> it.processed > 0
                         ProcessingState.Sent -> it.sent > 0
                         ProcessingState.Delivered -> it.delivered > 0
                         ProcessingState.Failed -> it.failed > 0
@@ -91,6 +96,7 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
             when (state) {
                 null -> { if (!binding.filterAll.isChecked) binding.filterAll.isChecked = true }
                 ProcessingState.Pending -> { if (!binding.filterPending.isChecked) binding.filterPending.isChecked = true }
+                ProcessingState.Processed -> { if (!binding.filterProcessing.isChecked) binding.filterProcessing.isChecked = true }
                 ProcessingState.Sent -> { if (!binding.filterSent.isChecked) binding.filterSent.isChecked = true }
                 ProcessingState.Delivered -> { if (!binding.filterDelivered.isChecked) binding.filterDelivered.isChecked = true }
                 ProcessingState.Failed -> { if (!binding.filterFailed.isChecked) binding.filterFailed.isChecked = true }
@@ -103,6 +109,7 @@ class MessagesListFragment : Fragment(), MessagesAdapter.OnItemClickListener<Mes
             when (checkedIds.firstOrNull()) {
                 R.id.filterAll -> viewModel.setFilter(null)
                 R.id.filterPending -> viewModel.setFilter(ProcessingState.Pending)
+                R.id.filterProcessing -> viewModel.setFilter(ProcessingState.Processed)
                 R.id.filterSent -> viewModel.setFilter(ProcessingState.Sent)
                 R.id.filterDelivered -> viewModel.setFilter(ProcessingState.Delivered)
                 R.id.filterFailed -> viewModel.setFilter(ProcessingState.Failed)

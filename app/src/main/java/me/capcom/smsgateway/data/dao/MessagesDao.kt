@@ -29,8 +29,9 @@ interface MessagesDao {
     @Query(
         """
         SELECT
-            COALESCE(SUM(CASE WHEN state NOT IN ('Processed', 'Cancelling') THEN 1 ELSE 0 END), 0) as total,
+            COALESCE(SUM(CASE WHEN state <> 'Cancelling' THEN 1 ELSE 0 END), 0) as total,
             COALESCE(SUM(CASE WHEN state = 'Pending' THEN 1 ELSE 0 END), 0) as pending,
+            COALESCE(SUM(CASE WHEN state = 'Processed' THEN 1 ELSE 0 END), 0) as processed,
             COALESCE(SUM(CASE WHEN state = 'Cancelling' THEN 1 ELSE 0 END), 0) as cancelling,
             COALESCE(SUM(CASE WHEN state = 'Cancelled' THEN 1 ELSE 0 END), 0) as cancelled,
             COALESCE(SUM(CASE WHEN state = 'Sent' THEN 1 ELSE 0 END), 0) as sent,
@@ -44,7 +45,7 @@ interface MessagesDao {
     @Query("SELECT * FROM message ORDER BY createdAt DESC LIMIT :limit")
     fun selectLast(limit: Int): LiveData<List<Message>>
 
-    @Query("SELECT * FROM message WHERE ((:state IS NULL AND state NOT IN ('Processed', 'Cancelling')) OR state = :state) ORDER BY createdAt DESC LIMIT :limit")
+    @Query("SELECT * FROM message WHERE ((:state IS NULL AND state <> 'Cancelling') OR state = :state) ORDER BY createdAt DESC LIMIT :limit")
     fun selectLastFiltered(limit: Int, state: String? = null): LiveData<List<Message>>
 
     /**
