@@ -57,6 +57,13 @@
                     tools:text="Pending (0)" />
 
                 <com.google.android.material.chip.Chip
+                    android:id="@+id/filterProcessing"
+                    style="@style/CompactFilterChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="Processing (0)" />
+
+                <com.google.android.material.chip.Chip
                     android:id="@+id/filterSent"
                     style="@style/CompactFilterChip"
                     android:layout_width="wrap_content"
