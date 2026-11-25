@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.modules.logs.LogsService
@@ -28,25 +29,27 @@ class WebhookQueueDispatcher(
         internetRequired: Boolean,
     ) {
         val appContext = context.applicationContext
+        val queueId = runBlocking {
+            queueRepository.enqueueWebhook(
+                url = url,
+                payload = gson.toJson(data),
+            )
+        }
+
+        logsService.insert(
+            LogEntry.Priority.DEBUG,
+            NAME,
+            "Webhook enqueued to persistent queue",
+            mapOf(
+                "queueId" to queueId,
+                "url" to url,
+                "internetRequired" to internetRequired
+            )
+        )
+
         scope.launch {
             WebhookQueueCoordinator.mutex.withLock {
                 try {
-                    val queueId = queueRepository.enqueueWebhook(
-                        url = url,
-                        payload = gson.toJson(data),
-                    )
-
-                    logsService.insert(
-                        LogEntry.Priority.DEBUG,
-                        NAME,
-                        "Webhook enqueued to persistent queue",
-                        mapOf(
-                            "queueId" to queueId,
-                            "url" to url,
-                            "internetRequired" to internetRequired
-                        )
-                    )
-
                     WebhookQueueProcessorWorker.start(
                         context = appContext,
                         internetRequired = internetRequired,
@@ -56,7 +59,7 @@ class WebhookQueueDispatcher(
                     logsService.insert(
                         LogEntry.Priority.ERROR,
                         NAME,
-                        "Failed to queue webhook event: ${e.message}",
+                        "Failed to start webhook queue processing: ${e.message}",
                         mapOf(
                             "error" to e.toString(),
                             "url" to url

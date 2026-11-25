@@ -1,20 +1,27 @@
 package me.capcom.smsgateway.modules.webhooks
 
 import kotlinx.coroutines.sync.Mutex
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.sync.withLock
 
 internal object WebhookQueueCoordinator {
     internal val mutex = Mutex()
 
-    private val finalized = AtomicBoolean(false)
+    private var generation = 0L
+    private var finalized = false
 
-    internal fun markStarted() {
-        finalized.set(false)
+    internal suspend fun begin(): Long = mutex.withLock {
+        generation++
+        finalized = false
+        generation
     }
 
-    internal fun markFinalized() {
-        finalized.set(true)
+    internal fun isCurrent(token: Long): Boolean = generation == token
+
+    internal fun finalize(token: Long) {
+        if (isCurrent(token)) {
+            finalized = true
+        }
     }
 
-    internal fun isFinalized(): Boolean = finalized.get()
+    internal fun isFinalized(): Boolean = finalized
 }

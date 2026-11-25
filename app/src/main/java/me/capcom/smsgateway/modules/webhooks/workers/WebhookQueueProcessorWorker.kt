@@ -167,9 +167,8 @@ class WebhookQueueProcessorWorker(
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        val token = WebhookQueueCoordinator.begin()
         try {
-            WebhookQueueCoordinator.markStarted()
-
             logsSvc.insert(
                 priority = LogEntry.Priority.DEBUG,
                 module = NAME,
@@ -211,31 +210,33 @@ class WebhookQueueProcessorWorker(
             } while (webhookRepository.hasDueWebhooks() && isActive)
 
             WebhookQueueCoordinator.mutex.withLock {
-                if (isActive) {
-                    webhookRepository.cleanupOldEntries()
+                if (WebhookQueueCoordinator.isCurrent(token)) {
+                    if (isActive) {
+                        webhookRepository.cleanupOldEntries()
 
-                    val nextAttempt = webhookRepository.getNextAttemptTime()
-                    if (nextAttempt != null) {
-                        val delayMs = nextAttempt - System.currentTimeMillis()
-                        logsSvc.insert(
-                            priority = LogEntry.Priority.DEBUG,
-                            module = NAME,
-                            message = "Scheduling next webhook queue processing",
-                            context = mapOf(
-                                "delayMs" to delayMs,
-                                "nextAttempt" to nextAttempt
+                        val nextAttempt = webhookRepository.getNextAttemptTime()
+                        if (nextAttempt != null) {
+                            val delayMs = nextAttempt - System.currentTimeMillis()
+                            logsSvc.insert(
+                                priority = LogEntry.Priority.DEBUG,
+                                module = NAME,
+                                message = "Scheduling next webhook queue processing",
+                                context = mapOf(
+                                    "delayMs" to delayMs,
+                                    "nextAttempt" to nextAttempt
+                                )
                             )
-                        )
 
-                        start(
-                            context = applicationContext,
-                            internetRequired = settings.internetRequired,
-                            initialDelayMs = delayMs,
-                            policy = ExistingWorkPolicy.APPEND_OR_REPLACE,
-                        )
+                            start(
+                                context = applicationContext,
+                                internetRequired = settings.internetRequired,
+                                initialDelayMs = delayMs,
+                                policy = ExistingWorkPolicy.APPEND_OR_REPLACE,
+                            )
+                        }
                     }
+                    WebhookQueueCoordinator.finalize(token)
                 }
-                WebhookQueueCoordinator.markFinalized()
             }
 
             logsSvc.insert(
@@ -249,7 +250,9 @@ class WebhookQueueProcessorWorker(
 
             return@withContext Result.success()
         } catch (e: CancellationException) {
-            WebhookQueueCoordinator.markFinalized()
+            WebhookQueueCoordinator.mutex.withLock {
+                WebhookQueueCoordinator.finalize(token)
+            }
             throw e
         } catch (e: Exception) {
             logsSvc.insert(
