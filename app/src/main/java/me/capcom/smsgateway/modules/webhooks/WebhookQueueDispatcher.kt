@@ -2,7 +2,11 @@ package me.capcom.smsgateway.modules.webhooks
 
 import android.content.Context
 import com.google.gson.GsonBuilder
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import me.capcom.smsgateway.extensions.configure
 import me.capcom.smsgateway.modules.logs.LogsService
 import me.capcom.smsgateway.modules.logs.db.LogEntry
@@ -14,7 +18,7 @@ class WebhookQueueDispatcher(
     private val queueRepository: WebhookQueueRepository,
     private val logsService: LogsService,
 ) {
-    private val enqueueLock = Any()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val gson = GsonBuilder().configure().create()
 
     fun enqueue(
@@ -23,30 +27,43 @@ class WebhookQueueDispatcher(
         data: WebHookEventDTO,
         internetRequired: Boolean,
     ) {
-        synchronized(enqueueLock) {
-            val queueId = runBlocking {
-                queueRepository.enqueueWebhook(
-                    url = url,
-                    payload = gson.toJson(data),
-                )
+        val appContext = context.applicationContext
+        scope.launch {
+            WebhookQueueCoordinator.mutex.withLock {
+                try {
+                    val queueId = queueRepository.enqueueWebhook(
+                        url = url,
+                        payload = gson.toJson(data),
+                    )
+
+                    logsService.insert(
+                        LogEntry.Priority.DEBUG,
+                        NAME,
+                        "Webhook enqueued to persistent queue",
+                        mapOf(
+                            "queueId" to queueId,
+                            "url" to url,
+                            "internetRequired" to internetRequired
+                        )
+                    )
+
+                    WebhookQueueProcessorWorker.start(
+                        context = appContext,
+                        internetRequired = internetRequired,
+                        policy = WebhookQueueProcessorWorker.resolvePolicy(appContext),
+                    )
+                } catch (e: Exception) {
+                    logsService.insert(
+                        LogEntry.Priority.ERROR,
+                        NAME,
+                        "Failed to queue webhook event: ${e.message}",
+                        mapOf(
+                            "error" to e.toString(),
+                            "url" to url
+                        )
+                    )
+                }
             }
-
-            logsService.insert(
-                LogEntry.Priority.DEBUG,
-                NAME,
-                "Webhook enqueued to persistent queue",
-                mapOf(
-                    "queueId" to queueId,
-                    "url" to url,
-                    "internetRequired" to internetRequired
-                )
-            )
-
-            WebhookQueueProcessorWorker.start(
-                context = context,
-                internetRequired = internetRequired,
-                policy = WebhookQueueProcessorWorker.resolvePolicy(context),
-            )
         }
     }
 }

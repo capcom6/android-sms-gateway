@@ -30,4 +30,19 @@ class WebhookWorkerPolicyTest {
     fun idleProcessorIsReplaced() {
         assertTrue(shouldReplace(ProcessorActivity.Idle))
     }
+
+    @Test
+    fun finalizedRunningProcessorIsReplaced() {
+        assertTrue(shouldReplace(ProcessorActivity.Running, finalized = true))
+    }
+
+    @Test
+    fun runningProcessorBeforeFinalizationIsKept() {
+        assertFalse(shouldReplace(ProcessorActivity.Running, finalized = false))
+    }
+
+    @Test
+    fun finalizedBlockedProcessorIsReplaced() {
+        assertTrue(shouldReplace(ProcessorActivity.Blocked, finalized = true))
+    }
 }

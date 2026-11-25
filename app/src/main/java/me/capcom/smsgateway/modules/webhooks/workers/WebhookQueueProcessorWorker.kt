@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
@@ -37,6 +38,7 @@ import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.webhooks.NAME
 import me.capcom.smsgateway.modules.webhooks.WebhookPayloadStorage
+import me.capcom.smsgateway.modules.webhooks.WebhookQueueCoordinator
 import me.capcom.smsgateway.modules.webhooks.WebhooksSettings
 import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueEntity
 import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueRepository
@@ -64,6 +66,9 @@ internal fun shouldReplace(activity: ProcessorActivity): Boolean = when (activit
     ProcessorActivity.DelayedPending -> true
     ProcessorActivity.Idle -> true
 }
+
+internal fun shouldReplace(activity: ProcessorActivity, finalized: Boolean): Boolean =
+    finalized || shouldReplace(activity)
 
 private fun List<WorkInfo>.processorActivity(): ProcessorActivity = when {
     any { it.state == WorkInfo.State.RUNNING } -> ProcessorActivity.Running
@@ -146,7 +151,7 @@ class WebhookQueueProcessorWorker(
                 .get()
                 .processorActivity()
 
-            return if (shouldReplace(activity)) {
+            return if (shouldReplace(activity, WebhookQueueCoordinator.isFinalized())) {
                 ExistingWorkPolicy.REPLACE
             } else {
                 ExistingWorkPolicy.KEEP
@@ -163,6 +168,8 @@ class WebhookQueueProcessorWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
+            WebhookQueueCoordinator.markStarted()
+
             logsSvc.insert(
                 priority = LogEntry.Priority.DEBUG,
                 module = NAME,
@@ -203,29 +210,32 @@ class WebhookQueueProcessorWorker(
                 }
             } while (webhookRepository.hasDueWebhooks() && isActive)
 
-            if (isActive) {
-                webhookRepository.cleanupOldEntries()
+            WebhookQueueCoordinator.mutex.withLock {
+                if (isActive) {
+                    webhookRepository.cleanupOldEntries()
 
-                val nextAttempt = webhookRepository.getNextAttemptTime()
-                if (nextAttempt != null) {
-                    val delayMs = nextAttempt - System.currentTimeMillis()
-                    logsSvc.insert(
-                        priority = LogEntry.Priority.DEBUG,
-                        module = NAME,
-                        message = "Scheduling next webhook queue processing",
-                        context = mapOf(
-                            "delayMs" to delayMs,
-                            "nextAttempt" to nextAttempt
+                    val nextAttempt = webhookRepository.getNextAttemptTime()
+                    if (nextAttempt != null) {
+                        val delayMs = nextAttempt - System.currentTimeMillis()
+                        logsSvc.insert(
+                            priority = LogEntry.Priority.DEBUG,
+                            module = NAME,
+                            message = "Scheduling next webhook queue processing",
+                            context = mapOf(
+                                "delayMs" to delayMs,
+                                "nextAttempt" to nextAttempt
+                            )
                         )
-                    )
 
-                    start(
-                        context = applicationContext,
-                        internetRequired = settings.internetRequired,
-                        initialDelayMs = delayMs,
-                        policy = ExistingWorkPolicy.APPEND_OR_REPLACE,
-                    )
+                        start(
+                            context = applicationContext,
+                            internetRequired = settings.internetRequired,
+                            initialDelayMs = delayMs,
+                            policy = ExistingWorkPolicy.APPEND_OR_REPLACE,
+                        )
+                    }
                 }
+                WebhookQueueCoordinator.markFinalized()
             }
 
             logsSvc.insert(
@@ -239,6 +249,7 @@ class WebhookQueueProcessorWorker(
 
             return@withContext Result.success()
         } catch (e: CancellationException) {
+            WebhookQueueCoordinator.markFinalized()
             throw e
         } catch (e: Exception) {
             logsSvc.insert(
