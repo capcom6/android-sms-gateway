@@ -17,7 +17,6 @@ import me.capcom.smsgateway.modules.webhooks.domain.WebHookDTO
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEvent
 import me.capcom.smsgateway.modules.webhooks.domain.WebHookEventDTO
 import me.capcom.smsgateway.modules.webhooks.workers.ReviewWebhooksWorker
-import me.capcom.smsgateway.modules.webhooks.workers.SendWebhookWorker
 import me.capcom.smsgateway.modules.webhooks.workers.WebhookQueueProcessorWorker
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
@@ -30,6 +29,7 @@ class WebHooksService(
     private val webhooksSettings: WebhooksSettings,
     private val notificationsService: NotificationsService,
     private val logsService: LogsService,
+    private val queueDispatcher: WebhookQueueDispatcher,
 ) : KoinComponent {
     private val eventsReceiver by lazy { EventsReceiver() }
 
@@ -150,6 +150,7 @@ class WebHooksService(
                 return@forEach
             }
 
+            val internetRequired = webhooksSettings.internetRequired
             try {
                 // Create the webhook event DTO
                 val webhookEventDTO = WebHookEventDTO(
@@ -160,11 +161,11 @@ class WebHooksService(
                     payload = payload,
                 )
 
-                SendWebhookWorker.start(
+                queueDispatcher.enqueue(
                     context = context,
                     url = webhook.url,
                     data = webhookEventDTO,
-                    internetRequired = webhooksSettings.internetRequired
+                    internetRequired = internetRequired,
                 )
 
                 queuedCount++
@@ -176,7 +177,7 @@ class WebHooksService(
                     mapOf(
                         "webhookId" to webhook.id,
                         "event" to event.name,
-                        "internetRequired" to webhooksSettings.internetRequired
+                        "internetRequired" to internetRequired
                     )
                 )
             } catch (e: Exception) {

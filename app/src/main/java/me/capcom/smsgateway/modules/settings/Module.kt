@@ -12,7 +12,6 @@ import me.capcom.smsgateway.modules.messages.MessagesSettings
 import me.capcom.smsgateway.modules.ping.PingSettings
 import me.capcom.smsgateway.modules.receiver.ReceiverSettings
 import me.capcom.smsgateway.modules.receiver.StateStorage
-import me.capcom.smsgateway.modules.webhooks.TemporaryStorage
 import me.capcom.smsgateway.modules.webhooks.WebhooksSettings
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -74,11 +73,6 @@ val settingsModule = module {
         )
     }
     //
-    single {
-        TemporaryStorage(
-            PreferencesStorage(get(), "webhooks")
-        )
-    }
     single {
         StateStorage(
             PreferencesStorage(get(), "receiver")
