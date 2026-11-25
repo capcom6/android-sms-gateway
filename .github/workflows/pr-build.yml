@@ -2,6 +2,7 @@ name: Release
 
 on:
   pull_request: { types: [opened, synchronize, ready_for_review] }
+  workflow_dispatch:
 
 jobs:
   build:
@@ -9,7 +10,9 @@ jobs:
       matrix:
         build-type: [release, insecure]
     name: Build ${{ matrix.build-type }}
-    if: github.event.pull_request.draft == false
+    # Manual runs are not pull_request events - build them too; PR builds run
+    # for every non-draft PR.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     uses: ./.github/workflows/build-apk.yml
     with:
       version-name: ${{ github.sha }}
@@ -23,8 +26,13 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    # Manual runs are not pull_request events - run them too.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     needs: [build]
+    # Fork PRs run without repository secrets: the artifact upload and the
+    # download links would fail or point nowhere, so guard on AWS credentials.
+    env:
+      AWS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
     steps:
       - name: Download release artifacts
         uses: actions/download-artifact@v4
@@ -37,6 +45,7 @@ jobs:
           name: insecure-artifacts
 
       - name: Upload to S3
+        if: env.AWS_KEY_ID != ''
         uses: capcom6/upload-s3-action@master
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -46,13 +55,14 @@ jobs:
           aws_bucket: ${{ secrets.AWS_BUCKET }}
           endpoint: ${{ secrets.AWS_ENDPOINT }}
           source_files: |
-            ./apk/release/app-release.apk
-            ./bundle/release/app-release.aab
-            ./apk/insecure/app-insecure.apk
-            ./bundle/insecure/app-insecure.aab
-          destination_dir: apk/${{ github.event.pull_request.head.sha }}
+            ./apk/play/release/app-release.apk
+            ./bundle/playRelease/app-release.aab
+            ./apk/play/insecure/app-insecure.apk
+            ./bundle/playInsecure/app-insecure.aab
+          destination_dir: apk/${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Find Comment
+        if: env.AWS_KEY_ID != '' && github.event_name == 'pull_request'
         uses: peter-evans/find-comment@v3
         id: fc
         with:
@@ -61,6 +71,7 @@ jobs:
           body-includes: Pull request artifacts
 
       - name: Create or update comment
+        if: env.AWS_KEY_ID != '' && github.event_name == 'pull_request'
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}

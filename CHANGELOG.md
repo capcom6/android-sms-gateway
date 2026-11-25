@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- F-Droid compatible `fdroid` flavor — builds the app without Firebase Cloud Messaging and Google Play Services, using the existing SSE transport for cloud communication (#165)
+
+### Changed
+- The `google-services` Gradle plugin is applied only when `google-services.json` is present, so builds without the file (CI without the secret, local checkouts) skip Firebase setup entirely
+- Release and insecure builds fall back to an unsigned APK when `keystore.jks` is absent, so builds without the signing key (CI on forks, local builds) can produce binaries
+- Firebase dependencies are scoped to the `play` flavor, so the `fdroid` flavor builds without Firebase Cloud Messaging and Google Play Services
+- The `play` flavor keeps the legacy `app-*.apk` and `app-*.aab` artifact filenames, so download links and automation are unaffected by the flavor split
+
 ### Fixed
 - Setting `receiver.content_provider_enabled` to `null` via `PATCH /settings` now resets the setting to its default (enabled) instead of failing with a validation error; explicit `true`/`false` values and invalid values keep their existing behavior [7b2be5f]
 
@@ -27,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Incoming MMS notifications whose WAP-push headers are unrecognized or undecodable are no longer dropped — the notification is parsed with the AOSP PDU parser, unknown header fields are skipped and logged as warnings, and the `mms:received` webhook fires for these messages [772f8b5]
+- Cloud commands are no longer lost when the notification channel is pinned to SSE_ONLY — the FCM token stored on the server is cleared, so delivery switches to the SSE transport
 
 ## [v1.78.2] - 2026-11-03
 

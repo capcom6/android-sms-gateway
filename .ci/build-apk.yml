@@ -1,0 +1,46 @@
+# Mirrors .github/workflows/build-apk.yml.
+# CI/CD variables (all optional - without them the build applies the
+# google-services plugin only when app/google-services.json exists and
+# falls back to unsigned APKs/AABs, see app/build.gradle):
+#   GOOGLE_SERVICES_JSON      base64 google-services.json (play flavor)
+#   SIGNING_KEY_STORE_BASE64  base64 keystore
+#   SIGNING_KEY_ALIAS, SIGNING_KEY_PASSWORD, SIGNING_STORE_PASSWORD
+#   VERSION_NAME              version name (a leading "v" is stripped)
+
+build:apk:
+  stage: build
+  image: cimg/android:2025.01
+  parallel:
+    matrix:
+      - FLAVOR: play
+        BUILD_TYPE: release
+        VARIANT: playRelease
+      - FLAVOR: play
+        BUILD_TYPE: insecure
+        VARIANT: playInsecure
+      - FLAVOR: fdroid
+        BUILD_TYPE: release
+        VARIANT: fdroidRelease
+      - FLAVOR: fdroid
+        BUILD_TYPE: insecure
+        VARIANT: fdroidInsecure
+  variables:
+    GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle-home"
+    SIGNING_KEY_STORE_PATH: app/keystore.jks
+  cache:
+    key: gradle
+    paths:
+      - .gradle-home/caches/
+      - .gradle-home/wrapper/
+  before_script:
+    - if [ -n "$GOOGLE_SERVICES_JSON" ]; then echo "$GOOGLE_SERVICES_JSON" | base64 -d > ./app/google-services.json; fi
+    - if [ -n "$SIGNING_KEY_STORE_BASE64" ]; then echo "$SIGNING_KEY_STORE_BASE64" | base64 -d > app/keystore.jks; fi
+    - if [ -n "$VERSION_NAME" ]; then sed -i "s/versionName.*/versionName \"${VERSION_NAME#v}\"/" app/build.gradle; fi
+  script:
+    - ./gradlew assemble${FLAVOR^}${BUILD_TYPE^} bundle${FLAVOR^}${BUILD_TYPE^}
+  artifacts:
+    name: "apk-$FLAVOR-$BUILD_TYPE"
+    paths:
+      - app/build/outputs/apk/$FLAVOR/$BUILD_TYPE/
+      - app/build/outputs/bundle/$VARIANT/
+    expire_in: 1 week
