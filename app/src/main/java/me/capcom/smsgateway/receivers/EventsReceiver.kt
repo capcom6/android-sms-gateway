@@ -32,7 +32,7 @@ class EventsReceiver : BroadcastReceiver(), KoinComponent {
                 logsService.insert(
                     LogEntry.Priority.ERROR,
                     MODULE_NAME,
-                    "Can't process message state intent",
+                    "Can't process message state intent: $e",
                     intent.toLogContext() + e.toLogContext()
                 )
             } finally {
