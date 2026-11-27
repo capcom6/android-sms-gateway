@@ -27,10 +27,12 @@ class RegistrationWorker(
     override suspend fun doWork(): Result {
         try {
             val fcmToken = inputData.getString(DATA_TOKEN)
+            val pushTokenType = inputData.getString(DATA_TOKEN_TYPE)
 
             App.instance.gatewayService.updateDevice(
                 applicationContext,
                 fcmToken,
+                pushTokenType,
             )
 
             return Result.success()
@@ -52,8 +54,9 @@ class RegistrationWorker(
         private const val NAME = "RegistrationWorker"
 
         private const val DATA_TOKEN = "token"
+        private const val DATA_TOKEN_TYPE = "tokenType"
 
-        fun start(context: Context, token: String?) {
+        fun start(context: Context, token: String?, tokenType: String? = null) {
             val work = OneTimeWorkRequestBuilder<RegistrationWorker>()
                 .setConstraints(
                     Constraints.Builder()
@@ -68,6 +71,7 @@ class RegistrationWorker(
                 .setInputData(
                     workDataOf(
                         DATA_TOKEN to token,
+                        DATA_TOKEN_TYPE to tokenType,
                     )
                 )
                 .build()
