@@ -67,6 +67,8 @@
     <string name="messages_header">Messages</string>
     <string name="messages">Messages…</string>
     <string name="minimum">Minimum</string>
+    <string name="mms_global_message_id">Global MMS message ID</string>
+    <string name="mms_global_message_id_summary">Derive the ID from message content so it stays stable across handset replacement</string>
     <string name="mms_max_inline_attachment_size">Max inline attachment size, bytes</string>
     <string name="mms_max_inline_attachment_size_invalid">Enter a number between 0 and 67108864</string>
     <string name="n_a">n/a</string>

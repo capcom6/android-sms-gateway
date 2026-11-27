@@ -131,6 +131,10 @@
                 "nullable": true,
                 "type": "string"
               },
+              "messageId": {
+                "description": "With 'Global MMS message ID' enabled (default on new installations): `mms_` followed by the SHA-256 hex digest of sender, receive timestamp, subject, body and sorted attachment metadata. Otherwise the device-local `content://mms` row `_id`. Combine with the top-level `deviceId` when deduplicating.",
+                "type": "string"
+              },
               "receivedAt": {
                 "description": "The timestamp when the MMS message was received.",
                 "format": "date-time",

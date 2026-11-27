@@ -26,6 +26,7 @@ This document covers:
     - [Flow](#flow)
     - [Webhook: `mms:received`](#webhook-mmsreceived)
     - [Webhook: `mms:downloaded`](#webhook-mmsdownloaded)
+    - [Message ID and deduplication](#message-id-and-deduplication)
     - [Fetching attachment bytes](#fetching-attachment-bytes)
   - [Inbox API](#inbox-api)
   - [Cloud mode](#cloud-mode)
@@ -207,7 +208,7 @@ the gateway.
 {
   "event": "mms:downloaded",
   "payload": {
-    "messageId": "hex-derived-id",
+    "messageId": "mms_9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
     "sender": "+15550009999",
     "recipient": "+15551234567",
     "simNumber": 1,
@@ -226,6 +227,33 @@ the gateway.
   }
 }
 ```
+
+### Message ID and deduplication
+
+The `mms:downloaded` `messageId` has two formats, selected by
+*Settings → Inbox → Global MMS message ID* (or
+`PATCH /settings {"receiver":{"mms_global_message_id":true}}`, scope
+`settings:write`):
+
+- **Enabled (default on new installations).** `mms_` followed by the SHA-256
+  hex digest of the sender, receive timestamp, subject, body, and sorted
+  attachment metadata (content type, name, size). Provider-local values
+  (`_id`, `partId`) and inline attachment bytes are excluded, so the ID does
+  not depend on the handset and stays stable across retries and inbox exports.
+- **Disabled (default when upgrading an existing installation).** The
+  device-local `content://mms` row `_id`. That counter restarts after a
+  handset replacement and can overlap with other devices on the same account.
+
+Existing installations keep the legacy format until the setting is enabled;
+new installations start with it enabled. Enabling it mid-stream changes the
+format only for messages received afterwards — older messages keep their
+original IDs and their attachments remain fetchable.
+
+**Deduplicate on the top-level `deviceId` plus `messageId`**, not on
+`messageId` alone. The content-derived ID removes cross-device collisions but
+is a hash, not a globally assigned identity. `mms:received` and
+`mms:downloaded` still carry different IDs for the same message and cannot be
+paired by ID; use `mms:downloaded` when the content is needed.
 
 ### Fetching attachment bytes
 
@@ -327,6 +355,11 @@ are reported back to the cloud identically to SMS.
 
 ## Limits and carrier behavior
 
+- **Global MMS message ID.** New installations derive the `mms:downloaded`
+  `messageId` from message content; upgrades keep the legacy provider `_id`
+  until it is enabled in *Settings → Inbox* or through
+  `PATCH /settings {"receiver":{"mms_global_message_id":true}}`. See
+  [Message ID and deduplication](#message-id-and-deduplication).
 - **Inline attachment limit.** A received attachment is inlined (base64) into
   the `mms:downloaded` webhook payload and into cloud inbox uploads only when
   it is not larger than the *Max inline attachment size* setting — 1 MiB by
@@ -386,6 +419,11 @@ are reported back to the cloud identically to SMS.
   metadata is reported. The bytes are kept on the device — fetch them with
   `GET /inbox/<messageId>/attachments/<partId>` — and the app log screen
   holds a `MMS attachment exceeds the inline limit and was skipped` entry.
+- **MMS vanish in the consumer while webhook delivery shows success.** A
+  dedupe keyed on `messageId` alone can discard messages whose device-local
+  `_id` was reused after a handset swap. Enable *Global MMS message ID* and
+  key dedupe on `deviceId` + `messageId` — see
+  [Message ID and deduplication](#message-id-and-deduplication).
 - **Inspecting the outgoing PDU for debugging.** With USB debugging
   enabled:
   ```sh

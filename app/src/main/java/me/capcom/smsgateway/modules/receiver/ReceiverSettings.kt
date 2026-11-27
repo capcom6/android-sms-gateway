@@ -12,6 +12,15 @@ class ReceiverSettings(
         get() = storage.get<Boolean>(CONTENT_PROVIDER_ENABLED) ?: true
         set(value) = storage.set(CONTENT_PROVIDER_ENABLED, value)
 
+    var mmsGlobalMessageId: Boolean
+        get() = storage.get<Boolean>(MMS_GLOBAL_MESSAGE_ID) ?: true
+        set(value) = storage.set(MMS_GLOBAL_MESSAGE_ID, value)
+
+    fun migrateMmsMessageId(isFreshInstall: Boolean) {
+        if (storage.get<Boolean>(MMS_GLOBAL_MESSAGE_ID) != null) return
+        mmsGlobalMessageId = isFreshInstall
+    }
+
     /**
      * Maximum size of an MMS attachment that may be inlined (base64) into
      * webhook payloads and cloud uploads. Larger parts are kept on the device
@@ -32,6 +41,7 @@ class ReceiverSettings(
     override fun export(): Map<String, *> {
         return mapOf(
             CONTENT_PROVIDER_ENABLED to contentProviderEnabled,
+            MMS_GLOBAL_MESSAGE_ID to mmsGlobalMessageId,
             MMS_MAX_INLINE_ATTACHMENT_BYTES to mmsMaxInlineAttachmentBytes,
         )
     }
@@ -47,6 +57,14 @@ class ReceiverSettings(
                     }
                     val changed = contentProviderEnabled != (newValue ?: true)
                     storage.set(key, newValue)
+                    changed
+                }
+
+                MMS_GLOBAL_MESSAGE_ID -> {
+                    val enabled = value?.toString()?.toBooleanStrictOrNull()
+                        ?: throw IllegalArgumentException("$MMS_GLOBAL_MESSAGE_ID must be a boolean")
+                    val changed = mmsGlobalMessageId != enabled
+                    storage.set(key, enabled)
                     changed
                 }
 
@@ -86,6 +104,7 @@ class ReceiverSettings(
 
     companion object {
         private const val CONTENT_PROVIDER_ENABLED = "content_provider_enabled"
+        private const val MMS_GLOBAL_MESSAGE_ID = "mms_global_message_id"
         private const val MMS_MAX_INLINE_ATTACHMENT_BYTES = "mms_max_inline_attachment_bytes"
 
         const val DEFAULT_MAX_INLINE_ATTACHMENT_BYTES = 1_048_576L

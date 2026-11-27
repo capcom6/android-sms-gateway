@@ -182,6 +182,62 @@ internal class ReceiverSettingsTest {
         assertFalse(ReceiverSettings(FakeKeyValueStorage()).import(mapOf("unknown" to 1)))
     }
 
+    @Test
+    fun defaultsToGlobalMessageIdWhenNotConfigured() {
+        val settings = ReceiverSettings(FakeKeyValueStorage())
+
+        assertTrue(settings.mmsGlobalMessageId)
+    }
+
+    @Test
+    fun migrationEnablesGlobalMessageIdForFreshInstall() {
+        val settings = ReceiverSettings(FakeKeyValueStorage())
+
+        settings.migrateMmsMessageId(true)
+
+        assertTrue(settings.mmsGlobalMessageId)
+    }
+
+    @Test
+    fun migrationKeepsLegacyMessageIdForUpgradedInstall() {
+        val settings = ReceiverSettings(FakeKeyValueStorage())
+
+        settings.migrateMmsMessageId(false)
+
+        assertFalse(settings.mmsGlobalMessageId)
+    }
+
+    @Test
+    fun migrationDoesNotOverwriteAnExplicitValue() {
+        val storage = FakeKeyValueStorage()
+        storage.set(GLOBAL_MESSAGE_ID_KEY, false)
+        val settings = ReceiverSettings(storage)
+
+        settings.migrateMmsMessageId(true)
+
+        assertFalse(settings.mmsGlobalMessageId)
+    }
+
+    @Test
+    fun exportsAndImportsGlobalMessageId() {
+        val storage = FakeKeyValueStorage()
+        val settings = ReceiverSettings(storage)
+
+        assertTrue(settings.export()[GLOBAL_MESSAGE_ID_KEY] == true)
+        assertTrue(settings.import(mapOf(GLOBAL_MESSAGE_ID_KEY to false)))
+        assertFalse(settings.mmsGlobalMessageId)
+        assertFalse(settings.import(mapOf(GLOBAL_MESSAGE_ID_KEY to false)))
+    }
+
+    @Test
+    fun importRejectsAnUnparsableGlobalMessageId() {
+        val settings = ReceiverSettings(FakeKeyValueStorage())
+
+        assertThrows(IllegalArgumentException::class.java) {
+            settings.import(mapOf(GLOBAL_MESSAGE_ID_KEY to "yes"))
+        }
+    }
+
     private class FakeKeyValueStorage : KeyValueStorage {
         private val values = mutableMapOf<String, Any?>()
 
@@ -205,5 +261,6 @@ internal class ReceiverSettingsTest {
 
     companion object {
         private const val KEY = "mms_max_inline_attachment_bytes"
+        private const val GLOBAL_MESSAGE_ID_KEY = "mms_global_message_id"
     }
 }

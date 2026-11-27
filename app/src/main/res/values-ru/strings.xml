@@ -58,6 +58,8 @@
     <string name="messages_header">Сообщения</string>
     <string name="messages">Сообщения…</string>
     <string name="minimum">Минимум</string>
+    <string name="mms_global_message_id">Глобальный ID MMS-сообщения</string>
+    <string name="mms_global_message_id_summary">Формировать ID из содержимого сообщения, чтобы он сохранялся при замене устройства</string>
     <string name="n_a">н/д</string>
     <string name="new_sms_received_webhooks_registered">Зарегистрирован новый вебхук для входящих
         сообщений</string>
