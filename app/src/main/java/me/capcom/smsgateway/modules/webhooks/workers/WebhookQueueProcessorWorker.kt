@@ -8,6 +8,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.gson.GsonBuilder
@@ -27,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import me.capcom.smsgateway.BuildConfig
 import me.capcom.smsgateway.R
@@ -36,6 +38,7 @@ import me.capcom.smsgateway.modules.logs.db.LogEntry
 import me.capcom.smsgateway.modules.notifications.NotificationsService
 import me.capcom.smsgateway.modules.webhooks.NAME
 import me.capcom.smsgateway.modules.webhooks.WebhookPayloadStorage
+import me.capcom.smsgateway.modules.webhooks.WebhookQueueCoordinator
 import me.capcom.smsgateway.modules.webhooks.WebhooksSettings
 import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueEntity
 import me.capcom.smsgateway.modules.webhooks.db.WebhookQueueRepository
@@ -45,6 +48,35 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
+
+internal const val DELAYED_TAG = "webhook_queue_processor_delayed"
+
+internal enum class ProcessorActivity {
+    Running,
+    Blocked,
+    DelayedPending,
+    Pending,
+    Idle,
+}
+
+internal fun shouldReplace(activity: ProcessorActivity): Boolean = when (activity) {
+    ProcessorActivity.Running -> false
+    ProcessorActivity.Blocked -> false
+    ProcessorActivity.Pending -> false
+    ProcessorActivity.DelayedPending -> true
+    ProcessorActivity.Idle -> true
+}
+
+internal fun shouldReplace(activity: ProcessorActivity, finalized: Boolean): Boolean =
+    finalized || shouldReplace(activity)
+
+private fun List<WorkInfo>.processorActivity(): ProcessorActivity = when {
+    any { it.state == WorkInfo.State.RUNNING } -> ProcessorActivity.Running
+    any { it.state == WorkInfo.State.BLOCKED } -> ProcessorActivity.Blocked
+    any { !it.state.isFinished && DELAYED_TAG in it.tags } -> ProcessorActivity.DelayedPending
+    any { !it.state.isFinished } -> ProcessorActivity.Pending
+    else -> ProcessorActivity.Idle
+}
 
 /**
  * Worker that processes webhook events from a persistent queue.
@@ -96,6 +128,7 @@ class WebhookQueueProcessorWorker(
                     }
                     if (initialDelayMs > 0) {
                         setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
+                        addTag(DELAYED_TAG)
                     }
                 }
                 .build()
@@ -108,6 +141,24 @@ class WebhookQueueProcessorWorker(
         }
 
         /**
+         * Resolve the policy for an event-driven start: keep a processor that is
+         * already running or blocked behind one, replace delayed work so new
+         * events are not left waiting for a far-future retry.
+         */
+        fun resolvePolicy(context: Context): ExistingWorkPolicy {
+            val activity = WorkManager.getInstance(context)
+                .getWorkInfosForUniqueWork(WORK_NAME)
+                .get()
+                .processorActivity()
+
+            return if (shouldReplace(activity, WebhookQueueCoordinator.isFinalized())) {
+                ExistingWorkPolicy.REPLACE
+            } else {
+                ExistingWorkPolicy.KEEP
+            }
+        }
+
+        /**
          * Stop any running queue processor workers.
          */
         fun stop(context: Context) {
@@ -116,6 +167,7 @@ class WebhookQueueProcessorWorker(
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        val token = WebhookQueueCoordinator.begin()
         try {
             logsSvc.insert(
                 priority = LogEntry.Priority.DEBUG,
@@ -157,28 +209,33 @@ class WebhookQueueProcessorWorker(
                 }
             } while (webhookRepository.hasDueWebhooks() && isActive)
 
-            if (isActive) {
-                webhookRepository.cleanupOldEntries()
+            WebhookQueueCoordinator.mutex.withLock {
+                if (WebhookQueueCoordinator.isCurrent(token)) {
+                    if (isActive) {
+                        webhookRepository.cleanupOldEntries()
 
-                val nextAttempt = webhookRepository.getNextAttemptTime()
-                if (nextAttempt != null) {
-                    val delayMs = nextAttempt - System.currentTimeMillis()
-                    logsSvc.insert(
-                        priority = LogEntry.Priority.DEBUG,
-                        module = NAME,
-                        message = "Scheduling next webhook queue processing",
-                        context = mapOf(
-                            "delayMs" to delayMs,
-                            "nextAttempt" to nextAttempt
-                        )
-                    )
+                        val nextAttempt = webhookRepository.getNextAttemptTime()
+                        if (nextAttempt != null) {
+                            val delayMs = nextAttempt - System.currentTimeMillis()
+                            logsSvc.insert(
+                                priority = LogEntry.Priority.DEBUG,
+                                module = NAME,
+                                message = "Scheduling next webhook queue processing",
+                                context = mapOf(
+                                    "delayMs" to delayMs,
+                                    "nextAttempt" to nextAttempt
+                                )
+                            )
 
-                    start(
-                        context = applicationContext,
-                        internetRequired = settings.internetRequired,
-                        initialDelayMs = delayMs,
-                        policy = ExistingWorkPolicy.APPEND_OR_REPLACE,
-                    )
+                            start(
+                                context = applicationContext,
+                                internetRequired = settings.internetRequired,
+                                initialDelayMs = delayMs,
+                                policy = ExistingWorkPolicy.APPEND_OR_REPLACE,
+                            )
+                        }
+                    }
+                    WebhookQueueCoordinator.finalize(token)
                 }
             }
 
@@ -193,6 +250,9 @@ class WebhookQueueProcessorWorker(
 
             return@withContext Result.success()
         } catch (e: CancellationException) {
+            WebhookQueueCoordinator.mutex.withLock {
+                WebhookQueueCoordinator.finalize(token)
+            }
             throw e
         } catch (e: Exception) {
             logsSvc.insert(
@@ -442,7 +502,7 @@ class WebhookQueueProcessorWorker(
     }
 
     /**
-     * HTTP client with the same configuration as the original SendWebhookWorker.
+     * HTTP client for sending queued webhook payloads.
      */
     private val client by lazy {
         HttpClient(OkHttp) {

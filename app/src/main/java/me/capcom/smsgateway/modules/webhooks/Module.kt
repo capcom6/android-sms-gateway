@@ -8,6 +8,7 @@ import org.koin.dsl.module
 
 val webhooksModule = module {
     singleOf(::WebHooksService)
+    singleOf(::WebhookQueueDispatcher)
     singleOf(::WebhookQueueRepository)
     singleOf(::WebhookPayloadStorage)
     viewModelOf(::WebhookQueueViewModel)
